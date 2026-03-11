@@ -20,7 +20,12 @@ src
 │       │   ├── Task.java
 │       │   ├── TaskRepository.java
 │       │   └── TaskService.java                
-│       └── Application.java     
+│       └── Application.java  
+│       └── entity
+│       └── repository
+│       └── factory
+│       └── service
+│       └── views 
 ├── main/resources
 │   ├── META-INF
 │   │   └── resources
@@ -44,6 +49,21 @@ architectural layers. It includes two feature packages: `base` and `examplefeatu
   *self-contained unit of functionality*, including UI components, business logic, data access, and an integration test.
   Once you create your own features, *you'll remove this package*.
 
+## Estructura de carpetas
+
+* entity: Clases que representan tablas.
+* repository: Acceso a base de datos mediante JPA.
+* sevice: Lógica de negocio.
+* factory...: Implementación del patrón factoria y otros.
+* views: Frontend en Vaadin.
+
+## Workflow
+
+`entity -> repository -> service -> patrones -> views`
+
+El workflow desado es: Primero la creación de la base de la clase entity y posteriormente su acceso en la base de
+datos en repository, posteriormente implementar la lógica y posibles patrones en service y factory... y por último
+el desarrolo de la UI en views.
 
 ## Starting in Development Mode
 
