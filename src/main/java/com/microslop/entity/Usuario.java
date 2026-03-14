@@ -20,13 +20,17 @@ public class Usuario {
     @Column(nullable = false)
     private LocalDateTime fechaCreacion;
 
+    @Column(nullable = false)
+    private String contraseña;
+
     public Usuario() {
         this.fechaCreacion = LocalDateTime.now();
     }
 
-    public Usuario(String nombre, String email) {
+    public Usuario(String nombre, String email, String contraseña) {
         this.nombre = nombre;
         this.email = email;
+        this.contraseña = contraseña;
         this.fechaCreacion = LocalDateTime.now();
     }
 
@@ -58,11 +62,15 @@ public class Usuario {
         this.fechaCreacion = fechaCreacion;
     }
 
+    public String getContraseña() { return contraseña; }
+    public void  setContraseña(String contraseña) { this.contraseña = contraseña; }
+
     @Override
     public String toString() {
         return "Usuario{" + "id=" + id +
                 ", nombre=" + nombre +
                 ", email=" + email +
+                ", contraseña:" + contraseña +
                 ", fechaCreacion=" + fechaCreacion +
                 '}';
     }
