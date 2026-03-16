@@ -17,25 +17,25 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User registroUsuario(String nombre, String email, String contraseña){
-        if(userRepository.existsByNombre(nombre)){
+    public User registroUsuario(String username, String email, String password){
+        if(userRepository.existsByNombre(username)){
             throw new RuntimeException("El nombre existe");
         }
 
         User user = new User();
-        user.setNombre(nombre);
+        user.setUsername(username);
         user.setEmail(email);
-        user.setContraseña(contraseña);
+        user.setPassword(password);
 
         return userRepository.save(user);
     }
 
     @Override
-    public Optional<User> login(String nombre, String contraseña){
-        Optional<User> usuario = userRepository.findByNombre(nombre);
+    public Optional<User> login(String username, String password){
+        Optional<User> user = userRepository.findByNombre(nombre);
 
-        if(usuario.isPresent() && usuario.get().getContraseña().equals(contraseña)){
-            return usuario;
+        if(user.isPresent() && user.get().getPassword().equals(password)){
+            return user;
         }
 
         return Optional.empty();
