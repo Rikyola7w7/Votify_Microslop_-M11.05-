@@ -20,6 +20,12 @@ public class Usuario {
     @Column(nullable = false)
     private LocalDateTime fechaCreacion;
 
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false)
+    private String password;
+
     public Usuario() {
         this.fechaCreacion = LocalDateTime.now();
     }
