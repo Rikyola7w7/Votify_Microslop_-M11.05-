@@ -26,9 +26,21 @@ public class UsuarioService {
             throw new IllegalArgumentException("Ya existe una cuenta con este correo electrónico.");
         }
 
+        if(nuevoUsuario.getPassword() == null){
+            throw new IllegalArgumentException("La contraseña no puede ser nula.");
+        }
+
+        if(nuevoUsuario.getPassword().length() < 6){
+            throw new IllegalArgumentException("La contraseña debe tener al menos 6 caracteres.");
+        }
+
+
+
         String contrasenaEncriptada = passwordEncoder.encode(nuevoUsuario.getPassword());
         nuevoUsuario.setPassword(contrasenaEncriptada);
 
         usuarioRepository.save(nuevoUsuario);
     }
+
+    //al hacer login utiliza el metodo passwordEncoder.matches(contraseña introducida) BORRA ESTO DESPUES
 }
