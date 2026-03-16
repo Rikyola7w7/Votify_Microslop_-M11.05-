@@ -37,6 +37,8 @@ public class Usuario {
 
     public Usuario(String nombre, String email, String username, String password, LocalDateTime fechaNacimiento) {
         this.nombre = nombre;
+        this.username = username;
+        this.password = password;
         this.email = email;
         this.fechaCreacion = LocalDateTime.now();
         this.fechaNacimiento = fechaNacimiento;
@@ -86,6 +88,14 @@ public class Usuario {
 
     public void setFotoPerfil(byte[] fotoPerfil) {
         this.fotoPerfil = fotoPerfil;
+    }
+
+    public LocalDateTime getFechaNacimiento() {
+        return fechaNacimiento;
+    }
+
+    public void setFechaNacimiento(LocalDateTime fechaNacimiento) {
+        this.fechaNacimiento = fechaNacimiento;
     }
 
     @Override
