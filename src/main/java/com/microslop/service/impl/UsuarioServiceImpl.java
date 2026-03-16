@@ -1,6 +1,6 @@
 package com.microslop.service.impl;
 
-import com.microslop.entity.Usuario;
+import com.microslop.entity.User;
 import com.microslop.repository.UsuarioRepository;
 import com.microslop.service.UsuarioService;
 import org.springframework.stereotype.Service;
@@ -17,22 +17,22 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
-    public Usuario registroUsuario(String nombre, String email, String contraseña){
+    public User registroUsuario(String nombre, String email, String contraseña){
         if(usuarioRepository.existsByNombre(nombre)){
             throw new RuntimeException("El nombre existe");
         }
 
-        Usuario usuario = new Usuario();
-        usuario.setNombre(nombre);
-        usuario.setEmail(email);
-        usuario.setContraseña(contraseña);
+        User user = new User();
+        user.setNombre(nombre);
+        user.setEmail(email);
+        user.setContraseña(contraseña);
 
-        return usuarioRepository.save(usuario);
+        return usuarioRepository.save(user);
     }
 
     @Override
-    public Optional<Usuario> login(String nombre, String contraseña){
-        Optional<Usuario> usuario = usuarioRepository.findByNombre(nombre);
+    public Optional<User> login(String nombre, String contraseña){
+        Optional<User> usuario = usuarioRepository.findByNombre(nombre);
 
         if(usuario.isPresent() && usuario.get().getContraseña().equals(contraseña)){
             return usuario;
