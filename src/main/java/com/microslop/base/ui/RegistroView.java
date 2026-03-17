@@ -112,7 +112,7 @@ public class RegistroView extends VerticalLayout {
         //RouterLink linkLogin = new RouterLink("¿Ya tienes cuenta? Inicia sesión", LoginView.class);
 
         FormLayout formLayout = new FormLayout();
-        formLayout.add(usernameField, nombreField, emailField, passwordField, fechaNacimientoField, uploadFoto);
+        formLayout.add(usernameField, nombreField, emailField, passwordField, confirmarPasswordField, fechaNacimientoField, uploadFoto);
         formLayout.setMaxWidth("450px");
 
         add(titulo, formLayout, btnRegistrar /* , linkLogin*/);
