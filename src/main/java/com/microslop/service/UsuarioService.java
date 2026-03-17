@@ -3,6 +3,8 @@ package com.microslop.service;
 import com.microslop.entity.Usuario;
 import com.microslop.repository.UsuarioRepository;
 
+import java.time.LocalDate;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,11 +20,11 @@ public class UsuarioService {
     }
 
     public void registrarUsuario(Usuario nuevoUsuario) {
-        if (usuarioRepository.existsByUsername(nuevoUsuario.getUsername())) {
+        if (usuarioRepository.existsByUsernameIgnoreCase(nuevoUsuario.getUsername())) {
             throw new IllegalArgumentException("El nombre de usuario ya está en uso. Elige otro.");
         }
 
-        if (usuarioRepository.existsByEmail(nuevoUsuario.getEmail())) {
+        if (usuarioRepository.existsByEmailIgnoreCase(nuevoUsuario.getEmail())) {
             throw new IllegalArgumentException("Ya existe una cuenta con este correo electrónico.");
         }
 
@@ -32,6 +34,14 @@ public class UsuarioService {
 
         if(nuevoUsuario.getPassword().length() < 6){
             throw new IllegalArgumentException("La contraseña debe tener al menos 6 caracteres.");
+        }
+
+        if(LocalDate.now().minusYears(13).isBefore(nuevoUsuario.getFechaNacimiento().toLocalDate())){
+            throw new IllegalArgumentException("Debes tener al menos 13 años para registrarte.");
+        }
+
+        if (LocalDate.now().isBefore(nuevoUsuario.getFechaNacimiento().toLocalDate())) {
+            throw new IllegalArgumentException("La fecha de nacimiento no puede ser en el futuro.");
         }
 
 
