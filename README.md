@@ -63,7 +63,7 @@ architectural layers. It includes two feature packages: `base` and `examplefeatu
 
 El workflow desado es: Primero la creación de la base de la clase entity y posteriormente su acceso en la base de
 datos en repository, posteriormente implementar la lógica y posibles patrones en service y factory... y por último
-el desarrolo de la UI en views.
+el desarrollo de la UI en views.
 
 ## Starting in Development Mode
 
