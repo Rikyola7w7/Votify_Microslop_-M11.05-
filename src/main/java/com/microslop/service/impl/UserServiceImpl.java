@@ -17,8 +17,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User registroUsuario(String username, String email, String password){
-        if(userRepository.existsByNombre(username)){
+    public User register(String username, String email, String password){
+        if(userRepository.existsByUsername(username)){
             throw new RuntimeException("El nombre existe");
         }
 
@@ -32,12 +32,32 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<User> login(String username, String password){
-        Optional<User> user = userRepository.findByNombre(nombre);
+        Optional<User> user = userRepository.findByUsername(username);
 
         if(user.isPresent() && user.get().getPassword().equals(password)){
             return user;
         }
 
         return Optional.empty();
+    }
+
+    @Override
+    public User updateProfile(Long id, String username, String email) {
+        User user = userRepository.findById(id).get();
+
+        user.setUsername(username);
+        user.setEmail(email);
+
+        return  userRepository.save(user);
+    }
+
+    @Override
+    public Optional<User> searchById(Long id){
+        return userRepository.findById(id);
+    }
+
+    @Override
+    public Optional<User> searchByUsername(String username) {
+        return userRepository.findByUsername(username);
     }
 }
