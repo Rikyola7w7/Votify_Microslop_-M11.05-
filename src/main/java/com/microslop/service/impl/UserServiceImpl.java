@@ -60,4 +60,9 @@ public class UserServiceImpl implements UserService {
     public Optional<User> searchByUsername(String username) {
         return userRepository.findByUsername(username);
     }
+
+    @Override
+    public void deleteUser(Long id){
+        userRepository.deleteById(id);
+    }
 }

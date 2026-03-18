@@ -14,4 +14,6 @@ public interface UserService {
     Optional<User> searchById(Long id);
 
     Optional<User> searchByUsername(String username);
+
+    void deleteUser(Long id);
 }
