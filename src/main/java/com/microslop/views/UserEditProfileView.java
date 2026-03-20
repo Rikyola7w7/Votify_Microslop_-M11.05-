@@ -3,6 +3,7 @@ package com.microslop.views;
 import com.microslop.entity.User;
 import com.microslop.service.UserService;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Image;
@@ -32,14 +33,7 @@ public class UserEditProfileView extends VerticalLayout {
 
     private void abrirDialogo() {
 
-        // Usuario pruebas temporal
-        User user = new User();
-        user.setId(1L);
-        user.setUsername("testUser");
-        user.setEmail("test@email.com");
-        //TODO utilizar el metodo de abajo cuando se terminen las pruebas
-        /*User user = userService.searchById(1L)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));*/
+        User user = userService.getCurrentUser();
 
         Dialog dialog = new Dialog();
         dialog.setWidth("500px");
@@ -82,9 +76,23 @@ public class UserEditProfileView extends VerticalLayout {
         });
 
         Button eliminar = new Button("Eliminar Cuenta", e -> {
-            userService.deleteUser(user.getId());
-            Notification.show("Cuenta eliminada");
-            dialog.close();
+
+            ConfirmDialog confirmDialog = new ConfirmDialog();
+            confirmDialog.setHeader("Eliminar cuenta");
+            confirmDialog.setText("¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.");
+
+            confirmDialog.setConfirmText("Eliminar");
+            confirmDialog.setCancelText("Cancelar");
+
+            confirmDialog.setConfirmButtonTheme("error primary");
+
+            confirmDialog.addConfirmListener(event -> {
+                userService.deleteUser(user.getId());
+                Notification.show("Cuenta eliminada");
+                dialog.close();
+            });
+
+            confirmDialog.open();
         });
 
         eliminar.getStyle()

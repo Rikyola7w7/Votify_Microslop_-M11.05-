@@ -65,4 +65,25 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long id){
         userRepository.deleteById(id);
     }
+
+    @Override
+    public User getCurrentUser() {
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testUser");
+        user.setEmail("test@email.com");
+        user.setPassword("1234");
+
+        return user;
+    }
+
+    //TODO Cambiar metodo getCurrentUser a un metodo con autentificacion como el inferior
+    /*
+    String username = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        User user = userService.searchByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+     */
 }
