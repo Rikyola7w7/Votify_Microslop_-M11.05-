@@ -32,9 +32,11 @@ public class UserEditProfileView extends VerticalLayout {
 
     private void abrirDialogo() {
 
-        //Usuario de prueba
-        User user = userService.searchById(1L)
-                .orElseGet(() -> userService.register("testUser", "test@email.com", "1234"));
+        // Usuario pruebas temporal
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testUser");
+        user.setEmail("test@email.com");
         //TODO utilizar el metodo de abajo cuando se terminen las pruebas
         /*User user = userService.searchById(1L)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));*/
