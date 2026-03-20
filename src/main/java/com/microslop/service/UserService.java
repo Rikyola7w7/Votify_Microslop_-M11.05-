@@ -5,7 +5,7 @@ import com.microslop.entity.User;
 import java.util.Optional;
 
 public interface UserService {
-    User register(String username, String email, String password);
+    void registerUser(User newUser);
 
     Optional<User> login(String username, String password);
 

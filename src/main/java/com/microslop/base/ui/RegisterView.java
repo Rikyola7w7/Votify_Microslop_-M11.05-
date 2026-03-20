@@ -1,7 +1,7 @@
 package com.microslop.base.ui;
 
-import com.microslop.entity.Usuario;
-import com.microslop.service.UsuarioService;
+import com.microslop.entity.User;
+import com.microslop.service.UserService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -25,77 +25,77 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 
-@Route("registro") // Define la URL: http://localhost:8080/registro
-@PageTitle("Registro | Votify")
+@Route("register")
+@PageTitle("Register | Votify")
 public class RegisterView extends VerticalLayout {
 
-    private final UsuarioService usuarioService;
-    private byte[] fotoPerfilBytes = null;
+    private final UserService userService;
+    private byte[] profilePictureBytes = null;
 
-    public RegistroView(UsuarioService usuarioService) {
-        this.usuarioService = usuarioService;
+    public RegisterView(UserService userService) {
+        this.userService = userService;
 
         setSizeFull();
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
 
-        H2 titulo = new H2("Crea tu cuenta en Votify");
+        H2 title = new H2("Create your account on Votify");
 
-        TextField usernameField = new TextField("Nombre de usuario");
-        TextField nombreField = new TextField("Nombre completo");
-        EmailField emailField = new EmailField("Correo electrónico");
-        PasswordField passwordField = new PasswordField("Contraseña");
-        PasswordField confirmarPasswordField = new PasswordField("Repetir contraseña");
-        DatePicker fechaNacimientoField = new DatePicker("Fecha de nacimiento");
+        TextField usernameField = new TextField("Username");
+        TextField nameField = new TextField("Full name");
+        EmailField emailField = new EmailField("Email");
+        PasswordField passwordField = new PasswordField("Password");
+        PasswordField confirmPasswordField = new PasswordField("Confirm password");
+        DatePicker birthDateField = new DatePicker("Birth date");
 
         MemoryBuffer buffer = new MemoryBuffer();
-        Upload uploadFoto = new Upload(buffer);
-        uploadFoto.setAcceptedFileTypes("image/jpeg", "image/png", "image/gif");
-        uploadFoto.setMaxFiles(1);
-        uploadFoto.setDropLabel(new Span("Arrastra tu foto de perfil aquí (opcional)"));
+        Upload uploadProfilePicture = new Upload(buffer);
+        uploadProfilePicture.setAcceptedFileTypes("image/jpeg", "image/png", "image/gif");
+        uploadProfilePicture.setMaxFiles(1);
+        uploadProfilePicture.setDropLabel(new Span("Drag your profile picture here (optional)"));
 
-        uploadFoto.addSucceededListener(event -> {
+        uploadProfilePicture.addSucceededListener(event -> {
             try {
                 InputStream inputStream = buffer.getInputStream();
-                fotoPerfilBytes = inputStream.readAllBytes();
+                profilePictureBytes = inputStream.readAllBytes();
             } catch (IOException e) {
-                Notification.show("Error al procesar la imagen.");
+                Notification.show("Error processing image.");
             }
         });
 
-        Button btnRegistrar = new Button("Registrarse", e -> {
-            if (usernameField.isEmpty() || nombreField.isEmpty() || emailField.isEmpty() || 
-                passwordField.isEmpty() || confirmarPasswordField.isEmpty() || fechaNacimientoField.isEmpty()) {
-                Notification.show("Por favor, rellena todos los campos obligatorios.");
+        Button registerButton = new Button("Register", e -> {
+            if (usernameField.isEmpty() || nameField.isEmpty() || emailField.isEmpty() || 
+                passwordField.isEmpty() || confirmPasswordField.isEmpty() || birthDateField.isEmpty()) {
+                Notification.show("Please fill in all required fields.");
                 return;
             }
 
-            if (!passwordField.getValue().equals(confirmarPasswordField.getValue())) {
-                Notification.show("Las contraseñas no coinciden.");
+            if (!passwordField.getValue().equals(confirmPasswordField.getValue())) {
+                Notification.show("Passwords do not match.");
                 return;
             }
 
             try {
-                LocalDateTime fechaNacimientoLDT = fechaNacimientoField.getValue().atStartOfDay();
+                LocalDateTime birthDateLDT = birthDateField.getValue().atStartOfDay();
 
-                Usuario nuevoUsuario = new Usuario(
-                        nombreField.getValue(),
+                User newUser = new User(
+                        nameField.getValue(),
                         emailField.getValue(),
                         usernameField.getValue(),
                         passwordField.getValue(),
-                        fechaNacimientoLDT
+                        birthDateLDT
                 );
 
-                if (fotoPerfilBytes != null) {
-                    nuevoUsuario.setFotoPerfil(fotoPerfilBytes);
+                if (profilePictureBytes != null) {
+                    newUser.setProfilePicture(profilePictureBytes);
                 }
 
-                this.usuarioService.registrarUsuario(nuevoUsuario);
+                this.userService.registerUser(newUser);
 
-                VaadinSession.getCurrent().setAttribute(Usuario.class, nuevoUsuario);
+                VaadinSession.getCurrent().setAttribute(User.class, newUser);
 
-                Notification exito = Notification.show("¡Cuenta creada!");
-                exito.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                Notification success = Notification.show("Account created!");
+                success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
                 getUI().ifPresent(ui -> ui.navigate(""));
 
@@ -106,15 +106,15 @@ public class RegisterView extends VerticalLayout {
                 error.addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
         });
-        btnRegistrar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        registerButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        //Esto va a dar error hasta que se cree LoginView.java
-        //RouterLink linkLogin = new RouterLink("¿Ya tienes cuenta? Inicia sesión", LoginView.class);
+        // This will error until LoginView.java is created
+        // RouterLink linkLogin = new RouterLink("Already have an account? Sign in", LoginView.class);
 
         FormLayout formLayout = new FormLayout();
-        formLayout.add(usernameField, nombreField, emailField, passwordField, confirmarPasswordField, fechaNacimientoField, uploadFoto);
+        formLayout.add(usernameField, nameField, emailField, passwordField, confirmPasswordField, birthDateField, uploadProfilePicture);
         formLayout.setMaxWidth("450px");
 
-        add(titulo, formLayout, btnRegistrar /* , linkLogin*/);
+        add(title, formLayout, registerButton /* , linkLogin*/);
     }
 }
