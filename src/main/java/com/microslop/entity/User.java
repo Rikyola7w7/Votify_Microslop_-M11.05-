@@ -5,14 +5,11 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "usuarios") //Da error pero funciona correctamente(creo)
+@Table(name = "users")
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
     @Column(nullable = false)
-    private String username;
+    private String name;
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -20,32 +17,39 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime creationDate;
 
+    @Id
+    @Column(nullable = false, unique = true)
+    private String username;
+
     @Column(nullable = false)
     private String password;
+
+    @Lob
+    @Column(nullable = true)
+    private byte[] profilePicture;
+
+    @Column(nullable = false)
+    private LocalDateTime birthDate;    
 
     public User() {
         this.creationDate = LocalDateTime.now();
     }
 
-    public User(String username, String email, String password) {
+    public User(String name, String email, String username, String password, LocalDateTime birthDate) {
+        this.name = name;
         this.username = username;
-        this.email = email;
         this.password = password;
+        this.email = email;
         this.creationDate = LocalDateTime.now();
+        this.birthDate = birthDate;
     }
 
-    public Long getId() {
-        return id;
-    }
-    public void setId(Long id) {
-        this.id = id;
-    }
 
-    public String getUsername() {
-        return username;
+    public String getName() {
+        return name;
     }
-    public void setUsername(String username) {
-        this.username = username;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getEmail() {
@@ -62,22 +66,45 @@ public class User {
         this.creationDate = creationDate;
     }
 
-    public String getPassword() { return password; }
-    public void  setPassword(String password) { this.password = password; }
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public byte[] getProfilePicture() {
+        return profilePicture;
+    }
+
+    public void setProfilePicture(byte[] profilePicture) {
+        this.profilePicture = profilePicture;
+    }
+
+    public LocalDateTime getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDateTime birthDate) {
+        this.birthDate = birthDate;
+    }
 
     @Override
     public String toString() {
-        return "Usuario{" + "id=" + id +
-                ", nombre=" + username +
+        return "User{" + "username=" + username +
+                ", name=" + name +
                 ", email=" + email +
-                ", contraseña:" + password +
-                ", fechaCreacion=" + creationDate +
+                ", creationDate=" + creationDate +
+                ", birthDate=" + birthDate +
                 '}';
     }
 }
-
-
-
-
-
-

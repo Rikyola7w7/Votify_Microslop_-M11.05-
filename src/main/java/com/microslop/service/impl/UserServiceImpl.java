@@ -1,63 +1,53 @@
-package com.microslop.service.impl;
+package com.microslop.service;
 
 import com.microslop.entity.User;
 import com.microslop.repository.UserRepository;
-import com.microslop.service.UserService;
+
+import java.time.LocalDate;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
-public class UserServiceImpl implements UserService {
+public class UserService {
 
-    private final UserRepository userRepository; //Inyección de dependecias entre la capa lógica y la capa de persistencia
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    @Override
-    public User register(String username, String email, String password){
-        if(userRepository.existsByUsername(username)){
-            throw new RuntimeException("El nombre existe");
+    public void registerUser(User newUser) {
+        if (userRepository.existsByUsernameIgnoreCase(newUser.getUsername())) {
+            throw new IllegalArgumentException("Username is already in use. Choose another one.");
         }
 
-        User user = new User();
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setPassword(password);
-
-        return userRepository.save(user);
-    }
-
-    @Override
-    public Optional<User> login(String username, String password){
-        Optional<User> user = userRepository.findByUsername(username);
-
-        if(user.isPresent() && user.get().getPassword().equals(password)){
-            return user;
+        if (userRepository.existsByEmailIgnoreCase(newUser.getEmail())) {
+            throw new IllegalArgumentException("An account with this email already exists.");
         }
 
-        return Optional.empty();
+        if (newUser.getPassword() == null) {
+            throw new IllegalArgumentException("Password cannot be null.");
+        }
+
+        if (newUser.getPassword().length() < 6) {
+            throw new IllegalArgumentException("Password must be at least 6 characters long.");
+        }
+
+        if (LocalDate.now().minusYears(13).isBefore(newUser.getBirthDate().toLocalDate())) {
+            throw new IllegalArgumentException("You must be at least 13 years old to register.");
+        }
+
+        if (LocalDate.now().isBefore(newUser.getBirthDate().toLocalDate())) {
+            throw new IllegalArgumentException("Birth date cannot be in the future.");
+        }
+
+        String encryptedPassword = passwordEncoder.encode(newUser.getPassword());
+        newUser.setPassword(encryptedPassword);
+
+        userRepository.save(newUser);
     }
 
-    @Override
-    public User updateProfile(Long id, String username, String email) {
-        User user = userRepository.findById(id).get();
-
-        user.setUsername(username);
-        user.setEmail(email);
-
-        return  userRepository.save(user);
-    }
-
-    @Override
-    public Optional<User> searchById(Long id){
-        return userRepository.findById(id);
-    }
-
-    @Override
-    public Optional<User> searchByUsername(String username) {
-        return userRepository.findByUsername(username);
-    }
 }

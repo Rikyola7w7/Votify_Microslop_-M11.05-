@@ -27,7 +27,7 @@ import java.time.LocalDateTime;
 
 @Route("registro") // Define la URL: http://localhost:8080/registro
 @PageTitle("Registro | Votify")
-public class RegistroView extends VerticalLayout {
+public class RegisterView extends VerticalLayout {
 
     private final UsuarioService usuarioService;
     private byte[] fotoPerfilBytes = null;
