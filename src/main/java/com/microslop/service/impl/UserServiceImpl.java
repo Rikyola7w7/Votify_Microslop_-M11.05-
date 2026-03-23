@@ -2,14 +2,16 @@ package com.microslop.service.impl;
 
 import com.microslop.entity.User;
 import com.microslop.repository.UserRepository;
+import com.microslop.service.UserService;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserServiceImpl {
+public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -48,6 +50,27 @@ public class UserServiceImpl {
         newUser.setPassword(encryptedPassword);
 
         userRepository.save(newUser);
+    }
+
+    //Estos metodos no hacen nada en mi parte, solo estan aqui para que compile
+    @Override
+    public Optional<User> login(String username, String password) {
+        return Optional.empty();
+    }
+
+    @Override
+    public User updateProfile(Long id, String username, String email) {
+        return null;
+    }
+
+    @Override
+    public Optional<User> searchById(Long id) {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<User> searchByUsername(String username) {
+        return Optional.empty();
     }
 
 }
