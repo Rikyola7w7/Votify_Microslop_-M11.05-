@@ -9,7 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserServiceImpl {
+public class UserServiceImpl { //aqui me pone q deberia ponerle implements "implements UserService" (aunq es cierto q sino habria q hacer los otros metodos)
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -50,4 +50,13 @@ public class UserServiceImpl {
         userRepository.save(newUser);
     }
 
+    public void login(String username, String password) {
+        User user = userRepository.findByUsernameIgnoreCase(username)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid username or password."));
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
+    }
 }
+
