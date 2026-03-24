@@ -9,8 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserServiceImpl { //aqui me pone q deberia ponerle implements "implements UserService" (aunq es cierto q sino habria q hacer los otros metodos)
-
+public class UserServiceImpl { //implements UserService
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
