@@ -1,9 +1,9 @@
 package com.microslop.factory;
 
-import com.microslop.entity.Competicion;
-import com.microslop.entity.Proyecto;
-import com.microslop.entity.Usuario;
-import com.microslop.entity.Voto;
+import com.microslop.entity.Competition;
+import com.microslop.entity.Project;
+import com.microslop.entity.User;
+import com.microslop.entity.Vote;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -16,9 +16,9 @@ import java.time.LocalDateTime;
 @Component
 public class IEntityFactory implements EntityFactory {
 
-    //Competición
+    //Competition
     @Override
-    public Competicion crearCompeticion(String nombre,
+    public Competition crearCompeticion(String nombre,
                                         String descripcion,
                                         LocalDateTime fechaInicio,
                                         LocalDateTime fechaFin) {
@@ -27,27 +27,27 @@ public class IEntityFactory implements EntityFactory {
             throw new IllegalArgumentException("La fecha de fin no puede ser anterior a la de inicio.");
         }
 
-        Competicion competicion = new Competicion(nombre, descripcion, fechaInicio, fechaFin);
+        Competition competicion = new Competition(nombre, descripcion, fechaInicio, fechaFin);
         competicion.setActiva(true);
         return competicion;
     }
 
-    //Proyecto
+    //Project
     @Override
-    public Proyecto crearProyecto(String nombre,
+    public Project crearProyecto(String nombre,
                                   String descripcion,
-                                  Competicion competicion) {
+                                  Competition competicion) {
         validarNoVacio(nombre, "El nombre del proyecto no puede estar vacío.");
         if (competicion == null) {
             throw new IllegalArgumentException("El proyecto debe pertenecer a una competición.");
         }
 
-        return new Proyecto(nombre, descripcion, competicion);
+        return new Project(nombre, descripcion, competicion);
     }
 
-    //Voto
+    //Vote
     @Override
-    public Voto crearVoto(Usuario usuario, Proyecto proyecto) {
+    public Vote crearVoto(User usuario, Project proyecto) {
         if (usuario == null) {
             throw new IllegalArgumentException("El voto debe estar asociado a un usuario.");
         }
@@ -55,7 +55,7 @@ public class IEntityFactory implements EntityFactory {
             throw new IllegalArgumentException("El voto debe estar asociado a un proyecto.");
         }
 
-        return new Voto(usuario, proyecto);
+        return new Vote(usuario, proyecto);
     }
 
     //Helpers

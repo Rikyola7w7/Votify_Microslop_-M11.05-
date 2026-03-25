@@ -1,6 +1,6 @@
 package com.microslop.repository;
 
-import com.microslop.entity.Competicion;
+import com.microslop.entity.Competition;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -9,15 +9,15 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CompeticionRepository extends JpaRepository<Competicion, Long> {
+public interface CompetitionRepository extends JpaRepository<Competition, Long> {
 
     //Todas las competiciones activas
-    List<Competicion> findByActivaTrue();
+    List<Competition> findByActiveTrue();
 
     //Buscar competición por nombre
-    Optional<Competicion> findByNombreIgnoreCase(String nombre);
+    Optional<Competition> findByNameIgnoreCase(String name);
 
     //Competiciones activas con sus proyectos precargados
-    @Query("SELECT DISTINCT c FROM Competicion c LEFT JOIN FETCH c.proyectos WHERE c.activa = true")
-    List<Competicion> findActivasConProyectos();
+    @Query("SELECT DISTINCT c FROM Competition c LEFT JOIN FETCH c.projects WHERE c.active = true")
+    List<Competition> findActivasConProyectos();
 }

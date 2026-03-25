@@ -1,9 +1,9 @@
 package com.microslop.factory;
 
-import com.microslop.entity.Competicion;
-import com.microslop.entity.Proyecto;
-import com.microslop.entity.Usuario;
-import com.microslop.entity.Voto;
+import com.microslop.entity.Competition;
+import com.microslop.entity.Project;
+import com.microslop.entity.User;
+import com.microslop.entity.Vote;
 
 import java.time.LocalDateTime;
 
@@ -12,17 +12,17 @@ import java.time.LocalDateTime;
  */
 public interface EntityFactory {
 
-    //Competición
-    Competicion crearCompeticion(String nombre,
+    //Competition
+    Competition crearCompeticion(String nombre,
                                  String descripcion,
                                  LocalDateTime fechaInicio,
                                  LocalDateTime fechaFin);
 
-    //Proyecto                                
-    Proyecto crearProyecto(String nombre,
+    //Project                                
+    Project crearProyecto(String nombre,
                            String descripcion,
-                           Competicion competicion);
+                           Competition competicion);
 
-    //Voto
-    Voto crearVoto(Usuario usuario, Proyecto proyecto);
+    //Vote
+    Vote crearVoto(User usuario, Project proyecto);
 }

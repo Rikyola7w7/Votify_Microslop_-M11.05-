@@ -1,7 +1,7 @@
 package com.microslop.service;
 
-import com.microslop.entity.Competicion;
-import com.microslop.repository.CompeticionRepository;
+import com.microslop.entity.Competition;
+import com.microslop.repository.CompetitionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,17 +10,17 @@ import java.util.Optional;
 
 @Service
 @Transactional
-public class CompeticionService {
+public class CompetitionService {
 
-    private final CompeticionRepository competicionRepository;
+    private final CompetitionRepository competicionRepository;
 
-    public CompeticionService(CompeticionRepository competicionRepository) {
+    public CompetitionService(CompetitionRepository competicionRepository) {
         this.competicionRepository = competicionRepository;
     }
 
     // ── Escritura ────────────────────────────────────────────────────────────
 
-    public Competicion guardar(Competicion competicion) {
+    public Competition guardar(Competition competicion) {
         return competicionRepository.save(competicion);
     }
 
@@ -28,14 +28,14 @@ public class CompeticionService {
         competicionRepository.deleteById(id);
     }
 
-    public Competicion activar(Long id) {
-        Competicion c = obtenerPorIdOFallar(id);
+    public Competition activar(Long id) {
+        Competition c = obtenerPorIdOFallar(id);
         c.setActiva(true);
         return competicionRepository.save(c);
     }
 
-    public Competicion desactivar(Long id) {
-        Competicion c = obtenerPorIdOFallar(id);
+    public Competition desactivar(Long id) {
+        Competition c = obtenerPorIdOFallar(id);
         c.setActiva(false);
         return competicionRepository.save(c);
     }
@@ -43,23 +43,23 @@ public class CompeticionService {
     // ── Lectura ──────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public Optional<Competicion> obtenerPorId(Long id) {
+    public Optional<Competition> obtenerPorId(Long id) {
         return competicionRepository.findById(id);
     }
 
     @Transactional(readOnly = true)
-    public Competicion obtenerPorIdOFallar(Long id) {
+    public Competition obtenerPorIdOFallar(Long id) {
         return competicionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Competición no encontrada: " + id));
     }
 
     @Transactional(readOnly = true)
-    public List<Competicion> listarActivas() {
+    public List<Competition> listarActivas() {
         return competicionRepository.findActivasConProyectos();
     }
 
     @Transactional(readOnly = true)
-    public List<Competicion> listarTodas() {
+    public List<Competition> listarTodas() {
         return competicionRepository.findAll();
     }
 }

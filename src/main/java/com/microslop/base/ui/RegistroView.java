@@ -1,7 +1,7 @@
 package com.microslop.base.ui;
 
-import com.microslop.entity.Usuario;
-import com.microslop.service.UsuarioService;
+import com.microslop.entity.User;
+import com.microslop.service.UserService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -29,10 +29,10 @@ import java.time.LocalDateTime;
 @PageTitle("Registro | Votify")
 public class RegistroView extends VerticalLayout {
 
-    private final UsuarioService usuarioService;
+    private final UserService usuarioService;
     private byte[] fotoPerfilBytes = null;
 
-    public RegistroView(UsuarioService usuarioService) {
+    public RegistroView(UserService usuarioService) {
         this.usuarioService = usuarioService;
 
         setSizeFull();
@@ -78,7 +78,7 @@ public class RegistroView extends VerticalLayout {
             try {
                 LocalDateTime fechaNacimientoLDT = fechaNacimientoField.getValue().atStartOfDay();
 
-                Usuario nuevoUsuario = new Usuario(
+                User nuevoUsuario = new User(
                         nombreField.getValue(),
                         emailField.getValue(),
                         usernameField.getValue(),
@@ -86,13 +86,14 @@ public class RegistroView extends VerticalLayout {
                         fechaNacimientoLDT
                 );
 
-                if (fotoPerfilBytes != null) {
-                    nuevoUsuario.setFotoPerfil(fotoPerfilBytes);
-                }
+                //De momento no se guarda la foto de perfil, pero se podría agregar un campo byte[] pfp en User y setearlo aquí
+                //if (fotoPerfilBytes != null) {
+                //    nuevoUsuario.setPFP(fotoPerfilBytes);
+                //}
 
                 this.usuarioService.registrarUsuario(nuevoUsuario);
 
-                VaadinSession.getCurrent().setAttribute(Usuario.class, nuevoUsuario);
+                VaadinSession.getCurrent().setAttribute(User.class, nuevoUsuario);
 
                 Notification exito = Notification.show("¡Cuenta creada!");
                 exito.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
