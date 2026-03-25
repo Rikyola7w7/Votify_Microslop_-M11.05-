@@ -2,14 +2,16 @@ package com.microslop.service.impl;
 
 import com.microslop.entity.User;
 import com.microslop.repository.UserRepository;
+import com.microslop.service.UserService;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserServiceImpl { //implements UserService
+public class UserServiceImpl implements UserService { //implements UserService
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -56,6 +58,14 @@ public class UserServiceImpl { //implements UserService
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new IllegalArgumentException("Invalid username or password.");
         }
+    }
+    @Override
+    public User updateProfile(Long id, String username, String email) {
+        return null; // Lo implementarás más adelante
+    }
+    @Override
+    public Optional<User> searchByUsernameIgnoreCase(String username) {
+        return userRepository.findByUsernameIgnoreCase(username);
     }
 }
 
