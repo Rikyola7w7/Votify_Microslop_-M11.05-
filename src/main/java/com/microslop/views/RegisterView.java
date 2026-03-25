@@ -1,4 +1,4 @@
-package com.microslop.base.ui;
+package com.microslop.views;
 
 import com.microslop.entity.User;
 import com.microslop.service.UserService;
@@ -15,13 +15,16 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouterLink;
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.VaadinSession;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
@@ -55,10 +58,24 @@ public class RegisterView extends VerticalLayout {
         uploadProfilePicture.setMaxFiles(1);
         uploadProfilePicture.setDropLabel(new Span("Drag your profile picture here (optional)"));
 
+        Image imagePreview = new Image();
+        imagePreview.setVisible(false);
+        imagePreview.setHeight("150px");
+        imagePreview.setWidth("150px");
+        imagePreview.getStyle().set("border-radius", "50%");
+        imagePreview.getStyle().set("object-fit", "cover");
+
         uploadProfilePicture.addSucceededListener(event -> {
             try {
                 InputStream inputStream = buffer.getInputStream();
                 profilePictureBytes = inputStream.readAllBytes();
+
+                StreamResource imageResource = new StreamResource(
+                        event.getFileName(),
+                        () -> new ByteArrayInputStream(profilePictureBytes)
+                );
+                imagePreview.setSrc(imageResource);
+                imagePreview.setVisible(true);
             } catch (IOException e) {
                 Notification.show("Error processing image.");
             }
@@ -114,7 +131,7 @@ public class RegisterView extends VerticalLayout {
         // RouterLink linkLogin = new RouterLink("Already have an account? Sign in", LoginView.class);
 
         FormLayout formLayout = new FormLayout();
-        formLayout.add(usernameField, nameField, emailField, passwordField, confirmPasswordField, birthDateField, uploadProfilePicture);
+        formLayout.add(usernameField, nameField, emailField, passwordField, confirmPasswordField, birthDateField, uploadProfilePicture, imagePreview);
         formLayout.setMaxWidth("450px");
 
         add(title, formLayout, registerButton /* , linkLogin*/);
