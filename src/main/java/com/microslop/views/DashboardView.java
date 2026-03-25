@@ -1,8 +1,8 @@
 package com.microslop.views;
 
 import com.microslop.entity.Project;
-import com.microslop.service.CompetitionService;
 import com.microslop.service.ProjectService;
+import com.microslop.service.CompetitionService;
 import com.microslop.service.VoteService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -42,7 +42,7 @@ public class DashboardView extends VerticalLayout implements HasUrlParameter<Lon
     // ── Estado ────────────────────────────────────────────────────────────────
 
     private Long competicionId;
-    private String usuarioId;          // recuperado de sesión
+    private Long usuarioId;          // recuperado de sesión
 
     // ── Áreas de la UI que se recargan tras votar ─────────────────────────────
 
@@ -74,7 +74,7 @@ public class DashboardView extends VerticalLayout implements HasUrlParameter<Lon
 
         // Recuperar usuario autenticado de la sesión
         Object uid = VaadinSession.getCurrent().getAttribute("username");
-        this.usuarioId = (uid instanceof String) ? (String) uid : null;
+        this.usuarioId = (uid instanceof Long) ? (Long) uid : null;
 
         removeAll();
         buildUi();
@@ -174,7 +174,7 @@ public class DashboardView extends VerticalLayout implements HasUrlParameter<Lon
             "linear-gradient(145deg, #f4d9b0, #b87333)"    // bronce
         };
         String[] borderColors = {"#aaa", "#c9a800", "#a0622a"};
-        boolean esPrimero     =true;
+        boolean esPrimero = true;
 
         for (int slot = 0; slot < 3; slot++) {
             int idx = orden[slot];

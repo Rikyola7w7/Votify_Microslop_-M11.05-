@@ -1,48 +1,15 @@
 package com.microslop.service;
-
 import com.microslop.entity.Project;
-import com.microslop.repository.ProjectRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
 
-
-@Service
-@Transactional
-public class ProjectService {
-
-    private final ProjectRepository projectRepository;
-
-    public ProjectService(ProjectRepository projectRepository) {
-        this.projectRepository = projectRepository;
-    }
-
-    //Escritura
-
-    public Project guardar(Project proyecto) {
-        return projectRepository.save(proyecto);
-    }
-
-    public void eliminar(Long id) {
-        projectRepository.deleteById(id);
-    }
-
-    //Lectura
-
-    @Transactional(readOnly = true)
-    public Project obtenerPorId(Long id) {
-        return projectRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Proyecto no encontrado: " + id));
-    }
-
-    @Transactional(readOnly = true)
-    public List<Project> listarPorCompeticion(Long competicionId) {
-        return projectRepository.findByCompetitionId(competicionId);
-    }
-
+public interface ProjectService {
     
-    @Transactional(readOnly = true)
-    public List<Project> obtenerRanking(Long competicionId) {
-        return projectRepository.findRankingByCompetition(competicionId);
-    }
+    Project guardar(Project proyecto);
+
+    void eliminar(Long id);
+
+    Project obtenerPorId(Long id);
+
+    java.util.List<Project> listarPorCompeticion(Long competicionId);
+
+    java.util.List<Project> obtenerRanking(Long competicionId);
 }
