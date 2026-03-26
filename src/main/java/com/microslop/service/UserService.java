@@ -6,11 +6,7 @@ import java.util.Optional;
 public interface UserService {
     void registerUser(User newUser);
 
-    Optional<User> login(String username, String password);
+    void login(String username, String password);
 
     User updateProfile(Long id, String username, String email);
-
-    Optional<User> searchById(Long id);
-
-    Optional<User> searchByUsername(String username);
 }

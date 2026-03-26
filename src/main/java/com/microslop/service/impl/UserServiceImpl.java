@@ -52,25 +52,20 @@ public class UserServiceImpl implements UserService {
         userRepository.save(newUser);
     }
 
-    //Estos metodos no hacen nada en mi parte, solo estan aqui para que compile
-    @Override
-    public Optional<User> login(String username, String password) {
-        return Optional.empty();
+
+    public void login(String username, String password) {
+        User user = userRepository.findByUsernameIgnoreCase(username)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid username or password."));
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
     }
 
     @Override
     public User updateProfile(Long id, String username, String email) {
+        // TODO: Implement profile update
         return null;
     }
-
-    @Override
-    public Optional<User> searchById(Long id) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<User> searchByUsername(String username) {
-        return Optional.empty();
-    }
-
 }
+
