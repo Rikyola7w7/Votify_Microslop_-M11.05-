@@ -124,13 +124,12 @@ public class RegisterView extends VerticalLayout {
         });
         registerButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        // This will error until LoginView.java is created
-        // RouterLink linkLogin = new RouterLink("Already have an account? Sign in", LoginView.class);
+        RouterLink linkLogin = new RouterLink("Already have an account? Sign in", LoginView.class);
 
         FormLayout formLayout = new FormLayout();
         formLayout.add(usernameField, nameField, emailField, passwordField, confirmPasswordField, birthDateField, uploadProfilePicture, imagePreview);
         formLayout.setMaxWidth("450px");
 
-        add(title, formLayout, registerButton /* , linkLogin*/);
+        add(title, formLayout, registerButton, linkLogin);
     }
 }

@@ -1,4 +1,4 @@
-package com.microslop.base.ui;
+package com.microslop.views;
 
 import com.microslop.entity.User;
 import com.microslop.service.UserService;
