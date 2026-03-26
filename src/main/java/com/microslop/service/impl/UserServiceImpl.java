@@ -61,11 +61,13 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Invalid username or password.");
         }
     }
-
     @Override
     public User updateProfile(Long id, String username, String email) {
-        // TODO: Implement profile update
-        return null;
+        return null; // Lo implementarás más adelante
+    }
+    @Override
+    public Optional<User> searchByUsernameIgnoreCase(String username) {
+        return userRepository.findByUsernameIgnoreCase(username);
     }
 }
 
