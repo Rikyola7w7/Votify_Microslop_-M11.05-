@@ -34,21 +34,13 @@ public class VoteServiceImpl implements VoteService {
 
     @Override
     public Vote emitirVoto(Long usuarioId, Long proyectoId) {
-        var usuario    = usuarioService.searchById(usuarioId).orElseThrow(() -> 
-            new IllegalStateException("Usuario no encontrado."));
+        // TODO: Necesitamos una forma de obtener usuario por ID o que el frontend pase username
         var proyecto   = proyectoService.obtenerPorId(proyectoId);
         var competicion = proyecto.getCompeticion();
-        var username = usuario.getUsername();
         if (!competicion.isActiva()) {
             throw new IllegalStateException("La competición no está activa.");
         }
-        if (voteRepository.existsByUserUsernameAndProjectId(username, proyectoId)) {
-            throw new IllegalStateException(
-                "El usuario '" + usuario.getName() + "' ya ha votado a este proyecto.");
-        }
-
-        Vote voto = voteFactory.crear(usuario, proyecto);
-        return voteRepository.save(voto);
+        throw new IllegalStateException("Método pendiente de implementación completa.");
     }
 
     // ── Lectura ──────────────────────────────────────────────────────────────
@@ -62,9 +54,8 @@ public class VoteServiceImpl implements VoteService {
     @Override
     @Transactional(readOnly = true)
     public boolean yaVoto(Long usuarioId, Long proyectoId) {
-        var usuario = usuarioService.searchById(usuarioId)
-            .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + usuarioId));
-        return voteRepository.existsByUserUsernameAndProjectId(usuario.getUsername(), proyectoId);
+        // TODO: Implementar cuando tengamos la forma de mapear usuarioId a username
+        return false;
     }
 
     @Override
