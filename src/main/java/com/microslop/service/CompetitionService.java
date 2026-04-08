@@ -19,4 +19,8 @@ public interface CompetitionService {
     Competition obtenerPorIdOFallar(Long id);
 
     List<Competition> listarActivas();
+
+    List<Competition> listarFinalizadas();
+
+    List<Competition> findAll();
 }

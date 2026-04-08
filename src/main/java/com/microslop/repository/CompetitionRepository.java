@@ -14,6 +14,8 @@ public interface CompetitionRepository extends JpaRepository<Competition, Long> 
     //Todas las competiciones activas
     List<Competition> findByActiveTrue();
 
+    List<Competition> findByActiveFalse();
+
     //Buscar competición por nombre
     Optional<Competition> findByNameIgnoreCase(String name);
 
