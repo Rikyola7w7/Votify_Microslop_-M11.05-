@@ -38,12 +38,12 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Password must be at least 6 characters long.");
         }
 
-        if (LocalDate.now().minusYears(13).isBefore(newUser.getBirthDate().toLocalDate())) {
-            throw new IllegalArgumentException("You must be at least 13 years old to register.");
-        }
-
         if (LocalDate.now().isBefore(newUser.getBirthDate().toLocalDate())) {
             throw new IllegalArgumentException("Birth date cannot be in the future.");
+        }
+
+        if (LocalDate.now().minusYears(13).isBefore(newUser.getBirthDate().toLocalDate())) {
+            throw new IllegalArgumentException("You must be at least 13 years old to register.");
         }
 
         String encryptedPassword = passwordEncoder.encode(newUser.getPassword());
