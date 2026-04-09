@@ -33,8 +33,8 @@ public class VoteServiceImpl implements VoteService {
     // ── Escritura ────────────────────────────────────────────────────────────
 
     @Override
-    public Vote emitirVoto(Long usuarioId, Long proyectoId) {
-        var usuario    = usuarioService.searchById(usuarioId).orElseThrow(() -> 
+    public Vote emitirVoto(String usuarioUsername, Long proyectoId) {
+        var usuario    = usuarioService.searchByUsername(usuarioUsername).orElseThrow(() -> 
             new IllegalStateException("Usuario no encontrado."));
         var proyecto   = proyectoService.obtenerPorId(proyectoId);
         var competicion = proyecto.getCompeticion();
@@ -61,10 +61,8 @@ public class VoteServiceImpl implements VoteService {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean yaVoto(Long usuarioId, Long proyectoId) {
-        var usuario = usuarioService.searchById(usuarioId)
-            .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + usuarioId));
-        return voteRepository.existsByUserUsernameAndProjectId(usuario.getUsername(), proyectoId);
+    public boolean yaVoto(String usuarioUsername, Long proyectoId) {
+        return voteRepository.existsByUserUsernameAndProjectId(usuarioUsername, proyectoId);
     }
 
     @Override

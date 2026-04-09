@@ -48,8 +48,12 @@ public class UserServiceImpl implements UserService {
 
         String encryptedPassword = passwordEncoder.encode(newUser.getPassword());
         newUser.setPassword(encryptedPassword);
-
         userRepository.save(newUser);
+    }
+
+    @Override
+    public Optional<User> searchByUsername(String username) {
+        return userRepository.findByUsername(username);
     }
 
     //Estos metodos no hacen nada en mi parte, solo estan aqui para que compile
@@ -68,9 +72,6 @@ public class UserServiceImpl implements UserService {
         return Optional.empty();
     }
 
-    @Override
-    public Optional<User> searchByUsername(String username) {
-        return Optional.empty();
-    }
+    
 
 }

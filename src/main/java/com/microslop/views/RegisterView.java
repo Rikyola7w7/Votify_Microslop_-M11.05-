@@ -112,6 +112,7 @@ public class RegisterView extends VerticalLayout {
                 this.userService.registerUser(newUser);
 
                 VaadinSession.getCurrent().setAttribute(User.class, newUser);
+                VaadinSession.getCurrent().setAttribute("username", newUser.getUsername());
 
                 Notification success = Notification.show("Account created!");
                 success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);

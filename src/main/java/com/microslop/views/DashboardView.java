@@ -27,7 +27,7 @@ import java.util.Locale;
  * Dashboard de clasificación de proyectos para una competición.
  * Ruta: /dashboard/{competicionId}
  *
- * Requiere que el usuario autenticado esté en sesión bajo la clave "usuarioId" (Long).
+ * Requiere que el usuario autenticado esté en sesión bajo la clave "username" (String).
  */
 @PageTitle("Clasificación")
 @Route("dashboard")
@@ -42,7 +42,7 @@ public class DashboardView extends VerticalLayout implements HasUrlParameter<Lon
     // ── Estado ────────────────────────────────────────────────────────────────
 
     private Long competicionId;
-    private Long usuarioId;          // recuperado de sesión
+    private String usuarioUsername;          // recuperado de sesión
 
     // ── Áreas de la UI que se recargan tras votar ─────────────────────────────
 
@@ -74,7 +74,12 @@ public class DashboardView extends VerticalLayout implements HasUrlParameter<Lon
 
         // Recuperar usuario autenticado de la sesión
         Object uid = VaadinSession.getCurrent().getAttribute("username");
-        this.usuarioId = (uid instanceof Long) ? (Long) uid : null;
+        this.usuarioUsername = (uid instanceof String) ? (String) uid : null;
+        
+        // TESTING: Si no hay usuario, usar uno dummy
+        if (this.usuarioUsername == null) {
+            this.usuarioUsername = "test_user";
+        }
 
         removeAll();
         buildUi();
@@ -231,8 +236,8 @@ public class DashboardView extends VerticalLayout implements HasUrlParameter<Lon
             card.add(medallaSpan, nombreSpan, labelVotos, numVotos);
 
             // Botón votar (solo si hay usuario en sesión y no ha votado ya)
-            if (usuarioId != null) {
-                boolean yaVoto = votoService.yaVoto(usuarioId, p.getId());
+            if (usuarioUsername != null) {
+                boolean yaVoto = votoService.yaVoto(usuarioUsername, p.getId());
                 var btnVotar = buildBotonVotar(p, yaVoto);
                 card.add(btnVotar);
             }
@@ -260,7 +265,7 @@ public class DashboardView extends VerticalLayout implements HasUrlParameter<Lon
         for (int i = 3; i < ranking.size(); i++) {
             Project p      = ranking.get(i);
             long totalVotos = votoService.contarVotosPorProyecto(p.getId());
-            boolean yaVoto  = usuarioId != null && votoService.yaVoto(usuarioId, p.getId());
+            boolean yaVoto  = usuarioUsername != null && votoService.yaVoto(usuarioUsername, p.getId());
 
             listaSection.add(buildFilaLista(p, i + 1, totalVotos, yaVoto));
         }
@@ -317,7 +322,7 @@ public class DashboardView extends VerticalLayout implements HasUrlParameter<Lon
         fila.add(numDiv, info);
 
         // Botón votar
-        if (usuarioId != null) {
+        if (usuarioUsername != null) {
             fila.add(buildBotonVotar(p, yaVoto));
         }
 
@@ -340,7 +345,7 @@ public class DashboardView extends VerticalLayout implements HasUrlParameter<Lon
         if (!yaVoto) {
             btn.addClickListener(e -> {
                 try {
-                    votoService.emitirVoto(usuarioId, proyecto.getId());
+                    votoService.emitirVoto(usuarioUsername, proyecto.getId());
 
                     Notification ok = Notification.show(
                         "¡Voto emitido para " + proyecto.getNombre() + "!");
