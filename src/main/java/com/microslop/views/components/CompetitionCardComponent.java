@@ -60,7 +60,7 @@ public class CompetitionCardComponent extends Div {
 
         Div iconContainer = createIconContainer();
 
-        H3 competitionTitle = new H3(competition.getNombre());
+        H3 competitionTitle = new H3(competition.getName());
         competitionTitle.getStyle()
             .set("margin", "20px 0 10px 0")
             .set("color", "#1a3a5c")

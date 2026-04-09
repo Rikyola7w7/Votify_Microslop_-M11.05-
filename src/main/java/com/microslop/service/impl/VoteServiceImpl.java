@@ -51,11 +51,6 @@ public class VoteServiceImpl implements VoteService {
         return voteRepository.save(vote);
     }
 
-    @Override
-    public Vote emitirVoto(String usuarioUsername, Long proyectoId) {
-        return submitVote(usuarioUsername, proyectoId);
-    }
-
     // ── Read ──────────────────────────────────────────────────────────────
 
     @Override
@@ -74,23 +69,5 @@ public class VoteServiceImpl implements VoteService {
     @Transactional(readOnly = true)
     public long countVotesPerUserInCompetition(String userId, Long competitionId) {
         return voteRepository.countByUsuarioEnCompeticion(userId, competitionId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public long contarVotosPorProyecto(Long proyectoId) {
-        return countVotesByProject(proyectoId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean yaVoto(String usuarioUsername, Long proyectoId) {
-        return hasUserVoted(usuarioUsername, proyectoId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public long contarVotosPorUsuarioEnCompeticion(String usuarioId, Long competicionId) {
-        return countVotesPerUserInCompetition(usuarioId, competicionId);
     }
 }

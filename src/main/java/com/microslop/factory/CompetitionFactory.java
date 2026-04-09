@@ -6,28 +6,28 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 
 /**
- * Factory para crear instancias de Competition con validación.
+ * Factory for creating Competition instances with validation.
  */
 @Component
 public class CompetitionFactory {
 
-    public Competition crear(String nombre,
-                            String descripcion,
-                            LocalDateTime fechaInicio,
-                            LocalDateTime fechaFin) {
-        validarNoVacio(nombre, "El nombre de la competición no puede estar vacío.");
-        if (fechaFin != null && fechaInicio != null && fechaFin.isBefore(fechaInicio)) {
-            throw new IllegalArgumentException("La fecha de fin no puede ser anterior a la de inicio.");
+    public Competition create(String name,
+                            String description,
+                            LocalDateTime startDate,
+                            LocalDateTime endDate) {
+        validateNotEmpty(name, "Competition name cannot be empty.");
+        if (endDate != null && startDate != null && endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("End date cannot be before start date.");
         }
 
-        Competition competicion = new Competition(nombre, descripcion, fechaInicio, fechaFin);
-        competicion.setActiva(true);
-        return competicion;
+        Competition competition = new Competition(name, description, startDate, endDate);
+        competition.setActive(true);
+        return competition;
     }
 
-    private void validarNoVacio(String valor, String mensaje) {
-        if (valor == null || valor.isBlank()) {
-            throw new IllegalArgumentException(mensaje);
+    private void validateNotEmpty(String value, String message) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(message);
         }
     }
 }

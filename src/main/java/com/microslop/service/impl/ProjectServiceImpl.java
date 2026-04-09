@@ -21,16 +21,6 @@ public class ProjectServiceImpl implements ProjectService {
     // ── Write Operations ────────────────────────────────────────────────────────────
 
     @Override
-    public Project guardar(Project proyecto) {
-        return projectRepository.save(proyecto);
-    }
-
-    @Override
-    public void eliminar(Long id) {
-        projectRepository.deleteById(id);
-    }
-
-    @Override
     public Project save(Project project) {
         return projectRepository.save(project);
     }
@@ -41,25 +31,6 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     // ── Read Operations ────────────────────────────────────────────────────────────
-
-    @Override
-    @Transactional(readOnly = true)
-    public Project obtenerPorId(Long id) {
-        return projectRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found: " + id));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Project> listarPorCompeticion(Long competicionId) {
-        return projectRepository.findByCompetitionId(competicionId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Project> obtenerRanking(Long competicionId) {
-        return projectRepository.findRankingByCompetition(competicionId);
-    }
 
     @Override
     @Transactional(readOnly = true)
