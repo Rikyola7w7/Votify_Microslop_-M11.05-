@@ -25,7 +25,6 @@ import com.vaadin.flow.server.VaadinSession;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @PageTitle("Votify")
 @Route(value = "", layout = MainLayout.class)
@@ -33,7 +32,6 @@ public class MainView extends VerticalLayout {
 
     private final CompetitionService competitionService;
     private Div cardsContainer;
-    private List<Competition> allCompetitions;
 
     @Autowired
     public MainView(CompetitionService competitionService) {

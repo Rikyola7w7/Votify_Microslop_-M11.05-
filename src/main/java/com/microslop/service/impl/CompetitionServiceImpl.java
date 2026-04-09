@@ -63,7 +63,7 @@ public class CompetitionServiceImpl implements CompetitionService {
     @Override
     @Transactional(readOnly = true)
     public List<Competition> getActiveCompetitions() {
-        return competitionRepository.findActivasConProyectos();
+        return competitionRepository.findActiveWithProjects();
     }
 
     @Override

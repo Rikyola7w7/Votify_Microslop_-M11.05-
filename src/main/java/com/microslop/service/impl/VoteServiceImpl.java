@@ -1,6 +1,5 @@
 package com.microslop.service.impl;
 
-import com.microslop.entity.User;
 import com.microslop.entity.Vote;
 import com.microslop.factory.VoteFactory;
 import com.microslop.repository.VoteRepository;
@@ -68,6 +67,6 @@ public class VoteServiceImpl implements VoteService {
     @Override
     @Transactional(readOnly = true)
     public long countVotesPerUserInCompetition(String userId, Long competitionId) {
-        return voteRepository.countByUsuarioEnCompeticion(userId, competitionId);
+        return voteRepository.countByUserInCompetition(userId, competitionId);
     }
 }

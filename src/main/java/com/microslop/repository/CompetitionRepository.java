@@ -11,15 +11,15 @@ import java.util.Optional;
 @Repository
 public interface CompetitionRepository extends JpaRepository<Competition, Long> {
 
-    //Todas las competiciones activas
+    // All active competitions
     List<Competition> findByActiveTrue();
 
     List<Competition> findByActiveFalse();
 
-    //Buscar competición por nombre
+    // Find competition by name
     Optional<Competition> findByNameIgnoreCase(String name);
 
-    //Competiciones activas con sus proyectos precargados
+    // Active competitions with their projects eager-loaded
     @Query("SELECT DISTINCT c FROM Competition c LEFT JOIN FETCH c.projects WHERE c.active = true")
-    List<Competition> findActivasConProyectos();
+    List<Competition> findActiveWithProjects();
 }

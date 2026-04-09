@@ -13,7 +13,6 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -47,7 +46,6 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     // ── State ────────────────────────────────────────────────────────────────
 
     private Long competitionId;
-    private String currentUserUsername;
 
     // ── UI areas that refresh after voting ─────────────────────────────────
 
@@ -76,10 +74,6 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     @Override
     public void setParameter(BeforeEvent event, Long competitionId) {
         this.competitionId = competitionId;
-
-        // Retrieve authenticated user from session (can be null if not logged in)
-        Object uid = VaadinSession.getCurrent().getAttribute("username");
-        this.currentUserUsername = (uid instanceof String) ? (String) uid : null;
 
         removeAll();
         buildUi();

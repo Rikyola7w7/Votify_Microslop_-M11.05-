@@ -11,10 +11,10 @@ import java.util.List;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
-    //Buscar proyecto por ID
+    // Find project by ID
     List<Project> findByCompetitionId(Long competitionId);
 
-    //Proyectos de una competición ordenados en orden descendente por número de votos
+    // Projects of a competition ordered in descending order by number of votes
     @Query("""
         SELECT p FROM Project p
         LEFT JOIN p.votes v
