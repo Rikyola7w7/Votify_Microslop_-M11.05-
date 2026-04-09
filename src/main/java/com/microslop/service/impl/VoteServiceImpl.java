@@ -16,58 +16,81 @@ import org.springframework.transaction.annotation.Transactional;
 public class VoteServiceImpl implements VoteService {
 
     private final VoteRepository     voteRepository;
-    private final ProjectService     proyectoService;
-    private final UserService        usuarioService;
+    private final ProjectService     projectService;
+    private final UserService        userService;
     private final VoteFactory        voteFactory;
 
     public VoteServiceImpl(VoteRepository voteRepository,
-                       ProjectService proyectoService,
-                       UserService usuarioService,
+                       ProjectService projectService,
+                       UserService userService,
                        VoteFactory voteFactory) {
         this.voteRepository  = voteRepository;
-        this.proyectoService = proyectoService;
-        this.usuarioService  = usuarioService;
+        this.projectService  = projectService;
+        this.userService     = userService;
         this.voteFactory     = voteFactory;
     }
 
-    // ── Escritura ────────────────────────────────────────────────────────────
+    // ── Write ────────────────────────────────────────────────────────────
+
+    @Override
+    public Vote submitVote(String userUsername, Long projectId) {
+        var user         = userService.searchByUsername(userUsername).orElseThrow(() -> 
+            new IllegalStateException("User not found."));
+        var project      = projectService.getById(projectId);
+        var competition  = project.getCompetition();
+        var username     = user.getUsername();
+        if (!competition.isActive()) {
+            throw new IllegalStateException("Competition is not active.");
+        }
+        if (voteRepository.existsByUserUsernameAndProjectId(username, projectId)) {
+            throw new IllegalStateException(
+                "User '" + user.getName() + "' has already voted for this project.");
+        }
+
+        Vote vote = voteFactory.create(user, project);
+        return voteRepository.save(vote);
+    }
 
     @Override
     public Vote emitirVoto(String usuarioUsername, Long proyectoId) {
-        var usuario    = usuarioService.searchByUsername(usuarioUsername).orElseThrow(() -> 
-            new IllegalStateException("Usuario no encontrado."));
-        var proyecto   = proyectoService.obtenerPorId(proyectoId);
-        var competicion = proyecto.getCompeticion();
-        var username = usuario.getUsername();
-        if (!competicion.isActiva()) {
-            throw new IllegalStateException("La competición no está activa.");
-        }
-        if (voteRepository.existsByUserUsernameAndProjectId(username, proyectoId)) {
-            throw new IllegalStateException(
-                "El usuario '" + usuario.getName() + "' ya ha votado a este proyecto.");
-        }
-
-        Vote voto = voteFactory.crear(usuario, proyecto);
-        return voteRepository.save(voto);
+        return submitVote(usuarioUsername, proyectoId);
     }
 
-    // ── Lectura ──────────────────────────────────────────────────────────────
+    // ── Read ──────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countVotesByProject(Long projectId) {
+        return voteRepository.countByProjectId(projectId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasUserVoted(String userUsername, Long projectId) {
+        return voteRepository.existsByUserUsernameAndProjectId(userUsername, projectId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countVotesPerUserInCompetition(String userId, Long competitionId) {
+        return voteRepository.countByUsuarioEnCompeticion(userId, competitionId);
+    }
 
     @Override
     @Transactional(readOnly = true)
     public long contarVotosPorProyecto(Long proyectoId) {
-        return voteRepository.countByProjectId(proyectoId);
+        return countVotesByProject(proyectoId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean yaVoto(String usuarioUsername, Long proyectoId) {
-        return voteRepository.existsByUserUsernameAndProjectId(usuarioUsername, proyectoId);
+        return hasUserVoted(usuarioUsername, proyectoId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public long contarVotosPorUsuarioEnCompeticion(String usuarioId, Long competicionId) {
-        return voteRepository.countByUsuarioEnCompeticion(usuarioId, competicionId);
+        return countVotesPerUserInCompetition(usuarioId, competicionId);
     }
 }

@@ -68,11 +68,9 @@ public class CompetitionCardComponent extends Div {
             .set("font-weight", "600")
             .set("text-align", "center");
 
-        Div votesInfo = createVotesInfo();
 
         cardContent.add(iconContainer);
         cardContent.add(competitionTitle);
-        cardContent.add(votesInfo);
 
         add(cardContent);
         add(createViewButton());
@@ -97,30 +95,7 @@ public class CompetitionCardComponent extends Div {
         return iconContainer;
     }
 
-    private Div createVotesInfo() {
-        Div votesDiv = new Div();
-        votesDiv.getStyle()
-            .set("display", "flex")
-            .set("align-items", "center")
-            .set("justify-content", "center")
-            .set("gap", "8px")
-            .set("color", "#666")
-            .set("font-size", "14px");
-
-        Icon voteIcon = VaadinIcon.THUMBS_UP.create();
-        voteIcon.getStyle().set("color", "#667eea");
-
-        // --- SOLUCIÓN DEL ERROR ---
-        // Se evita hacer competition.getProyectos().stream() aquí. 
-        // Más adelante, si quieres mostrar los votos reales, podemos usar 
-        // una consulta SQL rápida en el servicio en lugar de esto.
-        long totalVotes = 0; 
-
-        Span votesCount = new Span(totalVotes + " votos");
-
-        votesDiv.add(voteIcon, votesCount);
-        return votesDiv;
-    }
+    
 
     private Button createViewButton() {
         Button viewButton = new Button("VER");
@@ -140,7 +115,7 @@ public class CompetitionCardComponent extends Div {
 
         viewButton.addClickListener(event -> {
             getUI().ifPresent(ui -> ui.navigate(
-                "dashboard/" + competition.getId()
+                "competition/" + competition.getId()
             ));
         });
 

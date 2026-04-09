@@ -56,21 +56,39 @@ public class Competition {
 
     public String getNombre()                   { return name; }
     public void setNombre(String nombre)        { this.name = nombre; }
+    
+    public String getName()                     { return name; }
+    public void setName(String name)            { this.name = name; }
 
     public String getDescripcion()              { return description; }
     public void setDescripcion(String d)        { this.description = d; }
+    
+    public String getDescription()              { return description; }
+    public void setDescription(String d)        { this.description = d; }
 
     public LocalDateTime getFechaInicio()       { return startdate; }
     public void setFechaInicio(LocalDateTime f) { this.startdate = f; }
+    
+    public LocalDateTime getStartDate()         { return startdate; }
+    public void setStartDate(LocalDateTime f)   { this.startdate = f; }
 
     public LocalDateTime getFechaFin()          { return endDate; }
     public void setFechaFin(LocalDateTime f)    { this.endDate = f; }
+    
+    public LocalDateTime getEndDate()           { return endDate; }
+    public void setEndDate(LocalDateTime f)     { this.endDate = f; }
 
     public boolean isActiva()                   { return active; }
     public void setActiva(boolean activa)       { this.active = activa; }
+    
+    public boolean isActive()                   { return active; }
+    public void setActive(boolean active)       { this.active = active; }
 
     public List<Project> getProyectos()        { return projects; }
     public void setProyectos(List<Project> p)  { this.projects = p; }
+    
+    public List<Project> getProjects()         { return projects; }
+    public void setProjects(List<Project> p)   { this.projects = p; }
 
     @Override
     public String toString() {

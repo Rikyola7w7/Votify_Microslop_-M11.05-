@@ -27,16 +27,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@PageTitle("Votify - Competitions")
+@PageTitle("Votify")
 @Route(value = "", layout = MainLayout.class)
-public class CompetitionsView extends VerticalLayout {
+public class MainView extends VerticalLayout {
 
     private final CompetitionService competitionService;
     private Div cardsContainer;
     private List<Competition> allCompetitions;
 
     @Autowired
-    public CompetitionsView(CompetitionService competitionService) {
+    public MainView(CompetitionService competitionService) {
         this.competitionService = competitionService;
         initializeView();
         // Load all competitions initially to fix the "3 in DB, only 2 showing" issue
@@ -165,15 +165,14 @@ public class CompetitionsView extends VerticalLayout {
 
     private void refreshCompetitions(String filterType) {
         try {
-            // We use competitionService.listarActivas() for Active, 
-            // but for "All" we might need a findAll() or similar in the service.
-            // If the service only has listarActivas, we show those for now.
+            // Use competitionService.getActiveCompetitions() for Active, 
+            // and findAll() for all competitions.
             List<Competition> competitions;
             
             if (filterType.equals("Active")) {
-                competitions = competitionService.listarActivas();
+                competitions = competitionService.getActiveCompetitions();
             } else if (filterType.equals("Finished")) {
-                competitions = competitionService.listarFinalizadas();
+                competitions = competitionService.getFinishedCompetitions();
             } else {
                 competitions = competitionService.findAll();
             }

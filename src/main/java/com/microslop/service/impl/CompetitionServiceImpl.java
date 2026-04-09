@@ -22,26 +22,26 @@ public class CompetitionServiceImpl implements CompetitionService {
     // ── Write Operations ────────────────────────────────────────────────────────
 
     @Override
-    public Competition guardar(Competition competition) {
+    public Competition save(Competition competition) {
         return competitionRepository.save(competition);
     }
 
     @Override
-    public void eliminar(Long id) {
+    public void delete(Long id) {
         competitionRepository.deleteById(id);
     }
 
     @Override
-    public Competition activar(Long id) {
-        Competition c = obtenerPorIdOFallar(id);
-        c.setActiva(true);
+    public Competition activate(Long id) {
+        Competition c = getByIdOrFail(id);
+        c.setActive(true);
         return competitionRepository.save(c);
     }
 
     @Override
-    public Competition desactivar(Long id) {
-        Competition c = obtenerPorIdOFallar(id);
-        c.setActiva(false);
+    public Competition deactivate(Long id) {
+        Competition c = getByIdOrFail(id);
+        c.setActive(false);
         return competitionRepository.save(c);
     }
 
@@ -49,20 +49,20 @@ public class CompetitionServiceImpl implements CompetitionService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Competition> obtenerPorId(Long id) {
+    public Optional<Competition> getById(Long id) {
         return competitionRepository.findById(id);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Competition obtenerPorIdOFallar(Long id) {
+    public Competition getByIdOrFail(Long id) {
         return competitionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Competition> listarActivas() {
+    public List<Competition> getActiveCompetitions() {
         return competitionRepository.findActivasConProyectos();
     }
 
@@ -73,7 +73,7 @@ public class CompetitionServiceImpl implements CompetitionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Competition> listarFinalizadas() {
+    public List<Competition> getFinishedCompetitions() {
         return competitionRepository.findByActiveFalse();
     }
 }
