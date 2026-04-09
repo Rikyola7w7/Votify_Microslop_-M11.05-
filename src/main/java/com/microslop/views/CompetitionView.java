@@ -4,13 +4,14 @@ import com.microslop.entity.Project;
 import com.microslop.service.ProjectService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.VoteService;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.*;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.contextmenu.ContextMenu;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -76,14 +77,9 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     public void setParameter(BeforeEvent event, Long competitionId) {
         this.competitionId = competitionId;
 
-        // Retrieve authenticated user from session
+        // Retrieve authenticated user from session (can be null if not logged in)
         Object uid = VaadinSession.getCurrent().getAttribute("username");
         this.currentUserUsername = (uid instanceof String) ? (String) uid : null;
-        
-        // TESTING: If no user, use dummy user
-        if (this.currentUserUsername == null) {
-            this.currentUserUsername = "test_user";
-        }
 
         removeAll();
         buildUi();
@@ -113,8 +109,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             .set("box-shadow", "0 2px 8px rgba(0,0,0,0.3)");
 
         // Back button
-        Button backButton = new Button();
-        backButton.setIcon(new Icon(VaadinIcon.ARROW_LEFT));
+        Button backButton = new Button("← Back");
         backButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         backButton.getStyle()
             .set("color", "white")
@@ -133,13 +128,54 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             .set("flex", "1")
             .set("text-align", "center");
 
-        // Avatar
+        // Right section: Vote button and avatar
+        var rightSection = new HorizontalLayout();
+        rightSection.setAlignItems(Alignment.CENTER);
+        rightSection.setSpacing(true);
+        rightSection.setMargin(false);
+        rightSection.setPadding(false);
+
+        // Vote for Projects button
+        boolean isLoggedIn = isUserLoggedInCompetition();
+        Button voteButton = new Button("Vote");
+        voteButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        voteButton.setEnabled(isLoggedIn);
+        voteButton.getStyle()
+            .set("font-weight", "600")
+            .set("color", "#1a3a5c")
+            .set("background", "white")
+            .set("border", "none")
+            .set("cursor", "pointer");
+        voteButton.addClickListener(e -> getUI().ifPresent(ui -> 
+            ui.navigate("competition/" + competitionId + "/vote")
+        ));
+
+        // Avatar with dropdown menu
         var avatar = new Avatar();
+        avatar.setName(getUserDisplayName());
         avatar.getStyle()
             .set("cursor", "pointer")
             .set("background", "#2d6a9f");
 
-        header.add(backButton, title, avatar);
+        // Profile Dropdown Menu
+        ContextMenu userMenu = new ContextMenu(avatar);
+        userMenu.setOpenOnClick(true);
+        
+        if (isLoggedIn) {
+            userMenu.addItem("My Projects", event -> {
+                Notification.show("My Projects is under development.");
+            });
+            userMenu.addItem("Edit Profile", event -> {
+                Notification.show("Profile editing is under development.");
+            });
+            userMenu.addItem("Sign Out", event -> handleLogoutCompetition());
+        } else {
+            userMenu.addItem("Sign In", event -> getUI().ifPresent(ui -> ui.navigate("login")));
+            userMenu.addItem("Register", event -> getUI().ifPresent(ui -> ui.navigate("register")));
+        }
+
+        rightSection.add(voteButton, avatar);
+        header.add(backButton, title, rightSection);
         return header;
     }
 
@@ -197,7 +233,6 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             "linear-gradient(145deg, #f4d9b0, #b87333)"    // bronze
         };
         String[] borderColors = {"#aaa", "#c9a800", "#a0622a"};
-        boolean isFirst = true;
 
         for (int slot = 0; slot < 3; slot++) {
             int idx = order[slot];
@@ -253,13 +288,6 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
 
             card.add(medalSpan, nameSpan, labelVotes, numVotes);
 
-            // Vote button (only if user logged in and hasn't voted yet)
-            if (currentUserUsername != null) {
-                boolean hasVoted = voteService.hasUserVoted(currentUserUsername, p.getId());
-                var btnVote = buildVoteButton(p, hasVoted);
-                card.add(btnVote);
-            }
-
             podiumSection.add(card);
         }
     }
@@ -283,14 +311,13 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         for (int i = 3; i < ranking.size(); i++) {
             Project p      = ranking.get(i);
             long totalVotes = voteService.countVotesByProject(p.getId());
-            boolean hasVoted  = currentUserUsername != null && voteService.hasUserVoted(currentUserUsername, p.getId());
 
-            listSection.add(buildListRow(p, i + 1, totalVotes, hasVoted));
+            listSection.add(buildListRow(p, i + 1, totalVotes));
         }
     }
 
     private HorizontalLayout buildListRow(Project p, int position,
-                                             long totalVotes, boolean hasVoted) {
+                                             long totalVotes) {
         var row = new HorizontalLayout();
         row.setWidthFull();
         row.setAlignItems(Alignment.CENTER);
@@ -339,50 +366,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
 
         row.add(numDiv, info);
 
-        // Vote button
-        if (currentUserUsername != null) {
-            row.add(buildVoteButton(p, hasVoted));
-        }
-
         return row;
-    }
-
-    // ── Vote Button ───────────────────────────────────────────────────────────
-
-    private Button buildVoteButton(Project project, boolean hasVoted) {
-        var btn = new Button(hasVoted ? "✓ Voted" : "Vote");
-        btn.addThemeVariants(hasVoted
-            ? ButtonVariant.LUMO_SUCCESS
-            : ButtonVariant.LUMO_PRIMARY);
-        btn.setEnabled(!hasVoted);
-        btn.getStyle()
-            .set("font-weight", "700")
-            .set("border-radius", "8px")
-            .set("font-size", "0.85rem");
-
-        if (!hasVoted) {
-            btn.addClickListener(e -> {
-                try {
-                    voteService.submitVote(currentUserUsername, project.getId());
-
-                    Notification ok = Notification.show(
-                        "Vote submitted for " + project.getName() + "!");
-                    ok.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-                    ok.setDuration(3000);
-
-                    // Reload full ranking
-                    var ranking = projectService.getRanking(competitionId);
-                    renderPodium(ranking);
-                    renderList(ranking);
-
-                } catch (IllegalStateException ex) {
-                    Notification err = Notification.show(ex.getMessage());
-                    err.addThemeVariants(NotificationVariant.LUMO_ERROR);
-                    err.setDuration(4000);
-                }
-            });
-        }
-        return btn;
     }
 
     // ── Utilities ────────────────────────────────────────────────────────────
@@ -390,4 +374,25 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     private String formatNumber(long num) {
         return NumberFormat.getNumberInstance(Locale.US).format(num);
     }
-}
+    private boolean isUserLoggedInCompetition() {
+        VaadinSession session = VaadinSession.getCurrent();
+        return session != null && (session.getAttribute("userId") != null || session.getAttribute("username") != null);
+    }
+
+    private void handleLogoutCompetition() {
+        VaadinSession session = VaadinSession.getCurrent();
+        if (session != null) {
+            session.getSession().invalidate();
+        }
+        getUI().ifPresent(ui -> ui.navigate(""));
+        Notification.show("Logged out successfully");
+    }
+
+    private String getUserDisplayName() {
+        VaadinSession session = VaadinSession.getCurrent();
+        if (session != null && session.getAttribute("username") != null) {
+            String user = session.getAttribute("username").toString();
+            return user.substring(0, 1).toUpperCase();
+        }
+        return "G";
+    }}

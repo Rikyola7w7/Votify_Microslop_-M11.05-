@@ -98,10 +98,13 @@ public class MainView extends VerticalLayout {
         boolean isLoggedIn = isUserLoggedIn();
         
         if (isLoggedIn) {
+            userMenu.addItem("My Projects", event -> {
+                Notification.show("My Projects is under development.");
+            });
             userMenu.addItem("Edit Profile", event -> {
                 Notification.show("Profile editing is under development.");
             });
-            userMenu.addItem("Logout", event -> handleLogout());
+            userMenu.addItem("Sign Out", event -> handleLogout());
         } else {
             userMenu.addItem("Sign In", event -> getUI().ifPresent(ui -> ui.navigate("login")));
             userMenu.addItem("Register", event -> getUI().ifPresent(ui -> ui.navigate("register")));
