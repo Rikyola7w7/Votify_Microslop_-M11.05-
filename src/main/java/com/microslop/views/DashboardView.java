@@ -9,8 +9,11 @@ import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEvent;
@@ -24,13 +27,14 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Dashboard de clasificación de proyectos para una competición.
- * Ruta: /dashboard/{competicionId}
+ * Dashboard - Competition ranking and voting view.
+ * Route: /dashboard/{competitionId}
  *
- * Requiere que el usuario autenticado esté en sesión bajo la clave "username" (String).
+ * Displays projects for a competition sorted by vote count.
+ * Allows authenticated users to vote for projects.
  */
-@PageTitle("Clasificación")
-@Route("dashboard")
+@PageTitle("Dashboard")
+@Route("dashboard") // <--- Dejamos solo la ruta base
 public class DashboardView extends VerticalLayout implements HasUrlParameter<Long> {
 
     // ── Dependencias ─────────────────────────────────────────────────────────
@@ -101,12 +105,24 @@ public class DashboardView extends VerticalLayout implements HasUrlParameter<Lon
         var header = new HorizontalLayout();
         header.setWidthFull();
         header.setAlignItems(Alignment.CENTER);
+        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         header.getStyle()
             .set("background", "#1a3a5c")
             .set("padding", "0 2rem")
             .set("height", "64px")
             .set("box-shadow", "0 2px 8px rgba(0,0,0,0.3)");
 
+        // Back button
+        Button backButton = new Button();
+        backButton.setIcon(new Icon(VaadinIcon.ARROW_LEFT));
+        backButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        backButton.getStyle()
+            .set("color", "white")
+            .set("background", "transparent")
+            .set("cursor", "pointer");
+        backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
+
+        // Title
         var titulo = new H2(nombreCompeticion.toUpperCase());
         titulo.getStyle()
             .set("color", "white")
@@ -114,18 +130,20 @@ public class DashboardView extends VerticalLayout implements HasUrlParameter<Lon
             .set("font-size", "1.3rem")
             .set("font-weight", "700")
             .set("letter-spacing", "0.05em")
-            .set("flex", "1");
+            .set("flex", "1")
+            .set("text-align", "center");
 
+        // Avatar
         var avatar = new Avatar();
         avatar.getStyle()
             .set("cursor", "pointer")
             .set("background", "#2d6a9f");
 
-        header.add(titulo, avatar);
+        header.add(backButton, titulo, avatar);
         return header;
     }
 
-    // ── Cuerpo principal ──────────────────────────────────────────────────────
+    // ── Main Body ──────────────────────────────────────────────────────
 
     private VerticalLayout buildBody(List<Project> ranking) {
         var body = new VerticalLayout();
