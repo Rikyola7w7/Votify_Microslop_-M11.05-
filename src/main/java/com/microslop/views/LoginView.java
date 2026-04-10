@@ -35,8 +35,8 @@ public class LoginView extends VerticalLayout {
         PasswordField passwordField = new PasswordField("Password");
 
         Button loginButton = new Button("Login", e -> {
-            String username = usernameField.getValue();
-            String password = passwordField.getValue();
+            String username = usernameField.getValue().trim();
+            String password = passwordField.getValue().trim();
 
             if (username.isEmpty() || password.isEmpty()) {
                 Notification.show("Please fill in all fields.");
@@ -54,6 +54,7 @@ public class LoginView extends VerticalLayout {
 
                 // 3. Establecemos la sesión de Vaadin con el usuario recuperado
                 VaadinSession.getCurrent().setAttribute(User.class, loggedUser);
+                VaadinSession.getCurrent().setAttribute("username", loggedUser.getUsername());
 
                 // 4. Mostramos notificación de éxito y navegamos al inicio
                 Notification success = Notification.show("Login successful!");

@@ -11,8 +11,16 @@ import java.util.List;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
-    // Find project by ID
+    // Find projects by competition ID
     List<Project> findByCompetitionId(Long competitionId);
+
+    // Find projects where a user is a participant
+    @Query("""
+        SELECT p FROM Project p
+        INNER JOIN p.participants u
+        WHERE u.username = :username
+        """)
+    List<Project> findProjectsByParticipantUsername(@Param("username") String username);
 
     // Projects of a competition ordered in descending order by number of votes
     @Query("""

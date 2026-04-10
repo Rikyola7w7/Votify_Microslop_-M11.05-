@@ -50,4 +50,10 @@ public class ProjectServiceImpl implements ProjectService {
     public List<Project> getRanking(Long competitionId) {
         return projectRepository.findRankingByCompetition(competitionId);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Project> getUserProjects(String username) {
+        return projectRepository.findProjectsByParticipantUsername(username);
+    }
 }

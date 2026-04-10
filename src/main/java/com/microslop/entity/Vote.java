@@ -20,6 +20,9 @@ public class Vote {
     @Column(name = "vote_date", nullable = false)
     private LocalDateTime voteDate;
 
+    @Column(name = "comment", length = 500)
+    private String comment;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "username", nullable = false)
     private User user;
@@ -43,6 +46,9 @@ public class Vote {
 
     public LocalDateTime getVoteDate()         { return voteDate; }
     public void setVoteDate(LocalDateTime f)   { this.voteDate = f; }
+
+    public String getComment()                 { return comment; }
+    public void setComment(String comment)     { this.comment = comment; }
 
     public User getUser()                { return user; }
     public void setUser(User u)          { this.user = u; }

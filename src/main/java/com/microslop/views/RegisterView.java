@@ -20,6 +20,7 @@ import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.VaadinSession;
 
@@ -97,10 +98,10 @@ public class RegisterView extends VerticalLayout {
 
                 StandardUserCreator standardUserCreator = new StandardUserCreator();
                 User newUser = standardUserCreator.createUser(
-                        nameField.getValue(),
-                        emailField.getValue(),
-                        usernameField.getValue(),
-                        passwordField.getValue(),
+                        nameField.getValue().trim(),
+                        emailField.getValue().trim(),
+                        usernameField.getValue().trim(),
+                        passwordField.getValue().trim(),
                         birthDateLDT,
                         profilePictureBytes
                 );
@@ -114,8 +115,6 @@ public class RegisterView extends VerticalLayout {
                 success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
                 getUI().ifPresent(ui -> ui.navigate(""));
-
-                getUI().ifPresent(ui -> ui.navigate("login"));
 
             } catch (IllegalArgumentException ex) {
                 Notification error = Notification.show(ex.getMessage());

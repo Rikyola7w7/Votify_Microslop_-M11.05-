@@ -157,7 +157,12 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         
         if (isLoggedIn) {
             userMenu.addItem("My Projects", event -> {
-                Notification.show("My Projects is under development.");
+                String username = getLoggedInUsername();
+                if (username != null) {
+                    getUI().ifPresent(ui -> ui.navigate(username + "/projects"));
+                } else {
+                    Notification.show("Unable to load your projects.");
+                }
             });
             userMenu.addItem("Edit Profile", event -> {
                 Notification.show("Profile editing is under development.");
@@ -380,6 +385,14 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         }
         getUI().ifPresent(ui -> ui.navigate(""));
         Notification.show("Logged out successfully");
+    }
+
+    private String getLoggedInUsername() {
+        VaadinSession session = VaadinSession.getCurrent();
+        if (session != null && session.getAttribute("username") != null) {
+            return session.getAttribute("username").toString();
+        }
+        return null;
     }
 
     private String getUserDisplayName() {
