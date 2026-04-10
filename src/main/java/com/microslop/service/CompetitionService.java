@@ -6,17 +6,21 @@ import java.util.Optional;
 
 public interface CompetitionService {
     
-    Competition guardar(Competition competicion);
+    Competition save(Competition competition);
 
-    void eliminar(Long id);
+    void delete(Long id);
 
-    Competition activar(Long id);
+    Competition activate(Long id);
 
-    Competition desactivar(Long id);
+    Competition deactivate(Long id);
 
-    Optional<Competition> obtenerPorId(Long id);
+    Optional<Competition> getById(Long id);
 
-    Competition obtenerPorIdOFallar(Long id);
+    Competition getByIdOrFail(Long id);
 
-    List<Competition> listarActivas();
+    List<Competition> getActiveCompetitions();
+
+    List<Competition> getFinishedCompetitions();
+
+    List<Competition> findAll();
 }

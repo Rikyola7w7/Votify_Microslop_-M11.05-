@@ -3,8 +3,11 @@ package com.microslop.service;
 import com.microslop.entity.Vote;
 
 public interface VoteService {
-    Vote emitirVoto(Long usuarioId, Long proyectoId);
-    long contarVotosPorProyecto(Long proyectoId);
-    boolean yaVoto(Long usuarioId, Long proyectoId);
-    long contarVotosPorUsuarioEnCompeticion(String usuarioId, Long competicionId);
+    Vote submitVote(String userUsername, Long projectId);
+
+    long countVotesByProject(Long projectId);
+
+    boolean hasUserVoted(String userUsername, Long projectId);
+    
+    long countVotesPerUserInCompetition(String userId, Long competitionId);
 }

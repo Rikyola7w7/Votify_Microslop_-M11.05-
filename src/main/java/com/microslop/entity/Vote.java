@@ -18,7 +18,7 @@ public class Vote {
     private Long id;
 
     @Column(name = "vote_date", nullable = false)
-    private LocalDateTime fechaVoto;
+    private LocalDateTime voteDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "username", nullable = false)
@@ -29,20 +29,20 @@ public class Vote {
     private Project project;
 
     public Vote() {
-        this.fechaVoto = LocalDateTime.now();
+        this.voteDate = LocalDateTime.now();
     }
 
     public Vote(User user, Project project) {
         this.user   = user;
         this.project  = project;
-        this.fechaVoto = LocalDateTime.now();
+        this.voteDate = LocalDateTime.now();
     }
 
     public Long getId()                        { return id; }
     public void setId(Long id)                 { this.id = id; }
 
-    public LocalDateTime getFechaVoto()        { return fechaVoto; }
-    public void setFechaVoto(LocalDateTime f)  { this.fechaVoto = f; }
+    public LocalDateTime getVoteDate()         { return voteDate; }
+    public void setVoteDate(LocalDateTime f)   { this.voteDate = f; }
 
     public User getUser()                { return user; }
     public void setUser(User u)          { this.user = u; }
@@ -56,7 +56,7 @@ public class Vote {
                 "id=" + id +
                 ", user=" + user +
                 ", project=" + project +
-                ", fechaVoto=" + fechaVoto +
+                ", voteDate=" + voteDate +
                 '}';
     }
 }

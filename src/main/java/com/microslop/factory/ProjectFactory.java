@@ -5,25 +5,25 @@ import com.microslop.entity.Project;
 import org.springframework.stereotype.Component;
 
 /**
- * Factory para crear instancias de Project con validación.
+ * Factory for creating Project instances with validation.
  */
 @Component
 public class ProjectFactory {
 
-    public Project crear(String nombre,
-                        String descripcion,
-                        Competition competicion) {
-        validarNoVacio(nombre, "El nombre del proyecto no puede estar vacío.");
-        if (competicion == null) {
-            throw new IllegalArgumentException("El proyecto debe pertenecer a una competición.");
+    public Project create(String name,
+                        String description,
+                        Competition competition) {
+        validateNotEmpty(name, "Project name cannot be empty.");
+        if (competition == null) {
+            throw new IllegalArgumentException("Project must belong to a competition.");
         }
 
-        return new Project(nombre, descripcion, competicion);
+        return new Project(name, description, competition);
     }
 
-    private void validarNoVacio(String valor, String mensaje) {
-        if (valor == null || valor.isBlank()) {
-            throw new IllegalArgumentException(mensaje);
+    private void validateNotEmpty(String value, String message) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(message);
         }
     }
 }

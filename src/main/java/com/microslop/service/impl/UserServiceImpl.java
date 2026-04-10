@@ -48,10 +48,13 @@ public class UserServiceImpl implements UserService {
 
         String encryptedPassword = passwordEncoder.encode(newUser.getPassword());
         newUser.setPassword(encryptedPassword);
-
         userRepository.save(newUser);
     }
 
+    @Override
+    public Optional<User> searchByUsernameIgnoreCase(String username) {
+        return userRepository.findByUsernameIgnoreCase(username);
+    }
 
     public void login(String username, String password) {
         User user = userRepository.findByUsernameIgnoreCase(username)
@@ -64,10 +67,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public User updateProfile(Long id, String username, String email) {
         return null; // Lo implementarás más adelante
-    }
-    @Override
-    public Optional<User> searchByUsernameIgnoreCase(String username) {
-        return userRepository.findByUsernameIgnoreCase(username);
     }
 }
 

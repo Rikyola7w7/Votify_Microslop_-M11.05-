@@ -1,6 +1,5 @@
 package com.microslop.service.impl;
 
-import com.microslop.entity.User;
 import com.microslop.entity.Vote;
 import com.microslop.factory.VoteFactory;
 import com.microslop.repository.VoteRepository;
@@ -16,51 +15,58 @@ import org.springframework.transaction.annotation.Transactional;
 public class VoteServiceImpl implements VoteService {
 
     private final VoteRepository     voteRepository;
-    private final ProjectService     proyectoService;
-    private final UserService        usuarioService;
+    private final ProjectService     projectService;
+    private final UserService        userService;
     private final VoteFactory        voteFactory;
 
     public VoteServiceImpl(VoteRepository voteRepository,
-                       ProjectService proyectoService,
-                       UserService usuarioService,
+                       ProjectService projectService,
+                       UserService userService,
                        VoteFactory voteFactory) {
         this.voteRepository  = voteRepository;
-        this.proyectoService = proyectoService;
-        this.usuarioService  = usuarioService;
+        this.projectService  = projectService;
+        this.userService     = userService;
         this.voteFactory     = voteFactory;
     }
 
-    // ── Escritura ────────────────────────────────────────────────────────────
+    // ── Write ────────────────────────────────────────────────────────────
 
     @Override
-    public Vote emitirVoto(Long usuarioId, Long proyectoId) {
-        // TODO: Necesitamos una forma de obtener usuario por ID o que el frontend pase username
-        var proyecto   = proyectoService.obtenerPorId(proyectoId);
-        var competicion = proyecto.getCompeticion();
-        if (!competicion.isActiva()) {
-            throw new IllegalStateException("La competición no está activa.");
+    public Vote submitVote(String userUsername, Long projectId) {
+        var user         = userService.searchByUsernameIgnoreCase(userUsername).orElseThrow(() -> 
+            new IllegalStateException("User not found."));
+        var project      = projectService.getById(projectId);
+        var competition  = project.getCompetition();
+        var username     = user.getUsername();
+        if (!competition.isActive()) {
+            throw new IllegalStateException("Competition is not active.");
         }
-        throw new IllegalStateException("Método pendiente de implementación completa.");
+        if (voteRepository.existsByUserUsernameAndProjectId(username, projectId)) {
+            throw new IllegalStateException(
+                "User '" + user.getName() + "' has already voted for this project.");
+        }
+
+        Vote vote = voteFactory.create(user, project);
+        return voteRepository.save(vote);
     }
 
-    // ── Lectura ──────────────────────────────────────────────────────────────
+    // ── Read ──────────────────────────────────────────────────────────────
 
     @Override
     @Transactional(readOnly = true)
-    public long contarVotosPorProyecto(Long proyectoId) {
-        return voteRepository.countByProjectId(proyectoId);
+    public long countVotesByProject(Long projectId) {
+        return voteRepository.countByProjectId(projectId);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public boolean yaVoto(Long usuarioId, Long proyectoId) {
-        // TODO: Implementar cuando tengamos la forma de mapear usuarioId a username
-        return false;
+    public boolean hasUserVoted(String userUsername, Long projectId) {
+        return voteRepository.existsByUserUsernameAndProjectId(userUsername, projectId);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public long contarVotosPorUsuarioEnCompeticion(String usuarioId, Long competicionId) {
-        return voteRepository.countByUsuarioEnCompeticion(usuarioId, competicionId);
+    public long countVotesPerUserInCompetition(String userId, Long competitionId) {
+        return voteRepository.countByUserInCompetition(userId, competitionId);
     }
 }
