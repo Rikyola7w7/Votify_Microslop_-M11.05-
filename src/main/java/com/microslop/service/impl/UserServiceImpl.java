@@ -3,6 +3,7 @@ package com.microslop.service.impl;
 import com.microslop.entity.User;
 import com.microslop.repository.UserRepository;
 import com.microslop.service.UserService;
+import com.vaadin.flow.server.VaadinSession;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -68,13 +69,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getCurrentUser() {
-        User user = new User();
-        user.setId(1L);
-        user.setUsername("testUser");
-        user.setEmail("test@email.com");
-        user.setPassword("1234");
+        VaadinSession session = VaadinSession.getCurrent();
 
-        return user;
+        if (session == null) {
+            return null;
+        }
+
+        return session.getAttribute(User.class);
     }
 
     //TODO Cambiar metodo getCurrentUser a un metodo con autentificacion como el inferior
