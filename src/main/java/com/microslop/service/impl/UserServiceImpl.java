@@ -76,19 +76,18 @@ public class UserServiceImpl implements UserService {
         }
 
         return session.getAttribute(User.class);
+
+        /* Solo testing
+        User user = new User(); user.setId(1L);
+        user.setUsername("testUser");
+        user.setEmail("test@email.com");
+        user.setPassword("1234");
+
+        return user;
+        */
     }
     @Override
     public void logout() {
         VaadinSession.getCurrent().setAttribute(User.class, null);
     }
-
-    //TODO Cambiar metodo getCurrentUser a un metodo con autentificacion como el inferior
-    /*
-    String username = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-
-        User user = userService.searchByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-     */
 }
