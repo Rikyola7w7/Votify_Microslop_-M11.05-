@@ -1,6 +1,11 @@
 # My Application README
 
-- [ ] TODO Replace or update this README with instructions relevant to your application
+- TODO Sprint 1
+- [ ] Arreglar barra vertical izquierda
+- [ ] Cohesion entre interfazes
+- [ ] CSS
+- [ ] Barra busqueda en competiciones
+
 
 ## Project Structure
 
