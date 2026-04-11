@@ -2,6 +2,8 @@ package com.microslop.views;
 
 import com.microslop.entity.User;
 import com.microslop.service.UserService;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -14,6 +16,7 @@ import com.vaadin.flow.component.orderedlayout.*;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 
 @Route("perfil")
 public class UserEditProfileView extends VerticalLayout {
@@ -31,9 +34,25 @@ public class UserEditProfileView extends VerticalLayout {
         add(abrir);
     }
 
+    // Protección de la vista
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        if (userService.getCurrentUser() == null) {
+            Notification.show("Debes iniciar sesión");
+            UI.getCurrent().navigate("login");
+        }
+    }
+    
+
     private void abrirDialogo() {
 
         User user = userService.getCurrentUser();
+
+        if (user == null) {
+            Notification.show("Debes iniciar sesión");
+            UI.getCurrent().navigate("login");
+            return;
+        }
 
         Dialog dialog = new Dialog();
         dialog.setWidth("500px");
@@ -83,13 +102,17 @@ public class UserEditProfileView extends VerticalLayout {
 
             confirmDialog.setConfirmText("Eliminar");
             confirmDialog.setCancelText("Cancelar");
-
             confirmDialog.setConfirmButtonTheme("error primary");
 
             confirmDialog.addConfirmListener(event -> {
                 userService.deleteUser(user.getId());
                 Notification.show("Cuenta eliminada");
+
+                // limpiar sesión
+                VaadinSession.getCurrent().setAttribute(User.class, null);
+
                 dialog.close();
+                UI.getCurrent().navigate("login");
             });
 
             confirmDialog.open();
