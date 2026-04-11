@@ -77,6 +77,10 @@ public class UserServiceImpl implements UserService {
 
         return session.getAttribute(User.class);
     }
+    @Override
+    public void logout() {
+        VaadinSession.getCurrent().setAttribute(User.class, null);
+    }
 
     //TODO Cambiar metodo getCurrentUser a un metodo con autentificacion como el inferior
     /*
