@@ -35,7 +35,8 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public Project getById(Long id) {
-        return projectRepository.findById(id)
+        // Use custom query to fetch project with votes and users to avoid lazy loading issues
+        return projectRepository.findByIdWithVotesAndUsers(id)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found: " + id));
     }
 
@@ -54,6 +55,19 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public List<Project> getUserProjects(String username) {
-        return projectRepository.findProjectsByParticipantUsername(username);
+        List<Project> projects = projectRepository.findProjectsByParticipantUsername(username);
+        // Access all fields within transaction to prevent lazy loading errors
+        projects.forEach(p -> {
+            // Access description to force loading
+            String desc = p.getDescription();
+            // Access competition and votes
+            if (p.getCompetition() != null) {
+                p.getCompetition().getName();
+            }
+            if (p.getVotes() != null) {
+                p.getVotes().size();
+            }
+        });
+        return projects;
     }
 }

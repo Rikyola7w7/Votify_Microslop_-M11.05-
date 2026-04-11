@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.List;
 
 @Repository
@@ -31,4 +32,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         ORDER BY COUNT(v) DESC
         """)
     List<Project> findRankingByCompetition(@Param("competitionId") Long competitionId);
+
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.votes v LEFT JOIN FETCH v.user WHERE p.id = :projectId")
+    Optional<Project> findByIdWithVotesAndUsers(@Param("projectId") Long projectId);
 }
