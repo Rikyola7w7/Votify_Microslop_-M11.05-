@@ -94,11 +94,17 @@ public class UserProfileView extends VerticalLayout {
             UI.getCurrent().navigate("login");
         });
 
+        //Boton eliminar
+        Button delete = new Button("Eliminar cuenta", e -> abrirDialogoEliminar());
+        delete.getStyle()
+                .set("background-color", "#d32f2f")
+                .set("color", "white");
+
         logout.getStyle()
                 .set("background-color", "#757575")
                 .set("color", "white");
 
-        HorizontalLayout botones = new HorizontalLayout(editar, logout);
+        HorizontalLayout botones = new HorizontalLayout(editar, logout, delete);
         botones.setSpacing(true);
 
         VerticalLayout layout = new VerticalLayout(
@@ -161,6 +167,56 @@ public class UserProfileView extends VerticalLayout {
                 nombre,
                 email,
                 guardar
+        );
+
+        layout.setAlignItems(Alignment.CENTER);
+
+        dialog.add(layout);
+        dialog.open();
+    }
+
+    private void abrirDialogoEliminar() {
+
+        User user = userService.getCurrentUser();
+
+        if (user == null) {
+            Notification.show("Debes iniciar sesión");
+            return;
+        }
+
+        Dialog dialog = new Dialog();
+        dialog.setWidth("400px");
+
+        H2 titulo = new H2("Eliminar cuenta");
+
+        Span mensaje = new Span("¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.");
+
+        Button cancelar = new Button("Cancelar", e -> dialog.close());
+
+        Button confirmar = new Button("Eliminar", e -> {
+            try {
+                userService.deleteUser(user.getId());
+
+                Notification.show("Cuenta eliminada correctamente");
+
+                userService.logout();
+                UI.getCurrent().navigate("login");
+
+            } catch (Exception ex) {
+                Notification.show("Error al eliminar la cuenta");
+            }
+        });
+
+        confirmar.getStyle()
+                .set("background-color", "#d32f2f")
+                .set("color", "white");
+
+        HorizontalLayout botones = new HorizontalLayout(cancelar, confirmar);
+
+        VerticalLayout layout = new VerticalLayout(
+                titulo,
+                mensaje,
+                botones
         );
 
         layout.setAlignItems(Alignment.CENTER);
