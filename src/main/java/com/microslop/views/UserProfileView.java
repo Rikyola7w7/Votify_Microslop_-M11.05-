@@ -57,22 +57,34 @@ public class UserProfileView extends VerticalLayout {
         usernameText = new Span();
         emailText = new Span();
 
+        Span nombreLabel = new Span("Nombre: ");
+        nombreLabel.getStyle().set("font-weight", "bold");
+
+        usernameText.getStyle().set("color", "#333");
+
         HorizontalLayout nombreLayout = new HorizontalLayout(
-                new Span("Nombre: "),
+                nombreLabel,
                 usernameText
         );
+        nombreLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+
+        Span emailLabel = new Span("Email: ");
+        emailLabel.getStyle().set("font-weight", "bold");
+
+        emailText.getStyle().set("color", "#333");
 
         HorizontalLayout emailLayout = new HorizontalLayout(
-                new Span("Email: "),
+                emailLabel,
                 emailText
         );
+        emailLayout.setJustifyContentMode(JustifyContentMode.CENTER);
 
         VerticalLayout infoLayout = new VerticalLayout(
                 nombreLayout,
                 emailLayout
         );
 
-        infoLayout.setAlignItems(Alignment.START);
+        infoLayout.setAlignItems(Alignment.CENTER);
 
         HorizontalLayout contenido = new HorizontalLayout(
                 avatar,
