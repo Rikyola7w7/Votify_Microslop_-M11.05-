@@ -145,8 +145,7 @@ public class MainView extends VerticalLayout {
         
         filters.add(btnAll, btnActive, btnFinished);
 
-        TextField searchField = new TextField();
-        searchField.setPlaceholder("Search competition...");
+        TextField searchField = new TextField("Search competition...");
         searchField.setPrefixComponent(new Icon(VaadinIcon.SEARCH));
         searchField.setWidth("300px");
         searchField.setClearButtonVisible(true);

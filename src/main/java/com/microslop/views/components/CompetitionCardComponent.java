@@ -88,7 +88,7 @@ public class CompetitionCardComponent extends Div {
 
         Icon chartIcon = VaadinIcon.CHART_3D.create();
         chartIcon.setSize("64px");
-        chartIcon.getStyle().set("color", "#ffffff");
+        chartIcon.getElement().getStyle().set("color", "#ffffff");
 
         iconContainer.add(chartIcon);
         return iconContainer;

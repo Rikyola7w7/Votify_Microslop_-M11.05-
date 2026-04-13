@@ -20,6 +20,7 @@ import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.VaadinSession;
 
@@ -52,7 +53,8 @@ public class RegisterView extends VerticalLayout {
         DatePicker birthDateField = new DatePicker("Birth date");
 
         MemoryBuffer buffer = new MemoryBuffer();
-        Upload uploadProfilePicture = new Upload(buffer);
+        Upload uploadProfilePicture = new Upload();
+        uploadProfilePicture.setReceiver(buffer);
         uploadProfilePicture.setAcceptedFileTypes("image/jpeg", "image/png", "image/gif");
         uploadProfilePicture.setMaxFiles(1);
         uploadProfilePicture.setDropLabel(new Span("Drag your profile picture here (optional)"));
