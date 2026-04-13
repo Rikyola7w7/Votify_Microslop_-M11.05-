@@ -14,36 +14,40 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class VoteServiceImpl implements VoteService {
 
-    private final VoteRepository     voteRepository;
-    private final ProjectService     projectService;
-    private final UserService        userService;
-    private final VoteFactory        voteFactory;
+    private static final int MAX_VOTES_PER_PROJECT = 3;
+
+    private final VoteRepository voteRepository;
+    private final ProjectService projectService;
+    private final UserService    userService;
+    private final VoteFactory    voteFactory;
 
     public VoteServiceImpl(VoteRepository voteRepository,
-                       ProjectService projectService,
-                       UserService userService,
-                       VoteFactory voteFactory) {
-        this.voteRepository  = voteRepository;
-        this.projectService  = projectService;
-        this.userService     = userService;
-        this.voteFactory     = voteFactory;
+                           ProjectService projectService,
+                           UserService userService,
+                           VoteFactory voteFactory) {
+        this.voteRepository = voteRepository;
+        this.projectService = projectService;
+        this.userService    = userService;
+        this.voteFactory    = voteFactory;
     }
 
-    // ── Write ────────────────────────────────────────────────────────────
+    // ── Write ─────────────────────────────────────────────────────────────
 
     @Override
     public Vote submitVote(String userUsername, Long projectId) {
-        var user         = userService.searchByUsernameIgnoreCase(userUsername).orElseThrow(() -> 
-            new IllegalStateException("User not found."));
-        var project      = projectService.getById(projectId);
-        var competition  = project.getCompetition();
-        var username     = user.getUsername();
+        var user        = userService.searchByUsernameIgnoreCase(userUsername)
+                            .orElseThrow(() -> new IllegalStateException("User not found."));
+        var project     = projectService.getById(projectId);
+        var competition = project.getCompetition();
+
         if (!competition.isActive()) {
             throw new IllegalStateException("Competition is not active.");
         }
-        if (voteRepository.existsByUserUsernameAndProjectId(username, projectId)) {
+
+        long alreadyCast = voteRepository.countByUserUsernameAndProjectId(userUsername, projectId);
+        if (alreadyCast >= MAX_VOTES_PER_PROJECT) {
             throw new IllegalStateException(
-                "User '" + user.getName() + "' has already voted for this project.");
+                "You have already used all " + MAX_VOTES_PER_PROJECT + " votes for this project.");
         }
 
         Vote vote = voteFactory.create(user, project);
@@ -60,8 +64,8 @@ public class VoteServiceImpl implements VoteService {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean hasUserVoted(String userUsername, Long projectId) {
-        return voteRepository.existsByUserUsernameAndProjectId(userUsername, projectId);
+    public long countVotesByUserAndProject(String userUsername, Long projectId) {
+        return voteRepository.countByUserUsernameAndProjectId(userUsername, projectId);
     }
 
     @Override

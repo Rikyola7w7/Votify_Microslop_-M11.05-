@@ -10,6 +10,8 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class SeedRunner implements ApplicationRunner {
@@ -24,13 +26,26 @@ public class SeedRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         ClassPathResource resource = new ClassPathResource("neon.session.sql");
-        if (resource.exists()) {
-            ResourceDatabasePopulator populator = new ResourceDatabasePopulator(resource);
-            // Execute the script after the application context is up (after Hibernate DDL update)
-            DatabasePopulatorUtils.execute(populator, dataSource);
-            log.info("Executed neon.session.sql database populator");
-        } else {
+        if (!resource.exists()) {
             log.warn("neon.session.sql not found on classpath — skipping seed population");
+            return;
         }
+
+        String content;
+        try {
+            content = resource.getContentAsString(StandardCharsets.UTF_8).trim();
+        } catch (IOException e) {
+            log.warn("Could not read neon.session.sql — skipping seed population");
+            return;
+        }
+
+        if (content.isEmpty()) {
+            log.info("neon.session.sql is empty — skipping seed population");
+            return;
+        }
+
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator(resource);
+        DatabasePopulatorUtils.execute(populator, dataSource);
+        log.info("Executed neon.session.sql database populator");
     }
 }
