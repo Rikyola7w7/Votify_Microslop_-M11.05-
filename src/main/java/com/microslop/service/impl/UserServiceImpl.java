@@ -73,15 +73,26 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByUsernameIgnoreCase(currentUsername)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        user.setUsername(newUsername);
-        user.setEmail(email);
+        User newUser = new User();
+        newUser.setUsername(newUsername);
+        newUser.setEmail(email);
+        newUser.setPassword(user.getPassword());
+        newUser.setBirthDate(user.getBirthDate());
+        newUser.setCreationDate(user.getCreationDate());
+        newUser.setName(user.getName());
+        newUser.setProfilePicture(user.getProfilePicture());
 
-        return userRepository.save(user);
+        userRepository.delete(user);
+
+        User savedUser = userRepository.save(newUser);
+        VaadinSession.getCurrent().setAttribute(User.class, savedUser);
+
+        return savedUser;
     }
 
     @Override
-    public void deleteUser(String id){
-        userRepository.deleteById(id);
+    public void deleteUser(String username){
+        userRepository.deleteById(username);
     }
 
     @Override
