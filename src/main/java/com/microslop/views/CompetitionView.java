@@ -165,7 +165,12 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
                 }
             });
             userMenu.addItem("Edit Profile", event -> {
-                Notification.show("Profile editing is under development.");
+                String username = getLoggedInUsername();
+                if (username != null) {
+                    getUI().ifPresent(ui -> ui.navigate(username));
+                } else {
+                    Notification.show("Unable to load your profile.");
+                }
             });
             userMenu.addItem("Sign Out", event -> handleLogoutCompetition());
         } else {

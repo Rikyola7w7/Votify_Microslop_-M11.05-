@@ -12,9 +12,11 @@ import com.vaadin.flow.component.orderedlayout.*;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.BeforeEnterObserver;
+import com.vaadin.flow.router.BeforeEnterEvent;
 
-@Route("perfil")
-public class UserProfileView extends VerticalLayout {
+@Route(":username")
+public class UserProfileView extends VerticalLayout implements BeforeEnterObserver {
 
     private final UserService userService;
 
@@ -28,26 +30,26 @@ public class UserProfileView extends VerticalLayout {
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
 
-        crearLayout();
+        buildLayout();
     }
 
     // Protección de acceso
     @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        User user = userService.getCurrentUser();
+    public void beforeEnter(BeforeEnterEvent event) {
+        User loggedInUser = userService.getCurrentUser();
 
-        if (user == null) {
-            Notification.show("Debes iniciar sesión");
-            UI.getCurrent().navigate("login");
+        if (loggedInUser == null) {
+            Notification.show("You must sign in");
+            event.forwardTo("login");
             return;
         }
 
-        actualizarDatos(user);
+        updateData(loggedInUser);
     }
 
-    private void crearLayout() {
+    private void buildLayout() {
 
-        H2 titulo = new H2("Mi Perfil");
+        H2 title = new H2("My Profile");
 
         Image avatar = new Image("https://via.placeholder.com/120", "avatar");
         avatar.setWidth("120px");
@@ -57,16 +59,16 @@ public class UserProfileView extends VerticalLayout {
         usernameText = new Span();
         emailText = new Span();
 
-        Span nombreLabel = new Span("Nombre: ");
-        nombreLabel.getStyle().set("font-weight", "bold");
+        Span usernameLabel = new Span("Username: ");
+        usernameLabel.getStyle().set("font-weight", "bold");
 
         usernameText.getStyle().set("color", "#333");
 
-        HorizontalLayout nombreLayout = new HorizontalLayout(
-                nombreLabel,
+        HorizontalLayout usernameLayout = new HorizontalLayout(
+                usernameLabel,
                 usernameText
         );
-        nombreLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+        usernameLayout.setJustifyContentMode(JustifyContentMode.CENTER);
 
         Span emailLabel = new Span("Email: ");
         emailLabel.getStyle().set("font-weight", "bold");
@@ -80,48 +82,48 @@ public class UserProfileView extends VerticalLayout {
         emailLayout.setJustifyContentMode(JustifyContentMode.CENTER);
 
         VerticalLayout infoLayout = new VerticalLayout(
-                nombreLayout,
+                usernameLayout,
                 emailLayout
         );
 
         infoLayout.setAlignItems(Alignment.CENTER);
 
-        HorizontalLayout contenido = new HorizontalLayout(
+        HorizontalLayout content = new HorizontalLayout(
                 avatar,
                 infoLayout
         );
 
-        contenido.setAlignItems(Alignment.CENTER);
-        contenido.setSpacing(true);
+        content.setAlignItems(Alignment.CENTER);
+        content.setSpacing(true);
 
-        Button editar = new Button("Editar perfil", e -> abrirDialogo());
-        editar.getStyle()
+        Button editButton = new Button("Edit Profile", e -> openEditDialog());
+        editButton.getStyle()
                 .set("background-color", "#1976d2")
                 .set("color", "white");
 
-        Button logout = new Button("Cerrar sesión", e -> {
+        Button logoutButton = new Button("Sign Out", e -> {
             userService.logout();
-            Notification.show("Sesión cerrada");
+            Notification.show("Session closed");
             UI.getCurrent().navigate("login");
         });
 
-        Button delete = new Button("Eliminar cuenta", e -> abrirDialogoEliminar());
-        delete.getStyle()
+        Button deleteButton = new Button("Delete Account", e -> openDeleteDialog());
+        deleteButton.getStyle()
                 .set("background-color", "#d32f2f")
                 .set("color", "white");
 
-        logout.getStyle()
+        logoutButton.getStyle()
                 .set("background-color", "#757575")
                 .set("color", "white");
 
-        HorizontalLayout botones = new HorizontalLayout(editar, logout, delete);
-        botones.setSpacing(true);
+        HorizontalLayout buttons = new HorizontalLayout(editButton, logoutButton, deleteButton);
+        buttons.setSpacing(true);
 
         VerticalLayout layout = new VerticalLayout(
-                titulo,
+                title,
                 avatar,
                 infoLayout,
-                botones
+                buttons
         );
 
         layout.setAlignItems(Alignment.CENTER);
@@ -130,55 +132,55 @@ public class UserProfileView extends VerticalLayout {
         add(layout);
     }
 
-    private void actualizarDatos(User user) {
+    private void updateData(User user) {
         usernameText.setText(user.getUsername());
         emailText.setText(user.getEmail());
     }
 
-    private void abrirDialogo() {
+    private void openEditDialog() {
 
         User user = userService.getCurrentUser();
 
         if (user == null) {
-            Notification.show("Debes iniciar sesión");
+            Notification.show("You must sign in");
             return;
         }
 
         Dialog dialog = new Dialog();
         dialog.setWidth("500px");
 
-        H2 titulo = new H2("Editar Perfil");
+        H2 title = new H2("Edit Profile");
 
-        TextField nombre = new TextField("Nombre");
-        nombre.setValue(user.getUsername());
+        TextField usernameField = new TextField("Username");
+        usernameField.setValue(user.getUsername());
 
-        EmailField email = new EmailField("Email");
-        email.setValue(user.getEmail());
+        EmailField emailField = new EmailField("Email");
+        emailField.setValue(user.getEmail());
 
-        Button guardar = new Button("Guardar", e -> {
+        Button saveButton = new Button("Save", e -> {
             try {
                 User currentUser = userService.getCurrentUser();
 
                 User updatedUser = userService.updateProfile(
                         currentUser.getUsername(),
-                        nombre.getValue(),
-                        email.getValue()
+                        usernameField.getValue(),
+                        emailField.getValue()
                 );
 
-                actualizarDatos(updatedUser);
+                updateData(updatedUser);
 
-                Notification.show("Perfil actualizado");
+                Notification.show("Profile updated");
                 dialog.close();
             } catch (Exception ex) {
-                Notification.show("Error al actualizar");
+                Notification.show("Error updating profile");
             }
         });
 
         VerticalLayout layout = new VerticalLayout(
-                titulo,
-                nombre,
-                email,
-                guardar
+                title,
+                usernameField,
+                emailField,
+                saveButton
         );
 
         layout.setAlignItems(Alignment.CENTER);
@@ -187,48 +189,48 @@ public class UserProfileView extends VerticalLayout {
         dialog.open();
     }
 
-    private void abrirDialogoEliminar() {
+    private void openDeleteDialog() {
 
         User user = userService.getCurrentUser();
 
         if (user == null) {
-            Notification.show("Debes iniciar sesión");
+            Notification.show("You must sign in");
             return;
         }
 
         Dialog dialog = new Dialog();
         dialog.setWidth("400px");
 
-        H2 titulo = new H2("Eliminar cuenta");
+        H2 title = new H2("Delete Account");
 
-        Span mensaje = new Span("¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.");
+        Span message = new Span("Are you sure you want to delete your account? This action cannot be undone.");
 
-        Button cancelar = new Button("Cancelar", e -> dialog.close());
+        Button cancelButton = new Button("Cancel", e -> dialog.close());
 
-        Button confirmar = new Button("Eliminar", e -> {
+        Button confirmButton = new Button("Delete", e -> {
             try {
                 userService.deleteUser(user.getUsername());
 
-                Notification.show("Cuenta eliminada correctamente");
+                Notification.show("Account deleted successfully");
 
                 userService.logout();
                 UI.getCurrent().navigate("login");
 
             } catch (Exception ex) {
-                Notification.show("Error al eliminar la cuenta");
+                Notification.show("Error deleting account");
             }
         });
 
-        confirmar.getStyle()
+        confirmButton.getStyle()
                 .set("background-color", "#d32f2f")
                 .set("color", "white");
 
-        HorizontalLayout botones = new HorizontalLayout(cancelar, confirmar);
+        HorizontalLayout buttons = new HorizontalLayout(cancelButton, confirmButton);
 
         VerticalLayout layout = new VerticalLayout(
-                titulo,
-                mensaje,
-                botones
+                title,
+                message,
+                buttons
         );
 
         layout.setAlignItems(Alignment.CENTER);

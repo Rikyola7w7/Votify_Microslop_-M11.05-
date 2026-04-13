@@ -99,7 +99,7 @@ public class MainView extends VerticalLayout {
                 getUI().ifPresent(ui -> ui.navigate(username + "/projects"));
             });
             userMenu.addItem("Edit Profile", event -> {
-                Notification.show("Profile editing is under development.");
+                getUI().ifPresent(ui -> ui.navigate(username));
             });
             userMenu.addItem("Sign Out", event -> handleLogout());
         } else {

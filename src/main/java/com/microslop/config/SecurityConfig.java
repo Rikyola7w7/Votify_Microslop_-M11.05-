@@ -21,7 +21,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            //TODO: Por ahora se permite acceso no autenticado a toda la aplicación, cambiar esto en el futuro
+            //TODO: For now, unauthenticated access is allowed to the entire application, change this in the future
             .authorizeHttpRequests(auth -> auth
                 .anyRequest().permitAll()
             );
