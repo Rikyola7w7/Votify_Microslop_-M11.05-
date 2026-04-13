@@ -63,9 +63,17 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Invalid username or password.");
         }
     }
+
     @Override
-    public User updateProfile(Long id, String username, String email) {
-        return null; // Lo implementarás más adelante
+    public User updateProfile(String currentUsername, String newUsername, String email) {
+
+        User user = userRepository.findByUsernameIgnoreCase(currentUsername)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        user.setUsername(newUsername);
+        user.setEmail(email);
+
+        return userRepository.save(user);
     }
 
     @Override
@@ -82,16 +90,8 @@ public class UserServiceImpl implements UserService {
         }
 
         return session.getAttribute(User.class);
-
-        /* Solo testing
-        User user = new User(); user.setId(1L);
-        user.setUsername("testUser");
-        user.setEmail("test@email.com");
-        user.setPassword("1234");
-
-        return user;
-        */
     }
+
     @Override
     public void logout() {
         VaadinSession.getCurrent().setAttribute(User.class, null);

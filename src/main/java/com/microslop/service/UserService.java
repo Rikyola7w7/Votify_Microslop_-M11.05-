@@ -8,11 +8,11 @@ public interface UserService {
 
     void login(String username, String password);
 
-    User updateProfile(Long id, String username, String email);
+    User updateProfile(String currentUsername, String newUsername, String newEmail);
 
     Optional<User> searchByUsernameIgnoreCase(String username);
 
-    void deleteUser(Long id);
+    void deleteUser(String username);
 
     public User getCurrentUser();
 

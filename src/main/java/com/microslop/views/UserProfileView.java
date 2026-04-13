@@ -99,14 +99,12 @@ public class UserProfileView extends VerticalLayout {
                 .set("background-color", "#1976d2")
                 .set("color", "white");
 
-        // Botón logout
         Button logout = new Button("Cerrar sesión", e -> {
             userService.logout();
             Notification.show("Sesión cerrada");
             UI.getCurrent().navigate("login");
         });
 
-        //Boton eliminar
         Button delete = new Button("Eliminar cuenta", e -> abrirDialogoEliminar());
         delete.getStyle()
                 .set("background-color", "#d32f2f")
@@ -159,8 +157,10 @@ public class UserProfileView extends VerticalLayout {
 
         Button guardar = new Button("Guardar", e -> {
             try {
+                User currentUser = userService.getCurrentUser();
+
                 User updatedUser = userService.updateProfile(
-                        user.getId(),
+                        currentUser.getUsername(),
                         nombre.getValue(),
                         email.getValue()
                 );
@@ -207,7 +207,7 @@ public class UserProfileView extends VerticalLayout {
 
         Button confirmar = new Button("Eliminar", e -> {
             try {
-                userService.deleteUser(user.getId());
+                userService.deleteUser(user.getUsername());
 
                 Notification.show("Cuenta eliminada correctamente");
 

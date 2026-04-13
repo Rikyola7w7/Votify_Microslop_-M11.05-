@@ -14,7 +14,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(name = "fecha_creacion", nullable = false)
+    @Column(name = "creation_date", nullable = false)
     private LocalDateTime creationDate;
 
     @Id
