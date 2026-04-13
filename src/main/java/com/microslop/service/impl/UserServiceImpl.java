@@ -3,12 +3,11 @@ package com.microslop.service.impl;
 import com.microslop.entity.User;
 import com.microslop.repository.UserRepository;
 import com.microslop.service.UserService;
-
+import com.vaadin.flow.server.VaadinSession;
+import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.Optional;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -68,5 +67,33 @@ public class UserServiceImpl implements UserService {
     public User updateProfile(Long id, String username, String email) {
         return null; // Lo implementarás más adelante
     }
-}
 
+    @Override
+    public void deleteUser(String id){
+        userRepository.deleteById(id);
+    }
+
+    @Override
+    public User getCurrentUser() {
+        VaadinSession session = VaadinSession.getCurrent();
+
+        if (session == null) {
+            return null;
+        }
+
+        return session.getAttribute(User.class);
+
+        /* Solo testing
+        User user = new User(); user.setId(1L);
+        user.setUsername("testUser");
+        user.setEmail("test@email.com");
+        user.setPassword("1234");
+
+        return user;
+        */
+    }
+    @Override
+    public void logout() {
+        VaadinSession.getCurrent().setAttribute(User.class, null);
+    }
+}

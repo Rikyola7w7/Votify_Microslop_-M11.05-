@@ -9,5 +9,12 @@ public interface UserService {
     void login(String username, String password);
 
     User updateProfile(Long id, String username, String email);
+
     Optional<User> searchByUsernameIgnoreCase(String username);
+
+    void deleteUser(Long id);
+
+    public User getCurrentUser();
+
+    public void logout();
 }
