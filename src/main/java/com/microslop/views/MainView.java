@@ -22,7 +22,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
@@ -33,7 +32,6 @@ public class MainView extends VerticalLayout {
     private final CompetitionService competitionService;
     private Div cardsContainer;
 
-    @Autowired
     public MainView(CompetitionService competitionService) {
         this.competitionService = competitionService;
         initializeView();
@@ -96,8 +94,9 @@ public class MainView extends VerticalLayout {
         boolean isLoggedIn = isUserLoggedIn();
         
         if (isLoggedIn) {
+            String username = getUserUsername();
             userMenu.addItem("My Projects", event -> {
-                Notification.show("My Projects is under development.");
+                getUI().ifPresent(ui -> ui.navigate(username + "/projects"));
             });
             userMenu.addItem("Edit Profile", event -> {
                 Notification.show("Profile editing is under development.");
@@ -234,5 +233,13 @@ public class MainView extends VerticalLayout {
             return user.substring(0, 1).toUpperCase();
         }
         return "G";
+    }
+
+    private String getUserUsername() {
+        VaadinSession session = VaadinSession.getCurrent();
+        if (session != null && session.getAttribute("username") != null) {
+            return session.getAttribute("username").toString();
+        }
+        return "";
     }
 }

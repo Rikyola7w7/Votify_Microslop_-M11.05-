@@ -24,7 +24,6 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Lob
     @Column(nullable = true)
     private byte[] profilePicture;
 

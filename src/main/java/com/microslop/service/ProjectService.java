@@ -12,4 +12,6 @@ public interface ProjectService {
     java.util.List<Project> listByCompetition(Long competitionId);
 
     java.util.List<Project> getRanking(Long competitionId);
+
+    java.util.List<Project> getUserProjects(String username);
 }

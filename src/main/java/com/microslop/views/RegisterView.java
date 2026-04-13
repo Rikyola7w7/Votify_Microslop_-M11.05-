@@ -99,10 +99,10 @@ public class RegisterView extends VerticalLayout {
 
                 StandardUserCreator standardUserCreator = new StandardUserCreator();
                 User newUser = standardUserCreator.createUser(
-                        nameField.getValue(),
-                        emailField.getValue(),
-                        usernameField.getValue(),
-                        passwordField.getValue(),
+                        nameField.getValue().trim(),
+                        emailField.getValue().trim(),
+                        usernameField.getValue().trim(),
+                        passwordField.getValue().trim(),
                         birthDateLDT,
                         profilePictureBytes
                 );
@@ -116,8 +116,6 @@ public class RegisterView extends VerticalLayout {
                 success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
                 getUI().ifPresent(ui -> ui.navigate(""));
-
-                getUI().ifPresent(ui -> ui.navigate("login"));
 
             } catch (IllegalArgumentException ex) {
                 Notification error = Notification.show(ex.getMessage());

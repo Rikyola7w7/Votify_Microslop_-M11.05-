@@ -18,11 +18,19 @@ public class Project {
     @Column(length = 2000, name = "description")
     private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "competition_id", nullable = false)
     private Competition competition;
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "user_project",
+        joinColumns = @JoinColumn(name = "project_id"),
+        inverseJoinColumns = @JoinColumn(name = "username")
+    )
+    private List<User> participants = new ArrayList<>();
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Vote> votes = new ArrayList<>();
 
     public Project() {}
@@ -59,11 +67,24 @@ public class Project {
     public Competition getCompetition()          { return competition; }
     public void setCompetition(Competition competition) { this.competition = competition; }
 
+    public List<User> getParticipants()                     { return participants; }
+    public void setParticipants(List<User> participants)    { this.participants = participants; }
+
+    public void addParticipant(User user) {
+        if (!participants.contains(user)) {
+            participants.add(user);
+        }
+    }
+
+    public void removeParticipant(User user) {
+        participants.remove(user);
+    }
+
     public List<Vote> getVotes()                 { return votes; }
     public void setVotes(List<Vote> votes)       { this.votes = votes; }
 
     @Override
     public String toString() {
-        return "Project{id=" + id + ", name='" + name + "', votes=" + getTotalVotes() + "}";
+        return "Project{id=" + id + ", name='" + name + "', participants=" + participants.size() + ", votes=" + getTotalVotes() + "}";
     }
 }

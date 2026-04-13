@@ -56,9 +56,12 @@ public class UserServiceImpl implements UserService {
     }
 
     public void login(String username, String password) {
-        User user = userRepository.findByUsernameIgnoreCase(username)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid username or password."));
-
+        Optional<User> userOptional = userRepository.findByUsernameIgnoreCase(username);
+        if (!userOptional.isPresent()) {
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
+        
+        User user = userOptional.get();
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new IllegalArgumentException("Invalid username or password.");
         }
