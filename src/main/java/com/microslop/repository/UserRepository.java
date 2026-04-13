@@ -1,14 +1,12 @@
 package com.microslop.repository;
-
+import java.util.*;
 import com.microslop.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByUsername(String username);
-
-    boolean existsByUsername(String username);
+public interface UserRepository extends JpaRepository<User, String> { //da error pero funciona igual
+    boolean existsByUsernameIgnoreCase(String username);
+    boolean existsByEmailIgnoreCase(String email);
+    java.util.Optional<User> findByUsernameIgnoreCase(String username);
 }
