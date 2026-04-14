@@ -1,12 +1,12 @@
 # My Application README
 
 - TODO Sprint 1
-- [ ] Arreglar barra vertical izquierda
-- [ ] CSS
-- [ ] Barra busqueda en competiciones
-- [ ] Actualizar securityConfig
-- [ ] Arreglar modelo de base de datos para actualizacion/borrado
-- [ ] Borrar exmanple feature
+- [✓] Arreglar barra vertical izquierda
+- [✓] CSS
+- [✓] Barra busqueda en competiciones
+- [✓] Actualizar securityConfig
+- [✓] Arreglar modelo de base de datos para actualizacion/borrado
+- [✓] Borrar exmanple feature
 
 
 ## Project Structure
