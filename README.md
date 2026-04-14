@@ -2,9 +2,10 @@
 
 - TODO Sprint 1
 - [ ] Arreglar barra vertical izquierda
-- [ ] Cohesion entre interfazes
 - [ ] CSS
 - [ ] Barra busqueda en competiciones
+- [ ] Actualizar securityConfig
+- [ ] Arreglar modelo de base de datos para actualizacion/borrado
 
 
 ## Project Structure
