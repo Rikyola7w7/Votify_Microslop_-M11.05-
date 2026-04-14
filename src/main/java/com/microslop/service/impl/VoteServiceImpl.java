@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class VoteServiceImpl implements VoteService {
 
-    private static final int MAX_VOTES_PER_PROJECT = 3;
+    private static final int MAX_VOTES_PER_COMPETITION = 1;
 
     private final VoteRepository voteRepository;
     private final ProjectService projectService;
@@ -44,10 +44,10 @@ public class VoteServiceImpl implements VoteService {
             throw new IllegalStateException("Competition is not active.");
         }
 
-        long alreadyCast = voteRepository.countByUserUsernameAndProjectId(userUsername, projectId);
-        if (alreadyCast >= MAX_VOTES_PER_PROJECT) {
+        long alreadyCast = voteRepository.countByUserInCompetition(userUsername, competition.getId());
+        if (alreadyCast >= MAX_VOTES_PER_COMPETITION) {
             throw new IllegalStateException(
-                "You have already used all " + MAX_VOTES_PER_PROJECT + " votes for this project.");
+                "You already voted for a project in this competition.");
         }
 
         Vote vote = voteFactory.create(user, project);

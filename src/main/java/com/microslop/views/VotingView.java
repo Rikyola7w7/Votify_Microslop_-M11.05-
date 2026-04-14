@@ -1,5 +1,6 @@
 package com.microslop.views;
 
+import com.microslop.entity.Competition;
 import com.microslop.entity.Project;
 import com.microslop.entity.User;
 import com.microslop.service.CompetitionService;
@@ -28,11 +29,9 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-@PageTitle("Votación")
+@PageTitle("Vote")
 @Route("competition/:competitionId/vote")
 public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
@@ -41,9 +40,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private final VoteService        voteService;
 
     private Long competitionId;
-
-    /** Pending selections before submit: projectId -> number of votes chosen (1–3) */
-    private final Map<Long, Integer> selections = new HashMap<>();
 
     private VerticalLayout projectsContainer;
 
@@ -77,7 +73,19 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
 
+        var competition = competitionService.getByIdOrFail(competitionId);
+        if (!competition.isActive()) {
+            Notification.show("This competition is not active and cannot accept votes.", 4000,
+                              Notification.Position.BOTTOM_CENTER);
+            event.forwardTo("competition/" + competitionId);
+            return;
+        }
+
         if (!isLoggedIn()) {
+            VaadinSession session = VaadinSession.getCurrent();
+            if (session != null) {
+                session.setAttribute("postLoginRoute", "competition/" + competitionId + "/vote");
+            }
             event.forwardTo("login");
             return;
         }
@@ -118,7 +126,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         backButton.addClickListener(e ->
             getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId)));
 
-        var title = new H2("VOTACIÓN");
+        var title = new H2("VOTING");
         title.getStyle()
             .set("color", "white")
             .set("margin", "0")
@@ -159,7 +167,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         body.setAlignItems(Alignment.CENTER);
         body.getStyle().set("padding", "2rem 1rem");
 
-        var title = new H1("VOTACIÓN");
+        var title = new H1("VOTING");
         title.getStyle()
             .set("font-size", "2rem")
             .set("font-weight", "800")
@@ -167,7 +175,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             .set("margin", "0 0 0.25rem 0")
             .set("text-align", "center");
 
-        var subtitle = new Span("Competición: " + competitionName);
+        var subtitle = new Span("Competition: " + competitionName);
         subtitle.getStyle()
             .set("font-size", "1rem")
             .set("color", "#555")
@@ -183,32 +191,21 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         projectsContainer.setSpacing(false);
 
         String currentUser = getLoggedUsername();
+        boolean hasVotedInCompetition = voteService.countVotesPerUserInCompetition(currentUser, competitionId) > 0;
         for (Project p : projects) {
             long alreadyVoted = voteService.countVotesByUserAndProject(currentUser, p.getId());
-            projectsContainer.add(buildProjectCard(p, (int) alreadyVoted));
+            projectsContainer.add(buildProjectCard(p, alreadyVoted > 0, hasVotedInCompetition));
         }
 
-        Button submitButton = new Button("Enviar Votos");
-        submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        submitButton.getStyle()
-            .set("background", "#1a3a5c")
-            .set("color", "white")
-            .set("font-size", "1.1rem")
-            .set("font-weight", "700")
-            .set("padding", "0.75rem 3rem")
-            .set("border-radius", "8px")
-            .set("margin-top", "1.5rem")
-            .set("cursor", "pointer");
-        submitButton.addClickListener(e -> handleSubmit(projects));
-
-        body.add(title, subtitle, projectsContainer, submitButton);
+        body.add(title, subtitle, projectsContainer);
         return body;
     }
 
     // ── Project Card ──────────────────────────────────────────────────────
 
-    private Div buildProjectCard(Project p, int alreadyVoted) {
-        boolean locked = alreadyVoted > 0;
+    private Div buildProjectCard(Project p, boolean alreadySelected, boolean hasVotedInCompetition) {
+        long totalVotes = voteService.countVotesByProject(p.getId());
+        boolean otherProjectVoted = hasVotedInCompetition && !alreadySelected;
 
         var card = new Div();
         card.getStyle()
@@ -220,7 +217,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             .set("width", "100%")
             .set("box-sizing", "border-box");
 
-        // ── Left: name + description ──────────────────────────────────────
         var info = new VerticalLayout();
         info.setPadding(false);
         info.setSpacing(false);
@@ -238,61 +234,28 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             .set("color", "#666")
             .set("margin-top", "0.25rem");
 
-        info.add(name, desc);
+        var votesLabel = new Span("Total votes: " + totalVotes);
+        votesLabel.getStyle()
+            .set("font-size", "0.85rem")
+            .set("color", "#444")
+            .set("margin-top", "0.75rem");
 
-        // ── Center: vote circles ──────────────────────────────────────────
-        var pointsLabel = new Span("Puntos otorgados");
-        pointsLabel.getStyle()
-            .set("font-size", "0.8rem")
-            .set("color", "#555")
-            .set("font-weight", "600")
-            .set("display", "block")
-            .set("margin-bottom", "0.4rem")
-            .set("text-align", "center");
+        info.add(name, desc, votesLabel);
 
-        Div[] circles = new Div[3];
-        for (int i = 0; i < 3; i++) {
-            circles[i] = buildCircle(i + 1, false);
-        }
+        var voteButton = new Button(alreadySelected ? "Project selected" : otherProjectVoted ? "Already voted" : "Vote for this project");
+        voteButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        voteButton.setEnabled(!alreadySelected && !otherProjectVoted);
+        voteButton.getStyle()
+            .set("background", alreadySelected || otherProjectVoted ? "#cccccc" : "#1a3a5c")
+            .set("color", "white")
+            .set("font-weight", "700")
+            .set("padding", "0.75rem 1.25rem")
+            .set("border-radius", "8px")
+            .set("cursor", "pointer");
+        voteButton.addClickListener(e -> handleVote(p));
 
-        if (locked) {
-            for (int i = 0; i < alreadyVoted && i < 3; i++) {
-                setCircleSelected(circles[i], true);
-                circles[i].getStyle().set("cursor", "default").set("opacity", "0.75");
-            }
-        } else {
-            if (selections.containsKey(p.getId())) {
-                int pending = selections.get(p.getId());
-                for (int i = 0; i < pending; i++) {
-                    setCircleSelected(circles[i], true);
-                }
-            }
-            for (int i = 0; i < 3; i++) {
-                final int votes = i + 1;
-                circles[i].addClickListener(e -> {
-                    selections.put(p.getId(), votes);
-                    for (int j = 0; j < 3; j++) {
-                        setCircleSelected(circles[j], (j + 1) <= votes);
-                    }
-                });
-            }
-        }
-
-        var circlesRow = new HorizontalLayout(circles[0], circles[1], circles[2]);
-        circlesRow.setSpacing(true);
-        circlesRow.setPadding(false);
-        circlesRow.setAlignItems(Alignment.CENTER);
-
-        var pointsSection = new VerticalLayout();
-        pointsSection.setPadding(false);
-        pointsSection.setSpacing(false);
-        pointsSection.setAlignItems(Alignment.CENTER);
-        pointsSection.getStyle().set("min-width", "160px");
-        pointsSection.add(pointsLabel, circlesRow);
-
-        // ── Right: comments button ────────────────────────────────────────
-        Button commentsBtn = new Button("Añadir comentarios");
-        commentsBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        Button commentsBtn = new Button("Add Comments");
+        commentsBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         commentsBtn.getStyle()
             .set("background", "#2d6a9f")
             .set("color", "white")
@@ -303,7 +266,12 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             .set("cursor", "pointer");
         commentsBtn.addClickListener(e -> openCommentsDialog(p.getName()));
 
-        var row = new HorizontalLayout(info, pointsSection, commentsBtn);
+        var actions = new VerticalLayout(voteButton, commentsBtn);
+        actions.setPadding(false);
+        actions.setSpacing(true);
+        actions.setAlignItems(Alignment.END);
+
+        var row = new HorizontalLayout(info, actions);
         row.setWidthFull();
         row.setAlignItems(Alignment.CENTER);
         row.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
@@ -312,91 +280,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         card.add(row);
         return card;
-    }
-
-    // ── Circle helpers ────────────────────────────────────────────────────
-
-    private Div buildCircle(int number, boolean selected) {
-        var circle = new Div();
-        circle.add(new Span(String.valueOf(number)));
-        circle.getStyle()
-            .set("width", "44px")
-            .set("height", "44px")
-            .set("border-radius", "50%")
-            .set("display", "flex")
-            .set("align-items", "center")
-            .set("justify-content", "center")
-            .set("font-weight", "700")
-            .set("font-size", "1rem")
-            .set("cursor", "pointer")
-            .set("transition", "background 0.15s, color 0.15s, box-shadow 0.15s")
-            .set("user-select", "none");
-        setCircleSelected(circle, selected);
-        return circle;
-    }
-
-    private void setCircleSelected(Div circle, boolean selected) {
-        if (selected) {
-            circle.getStyle()
-                .set("background", "#1a3a5c")
-                .set("color", "white")
-                .set("box-shadow", "0 0 0 3px #2d6a9f55");
-        } else {
-            circle.getStyle()
-                .set("background", "#e0e5ea")
-                .set("color", "#555")
-                .set("box-shadow", "none");
-        }
-    }
-
-    // ── Submit ────────────────────────────────────────────────────────────
-
-    private void handleSubmit(List<Project> projects) {
-        String username = getLoggedUsername();
-
-        if (selections.isEmpty()) {
-            showNotification("You haven't selected any votes yet.", NotificationVariant.LUMO_CONTRAST);
-            return;
-        }
-
-        int submitted = 0;
-        int skipped   = 0;
-
-        for (Map.Entry<Long, Integer> entry : selections.entrySet()) {
-            Long projectId = entry.getKey();
-            int  voteCount = entry.getValue();
-
-            long alreadyCast = voteService.countVotesByUserAndProject(username, projectId);
-            if (alreadyCast > 0) {
-                skipped++;
-                continue;
-            }
-
-            for (int i = 0; i < voteCount; i++) {
-                try {
-                    voteService.submitVote(username, projectId);
-                    submitted++;
-                } catch (IllegalStateException ex) {
-                    break;
-                }
-            }
-        }
-
-        selections.clear();
-
-        if (submitted > 0) {
-            String msg = "Votes submitted!"
-                + (skipped > 0 ? " (" + skipped + " project(s) already had your vote)" : "");
-            showNotification(msg, NotificationVariant.LUMO_SUCCESS);
-        } else {
-            showNotification("All selected projects already had your vote.", NotificationVariant.LUMO_CONTRAST);
-        }
-
-        projectsContainer.removeAll();
-        for (Project p : projects) {
-            long given = voteService.countVotesByUserAndProject(username, p.getId());
-            projectsContainer.add(buildProjectCard(p, (int) given));
-        }
     }
 
     // ── Comments dialog ───────────────────────────────────────────────────
@@ -453,6 +336,22 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         return (username != null && !username.isEmpty())
                ? username.substring(0, 1).toUpperCase()
                : "G";
+    }
+
+    private void handleVote(Project project) {
+        String username = getLoggedUsername();
+        if (username == null) {
+            showNotification("You must be logged in to vote.", NotificationVariant.LUMO_CONTRAST);
+            return;
+        }
+
+        try {
+            voteService.submitVote(username, project.getId());
+            showNotification("Vote submitted!", NotificationVariant.LUMO_SUCCESS);
+            getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId));
+        } catch (IllegalStateException ex) {
+            showNotification(ex.getMessage(), NotificationVariant.LUMO_CONTRAST);
+        }
     }
 
     private void showNotification(String msg, NotificationVariant variant) {
