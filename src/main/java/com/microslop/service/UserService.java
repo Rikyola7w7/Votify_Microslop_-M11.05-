@@ -14,7 +14,9 @@ public interface UserService {
 
     void deleteUser(String username);
 
-    public User getCurrentUser();
+    User getCurrentUser();
 
-    public void logout();
+    void logout();
+
+    String getUserDisplayName();
 }

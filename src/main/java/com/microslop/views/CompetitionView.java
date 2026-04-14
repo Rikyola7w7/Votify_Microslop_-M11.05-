@@ -21,6 +21,7 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
+import com.microslop.service.UserService;
 
 import java.text.NumberFormat;
 import java.util.List;
@@ -42,6 +43,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     private final CompetitionService competitionService;
     private final ProjectService     projectService;
     private final VoteService        voteService;
+    private final UserService userService;
 
     // ── State ────────────────────────────────────────────────────────────────
 
@@ -56,10 +58,12 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
 
     public CompetitionView(CompetitionService competitionService,
                            ProjectService projectService,
-                           VoteService voteService) {
+                           VoteService voteService,
+                           UserService userService) {
         this.competitionService = competitionService;
         this.projectService     = projectService;
         this.voteService        = voteService;
+        this.userService = userService;
 
         setSizeFull();
         setPadding(false);
@@ -146,7 +150,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
 
         // Avatar with dropdown menu
         var avatar = new Avatar();
-        avatar.setName(getUserDisplayName());
+        avatar.setName(userService.getUserDisplayName());
         avatar.getStyle()
             .set("cursor", "pointer")
             .set("background", "#2d6a9f");
@@ -399,12 +403,4 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         }
         return null;
     }
-
-    private String getUserDisplayName() {
-        VaadinSession session = VaadinSession.getCurrent();
-        if (session != null && session.getAttribute("username") != null) {
-            String user = session.getAttribute("username").toString();
-            return user.substring(0, 1).toUpperCase();
-        }
-        return "G";
-    }}
+}

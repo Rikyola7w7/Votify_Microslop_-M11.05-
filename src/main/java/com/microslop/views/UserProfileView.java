@@ -4,6 +4,7 @@ import com.microslop.entity.User;
 import com.microslop.service.UserService;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.*;
@@ -51,10 +52,13 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
 
         H2 title = new H2("My Profile");
 
-        Image avatar = new Image("https://via.placeholder.com/120", "avatar");
-        avatar.setWidth("120px");
-        avatar.setHeight("120px");
-        avatar.getStyle().set("border-radius", "50%");
+        var avatar = new Avatar();
+        avatar.setName(userService.getUserDisplayName());
+        avatar.getStyle()
+                .set("cursor", "pointer")
+                .set("background", "#2d6a9f")
+                .set("width", "48px")
+                .set("height", "48px");
 
         usernameText = new Span();
         emailText = new Span();

@@ -110,4 +110,14 @@ public class UserServiceImpl implements UserService {
     public void logout() {
         VaadinSession.getCurrent().setAttribute(User.class, null);
     }
+
+    @Override
+    public String getUserDisplayName() {
+        VaadinSession session = VaadinSession.getCurrent();
+        if (session != null && session.getAttribute("username") != null) {
+            String user = session.getAttribute("username").toString();
+            return user.substring(0, 1).toUpperCase();
+        }
+        return "G";
+    }
 }
