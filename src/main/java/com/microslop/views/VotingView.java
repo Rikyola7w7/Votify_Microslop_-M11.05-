@@ -4,6 +4,7 @@ import com.microslop.entity.Competition;
 import com.microslop.entity.Project;
 import com.microslop.entity.User;
 import com.microslop.service.CompetitionService;
+import com.microslop.service.ProjectCommentService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.VoteService;
 
@@ -38,6 +39,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private final CompetitionService competitionService;
     private final ProjectService     projectService;
     private final VoteService        voteService;
+    private final ProjectCommentService commentService;
 
     private Long competitionId;
 
@@ -45,10 +47,12 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
     public VotingView(CompetitionService competitionService,
                       ProjectService projectService,
-                      VoteService voteService) {
+                      VoteService voteService,
+                      ProjectCommentService commentService) {
         this.competitionService = competitionService;
         this.projectService     = projectService;
         this.voteService        = voteService;
+        this.commentService     = commentService;
 
         setSizeFull();
         setPadding(false);
@@ -264,7 +268,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             .set("white-space", "normal")
             .set("min-width", "130px")
             .set("cursor", "pointer");
-        commentsBtn.addClickListener(e -> openCommentsDialog(p.getName()));
+        commentsBtn.addClickListener(e -> openCommentsDialog(p.getName(), p.getId()));
 
         var actions = new VerticalLayout(voteButton, commentsBtn);
         actions.setPadding(false);
@@ -284,7 +288,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
     // ── Comments dialog ───────────────────────────────────────────────────
 
-    private void openCommentsDialog(String projectName) {
+    private void openCommentsDialog(String projectName, Long projectId) {
         var dialog = new Dialog();
         dialog.setHeaderTitle("Comments for: " + projectName);
 
@@ -294,8 +298,20 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         textArea.setPlaceholder("Write your feedback here...");
 
         var saveBtn = new Button("Save", e -> {
-            showNotification("Comment saved! (feature under development)", NotificationVariant.LUMO_SUCCESS);
-            dialog.close();
+            String commentText = textArea.getValue().trim();
+            if (commentText.isEmpty()) {
+                showNotification("Comment cannot be empty.", NotificationVariant.LUMO_CONTRAST);
+                return;
+            }
+
+            try {
+                String username = getLoggedUsername();
+                commentService.saveComment(projectId, username, commentText);
+                showNotification("Comment saved successfully!", NotificationVariant.LUMO_SUCCESS);
+                dialog.close();
+            } catch (Exception ex) {
+                showNotification("Error saving comment: " + ex.getMessage(), NotificationVariant.LUMO_ERROR);
+            }
         });
         saveBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
