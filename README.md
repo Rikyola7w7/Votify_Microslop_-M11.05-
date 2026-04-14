@@ -6,7 +6,6 @@
 - [ ] Barra busqueda en competiciones
 - [ ] Actualizar securityConfig
 - [ ] Arreglar modelo de base de datos para actualizacion/borrado
-- [ ] Borrar exmanple feature
 
 
 ## Project Structure
