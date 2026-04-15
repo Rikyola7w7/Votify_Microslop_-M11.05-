@@ -19,7 +19,7 @@ import com.vaadin.flow.server.VaadinSession;
 @PageTitle("Login | Votify")
 public class LoginView extends VerticalLayout {
 
-    // Usamos la interfaz UserService, que es la mejor práctica
+    // We use the UserService interface, which is the best practice
     private final UserService userService;
 
     public LoginView(UserService userService) {
@@ -44,30 +44,40 @@ public class LoginView extends VerticalLayout {
             }
 
             try {
-                // 1. Intentamos hacer el login. Al ser void, si falla lanzará excepción.
+                // 1. Attempting to login. If it fails, it will throw an exception.
                 this.userService.login(username, password);
 
-                // 2. Si llegamos a esta línea, el login fue un éxito. 
-                // Extraemos el usuario usando el método que ya tienes en UserService.
+                // 2. If we reach this point, login was successful.
+                // Retrieve the user using the method already in UserService.
                 User loggedUser = this.userService.searchByUsernameIgnoreCase(username)
                         .orElseThrow(() -> new IllegalStateException("Error: User not found after successful login."));
 
-                // 3. Establecemos la sesión de Vaadin con el usuario recuperado
-                VaadinSession.getCurrent().setAttribute(User.class, loggedUser);
-                VaadinSession.getCurrent().setAttribute("username", loggedUser.getUsername());
+                // 3. Set Vaadin session with the retrieved user
+                VaadinSession session = VaadinSession.getCurrent();
+                if (session != null) {
+                    session.setAttribute(User.class, loggedUser);
+                    session.setAttribute("username", loggedUser.getUsername());
+                }
 
-                // 4. Mostramos notificación de éxito y navegamos al inicio
+                // 4. Show success notification
                 Notification success = Notification.show("Login successful!");
                 success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
-                getUI().ifPresent(ui -> ui.navigate(""));
+                // 5. Navegamos a la ruta de retorno, si existe.
+                String destination = "";
+                if (session != null && session.getAttribute("postLoginRoute") != null) {
+                    destination = session.getAttribute("postLoginRoute").toString();
+                    session.setAttribute("postLoginRoute", null);
+                }
+                String finalDestination = destination.isBlank() ? "" : destination;
+                getUI().ifPresent(ui -> ui.navigate(finalDestination));
 
             } catch (IllegalArgumentException ex) {
-                // Captura el error de credenciales inválidas ("Invalid username or password.")
+                // Captures invalid credentials error ("Invalid username or password.")
                 Notification error = Notification.show(ex.getMessage());
                 error.addThemeVariants(NotificationVariant.LUMO_ERROR);
             } catch (IllegalStateException ex) {
-                // Por si acaso ocurre un error extraño recuperando el usuario
+                // In case an unexpected error occurs retrieving the user
                 Notification error = Notification.show("An unexpected error occurred.");
                 error.addThemeVariants(NotificationVariant.LUMO_ERROR);
             }

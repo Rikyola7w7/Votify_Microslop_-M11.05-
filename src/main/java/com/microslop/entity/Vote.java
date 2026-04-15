@@ -4,13 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(
-    name = "vote", 
-    uniqueConstraints = @UniqueConstraint(
-        name = "uk_user_project",
-        columnNames = {"username", "project_id"}
-    )
-)
+@Table(name = "vote")
 public class Vote {
 
     @Id
@@ -36,9 +30,9 @@ public class Vote {
     }
 
     public Vote(User user, Project project) {
-        this.user   = user;
-        this.project  = project;
-        this.voteDate = LocalDateTime.now();
+        this.user      = user;
+        this.project   = project;
+        this.voteDate  = LocalDateTime.now();
     }
 
     public Long getId()                        { return id; }
@@ -47,22 +41,15 @@ public class Vote {
     public LocalDateTime getVoteDate()         { return voteDate; }
     public void setVoteDate(LocalDateTime f)   { this.voteDate = f; }
 
-    public String getComment()                 { return comment; }
-    public void setComment(String comment)     { this.comment = comment; }
+    public User getUser()                      { return user; }
+    public void setUser(User u)                { this.user = u; }
 
-    public User getUser()                { return user; }
-    public void setUser(User u)          { this.user = u; }
-
-    public Project getProject()              { return project; }
-    public void setProject(Project p)        { this.project = p; }
+    public Project getProject()                { return project; }
+    public void setProject(Project p)          { this.project = p; }
 
     @Override
     public String toString() {
-        return "Vote{" +
-                "id=" + id +
-                ", user=" + user +
-                ", project=" + project +
-                ", voteDate=" + voteDate +
-                '}';
+        return "Vote{id=" + id + ", user=" + user + ", project=" + project +
+               ", voteDate=" + voteDate + '}';
     }
 }

@@ -33,6 +33,9 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Vote> votes = new ArrayList<>();
 
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProjectComment> comments = new ArrayList<>();
+
     public Project() {}
 
     public Project(String name, String description, Competition competition) {
@@ -83,8 +86,25 @@ public class Project {
     public List<Vote> getVotes()                 { return votes; }
     public void setVotes(List<Vote> votes)       { this.votes = votes; }
 
+    public List<ProjectComment> getComments()    { return comments; }
+    public void setComments(List<ProjectComment> comments) { this.comments = comments; }
+
+    public void addComment(ProjectComment comment) {
+        comments.add(comment);
+        comment.setProject(this);
+    }
+
+    public void removeComment(ProjectComment comment) {
+        comments.remove(comment);
+        comment.setProject(null);
+    }
+
+    public long getCommentCount() {
+        return comments.size();
+    }
+
     @Override
     public String toString() {
-        return "Project{id=" + id + ", name='" + name + "', participants=" + participants.size() + ", votes=" + getTotalVotes() + "}";
+        return "Project{id=" + id + ", name='" + name + "', votes=" + getTotalVotes() + ", comments=" + getCommentCount() + "}";
     }
 }

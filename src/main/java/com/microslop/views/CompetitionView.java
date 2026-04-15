@@ -1,6 +1,7 @@
 package com.microslop.views;
 
 import com.microslop.entity.Project;
+import com.microslop.entity.User;
 import com.microslop.service.ProjectService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.VoteService;
@@ -137,16 +138,23 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         boolean isLoggedIn = isUserLoggedInCompetition();
         Button voteButton = new Button("Vote");
         voteButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-        voteButton.setEnabled(isLoggedIn);
         voteButton.getStyle()
             .set("font-weight", "600")
             .set("color", "#1a3a5c")
             .set("background", "white")
             .set("border", "none")
             .set("cursor", "pointer");
-        voteButton.addClickListener(e -> getUI().ifPresent(ui -> 
-            ui.navigate("competition/" + competitionId + "/vote")
-        ));
+        voteButton.addClickListener(e -> {
+            if (isUserLoggedInCompetition()) {
+                getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/vote"));
+            } else {
+                VaadinSession session = VaadinSession.getCurrent();
+                if (session != null) {
+                    session.setAttribute("postLoginRoute", "competition/" + competitionId + "/vote");
+                }
+                getUI().ifPresent(ui -> ui.navigate("login"));
+            }
+        });
 
         // Avatar with dropdown menu
         var avatar = new Avatar();
@@ -384,7 +392,9 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     }
     private boolean isUserLoggedInCompetition() {
         VaadinSession session = VaadinSession.getCurrent();
-        return session != null && (session.getAttribute("userId") != null || session.getAttribute("username") != null);
+        return session != null && (session.getAttribute(User.class) != null
+               || session.getAttribute("userId") != null
+               || session.getAttribute("username") != null);
     }
 
     private void handleLogoutCompetition() {

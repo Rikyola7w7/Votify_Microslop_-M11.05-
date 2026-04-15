@@ -5,9 +5,6 @@ import com.microslop.entity.User;
 import com.microslop.entity.Vote;
 import org.springframework.stereotype.Component;
 
-/**
- * Factory for creating Vote instances with validation.
- */
 @Component
 public class VoteFactory {
 
@@ -18,7 +15,6 @@ public class VoteFactory {
         if (project == null) {
             throw new IllegalArgumentException("Vote must be associated with a project.");
         }
-
         return new Vote(user, project);
     }
 }

@@ -46,11 +46,11 @@ public class RegisterView extends VerticalLayout {
         H2 title = new H2("Create your account on Votify");
 
         TextField usernameField = new TextField("Username");
-        TextField nameField = new TextField("Full name");
+        TextField nameField = new TextField("Full Name");
         EmailField emailField = new EmailField("Email");
         PasswordField passwordField = new PasswordField("Password");
-        PasswordField confirmPasswordField = new PasswordField("Confirm password");
-        DatePicker birthDateField = new DatePicker("Birth date");
+        PasswordField confirmPasswordField = new PasswordField("Confirm Password");
+        DatePicker birthDateField = new DatePicker("Birth Date");
 
         MemoryBuffer buffer = new MemoryBuffer();
         Upload uploadProfilePicture = new Upload();
@@ -112,7 +112,7 @@ public class RegisterView extends VerticalLayout {
                 VaadinSession.getCurrent().setAttribute(User.class, newUser);
                 VaadinSession.getCurrent().setAttribute("username", newUser.getUsername());
 
-                Notification success = Notification.show("Account created!");
+                Notification success = Notification.show("Account created successfully!");
                 success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
                 getUI().ifPresent(ui -> ui.navigate(""));
