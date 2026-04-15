@@ -1,10 +1,11 @@
 package com.microslop.views;
 
 import com.microslop.entity.Project;
+import com.microslop.entity.ProjectComment;
 import com.microslop.entity.User;
-import com.microslop.entity.Vote;
 import com.microslop.service.ProjectService;
-import com.microslop.views.components.CommentCardComponent;
+import com.microslop.service.ProjectCommentService;
+import com.microslop.views.components.ProjectCommentCardComponent;
 import com.microslop.base.ui.MainLayout;
 
 import com.vaadin.flow.component.avatar.Avatar;
@@ -35,14 +36,16 @@ import java.util.List;
 public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObserver {
 
     private final ProjectService projectService;
+    private final ProjectCommentService projectCommentService;
     private String currentUsername;
     private Long projectId;
     private Project project;
     private Div commentsContainer;
 
     @Autowired
-    public ProjectDetailsView(ProjectService projectService) {
+    public ProjectDetailsView(ProjectService projectService, ProjectCommentService projectCommentService) {
         this.projectService = projectService;
+        this.projectCommentService = projectCommentService;
         initializeView();
     }
 
@@ -143,30 +146,19 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
 
             commentsContainer.add(projectTitle);
 
-            // Get votes/comments
-            List<Vote> votes = project.getVotes();
+            // Get comments from ProjectComment table
+            List<ProjectComment> comments = projectCommentService.getCommentsByProject(projectId);
 
-            if (votes == null || votes.isEmpty()) {
+            if (comments == null || comments.isEmpty()) {
                 showNoCommentsMessage();
             } else {
-                votes.forEach(vote -> {
-                    if (vote.getComment() != null && !vote.getComment().trim().isEmpty()) {
-                        commentsContainer.add(createCommentCard(vote));
-                    }
-                });
-
-                // If no votes have comments
-                if (votes.stream().noneMatch(v -> v.getComment() != null && !v.getComment().trim().isEmpty())) {
-                    showNoCommentsMessage();
-                }
+                comments.forEach(comment -> 
+                    commentsContainer.add(new ProjectCommentCardComponent(comment))
+                );
             }
         } catch (Exception e) {
             showErrorNotification("Error loading project: " + e.getMessage());
         }
-    }
-
-    private Div createCommentCard(Vote vote) {
-        return new CommentCardComponent(vote);
     }
 
     private void showNoCommentsMessage() {

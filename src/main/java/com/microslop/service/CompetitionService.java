@@ -23,4 +23,8 @@ public interface CompetitionService {
     List<Competition> getFinishedCompetitions();
 
     List<Competition> findAll();
+
+    List<Competition> searchByName(String searchTerm);
+
+    List<Competition> searchByName(List<Competition> competitions, String searchTerm);
 }

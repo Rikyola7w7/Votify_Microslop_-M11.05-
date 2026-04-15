@@ -2,6 +2,7 @@ package com.microslop.views;
 
 import com.microslop.entity.Competition;
 import com.microslop.service.CompetitionService;
+import com.microslop.service.UserService;
 import com.microslop.views.components.CompetitionCardComponent;
 import com.microslop.base.ui.MainLayout;
 
@@ -30,11 +31,13 @@ import java.util.List;
 public class MainView extends VerticalLayout {
 
     private final CompetitionService competitionService;
+    private final UserService userService;
     private Div cardsContainer;
     private List<Competition> currentCompetitions;
 
-    public MainView(CompetitionService competitionService) {
+    public MainView(CompetitionService competitionService, UserService userService) {
         this.competitionService = competitionService;
+        this.userService = userService;
         initializeView();
         // Load all competitions initially to fix the "3 in DB, only 2 showing" issue
         refreshCompetitions("All");
@@ -82,7 +85,7 @@ public class MainView extends VerticalLayout {
             .set("font-weight", "600");
 
         Avatar userAvatar = new Avatar();
-        userAvatar.setName(getUserDisplayName());
+        userAvatar.setName(userService.getUserDisplayName());
         userAvatar.getStyle()
             .set("width", "48px")
             .set("height", "48px")
@@ -92,10 +95,10 @@ public class MainView extends VerticalLayout {
         ContextMenu userMenu = new ContextMenu(userAvatar);
         userMenu.setOpenOnClick(true);
         
-        boolean isLoggedIn = isUserLoggedIn();
+        boolean isLoggedIn = userService.isLoggedIn();
         
         if (isLoggedIn) {
-            String username = getUserUsername();
+            String username = userService.getCurrentUsername();
             userMenu.addItem("My Projects", event -> {
                 getUI().ifPresent(ui -> ui.navigate(username + "/projects"));
             });
@@ -194,16 +197,8 @@ public class MainView extends VerticalLayout {
     }
 
     private void filterByName(String searchTerm) {
-        if (searchTerm == null || searchTerm.trim().isEmpty()) {
-            // If search is cleared, display all current competitions
-            displayCompetitions(currentCompetitions);
-        } else {
-            // Filter competitions by name (case-insensitive)
-            List<Competition> filtered = currentCompetitions.stream()
-                .filter(comp -> comp.getName().toLowerCase().contains(searchTerm.toLowerCase()))
-                .toList();
-            displayCompetitions(filtered);
-        }
+        List<Competition> filtered = competitionService.searchByName(currentCompetitions, searchTerm);
+        displayCompetitions(filtered);
     }
 
     private void showNoCompetitionsMessage(String type) {
@@ -215,11 +210,6 @@ public class MainView extends VerticalLayout {
             .set("color", "#666")
             .set("padding", "60px 20px");
         cardsContainer.add(noDataDiv);
-    }
-
-    private boolean isUserLoggedIn() {
-        VaadinSession session = VaadinSession.getCurrent();
-        return session != null && (session.getAttribute("userId") != null || session.getAttribute("username") != null);
     }
 
     private void handleLogout() {
@@ -236,22 +226,5 @@ public class MainView extends VerticalLayout {
         n.addThemeVariants(NotificationVariant.LUMO_ERROR);
         n.setDuration(5000);
         n.open();
-    }
-
-    private String getUserDisplayName() {
-        VaadinSession session = VaadinSession.getCurrent();
-        if (session != null && session.getAttribute("username") != null) {
-            String user = session.getAttribute("username").toString();
-            return user.substring(0, 1).toUpperCase();
-        }
-        return "G";
-    }
-
-    private String getUserUsername() {
-        VaadinSession session = VaadinSession.getCurrent();
-        if (session != null && session.getAttribute("username") != null) {
-            return session.getAttribute("username").toString();
-        }
-        return "";
     }
 }

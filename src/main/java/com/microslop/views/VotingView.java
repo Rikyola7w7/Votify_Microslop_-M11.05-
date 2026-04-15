@@ -5,6 +5,7 @@ import com.microslop.entity.Project;
 import com.microslop.entity.User;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.ProjectCommentService;
+import com.microslop.service.UserService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.VoteService;
 
@@ -40,6 +41,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private final ProjectService     projectService;
     private final VoteService        voteService;
     private final ProjectCommentService commentService;
+    private final UserService userService;
 
     private Long competitionId;
 
@@ -48,11 +50,13 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     public VotingView(CompetitionService competitionService,
                       ProjectService projectService,
                       VoteService voteService,
-                      ProjectCommentService commentService) {
+                      ProjectCommentService commentService,
+                      UserService userService) {
         this.competitionService = competitionService;
         this.projectService     = projectService;
         this.voteService        = voteService;
         this.commentService     = commentService;
+        this.userService        = userService;
 
         setSizeFull();
         setPadding(false);
@@ -85,7 +89,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
 
-        if (!isLoggedIn()) {
+        if (!userService.isLoggedIn()) {
             VaadinSession session = VaadinSession.getCurrent();
             if (session != null) {
                 session.setAttribute("postLoginRoute", "competition/" + competitionId + "/vote");
@@ -147,7 +151,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         rightSection.setPadding(false);
 
         var avatar = new Avatar();
-        avatar.setName(getUserDisplayName());
+        avatar.setName(userService.getUserDisplayName());
         avatar.getStyle().set("cursor", "pointer").set("background", "#2d6a9f");
 
         ContextMenu userMenu = new ContextMenu(avatar);
@@ -194,7 +198,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         projectsContainer.setPadding(false);
         projectsContainer.setSpacing(false);
 
-        String currentUser = getLoggedUsername();
+        String currentUser = userService.getCurrentUsername();
         boolean hasVotedInCompetition = voteService.countVotesPerUserInCompetition(currentUser, competitionId) > 0;
         for (Project p : projects) {
             long alreadyVoted = voteService.countVotesByUserAndProject(currentUser, p.getId());
@@ -305,7 +309,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             }
 
             try {
-                String username = getLoggedUsername();
+                String username = userService.getCurrentUsername();
                 commentService.saveComment(projectId, username, commentText);
                 showNotification("Comment saved successfully!", NotificationVariant.LUMO_SUCCESS);
                 dialog.close();
@@ -332,31 +336,9 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
     // ── Utilities ─────────────────────────────────────────────────────────
 
-    private boolean isLoggedIn() {
-        VaadinSession s = VaadinSession.getCurrent();
-        return s != null && (s.getAttribute(User.class) != null
-               || s.getAttribute("username") != null);
-    }
-
-    private String getLoggedUsername() {
-        VaadinSession s = VaadinSession.getCurrent();
-        if (s == null) return null;
-        User u = s.getAttribute(User.class);
-        if (u != null) return u.getUsername();
-        Object attr = s.getAttribute("username");
-        return attr != null ? attr.toString() : null;
-    }
-
-    private String getUserDisplayName() {
-        String username = getLoggedUsername();
-        return (username != null && !username.isEmpty())
-               ? username.substring(0, 1).toUpperCase()
-               : "G";
-    }
-
     private void handleVote(Project project) {
-        String username = getLoggedUsername();
-        if (username == null) {
+        String username = userService.getCurrentUsername();
+        if (username == null || username.isEmpty()) {
             showNotification("You must be logged in to vote.", NotificationVariant.LUMO_CONTRAST);
             return;
         }

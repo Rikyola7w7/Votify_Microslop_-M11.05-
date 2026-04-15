@@ -135,7 +135,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         rightSection.setPadding(false);
 
         // Vote for Projects button
-        boolean isLoggedIn = isUserLoggedInCompetition();
+        boolean isLoggedIn = userService.isLoggedIn();
         Button voteButton = new Button("Vote");
         voteButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         voteButton.getStyle()
@@ -145,7 +145,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             .set("border", "none")
             .set("cursor", "pointer");
         voteButton.addClickListener(e -> {
-            if (isUserLoggedInCompetition()) {
+            if (userService.isLoggedIn()) {
                 getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/vote"));
             } else {
                 VaadinSession session = VaadinSession.getCurrent();
@@ -169,7 +169,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         
         if (isLoggedIn) {
             userMenu.addItem("My Projects", event -> {
-                String username = getLoggedInUsername();
+                String username = userService.getCurrentUsername();
                 if (username != null) {
                     getUI().ifPresent(ui -> ui.navigate(username + "/projects"));
                 } else {
@@ -177,14 +177,21 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
                 }
             });
             userMenu.addItem("Edit Profile", event -> {
-                String username = getLoggedInUsername();
+                String username = userService.getCurrentUsername();
                 if (username != null) {
                     getUI().ifPresent(ui -> ui.navigate(username));
                 } else {
                     Notification.show("Unable to load your profile.");
                 }
             });
-            userMenu.addItem("Sign Out", event -> handleLogoutCompetition());
+            userMenu.addItem("Sign Out", event -> {
+                VaadinSession session = VaadinSession.getCurrent();
+                if (session != null) {
+                    session.getSession().invalidate();
+                }
+                getUI().ifPresent(ui -> ui.navigate(""));
+                Notification.show("Logged out successfully");
+            });
         } else {
             userMenu.addItem("Sign In", event -> getUI().ifPresent(ui -> ui.navigate("login")));
             userMenu.addItem("Register", event -> getUI().ifPresent(ui -> ui.navigate("register")));
@@ -389,28 +396,5 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
 
     private String formatNumber(long num) {
         return NumberFormat.getNumberInstance(Locale.US).format(num);
-    }
-    private boolean isUserLoggedInCompetition() {
-        VaadinSession session = VaadinSession.getCurrent();
-        return session != null && (session.getAttribute(User.class) != null
-               || session.getAttribute("userId") != null
-               || session.getAttribute("username") != null);
-    }
-
-    private void handleLogoutCompetition() {
-        VaadinSession session = VaadinSession.getCurrent();
-        if (session != null) {
-            session.getSession().invalidate();
-        }
-        getUI().ifPresent(ui -> ui.navigate(""));
-        Notification.show("Logged out successfully");
-    }
-
-    private String getLoggedInUsername() {
-        VaadinSession session = VaadinSession.getCurrent();
-        if (session != null && session.getAttribute("username") != null) {
-            return session.getAttribute("username").toString();
-        }
-        return null;
     }
 }

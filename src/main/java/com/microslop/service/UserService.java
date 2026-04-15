@@ -19,4 +19,8 @@ public interface UserService {
     void logout();
 
     String getUserDisplayName();
+
+    boolean isLoggedIn();
+
+    String getCurrentUsername();
 }

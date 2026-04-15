@@ -76,4 +76,26 @@ public class CompetitionServiceImpl implements CompetitionService {
     public List<Competition> getFinishedCompetitions() {
         return competitionRepository.findByActiveFalse();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Competition> searchByName(String searchTerm) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return findAll();
+        }
+        return competitionRepository.findAll().stream()
+            .filter(comp -> comp.getName().toLowerCase().contains(searchTerm.toLowerCase()))
+            .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Competition> searchByName(List<Competition> competitions, String searchTerm) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return competitions;
+        }
+        return competitions.stream()
+            .filter(comp -> comp.getName().toLowerCase().contains(searchTerm.toLowerCase()))
+            .toList();
+    }
 }

@@ -120,4 +120,19 @@ public class UserServiceImpl implements UserService {
         }
         return "G";
     }
+
+    @Override
+    public boolean isLoggedIn() {
+        VaadinSession session = VaadinSession.getCurrent();
+        return session != null && (session.getAttribute("userId") != null || session.getAttribute("username") != null);
+    }
+
+    @Override
+    public String getCurrentUsername() {
+        VaadinSession session = VaadinSession.getCurrent();
+        if (session != null && session.getAttribute("username") != null) {
+            return session.getAttribute("username").toString();
+        }
+        return "";
+    }
 }
