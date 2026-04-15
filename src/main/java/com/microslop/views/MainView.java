@@ -31,6 +31,7 @@ public class MainView extends VerticalLayout {
 
     private final CompetitionService competitionService;
     private Div cardsContainer;
+    private List<Competition> currentCompetitions;
 
     public MainView(CompetitionService competitionService) {
         this.competitionService = competitionService;
@@ -166,32 +167,43 @@ public class MainView extends VerticalLayout {
         try {
             // Use competitionService.getActiveCompetitions() for Active, 
             // and findAll() for all competitions.
-            List<Competition> competitions;
             
             if (filterType.equals("Active")) {
-                competitions = competitionService.getActiveCompetitions();
+                currentCompetitions = competitionService.getActiveCompetitions();
             } else if (filterType.equals("Finished")) {
-                competitions = competitionService.getFinishedCompetitions();
+                currentCompetitions = competitionService.getFinishedCompetitions();
             } else {
-                competitions = competitionService.findAll();
+                currentCompetitions = competitionService.findAll();
             }
 
-            cardsContainer.removeAll();
-            if (competitions.isEmpty()) {
-                showNoCompetitionsMessage(filterType);
-            } else {
-                competitions.forEach(competition ->
-                    cardsContainer.add(new CompetitionCardComponent(competition))
-                );
-            }
+            displayCompetitions(currentCompetitions);
         } catch (Exception e) {
             showErrorNotification("Error loading competitions: " + e.getMessage());
         }
     }
 
+    private void displayCompetitions(List<Competition> competitions) {
+        cardsContainer.removeAll();
+        if (competitions.isEmpty()) {
+            showNoCompetitionsMessage("matching");
+        } else {
+            competitions.forEach(competition ->
+                cardsContainer.add(new CompetitionCardComponent(competition))
+            );
+        }
+    }
+
     private void filterByName(String searchTerm) {
-        // Implementation for real-time search filtering
-        Notification.show("Filtering by: " + searchTerm);
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            // If search is cleared, display all current competitions
+            displayCompetitions(currentCompetitions);
+        } else {
+            // Filter competitions by name (case-insensitive)
+            List<Competition> filtered = currentCompetitions.stream()
+                .filter(comp -> comp.getName().toLowerCase().contains(searchTerm.toLowerCase()))
+                .toList();
+            displayCompetitions(filtered);
+        }
     }
 
     private void showNoCompetitionsMessage(String type) {
