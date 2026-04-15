@@ -47,6 +47,9 @@ public class Vote {
     public Project getProject()                { return project; }
     public void setProject(Project p)          { this.project = p; }
 
+    public String getComment()                 { return comment; }
+    public void setComment(String c)           { this.comment = c; }
+
     @Override
     public String toString() {
         return "Vote{id=" + id + ", user=" + user + ", project=" + project +
