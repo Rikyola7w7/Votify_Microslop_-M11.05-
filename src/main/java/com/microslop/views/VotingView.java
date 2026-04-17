@@ -1,14 +1,11 @@
 package com.microslop.views;
 
-import com.microslop.entity.Competition;
 import com.microslop.entity.Project;
-import com.microslop.entity.User;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.ProjectCommentService;
 import com.microslop.service.UserService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.VoteService;
-
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -30,7 +27,6 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
-
 import java.util.List;
 
 @PageTitle("Vote")

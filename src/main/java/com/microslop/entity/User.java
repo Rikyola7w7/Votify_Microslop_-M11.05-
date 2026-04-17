@@ -1,7 +1,6 @@
 package com.microslop.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity

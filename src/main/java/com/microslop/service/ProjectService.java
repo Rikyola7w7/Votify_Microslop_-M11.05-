@@ -1,4 +1,5 @@
 package com.microslop.service;
+
 import com.microslop.entity.Project;
 
 public interface ProjectService {
