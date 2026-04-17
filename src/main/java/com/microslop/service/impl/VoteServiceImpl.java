@@ -34,7 +34,7 @@ public class VoteServiceImpl implements VoteService {
     // ── Write ─────────────────────────────────────────────────────────────
 
     @Override
-    public Vote submitVote(String userUsername, Long projectId) {
+    public void submitVote(String userUsername, Long projectId) {
         var user        = userService.searchByUsernameIgnoreCase(userUsername)
                             .orElseThrow(() -> new IllegalStateException("User not found."));
         var project     = projectService.getById(projectId);
@@ -51,7 +51,7 @@ public class VoteServiceImpl implements VoteService {
         }
 
         Vote vote = voteFactory.create(user, project);
-        return voteRepository.save(vote);
+        voteRepository.save(vote);
     }
 
     // ── Read ──────────────────────────────────────────────────────────────

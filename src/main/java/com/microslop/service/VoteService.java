@@ -4,7 +4,7 @@ import com.microslop.entity.Vote;
 
 public interface VoteService {
 
-    Vote submitVote(String userUsername, Long projectId);
+    void submitVote(String userUsername, Long projectId);
 
     long countVotesByProject(Long projectId);
 
