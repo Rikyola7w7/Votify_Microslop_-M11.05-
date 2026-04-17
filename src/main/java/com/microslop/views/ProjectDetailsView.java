@@ -1,6 +1,7 @@
 package com.microslop.views;
 
 import com.microslop.entity.Project;
+import com.microslop.entity.ProjectComment;
 import com.microslop.entity.User;
 import com.microslop.entity.Vote;
 import com.microslop.service.ProjectService;
@@ -138,22 +139,32 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
 
             commentsContainer.add(projectTitle);
 
-            // Get votes/comments
+            // Get all comments (both votes with comments and ProjectComment)
             List<Vote> votes = project.getVotes();
+            List<ProjectComment> comments = project.getComments();
+            
+            boolean hasComments = false;
 
-            if (votes == null || votes.isEmpty()) {
-                showNoCommentsMessage();
-            } else {
-                votes.forEach(vote -> {
+            // Display votes with comments
+            if (votes != null) {
+                for (Vote vote : votes) {
                     if (vote.getComment() != null && !vote.getComment().trim().isEmpty()) {
                         commentsContainer.add(createCommentCard(vote));
+                        hasComments = true;
                     }
-                });
-
-                // If no votes have comments
-                if (votes.stream().noneMatch(v -> v.getComment() != null && !v.getComment().trim().isEmpty())) {
-                    showNoCommentsMessage();
                 }
+            }
+            
+            // Display ProjectComment entries
+            if (comments != null) {
+                for (ProjectComment comment : comments) {
+                    commentsContainer.add(createProjectCommentCard(comment));
+                    hasComments = true;
+                }
+            }
+            
+            if (!hasComments) {
+                showNoCommentsMessage();
             }
         } catch (Exception e) {
             showErrorNotification("Error loading project: " + e.getMessage());
@@ -162,6 +173,10 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
 
     private Div createCommentCard(Vote vote) {
         return new CommentCardComponent(vote);
+    }
+
+    private Div createProjectCommentCard(ProjectComment comment) {
+        return new CommentCardComponent(comment);
     }
 
     private void showNoCommentsMessage() {
