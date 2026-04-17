@@ -3,6 +3,8 @@ package com.microslop.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -29,6 +31,12 @@ public class User {
 
     @Column(nullable = false)
     private LocalDateTime birthDate;    
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Vote> votes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProjectComment> comments = new ArrayList<>();
 
     public User() {
         this.creationDate = LocalDateTime.now();
@@ -93,6 +101,12 @@ public class User {
     public void setBirthDate(LocalDateTime birthDate) {
         this.birthDate = birthDate;
     }
+
+    public List<Vote> getVotes() { return votes; }
+    public void setVotes(List<Vote> votes) { this.votes = votes; }
+
+    public List<ProjectComment> getComments() { return comments; }
+    public void setComments(List<ProjectComment> comments) { this.comments = comments; }
 
     @Override
     public String toString() {

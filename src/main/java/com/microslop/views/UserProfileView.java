@@ -218,6 +218,7 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
                 Notification.show("Account deleted successfully");
 
                 userService.logout();
+                dialog.close();
                 UI.getCurrent().navigate("login");
 
             } catch (Exception ex) {
