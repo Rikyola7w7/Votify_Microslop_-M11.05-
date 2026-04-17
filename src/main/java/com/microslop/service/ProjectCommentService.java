@@ -1,7 +1,6 @@
 package com.microslop.service;
 
 import com.microslop.entity.ProjectComment;
-
 import java.util.List;
 
 public interface ProjectCommentService {

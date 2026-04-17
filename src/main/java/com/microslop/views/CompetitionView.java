@@ -1,7 +1,6 @@
 package com.microslop.views;
 
 import com.microslop.entity.Project;
-import com.microslop.entity.User;
 import com.microslop.service.ProjectService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.VoteService;
@@ -23,7 +22,6 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import com.microslop.service.UserService;
-
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;

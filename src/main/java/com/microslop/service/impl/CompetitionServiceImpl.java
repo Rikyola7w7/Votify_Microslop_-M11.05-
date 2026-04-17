@@ -5,7 +5,6 @@ import com.microslop.repository.CompetitionRepository;
 import com.microslop.service.CompetitionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Optional;
 

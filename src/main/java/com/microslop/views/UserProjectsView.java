@@ -5,7 +5,6 @@ import com.microslop.entity.User;
 import com.microslop.service.ProjectService;
 import com.microslop.views.components.ProjectCardComponent;
 import com.microslop.base.ui.MainLayout;
-
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H1;
@@ -22,9 +21,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
-
 import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.List;
 
 @PageTitle("My Projects | Votify")
