@@ -27,12 +27,12 @@ public class ProjectCommentServiceImpl implements ProjectCommentService {
     }
 
     @Override
-    public ProjectComment saveComment(Long projectId, String username, String commentText) {
+    public void saveComment(Long projectId, String username, String commentText) {
         var project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
 
         var comment = commentFactory.create(project, username, commentText);
-        return commentRepository.save(comment);
+        commentRepository.save(comment);
     }
 
     @Override
