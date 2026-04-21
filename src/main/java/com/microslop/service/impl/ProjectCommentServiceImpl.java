@@ -39,7 +39,7 @@ public class ProjectCommentServiceImpl implements ProjectCommentService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
 
         var comment = commentFactory.create(project, user, commentText);
-        return commentRepository.save(comment);
+        commentRepository.save(comment);
     }
 
     @Override
