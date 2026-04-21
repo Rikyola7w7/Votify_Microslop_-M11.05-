@@ -1,6 +1,5 @@
 package com.microslop.service;
 
-import com.microslop.entity.Vote;
 
 public interface VoteService {
 
