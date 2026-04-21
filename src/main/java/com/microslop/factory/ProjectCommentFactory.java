@@ -2,6 +2,7 @@ package com.microslop.factory;
 
 import com.microslop.entity.Project;
 import com.microslop.entity.ProjectComment;
+import com.microslop.entity.User;
 import org.springframework.stereotype.Component;
 
 /**
@@ -10,14 +11,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class ProjectCommentFactory {
 
-    public ProjectComment create(Project project, String username, String commentText) {
+    public ProjectComment create(Project project, User user, String commentText) {
         if (project == null) {
             throw new IllegalArgumentException("Comment must be associated with a project.");
         }
-        validateNotEmpty(username, "Username cannot be empty.");
+        if (user == null) {
+            throw new IllegalArgumentException("Comment must be associated with a user.");
+        }
         validateNotEmpty(commentText, "Comment text cannot be empty.");
 
-        return new ProjectComment(project, username, commentText);
+        return new ProjectComment(project, user, commentText);
     }
 
     private void validateNotEmpty(String value, String message) {

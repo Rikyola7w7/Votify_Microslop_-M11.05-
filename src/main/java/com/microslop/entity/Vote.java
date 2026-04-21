@@ -17,7 +17,7 @@ public class Vote {
     @Column(name = "comment", length = 500)
     private String comment;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JoinColumn(name = "username", nullable = false)
     private User user;
 

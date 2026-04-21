@@ -15,8 +15,9 @@ public class ProjectComment {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @Column(name = "username", nullable = false, length = 255)
-    private String username;
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @JoinColumn(name = "username", nullable = false)
+    private User user;
 
     @Column(name = "comment_text", nullable = false, length = 2000)
     private String commentText;
@@ -28,9 +29,9 @@ public class ProjectComment {
         this.creationDate = LocalDateTime.now();
     }
 
-    public ProjectComment(Project project, String username, String commentText) {
+    public ProjectComment(Project project, User user, String commentText) {
         this.project = project;
-        this.username = username;
+        this.user = user;
         this.commentText = commentText;
         this.creationDate = LocalDateTime.now();
     }
@@ -41,8 +42,11 @@ public class ProjectComment {
     public Project getProject() { return project; }
     public void setProject(Project project) { this.project = project; }
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+
+    public String getUsername() { return user != null ? user.getUsername() : null; }
+    public void setUsername(String username) { /* Campo deprecated - usar setUser() */ }
 
     public String getCommentText() { return commentText; }
     public void setCommentText(String commentText) { this.commentText = commentText; }
@@ -55,7 +59,7 @@ public class ProjectComment {
         return "ProjectComment{" +
                 "id=" + id +
                 ", project=" + project +
-                ", username='" + username + '\'' +
+                ", user=" + (user != null ? user.getUsername() : "null") +
                 ", creationDate=" + creationDate +
                 '}';
     }
