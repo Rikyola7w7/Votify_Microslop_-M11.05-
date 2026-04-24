@@ -28,10 +28,25 @@ public class Competition {
     @Column(nullable = false, name = "active")
     private boolean active = true;
 
+    @Column(name = "event_type", length = 100)
+    private String eventType;
+
+    @Column(name = "creation_date", nullable = false)
+    private LocalDateTime createdAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = false)
+    private User creator;
+
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Project> projects = new ArrayList<>();
 
-    public Competition() {}
+    @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Category> categories = new ArrayList<>();
+
+    public Competition() {
+        this.createdAt = LocalDateTime.now();
+    }
 
     public Competition(String name, String description,
                        LocalDateTime startDate, LocalDateTime endDate) {
@@ -39,6 +54,7 @@ public class Competition {
         this.description = description;
         this.startdate = startDate;
         this.endDate = endDate;
+        this.createdAt = LocalDateTime.now();
     }
 
     public void addProject(Project project) {
@@ -49,6 +65,16 @@ public class Competition {
     public void removeProject(Project project) {
         projects.remove(project);
         project.setCompetition(null);
+    }
+
+    public void addCategory(Category category) {
+        categories.add(category);
+        category.setCompetition(this);
+    }
+
+    public void removeCategory(Category category) {
+        categories.remove(category);
+        category.setCompetition(null);
     }
 
     public Long getId()                         { return id; }
@@ -69,11 +95,23 @@ public class Competition {
     public boolean isActive()                   { return active; }
     public void setActive(boolean active)       { this.active = active; }
 
+    public String getEventType()                { return eventType; }
+    public void setEventType(String eventType)  { this.eventType = eventType; }
+
+    public LocalDateTime getCreatedAt()         { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public User getCreator()                    { return creator; }
+    public void setCreator(User creator)        { this.creator = creator; }
+
     public List<Project> getProjects()          { return projects; }
     public void setProjects(List<Project> p)    { this.projects = p; }
 
+    public List<Category> getCategories()       { return categories; }
+    public void setCategories(List<Category> c) { this.categories = c; }
+
     @Override
     public String toString() {
-        return "Competition{id=" + id + ", name='" + name + "', active=" + active + "}";
+        return "Competition{id=" + id + ", name='" + name + "', active=" + active + ", eventType='" + eventType + "'}";
     }
 }
