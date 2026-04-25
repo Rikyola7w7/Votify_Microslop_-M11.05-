@@ -1,11 +1,17 @@
 package com.microslop.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "project")
+@Data
+@NoArgsConstructor
+@ToString(exclude = {"participants", "votes", "comments"})
 public class Project {
 
     @Id 
@@ -36,8 +42,6 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<ProjectComment> comments = new ArrayList<>();
 
-    public Project() {}
-
     public Project(String name, String description, Competition competition) {
         this.name       = name;
         this.description  = description;
@@ -58,21 +62,6 @@ public class Project {
         return votes.size();
     }
 
-    public Long getId()                          { return id; }
-    public void setId(Long id)                   { this.id = id; }
-
-    public String getName()                      { return name; }
-    public void setName(String name)             { this.name = name; }
-
-    public String getDescription()               { return description; }
-    public void setDescription(String description)  { this.description = description; }
-
-    public Competition getCompetition()          { return competition; }
-    public void setCompetition(Competition competition) { this.competition = competition; }
-
-    public List<User> getParticipants()                     { return participants; }
-    public void setParticipants(List<User> participants)    { this.participants = participants; }
-
     public void addParticipant(User user) {
         if (!participants.contains(user)) {
             participants.add(user);
@@ -82,12 +71,6 @@ public class Project {
     public void removeParticipant(User user) {
         participants.remove(user);
     }
-
-    public List<Vote> getVotes()                 { return votes; }
-    public void setVotes(List<Vote> votes)       { this.votes = votes; }
-
-    public List<ProjectComment> getComments()    { return comments; }
-    public void setComments(List<ProjectComment> comments) { this.comments = comments; }
 
     public void addComment(ProjectComment comment) {
         comments.add(comment);
@@ -101,10 +84,5 @@ public class Project {
 
     public long getCommentCount() {
         return comments.size();
-    }
-
-    @Override
-    public String toString() {
-        return "Project{id=" + id + ", name='" + name + "', votes=" + getTotalVotes() + ", comments=" + getCommentCount() + "}";
     }
 }

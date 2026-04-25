@@ -1,6 +1,6 @@
 package com.microslop.service.impl;
 
-import com.microslop.dto.CreateCategoryDTO;
+import com.microslop.dto.CategoryDTO;
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
 import com.microslop.repository.CategoryRepository;
@@ -37,7 +37,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Category createCategory(Long competitionId, CreateCategoryDTO categoryDTO) {
+    public Category createCategory(Long competitionId, CategoryDTO categoryDTO) {
         // Validate competition exists
         Competition competition = competitionRepository.findById(competitionId)
                 .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + competitionId));

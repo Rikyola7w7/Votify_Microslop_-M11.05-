@@ -1,11 +1,9 @@
 # My Application README
 
-- TODO Sprint 1
-- [ ] Arreglar barra vertical izquierda
-- [ ] CSS
-- [ ] Barra busqueda en competiciones
-- [ ] Actualizar securityConfig
-- [ ] Arreglar modelo de base de datos para actualizacion/borrado
+- TODO Sprint 2
+- [ ] Aplicar Lombok?
+- [ ] Patron DTO
+- [ ] Patron builder
 
 
 

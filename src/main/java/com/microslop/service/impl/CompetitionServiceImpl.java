@@ -1,7 +1,7 @@
 package com.microslop.service.impl;
 
-import com.microslop.dto.CreateCategoryDTO;
-import com.microslop.dto.CreateCompetitionDTO;
+import com.microslop.dto.CategoryDTO;
+import com.microslop.dto.CompetitionDTO;
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
 import com.microslop.entity.User;
@@ -38,7 +38,7 @@ public class CompetitionServiceImpl implements CompetitionService {
     }
 
     @Override
-    public Competition createCompetition(String creatorUsername, CreateCompetitionDTO competitionDTO) {
+    public Competition createCompetition(String creatorUsername, CompetitionDTO competitionDTO) {
         // Validate and retrieve creator user
         User creator = userRepository.findByUsernameIgnoreCase(creatorUsername)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + creatorUsername));
@@ -57,7 +57,7 @@ public class CompetitionServiceImpl implements CompetitionService {
         Competition savedCompetition = competitionRepository.save(competition);
 
         // Create and add categories
-        for (CreateCategoryDTO categoryDTO : competitionDTO.getCategories()) {
+        for (CategoryDTO categoryDTO : competitionDTO.getCategories()) {
             Category category = new Category();
             category.setName(categoryDTO.getName());
             category.setWeight(categoryDTO.getWeight());

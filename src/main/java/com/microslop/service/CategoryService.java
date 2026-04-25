@@ -1,6 +1,6 @@
 package com.microslop.service;
 
-import com.microslop.dto.CreateCategoryDTO;
+import com.microslop.dto.CategoryDTO;
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
 
@@ -26,7 +26,7 @@ public interface CategoryService {
      * @param categoryDTO the DTO containing category data
      * @return the created and saved category
      */
-    Category createCategory(Long competitionId, CreateCategoryDTO categoryDTO);
+    Category createCategory(Long competitionId, CategoryDTO categoryDTO);
 
     /**
      * Delete a category by its ID.

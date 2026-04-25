@@ -1,7 +1,7 @@
 package com.microslop.views;
 
-import com.microslop.dto.CreateCategoryDTO;
-import com.microslop.dto.CreateCompetitionDTO;
+import com.microslop.dto.CategoryDTO;
+import com.microslop.dto.CompetitionDTO;
 import com.microslop.entity.Category;
 import com.microslop.entity.User;
 import com.microslop.service.CompetitionService;
@@ -52,7 +52,7 @@ public class CreateCompetitionView extends VerticalLayout {
     private final ComboBox<String> categoryCombo;
     private final IntegerField categoryWeightField;
     private final VerticalLayout categoriesContainer;
-    private final List<CreateCategoryDTO> selectedCategories;
+    private final List<CategoryDTO> selectedCategories;
 
     public CreateCompetitionView(CompetitionService competitionService, UserService userService) {
         this.competitionService = competitionService;
@@ -210,7 +210,7 @@ public class CreateCompetitionView extends VerticalLayout {
         }
 
         // Create and add category
-        CreateCategoryDTO category = new CreateCategoryDTO(categoryName, weight);
+        CategoryDTO category = new CategoryDTO(categoryName, weight);
         selectedCategories.add(category);
         displayCategory(category);
 
@@ -222,7 +222,7 @@ public class CreateCompetitionView extends VerticalLayout {
     /**
      * Display a category in the categories container.
      */
-    private void displayCategory(CreateCategoryDTO category) {
+    private void displayCategory(CategoryDTO category) {
         HorizontalLayout categoryItem = new HorizontalLayout();
         categoryItem.setAlignItems(Alignment.CENTER);
         categoryItem.setWidth("100%");
@@ -292,7 +292,7 @@ public class CreateCompetitionView extends VerticalLayout {
 
         try {
             // Create DTO
-            CreateCompetitionDTO dto = new CreateCompetitionDTO(
+            CompetitionDTO dto = new CompetitionDTO(
                     competitionName,
                     description,
                     startDate.atTime(LocalTime.MIN),
@@ -301,7 +301,7 @@ public class CreateCompetitionView extends VerticalLayout {
             );
 
             // Add categories
-            for (CreateCategoryDTO category : selectedCategories) {
+            for (CategoryDTO category : selectedCategories) {
                 dto.addCategory(category);
             }
 

@@ -1,6 +1,6 @@
 package com.microslop.service;
 
-import com.microslop.dto.CreateCompetitionDTO;
+import com.microslop.dto.CompetitionDTO;
 import com.microslop.entity.Competition;
 import java.util.List;
 import java.util.Optional;
@@ -20,7 +20,7 @@ public interface CompetitionService {
      * @param competitionDTO the DTO containing competition data
      * @return the created competition
      */
-    Competition createCompetition(String creatorUsername, CreateCompetitionDTO competitionDTO);
+    Competition createCompetition(String creatorUsername, CompetitionDTO competitionDTO);
 
     void delete(Long id);
 
