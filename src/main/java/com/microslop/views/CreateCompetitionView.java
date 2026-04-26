@@ -101,9 +101,10 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         );
 
         // Competition Name
-        competitionNameField = new TextField("Competition Name");
-        competitionNameField.setPlaceholder("Enter competition name");
+        competitionNameField = new TextField("Competition Name *");
+        competitionNameField.setPlaceholder("Enter competition name (max 20 characters)");
         competitionNameField.setWidth("100%");
+        competitionNameField.setMaxLength(20);
 
         // Description
         descriptionArea = new TextArea("Description");
@@ -112,18 +113,18 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         descriptionArea.setHeight("100px");
 
         // Event Type
-        eventTypeCombo = new ComboBox<>("Event Type");
+        eventTypeCombo = new ComboBox<>("Event Type *");
         eventTypeCombo.setItems("Tech", "Art", "Music", "Sports", "Business", "Education", "Other");
         eventTypeCombo.setAllowCustomValue(true);
         eventTypeCombo.setWidth("100%");
 
         // Start Date (Voting Window)
-        startDatePicker = new DatePicker("Start Date");
+        startDatePicker = new DatePicker("Start Date *");
         startDatePicker.setWidth("100%");
         startDatePicker.setValue(LocalDate.now());
 
         // End Date (Voting Window)
-        endDatePicker = new DatePicker("End Date");
+        endDatePicker = new DatePicker("End Date *");
         endDatePicker.setWidth("100%");
         endDatePicker.setValue(LocalDate.now().plusDays(7));
 
@@ -401,48 +402,25 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         judgesContainer.add(judgeItem);
     }
     private void createCompetition() {
-        // Validation
+        // Get and trim values
         String competitionName = competitionNameField.getValue().trim();
         String description = descriptionArea.getValue().trim();
         String eventType = eventTypeCombo.getValue();
         LocalDate startDate = startDatePicker.getValue();
         LocalDate endDate = endDatePicker.getValue();
 
-        // Validate required fields
-        if (competitionName.isEmpty()) {
-            Notification notification = Notification.show("Competition name is required.");
-            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            return;
-        }
+        // Validate all required fields using service
+        List<String> errors = competitionService.validateCompetitionCreation(
+                competitionName,
+                eventType,
+                startDate,
+                endDate,
+                selectedCategories
+        );
 
-        if (eventType == null || eventType.trim().isEmpty()) {
-            Notification notification = Notification.show("Event type is required.");
-            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            return;
-        }
-
-        if (startDate == null || endDate == null) {
-            Notification notification = Notification.show("Voting window dates are required.");
-            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            return;
-        }
-
-        if (endDate.isBefore(startDate)) {
-            Notification notification = Notification.show("End date must be after start date.");
-            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            return;
-        }
-
-        // Validate categories total weight = 100%
-        if (selectedCategories.isEmpty()) {
-            Notification notification = Notification.show("At least one category is required.");
-            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            return;
-        }
-
-        int totalCategoryWeight = selectedCategories.stream().mapToInt(CategoryDTO::getWeight).sum();
-        if (totalCategoryWeight != 100) {
-            Notification notification = Notification.show("Category weights must total exactly 100%. Current total: " + totalCategoryWeight + "%");
+        if (!errors.isEmpty()) {
+            String errorMessage = String.join("\n", errors);
+            Notification notification = Notification.show(errorMessage);
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
@@ -498,7 +476,12 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
      * Navigate back to the previous page.
      */
     private void navigateBack() {
-        getUI().ifPresent(ui -> ui.navigate(""));
+        String username = userService.getCurrentUsername();
+        if (username != null) {
+            getUI().ifPresent(ui -> ui.navigate(username + "/competitions"));
+        } else {
+            getUI().ifPresent(ui -> ui.navigate(""));
+        }
     }
 
     /**

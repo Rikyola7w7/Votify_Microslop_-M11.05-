@@ -1,7 +1,9 @@
 package com.microslop.service;
 
 import com.microslop.dto.CompetitionDTO;
+import com.microslop.dto.CategoryDTO;
 import com.microslop.entity.Competition;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,4 +43,17 @@ public interface CompetitionService {
     List<Competition> searchByName(String searchTerm);
 
     List<Competition> searchByName(List<Competition> competitions, String searchTerm);
+
+    /**
+     * Validate competition creation input.
+     * @param competitionName the competition name
+     * @param eventType the event type
+     * @param startDate the start date
+     * @param endDate the end date
+     * @param categories the list of categories
+     * @return a list of error messages (empty if valid)
+     */
+    List<String> validateCompetitionCreation(String competitionName, String eventType, 
+                                            LocalDate startDate, LocalDate endDate, 
+                                            List<CategoryDTO> categories);
 }

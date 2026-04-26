@@ -11,6 +11,8 @@ import com.microslop.repository.UserRepository;
 import com.microslop.service.CompetitionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -146,5 +148,47 @@ public class CompetitionServiceImpl implements CompetitionService {
         return competitions.stream()
             .filter(comp -> comp.getName().toLowerCase().contains(searchTerm.toLowerCase()))
             .toList();
+    }
+
+    @Override
+    public List<String> validateCompetitionCreation(String competitionName, String eventType, 
+                                                    LocalDate startDate, LocalDate endDate, 
+                                                    List<CategoryDTO> categories) {
+        List<String> errors = new ArrayList<>();
+
+        // Validate competition name
+        if (competitionName == null || competitionName.trim().isEmpty()) {
+            errors.add("• Competition name is required");
+        } else if (competitionName.length() > 20) {
+            errors.add("• Competition name cannot exceed 20 characters");
+        }
+
+        // Validate event type
+        if (eventType == null || eventType.trim().isEmpty()) {
+            errors.add("• Event type is required");
+        }
+
+        // Validate dates
+        if (startDate == null) {
+            errors.add("• Start date is required");
+        }
+        if (endDate == null) {
+            errors.add("• End date is required");
+        }
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            errors.add("• End date must be after start date");
+        }
+
+        // Validate categories
+        if (categories == null || categories.isEmpty()) {
+            errors.add("• At least one category is required");
+        } else {
+            int totalWeight = categories.stream().mapToInt(CategoryDTO::getWeight).sum();
+            if (totalWeight != 100) {
+                errors.add("• Category weights must total exactly 100% (current: " + totalWeight + "%)");
+            }
+        }
+
+        return errors;
     }
 }
