@@ -2,7 +2,6 @@ package com.microslop.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +21,7 @@ public class CompetitionDTO {
     private LocalDateTime endDate;
     private String eventType;
     private List<CategoryDTO> categories = new ArrayList<>();
+    private List<String> judgeUsernames = new ArrayList<>();
 
     public CompetitionDTO(String name, String description,
                           LocalDateTime startDate, LocalDateTime endDate,
@@ -35,5 +35,9 @@ public class CompetitionDTO {
 
     public void addCategory(CategoryDTO category) {
         this.categories.add(category);
+    }
+
+    public void addJudgeUsername(String username) {
+        this.judgeUsernames.add(username);
     }
 }

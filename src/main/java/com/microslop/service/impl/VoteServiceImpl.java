@@ -43,7 +43,7 @@ public class VoteServiceImpl implements VoteService {
             throw new IllegalStateException("Competition is not active.");
         }
 
-        long alreadyCast = voteRepository.countByUserInCompetition(userUsername, competition.getId());
+        long alreadyCast = voteRepository.countByUserInCompetition(user.getId(), competition.getId());
         if (alreadyCast >= MAX_VOTES_PER_COMPETITION) {
             throw new IllegalStateException(
                 "You already voted for a project in this competition.");
@@ -63,13 +63,13 @@ public class VoteServiceImpl implements VoteService {
 
     @Override
     @Transactional(readOnly = true)
-    public long countVotesByUserAndProject(String userUsername, Long projectId) {
-        return voteRepository.countByUserUsernameAndProjectId(userUsername, projectId);
+    public long countVotesByUserAndProject(Long userId, Long projectId) {
+        return voteRepository.countByUserIdAndProjectId(userId, projectId);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public long countVotesPerUserInCompetition(String userId, Long competitionId) {
+    public long countVotesPerUserInCompetition(Long userId, Long competitionId) {
         return voteRepository.countByUserInCompetition(userId, competitionId);
     }
 }

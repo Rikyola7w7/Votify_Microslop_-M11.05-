@@ -7,7 +7,7 @@ public interface VoteService {
 
     long countVotesByProject(Long projectId);
 
-    long countVotesByUserAndProject(String userUsername, Long projectId);
+    long countVotesByUserAndProject(Long userId, Long projectId);
 
-    long countVotesPerUserInCompetition(String userId, Long competitionId);
+    long countVotesPerUserInCompetition(Long userId, Long competitionId);
 }

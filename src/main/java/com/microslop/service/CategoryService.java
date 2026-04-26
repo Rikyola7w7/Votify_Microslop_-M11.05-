@@ -2,7 +2,6 @@ package com.microslop.service;
 
 import com.microslop.dto.CategoryDTO;
 import com.microslop.entity.Category;
-import com.microslop.entity.Competition;
 
 import java.util.List;
 import java.util.Optional;

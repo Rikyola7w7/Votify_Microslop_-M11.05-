@@ -4,10 +4,10 @@ import com.microslop.dto.CategoryDTO;
 import com.microslop.dto.CompetitionDTO;
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
+import com.microslop.entity.Judge;
 import com.microslop.entity.User;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.UserRepository;
-import com.microslop.service.CategoryService;
 import com.microslop.service.CompetitionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,14 +20,11 @@ public class CompetitionServiceImpl implements CompetitionService {
 
     private final CompetitionRepository competitionRepository;
     private final UserRepository userRepository;
-    private final CategoryService categoryService;
 
     public CompetitionServiceImpl(CompetitionRepository competitionRepository,
-                                 UserRepository userRepository,
-                                 CategoryService categoryService) {
+                                 UserRepository userRepository) {
         this.competitionRepository = competitionRepository;
         this.userRepository = userRepository;
-        this.categoryService = categoryService;
     }
 
     // ── Write Operations ────────────────────────────────────────────────────────
@@ -39,8 +36,8 @@ public class CompetitionServiceImpl implements CompetitionService {
 
     @Override
     public Competition createCompetition(String creatorUsername, CompetitionDTO competitionDTO) {
-        // Validate and retrieve creator user
-        User creator = userRepository.findByUsernameIgnoreCase(creatorUsername)
+        // Validate creator user exists
+        userRepository.findByUsernameIgnoreCase(creatorUsername)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + creatorUsername));
 
         // Create new competition from DTO
@@ -50,7 +47,7 @@ public class CompetitionServiceImpl implements CompetitionService {
         competition.setStartDate(competitionDTO.getStartDate());
         competition.setEndDate(competitionDTO.getEndDate());
         competition.setEventType(competitionDTO.getEventType());
-        competition.setCreator(creator);
+        competition.setCreatedBy(creatorUsername);
         competition.setActive(true);
 
         // Save competition to get generated ID
@@ -65,7 +62,16 @@ public class CompetitionServiceImpl implements CompetitionService {
             savedCompetition.addCategory(category);
         }
 
-        // Save competition with categories
+        // Create and add judges
+        for (String judgeUsername : competitionDTO.getJudgeUsernames()) {
+            User judge = userRepository.findByUsernameIgnoreCase(judgeUsername)
+                    .orElseThrow(() -> new IllegalArgumentException("Judge user not found: " + judgeUsername));
+            
+            Judge judgeEntity = new Judge(judge, savedCompetition);
+            savedCompetition.addJudge(judgeEntity);
+        }
+
+        // Save competition with categories and judges
         return competitionRepository.save(savedCompetition);
     }
 

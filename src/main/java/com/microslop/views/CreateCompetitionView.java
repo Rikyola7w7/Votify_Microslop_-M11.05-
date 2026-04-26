@@ -1,8 +1,8 @@
 package com.microslop.views;
 
+import com.microslop.base.ui.MainLayout;
 import com.microslop.dto.CategoryDTO;
 import com.microslop.dto.CompetitionDTO;
-import com.microslop.entity.Category;
 import com.microslop.entity.User;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.UserService;
@@ -22,12 +22,13 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,11 +36,11 @@ import java.util.List;
 /**
  * View for creating a new competition.
  * Provides a form with fields for competition details, event type, voting window, and categories.
- * Route: /create-competition
+ * Route: /:username/competitions/create-competition
  */
-@Route("create-competition")
+@Route(value = ":username/competitions/create-competition", layout = MainLayout.class)
 @PageTitle("Create Competition | Votify")
-public class CreateCompetitionView extends VerticalLayout {
+public class CreateCompetitionView extends VerticalLayout implements BeforeEnterObserver {
 
     private final CompetitionService competitionService;
     private final UserService userService;
@@ -49,15 +50,38 @@ public class CreateCompetitionView extends VerticalLayout {
     private final ComboBox<String> eventTypeCombo;
     private final DatePicker startDatePicker;
     private final DatePicker endDatePicker;
-    private final ComboBox<String> categoryCombo;
+    private final TextField categoryNameField;
     private final IntegerField categoryWeightField;
     private final VerticalLayout categoriesContainer;
+    private final Span categoryTotalWeightSpan;
     private final List<CategoryDTO> selectedCategories;
+    
+    private final TextField judgeUsernameField;
+    private final VerticalLayout judgesContainer;
+    private final List<String> selectedJudges;
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        String username = event.getRouteParameters().get("username").orElse(null);
+
+        if (username == null || username.isEmpty()) {
+            event.forwardTo("");
+            return;
+        }
+
+        String loggedInUser = userService.getCurrentUsername();
+        if (loggedInUser == null || !loggedInUser.equals(username)) {
+            event.forwardTo("");
+            Notification.show("Access denied. You can only create competitions for your own account.");
+            return;
+        }
+    }
 
     public CreateCompetitionView(CompetitionService competitionService, UserService userService) {
         this.competitionService = competitionService;
         this.userService = userService;
         this.selectedCategories = new ArrayList<>();
+        this.selectedJudges = new ArrayList<>();
 
         setSpacing(true);
         setPadding(true);
@@ -125,23 +149,27 @@ public class CreateCompetitionView extends VerticalLayout {
         categoryInputLayout.setSpacing(true);
         categoryInputLayout.setAlignItems(Alignment.END);
 
-        categoryCombo = new ComboBox<>("Category Name");
-        categoryCombo.setItems("Gaming", "Programming", "Design", "Writing", "Photography", "Video");
-        categoryCombo.setAllowCustomValue(true);
-        categoryCombo.setWidth("200px");
+        categoryNameField = new TextField("Category Name");
+        categoryNameField.setPlaceholder("e.g., Gaming, Design, etc.");
+        categoryNameField.setWidth("200px");
 
-        categoryWeightField = new IntegerField("Weight");
+        categoryWeightField = new IntegerField("Weight (%)");
         categoryWeightField.setValue(1);
         categoryWeightField.setMin(1);
         categoryWeightField.setMax(100);
-        categoryWeightField.setWidth("100px");
+        categoryWeightField.setWidth("200px");
+        categoryWeightField.setHelperText("Enter weight as percentage");
 
         Button addCategoryButton = new Button("Add Category");
         addCategoryButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addCategoryButton.setIcon(new Icon(VaadinIcon.PLUS));
         addCategoryButton.addClickListener(e -> addCategory());
 
-        categoryInputLayout.add(categoryCombo, categoryWeightField, addCategoryButton);
+        categoryInputLayout.add(categoryNameField, categoryWeightField, addCategoryButton);
+
+        // Total Weight Indicator
+        categoryTotalWeightSpan = new Span("Total Weight: 0%");
+        categoryTotalWeightSpan.getStyle().set("font-weight", "bold").set("color", "#ff6b6b");
 
         // Categories Display Container
         categoriesContainer = new VerticalLayout();
@@ -154,7 +182,40 @@ public class CreateCompetitionView extends VerticalLayout {
                 .set("background-color", "#f9f9f9")
                 .set("min-height", "60px");
 
-        // ── Action Buttons ──────────────────────────────────────────────────────
+        // ── Judges Section ──────────────────────────────────────────────────
+        Span judgesTitle = new Span("Judges");
+        judgesTitle.getStyle()
+                .set("font-weight", "bold")
+                .set("font-size", "16px")
+                .set("color", "#1a3a5c")
+                .set("margin-top", "1em");
+
+        // Judge Input Fields
+        HorizontalLayout judgeInputLayout = new HorizontalLayout();
+        judgeInputLayout.setSpacing(true);
+        judgeInputLayout.setAlignItems(Alignment.END);
+
+        judgeUsernameField = new TextField("Judge Username");
+        judgeUsernameField.setPlaceholder("Enter judge username");
+        judgeUsernameField.setWidth("250px");
+
+        Button addJudgeButton = new Button("Add Judge");
+        addJudgeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        addJudgeButton.setIcon(new Icon(VaadinIcon.PLUS));
+        addJudgeButton.addClickListener(e -> addJudge());
+
+        judgeInputLayout.add(judgeUsernameField, addJudgeButton);
+
+        // Judges Display Container
+        judgesContainer = new VerticalLayout();
+        judgesContainer.setSpacing(true);
+        judgesContainer.setPadding(false);
+        judgesContainer.setWidth("100%");
+        judgesContainer.getStyle().set("border", "1px solid #e0e0e0")
+                .set("border-radius", "4px")
+                .set("padding", "10px")
+                .set("background-color", "#f9f9f9")
+                .set("min-height", "60px");
         HorizontalLayout buttonsLayout = new HorizontalLayout();
         buttonsLayout.setSpacing(true);
         buttonsLayout.setJustifyContentMode(JustifyContentMode.END);
@@ -174,7 +235,11 @@ public class CreateCompetitionView extends VerticalLayout {
                 formLayout,
                 categoriesTitle,
                 categoryInputLayout,
+                categoryTotalWeightSpan,
                 categoriesContainer,
+                judgesTitle,
+                judgeInputLayout,
+                judgesContainer,
                 createEmptySpace(),
                 buttonsLayout
         );
@@ -184,7 +249,7 @@ public class CreateCompetitionView extends VerticalLayout {
      * Add a category to the selected categories list and display it.
      */
     private void addCategory() {
-        String categoryName = categoryCombo.getValue();
+        String categoryName = categoryNameField.getValue().trim();
         Integer weight = categoryWeightField.getValue();
 
         // Validation
@@ -209,14 +274,38 @@ public class CreateCompetitionView extends VerticalLayout {
             return;
         }
 
+        // Calculate total weight with new category
+        int currentTotal = selectedCategories.stream().mapToInt(CategoryDTO::getWeight).sum();
+        int newTotal = currentTotal + weight;
+
+        // Validate that total does not exceed 100
+        if (newTotal > 100) {
+            Notification notification = Notification.show("Total weight cannot exceed 100%. Current: " + currentTotal + "% + " + weight + "% = " + newTotal + "%");
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
         // Create and add category
         CategoryDTO category = new CategoryDTO(categoryName, weight);
         selectedCategories.add(category);
         displayCategory(category);
+        updateCategoryTotalWeight();
 
         // Reset fields
-        categoryCombo.clear();
+        categoryNameField.clear();
         categoryWeightField.setValue(1);
+    }
+
+    /**
+     * Update the category total weight indicator.
+     */
+    private void updateCategoryTotalWeight() {
+        int totalWeight = selectedCategories.stream().mapToInt(CategoryDTO::getWeight).sum();
+        String status = totalWeight == 100 ? "✓ Complete" : "Remaining: " + (100 - totalWeight) + "%";
+        String color = totalWeight == 100 ? "#4caf50" : (totalWeight > 100 ? "#ff6b6b" : "#ff6b6b");
+        
+        categoryTotalWeightSpan.setText("Total Weight: " + totalWeight + "% - " + status);
+        categoryTotalWeightSpan.getStyle().set("color", color);
     }
 
     /**
@@ -240,6 +329,7 @@ public class CreateCompetitionView extends VerticalLayout {
         removeButton.addClickListener(e -> {
             selectedCategories.remove(category);
             categoriesContainer.remove(categoryItem);
+            updateCategoryTotalWeight();
         });
 
         categoryItem.add(categoryLabel, removeButton);
@@ -247,8 +337,69 @@ public class CreateCompetitionView extends VerticalLayout {
     }
 
     /**
-     * Create the competition with the provided data.
+     * Add a judge to the selected judges list and display it.
      */
+    private void addJudge() {
+        String judgeUsername = judgeUsernameField.getValue().trim();
+
+        // Validation - empty field
+        if (judgeUsername.isEmpty()) {
+            Notification notification = Notification.show("Please enter a judge username.");
+            notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
+            return;
+        }
+
+        // Validation - check if user exists
+        boolean userExists = userService.searchByUsernameIgnoreCase(judgeUsername).isPresent();
+        if (!userExists) {
+            Notification notification = Notification.show("Judge user not found: " + judgeUsername);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
+        // Check if judge already added
+        boolean alreadyExists = selectedJudges.stream()
+                .anyMatch(judge -> judge.equalsIgnoreCase(judgeUsername));
+        if (alreadyExists) {
+            Notification notification = Notification.show("Judge already added.");
+            notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
+            return;
+        }
+
+        // Add judge
+        selectedJudges.add(judgeUsername);
+        displayJudge(judgeUsername);
+
+        // Reset field
+        judgeUsernameField.clear();
+    }
+
+    /**
+     * Display a judge in the judges container.
+     */
+    private void displayJudge(String judgeUsername) {
+        HorizontalLayout judgeItem = new HorizontalLayout();
+        judgeItem.setAlignItems(Alignment.CENTER);
+        judgeItem.setWidth("100%");
+        judgeItem.getStyle()
+                .set("background-color", "white")
+                .set("padding", "10px")
+                .set("border-radius", "4px")
+                .set("border", "1px solid #ddd");
+
+        Span judgeLabel = new Span("@" + judgeUsername);
+        judgeLabel.getStyle().set("flex-grow", "1");
+
+        Button removeButton = new Button(new Icon(VaadinIcon.TRASH));
+        removeButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+        removeButton.addClickListener(e -> {
+            selectedJudges.remove(judgeUsername);
+            judgesContainer.remove(judgeItem);
+        });
+
+        judgeItem.add(judgeLabel, removeButton);
+        judgesContainer.add(judgeItem);
+    }
     private void createCompetition() {
         // Validation
         String competitionName = competitionNameField.getValue().trim();
@@ -282,6 +433,20 @@ public class CreateCompetitionView extends VerticalLayout {
             return;
         }
 
+        // Validate categories total weight = 100%
+        if (selectedCategories.isEmpty()) {
+            Notification notification = Notification.show("At least one category is required.");
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
+        int totalCategoryWeight = selectedCategories.stream().mapToInt(CategoryDTO::getWeight).sum();
+        if (totalCategoryWeight != 100) {
+            Notification notification = Notification.show("Category weights must total exactly 100%. Current total: " + totalCategoryWeight + "%");
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
         // Get logged-in user
         User loggedUser = VaadinSession.getCurrent().getAttribute(User.class);
         if (loggedUser == null) {
@@ -303,6 +468,11 @@ public class CreateCompetitionView extends VerticalLayout {
             // Add categories
             for (CategoryDTO category : selectedCategories) {
                 dto.addCategory(category);
+            }
+
+            // Add judges
+            for (String judgeUsername : selectedJudges) {
+                dto.addJudgeUsername(judgeUsername);
             }
 
             // Save competition

@@ -1,7 +1,6 @@
 package com.microslop.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.ToString;
 import java.time.LocalDateTime;
@@ -14,6 +13,13 @@ import java.util.List;
 @ToString(exclude = {"votes", "comments", "password"})
 public class User {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String username;
+
     @Column(nullable = false)
     private String name;
 
@@ -22,10 +28,6 @@ public class User {
 
     @Column(name = "creation_date", nullable = false)
     private LocalDateTime creationDate;
-
-    @Id
-    @Column(nullable = false, unique = true)
-    private String username;
 
     @Column(nullable = false)
     private String password;

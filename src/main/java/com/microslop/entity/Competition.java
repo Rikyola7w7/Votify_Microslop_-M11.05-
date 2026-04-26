@@ -12,7 +12,7 @@ import java.util.List;
 @Table(name = "competition")
 @Data
 @NoArgsConstructor
-@ToString(exclude = {"projects", "categories"})
+@ToString(exclude = {"projects", "categories", "judges"})
 public class Competition {
 
     @Id 
@@ -37,12 +37,8 @@ public class Competition {
     @Column(name = "event_type", length = 100)
     private String eventType;
 
-    @Column(name = "creation_date", nullable = false)
-    private LocalDateTime createdAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
-    private User creator;
+    @Column(name = "created_by", length = 255)
+    private String createdBy;
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Project> projects = new ArrayList<>();
@@ -50,13 +46,15 @@ public class Competition {
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Category> categories = new ArrayList<>();
 
+    @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Judge> judges = new ArrayList<>();
+
     public Competition(String name, String description,
                        LocalDateTime startDate, LocalDateTime endDate) {
         this.name      = name;
         this.description = description;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.createdAt = LocalDateTime.now();
     }
 
     public void addProject(Project project) {
@@ -77,5 +75,15 @@ public class Competition {
     public void removeCategory(Category category) {
         categories.remove(category);
         category.setCompetition(null);
+    }
+
+    public void addJudge(Judge judge) {
+        judges.add(judge);
+        judge.setCompetition(this);
+    }
+
+    public void removeJudge(Judge judge) {
+        judges.remove(judge);
+        judge.setCompetition(null);
     }
 }

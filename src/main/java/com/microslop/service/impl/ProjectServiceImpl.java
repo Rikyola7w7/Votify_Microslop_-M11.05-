@@ -57,8 +57,6 @@ public class ProjectServiceImpl implements ProjectService {
         List<Project> projects = projectRepository.findProjectsByParticipantUsername(username);
         // Access all fields within transaction to prevent lazy loading errors
         projects.forEach(p -> {
-            // Access description to force loading
-            String desc = p.getDescription();
             // Access competition and votes
             if (p.getCompetition() != null) {
                 p.getCompetition().getName();

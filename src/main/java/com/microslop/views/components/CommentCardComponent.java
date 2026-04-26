@@ -13,15 +13,11 @@ import com.vaadin.flow.component.html.H2;
  */
 public class CommentCardComponent extends Div {
 
-    private final Vote vote;
-    private final ProjectComment projectComment;
     private final String username;
     private final String commentText;
 
     // Constructor for Vote (with user object)
     public CommentCardComponent(Vote vote) {
-        this.vote = vote;
-        this.projectComment = null;
         this.username = vote.getUser().getUsername();
         this.commentText = vote.getComment();
         buildCard(vote.getUser());
@@ -29,8 +25,6 @@ public class CommentCardComponent extends Div {
 
     // Constructor for ProjectComment (username only, no user object)
     public CommentCardComponent(ProjectComment projectComment) {
-        this.vote = null;
-        this.projectComment = projectComment;
         this.username = projectComment.getUsername();
         this.commentText = projectComment.getCommentText();
         buildCard(null);
