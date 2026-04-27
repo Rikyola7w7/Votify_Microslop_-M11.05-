@@ -13,14 +13,14 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
     long countByProjectId(Long projectId);
 
     /** Total votes cast by a user for a specific project. */
-    long countByUserUsernameAndProjectId(String username, Long projectId);
+    long countByUserIdAndProjectId(Long userId, Long projectId);
 
     /** Total votes cast by a user in an entire competition. */
     @Query("""
         SELECT COUNT(v) FROM Vote v
-        WHERE v.user.username = :username
+        WHERE v.user.id = :userId
         AND v.project.competition.id = :competitionId
         """)
-    long countByUserInCompetition(@Param("username") String username,
+    long countByUserInCompetition(@Param("userId") Long userId,
                                   @Param("competitionId") Long competitionId);
 }

@@ -194,10 +194,16 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         projectsContainer.setPadding(false);
         projectsContainer.setSpacing(false);
 
-        String currentUser = userService.getCurrentUsername();
-        boolean hasVotedInCompetition = voteService.countVotesPerUserInCompetition(currentUser, competitionId) > 0;
+        var currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            Notification.show("User not found. Please log in again.");
+            body.add(new Paragraph("Error: User not found. Please log in again."));
+            return body;
+        }
+        
+        boolean hasVotedInCompetition = voteService.countVotesPerUserInCompetition(currentUser.getId(), competitionId) > 0;
         for (Project p : projects) {
-            long alreadyVoted = voteService.countVotesByUserAndProject(currentUser, p.getId());
+            long alreadyVoted = voteService.countVotesByUserAndProject(currentUser.getId(), p.getId());
             projectsContainer.add(buildProjectCard(p, alreadyVoted > 0, hasVotedInCompetition));
         }
 

@@ -1,10 +1,16 @@
 package com.microslop.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "vote")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Vote {
 
     @Id
@@ -18,41 +24,16 @@ public class Vote {
     private String comment;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-    @JoinColumn(name = "username", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    public Vote() {
-        this.voteDate = LocalDateTime.now();
-    }
-
     public Vote(User user, Project project) {
         this.user      = user;
         this.project   = project;
         this.voteDate  = LocalDateTime.now();
-    }
-
-    public Long getId()                        { return id; }
-    public void setId(Long id)                 { this.id = id; }
-
-    public LocalDateTime getVoteDate()         { return voteDate; }
-    public void setVoteDate(LocalDateTime f)   { this.voteDate = f; }
-
-    public User getUser()                      { return user; }
-    public void setUser(User u)                { this.user = u; }
-
-    public Project getProject()                { return project; }
-    public void setProject(Project p)          { this.project = p; }
-
-    public String getComment()                 { return comment; }
-    public void setComment(String c)           { this.comment = c; }
-
-    @Override
-    public String toString() {
-        return "Vote{id=" + id + ", user=" + user + ", project=" + project +
-               ", voteDate=" + voteDate + '}';
     }
 }

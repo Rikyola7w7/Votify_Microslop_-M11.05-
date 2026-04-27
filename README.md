@@ -1,5 +1,11 @@
 # Votify README
 
+- TODO Sprint 1
+- [ ] Arreglar barra vertical izquierda
+- [ ] CSS
+- [ ] Barra busqueda en competiciones
+- [ ] Actualizar securityConfig
+- [ ] Arreglar modelo de base de datos para actualizacion/borrado
 
 ## Arquitectura y flujo request-response
 La aplicación sigue una arquitectura en capas. Cada acción del usuario recorre el siguiente ciclo completo:
@@ -53,6 +59,12 @@ El resultado sube de vuelta hasta VoteView, que actualiza el contador en pantall
 
 
 ## Estructura del proyecto
+
+
+
+## Project Structure
+
+This project has the following structure:
 
 ```
 src

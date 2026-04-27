@@ -35,7 +35,7 @@ public class ProjectCommentServiceImpl implements ProjectCommentService {
         var project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
         
-        var user = userRepository.findById(username)
+        var user = userRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
 
         var comment = commentFactory.create(project, user, commentText);
@@ -51,7 +51,9 @@ public class ProjectCommentServiceImpl implements ProjectCommentService {
     @Override
     @Transactional(readOnly = true)
     public List<ProjectComment> getCommentsByUser(String username) {
-        return commentRepository.findByUserUsernameOrderByCreationDateDesc(username);
+        var user = userRepository.findByUsernameIgnoreCase(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+        return commentRepository.findByUserIdOrderByCreationDateDesc(user.getId());
     }
 
     @Override

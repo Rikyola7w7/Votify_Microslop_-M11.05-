@@ -92,7 +92,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(String username){
-        userRepository.deleteById(username);
+        User user = userRepository.findByUsernameIgnoreCase(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+        userRepository.deleteById(user.getId());
     }
 
     @Override

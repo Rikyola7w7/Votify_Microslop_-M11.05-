@@ -20,13 +20,11 @@ import java.util.List;
 public class ProjectCardComponent extends Div {
 
     private final Project project;
-    private final String username;
     private final ProjectService projectService;
     private final Runnable onCommentClick;
 
     public ProjectCardComponent(Project project, String username, ProjectService projectService, Runnable onCommentClick) {
         this.project = project;
-        this.username = username;
         this.projectService = projectService;
         this.onCommentClick = onCommentClick;
         buildCard();
