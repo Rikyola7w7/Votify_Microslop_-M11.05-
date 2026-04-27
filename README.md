@@ -1,17 +1,58 @@
-# My Application README
-
-- TODO Sprint 1
-- [ ] Arreglar barra vertical izquierda
-- [ ] CSS
-- [ ] Barra busqueda en competiciones
-- [ ] Actualizar securityConfig
-- [ ] Arreglar modelo de base de datos para actualizacion/borrado
+# Votify README
 
 
+## Arquitectura y flujo request-response
+La aplicación sigue una arquitectura en capas. Cada acción del usuario recorre el siguiente ciclo completo:
 
-## Project Structure
+```
+CLIENTE (Navegador)
+│
+└── interacción UI
+▼
+VIEW (Vaadin)
+• CompetitionView
+• LoginView
+• RegisterView
+• UserProfileView
+• UserProjectsView
+• VoteView
+│
+└── llamada a método
+▼
+SERVICE (Lógica de negocio)
+• CompetitionService
+• ProjectService
+• UserService
+• VoteService
+│
+└── consulta / persistencia
+▼
+REPOSITORY (Acceso a datos - JPA)
+• CompetitionRepository
+• ProjectRepository
+• UserRepository
+• VoteRepository
+│
+└── mapeo ORM
+▼
+ENTITY (Modelo de dominio)
+• Usuario
+• Competicion
+• Proyecto
+• Voto
+```
 
-This project has the following structure:
+Ejemplo de ciclo completo — un usuario vota un proyecto:
+
+El usuario pulsa "Votar" en VoteView.
+VoteView llama a VoteService.registerVote(userId, projectId).
+VoteService valida que el usuario no haya votado ya ese proyecto en esa competición.
+VoteService llama a VoteRepository.save(voto) para persistir el voto.
+El repositorio mapea el objeto Voto a su tabla en la BD mediante JPA.
+El resultado sube de vuelta hasta VoteView, que actualiza el contador en pantalla.
+
+
+## Estructura del proyecto
 
 ```
 src
@@ -21,48 +62,52 @@ src
 │       │   └── ui
 │       │       ├── ViewToolbar.java
 │       │       └── MainLayout.java
-│       ├── examplefeature
-│       │   ├── ui
-│       │   │   └── TaskListView.java
-│       │   ├── Task.java
-│       │   ├── TaskRepository.java
-│       │   └── TaskService.java                
-│       └── Application.java  
-│       └── entity
-│       └── repository
-│       └── factory
-│       └── service
-│       └── views 
+│       ├── entity
+│       │   ├── Usuario.java
+│       │   ├── Competicion.java
+│       │   ├── Proyecto.java
+│       │   ├── Voto.java
+│       │   └──...
+│       ├── repository
+│       │   ├── UserRepository.java
+│       │   ├── CompetitionRepository.java
+│       │   ├── ProjectRepository.java
+│       │   ├── VoteRepository.java
+│       │   └──...
+│       ├── service
+│       │   ├── UserService.java
+│       │   ├── CompetitionService.java
+│       │   ├── ProjectService.java
+│       │   ├──VoteService.java
+│       │   └──...
+│       ├── factory
+│       │   └── [implementación de patrones de diseño]
+│       ├── views
+│       │   ├── LoginView.java
+│       │   ├── RegisterView.java
+│       │   ├── CompetitionView.java
+│       │   ├── UserProfileView.java
+│       │   ├── UserProjectsView.java
+│       │   ├── VoteView.java
+|       |   └──...
+│       └── Application.java
 ├── main/resources
-│   ├── META-INF
-│   │   └── resources
-│   │       └── styles.css
-│   └── application.properties 
+│   ├── META-INF/resources
+│   │   └── styles.css
+│   └── application.properties
 └── test/java
     └── [application package]
-        └── examplefeature
-           └── TaskServiceTest.java                 
+        └── [tests unitarios e integración]             
 ```
+El punto de entrada es Application.java, que contiene el método main() que arranca Spring Boot.
 
-The main entry point into the application is `Application.java`. This class contains the `main()` method that starts up 
-the Spring Boot application.
+## Descripción de capas
 
-The project follows a *feature-based package structure*, organizing code by *functional units* rather than traditional 
-architectural layers. It includes two feature packages: `base` and `examplefeature`.
-
-* The `base` package contains classes meant for reuse across different features, either through composition or 
-  inheritance. You can use them as-is, tweak them to your needs, or remove them.
-* The `examplefeature` package is an example feature package that demonstrates the structure. It represents a 
-  *self-contained unit of functionality*, including UI components, business logic, data access, and an integration test.
-  Once you create your own features, *you'll remove this package*.
-
-## Estructura de carpetas
-
-* entity: Clases que representan tablas.
-* repository: Acceso a base de datos mediante JPA.
-* sevice: Lógica de negocio.
-* factory...: Implementación del patrón factoria y otros.
-* views: Frontend en Vaadin.
+entity/ — Clases que mapean las tablas de la base de datos mediante JPA/Hibernate.
+repository/ — Interfaces de acceso a datos; extienden JpaRepository para operaciones CRUD automáticas.
+service/ — Lógica de negocio; orquestan operaciones entre repositorios y aplican las reglas del dominio.
+factory/ — Implementación de patrones de diseño (Factory y otros) para la creación de objetos complejos.
+views/ — Frontend en Vaadin; cada clase es una pantalla con su lógica de presentación.
 
 ## Workflow
 
@@ -71,6 +116,14 @@ architectural layers. It includes two feature packages: `base` and `examplefeatu
 El workflow desado es: Primero la creación de la base de la clase entity y posteriormente su acceso en la base de
 datos en repository, posteriormente implementar la lógica y posibles patrones en service y factory... y por último
 el desarrollo de la UI en views.
+
+
+- TODO Sprint 2
+- [ ] Arreglar barra vertical izquierda
+- [ ] CSS
+- [ ] Barra busqueda en competiciones
+- [ ] Actualizar securityConfig
+- [ ] Arreglar modelo de base de datos para actualizacion/borrado
 
 ## Starting in Development Mode
 
