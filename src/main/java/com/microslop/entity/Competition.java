@@ -28,8 +28,12 @@ public class Competition {
     @Column(nullable = false, name = "active")
     private boolean active = true;
 
+    @Column(nullable = false, name = "max_votes")
+    private int maxVotes = 1;
+
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Project> projects = new ArrayList<>();
+
 
     public Competition() {}
 
@@ -65,15 +69,18 @@ public class Competition {
 
     public LocalDateTime getEndDate()           { return endDate; }
     public void setEndDate(LocalDateTime f)     { this.endDate = f; }
-
+    
     public boolean isActive()                   { return active; }
     public void setActive(boolean active)       { this.active = active; }
+
+    public int getMaxVotes()                    { return maxVotes; }
+    public void setMaxVotes(int maxVotes)       { this.maxVotes = maxVotes; }
 
     public List<Project> getProjects()          { return projects; }
     public void setProjects(List<Project> p)    { this.projects = p; }
 
     @Override
     public String toString() {
-        return "Competition{id=" + id + ", name='" + name + "', active=" + active + "}";
+        return "Competition{id=" + id + ", name='" + name + "', active=" + active + ", maxVotes=" + maxVotes + "}";
     }
 }

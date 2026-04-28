@@ -44,12 +44,12 @@ public class RegisterView extends VerticalLayout {
 
         H2 title = new H2("Create your account on Votify");
 
-        TextField usernameField = new TextField("Username");
-        TextField nameField = new TextField("Full Name");
-        EmailField emailField = new EmailField("Email");
-        PasswordField passwordField = new PasswordField("Password");
-        PasswordField confirmPasswordField = new PasswordField("Confirm Password");
-        DatePicker birthDateField = new DatePicker("Birth Date");
+        TextField usernameField = new TextField("Username*" );
+        TextField nameField = new TextField("Full Name *");
+        EmailField emailField = new EmailField("Email *");
+        PasswordField passwordField = new PasswordField("Password *");
+        PasswordField confirmPasswordField = new PasswordField("Confirm Password *");
+        DatePicker birthDateField = new DatePicker("Birth Date *");
 
         MemoryBuffer buffer = new MemoryBuffer();
         Upload uploadProfilePicture = new Upload();
@@ -128,6 +128,7 @@ public class RegisterView extends VerticalLayout {
         FormLayout formLayout = new FormLayout();
         formLayout.add(usernameField, nameField, emailField, passwordField, confirmPasswordField, birthDateField, uploadProfilePicture, imagePreview);
         formLayout.setMaxWidth("450px");
+        formLayout.getStyle().set("margin", "auto");
 
         add(title, formLayout, registerButton, linkLogin);
     }

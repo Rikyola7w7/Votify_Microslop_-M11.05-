@@ -39,9 +39,7 @@ src
 │   │       └── styles.css
 │   └── application.properties 
 └── test/java
-    └── [application package]
-        └── examplefeature
-           └── TaskServiceTest.java                 
+    └── [application package]           
 ```
 
 The main entry point into the application is `Application.java`. This class contains the `main()` method that starts up 
