@@ -20,6 +20,9 @@ public class Vote {
     @Column(name = "vote_date", nullable = false)
     private LocalDateTime voteDate;
 
+    @Column(name = "comment", length = 500)
+    private String comment;
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
