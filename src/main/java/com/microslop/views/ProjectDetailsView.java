@@ -36,7 +36,6 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
     private Project project;
     private Div commentsContainer;
 
-    @Autowired
     public ProjectDetailsView(ProjectService projectService) {
         this.projectService = projectService;
         initializeView();
