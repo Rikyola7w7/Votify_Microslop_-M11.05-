@@ -42,6 +42,12 @@ public class CategoryServiceImpl implements CategoryService {
         Competition competition = competitionRepository.findById(competitionId)
                 .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + competitionId));
 
+        categoryRepository.findByCompetitionIdAndName(competitionId, categoryDTO.getName())
+                .ifPresent(existing ->{
+                    throw new IllegalArgumentException(
+                            "A category with name '" + categoryDTO.getName() + "' already exist in this competition"
+                    );
+                });
         // Create new category from DTO
         Category category = new Category();
         category.setName(categoryDTO.getName());
