@@ -233,8 +233,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             for (Project p : projects) {
                 boolean matches = true;
                 if (selectedCategory != null) {
-                    matches = p.getName().toLowerCase().contains(selectedCategory.getName().toLowerCase()) ||
-                            (p.getDescription() != null && p.getDescription().toLowerCase().contains(selectedCategory.getName().toLowerCase()));
+                    matches = p.getCategories().stream()
+                            .anyMatch(c -> c.getId().equals(selectedCategory.getId()));
                 }
                 if (matches) {
                     long alreadyVoted = voteService.countVotesByUserAndProject(currentUser.getId(), p.getId());
