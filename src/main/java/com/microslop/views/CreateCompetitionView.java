@@ -461,7 +461,8 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
             success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
             // Navigate back to competitions
-            getUI().ifPresent(ui -> ui.navigate(""));
+            String username = userService.getCurrentUsername();
+            getUI().ifPresent(ui -> ui.navigate(username + "/competitions"));
 
         } catch (IllegalArgumentException ex) {
             Notification error = Notification.show(ex.getMessage());
