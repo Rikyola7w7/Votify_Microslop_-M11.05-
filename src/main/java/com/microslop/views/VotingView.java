@@ -1,5 +1,6 @@
 package com.microslop.views;
 
+import com.microslop.entity.Competition;
 import com.microslop.entity.Project;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.ProjectCommentService;
@@ -42,6 +43,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private Long competitionId;
 
     private VerticalLayout projectsContainer;
+    private Span voteCounterSpan;
 
     public VotingView(CompetitionService competitionService,
                       ProjectService projectService,
@@ -104,13 +106,13 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         var competition = competitionService.getByIdOrFail(competitionId);
         var projects    = projectService.listByCompetition(competitionId);
 
-        add(buildHeader(competition.getName()));
+        add(buildHeader(competition));
         add(buildBody(projects, competition.getName()));
     }
 
     // ── Header ────────────────────────────────────────────────────────────
 
-    private HorizontalLayout buildHeader(String competitionName) {
+    private HorizontalLayout buildHeader(Competition competition) {
         var header = new HorizontalLayout();
         header.setWidthFull();
         header.setAlignItems(Alignment.CENTER);
@@ -146,6 +148,16 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         rightSection.setMargin(false);
         rightSection.setPadding(false);
 
+        // Add vote counter display
+        voteCounterSpan = new Span("Votes: " + competition.getMaxVotes());
+        voteCounterSpan.getStyle()
+            .set("color", "white")
+            .set("font-weight", "600")
+            .set("font-size", "1rem")
+            .set("background", "#2d6a9f")
+            .set("padding", "0.4rem 0.8rem")
+            .set("border-radius", "6px");
+
         var avatar = new Avatar();
         avatar.setName(userService.getUserDisplayName());
         avatar.getStyle().set("cursor", "pointer").set("background", "#2d6a9f");
@@ -158,7 +170,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             getUI().ifPresent(ui -> ui.navigate(""));
         });
 
-        rightSection.add(avatar);
+        rightSection.add(voteCounterSpan, avatar);
         header.add(backButton, title, rightSection);
         return header;
     }
@@ -341,6 +353,18 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         try {
             voteService.submitVote(username, project.getId());
+            
+            // Update the vote counter
+            var competition = competitionService.getByIdOrFail(competitionId);
+            int remainingVotes = competition.getMaxVotes();
+            String currentUser = userService.getCurrentUsername();
+            long votesUsed = voteService.countVotesPerUserInCompetition(currentUser, competitionId);
+            int votesLeft = Math.max(0, remainingVotes - (int)votesUsed);
+            
+            if (voteCounterSpan != null) {
+                voteCounterSpan.setText("Votes: " + votesLeft);
+            }
+            
             showNotification("Vote submitted!", NotificationVariant.LUMO_SUCCESS);
             getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId));
         } catch (IllegalStateException ex) {
