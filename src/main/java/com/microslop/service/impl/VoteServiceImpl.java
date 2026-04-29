@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class VoteServiceImpl implements VoteService {
 
-    private static final int MAX_VOTES_PER_COMPETITION = 1;
+    private static final int MAX_VOTES_PER_CATEGORY = 1;
 
     private final VoteRepository voteRepository;
     private final ProjectService projectService;
@@ -49,10 +49,10 @@ public class VoteServiceImpl implements VoteService {
             throw new IllegalStateException("Competition is not active.");
         }
 
-        long alreadyCast = voteRepository.countByUserInCompetition(user.getId(), competition.getId());
-        if (alreadyCast >= MAX_VOTES_PER_COMPETITION) {
+        long alreadyCastInCategory = voteRepository.countByUserIdAndCategoryId(user.getId(), category.getId());
+        if (alreadyCastInCategory >= MAX_VOTES_PER_CATEGORY) {
             throw new IllegalStateException(
-                "You already voted for a project in this competition.");
+                "You already voted for a project in this category.");
         }
 
         Vote vote = voteFactory.create(user, project, category);
@@ -77,5 +77,11 @@ public class VoteServiceImpl implements VoteService {
     @Transactional(readOnly = true)
     public long countVotesPerUserInCompetition(Long userId, Long competitionId) {
         return voteRepository.countByUserInCompetition(userId, competitionId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countVotesByUserAndCategory(Long userId, Long categoryId) {
+        return voteRepository.countByUserIdAndCategoryId(userId, categoryId);
     }
 }

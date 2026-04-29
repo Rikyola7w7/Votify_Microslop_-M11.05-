@@ -23,4 +23,7 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
         """)
     long countByUserInCompetition(@Param("userId") Long userId,
                                   @Param("competitionId") Long competitionId);
+
+    /** Total votes cast by a user for a specific category. */
+    long countByUserIdAndCategoryId(Long userId, Long categoryId);
 }

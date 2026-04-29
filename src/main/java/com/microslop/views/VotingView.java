@@ -228,8 +228,9 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         Runnable updateProjectsList = () -> {
             projectsContainer.removeAll();
-            boolean hasVotedInCompetition = voteService.countVotesPerUserInCompetition(currentUser.getId(), competitionId) > 0;
             Category selectedCategory = categoryDropdown.getValue();
+            boolean hasVotedInCategory = selectedCategory != null && 
+                    voteService.countVotesByUserAndCategory(currentUser.getId(), selectedCategory.getId()) > 0;
 
             for (Project p : projects) {
                 boolean matches = true;
@@ -239,7 +240,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 }
                 if (matches) {
                     long alreadyVoted = voteService.countVotesByUserAndProject(currentUser.getId(), p.getId());
-                    projectsContainer.add(buildProjectCard(p, alreadyVoted > 0, hasVotedInCompetition));
+                    projectsContainer.add(buildProjectCard(p, alreadyVoted > 0, hasVotedInCategory));
                 }
             }
         };
@@ -254,9 +255,9 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
     // ── Project Card ──────────────────────────────────────────────────────
 
-    private Div buildProjectCard(Project p, boolean alreadySelected, boolean hasVotedInCompetition) {
+    private Div buildProjectCard(Project p, boolean alreadySelected, boolean hasVotedInCategory) {
         long totalVotes = voteService.countVotesByProject(p.getId());
-        boolean otherProjectVoted = hasVotedInCompetition && !alreadySelected;
+        boolean otherProjectVoted = hasVotedInCategory && !alreadySelected;
 
         var card = new Div();
         card.getStyle()
