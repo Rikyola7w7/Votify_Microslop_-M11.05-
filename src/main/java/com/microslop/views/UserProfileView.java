@@ -5,14 +5,17 @@ import com.microslop.service.UserService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.*;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.BeforeEnterObserver;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.router.BeforeEnterEvent;
 
 @Route(":username")
@@ -22,6 +25,7 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
 
     private Span usernameText;
     private Span emailText;
+    private Avatar avatar;
 
     public UserProfileView(UserService userService) {
         this.userService = userService;
@@ -29,11 +33,9 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         setSizeFull();
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
-
-        buildLayout();
+        addClassNames(LumoUtility.Background.CONTRAST_5);
     }
 
-    // Protección de acceso
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         User loggedInUser = userService.getCurrentUser();
@@ -44,104 +46,72 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
             return;
         }
 
+        buildLayout();
         updateData(loggedInUser);
     }
 
     private void buildLayout() {
+        removeAll(); // Ensure clean state if navigated to multiple times
+
+        VerticalLayout card = new VerticalLayout();
+        card.setMaxWidth("500px");
+        card.addClassNames(
+                LumoUtility.Background.BASE,
+                LumoUtility.Padding.LARGE,
+                LumoUtility.BorderRadius.LARGE,
+                LumoUtility.BoxShadow.MEDIUM
+        );
+        card.setAlignItems(Alignment.CENTER);
 
         H2 title = new H2("My Profile");
+        title.addClassNames(LumoUtility.Margin.Top.NONE, LumoUtility.Margin.Bottom.LARGE);
 
-        var avatar = new Avatar();
-        avatar.setName(userService.getUserDisplayName());
-        avatar.getStyle()
-                .set("cursor", "pointer")
-                .set("background", "#2d6a9f")
-                .set("width", "48px")
-                .set("height", "48px");
+        avatar = new Avatar();
+        avatar.setWidth("80px");
+        avatar.setHeight("80px");
+        avatar.addClassNames(LumoUtility.Margin.Bottom.MEDIUM);
 
         usernameText = new Span();
+        usernameText.addClassNames(LumoUtility.FontWeight.SEMIBOLD, LumoUtility.FontSize.LARGE);
+
         emailText = new Span();
+        emailText.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Bottom.LARGE);
 
-        Span usernameLabel = new Span("Username: ");
-        usernameLabel.getStyle().set("font-weight", "bold");
-
-        usernameText.getStyle().set("color", "#333");
-
-        HorizontalLayout usernameLayout = new HorizontalLayout(
-                usernameLabel,
-                usernameText
-        );
-        usernameLayout.setJustifyContentMode(JustifyContentMode.CENTER);
-
-        Span emailLabel = new Span("Email: ");
-        emailLabel.getStyle().set("font-weight", "bold");
-
-        emailText.getStyle().set("color", "#333");
-
-        HorizontalLayout emailLayout = new HorizontalLayout(
-                emailLabel,
-                emailText
-        );
-        emailLayout.setJustifyContentMode(JustifyContentMode.CENTER);
-
-        VerticalLayout infoLayout = new VerticalLayout(
-                usernameLayout,
-                emailLayout
-        );
-
+        VerticalLayout infoLayout = new VerticalLayout(usernameText, emailText);
         infoLayout.setAlignItems(Alignment.CENTER);
+        infoLayout.setSpacing(false);
+        infoLayout.setPadding(false);
 
-        HorizontalLayout content = new HorizontalLayout(
-                avatar,
-                infoLayout
-        );
+        Button editButton = new Button("Edit Profile", VaadinIcon.EDIT.create(), e -> openEditDialog());
+        editButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        editButton.setWidthFull();
 
-        content.setAlignItems(Alignment.CENTER);
-        content.setSpacing(true);
-
-        Button editButton = new Button("Edit Profile", e -> openEditDialog());
-        editButton.getStyle()
-                .set("background-color", "#1976d2")
-                .set("color", "white");
-
-        Button logoutButton = new Button("Sign Out", e -> {
+        Button logoutButton = new Button("Sign Out", VaadinIcon.SIGN_OUT.create(), e -> {
             userService.logout();
             Notification.show("Session closed");
             UI.getCurrent().navigate("login");
         });
+        logoutButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        Button deleteButton = new Button("Delete Account", e -> openDeleteDialog());
-        deleteButton.getStyle()
-                .set("background-color", "#d32f2f")
-                .set("color", "white");
+        Button deleteButton = new Button("Delete Account", VaadinIcon.TRASH.create(), e -> openDeleteDialog());
+        deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
 
-        logoutButton.getStyle()
-                .set("background-color", "#757575")
-                .set("color", "white");
+        HorizontalLayout secondaryButtons = new HorizontalLayout(logoutButton, deleteButton);
+        secondaryButtons.setWidthFull();
+        secondaryButtons.setJustifyContentMode(JustifyContentMode.BETWEEN);
+        secondaryButtons.addClassNames(LumoUtility.Margin.Top.MEDIUM);
 
-        HorizontalLayout buttons = new HorizontalLayout(editButton, logoutButton, deleteButton);
-        buttons.setSpacing(true);
-
-        VerticalLayout layout = new VerticalLayout(
-                title,
-                avatar,
-                infoLayout,
-                buttons
-        );
-
-        layout.setAlignItems(Alignment.CENTER);
-        layout.setSpacing(true);
-
-        add(layout);
+        card.add(title, avatar, infoLayout, editButton, secondaryButtons);
+        add(card);
     }
 
     private void updateData(User user) {
-        usernameText.setText(user.getUsername());
+        avatar.setName(user.getName() != null && !user.getName().isBlank() ? user.getName() : user.getUsername());
+        usernameText.setText("@" + user.getUsername());
         emailText.setText(user.getEmail());
     }
 
     private void openEditDialog() {
-
         User user = userService.getCurrentUser();
 
         if (user == null) {
@@ -150,15 +120,18 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         }
 
         Dialog dialog = new Dialog();
-        dialog.setWidth("500px");
+        dialog.setWidth("400px");
 
         H2 title = new H2("Edit Profile");
+        title.addClassNames(LumoUtility.Margin.Top.NONE, LumoUtility.Margin.Bottom.MEDIUM);
 
         TextField usernameField = new TextField("Username");
         usernameField.setValue(user.getUsername());
+        usernameField.setWidthFull();
 
         EmailField emailField = new EmailField("Email");
         emailField.setValue(user.getEmail());
+        emailField.setWidthFull();
 
         Button saveButton = new Button("Save", e -> {
             try {
@@ -178,22 +151,24 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
                 Notification.show("Error updating profile");
             }
         });
+        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        
+        Button cancelButton = new Button("Cancel", e -> dialog.close());
 
-        VerticalLayout layout = new VerticalLayout(
-                title,
-                usernameField,
-                emailField,
-                saveButton
-        );
+        HorizontalLayout buttons = new HorizontalLayout(cancelButton, saveButton);
+        buttons.setWidthFull();
+        buttons.setJustifyContentMode(JustifyContentMode.END);
+        buttons.addClassNames(LumoUtility.Margin.Top.MEDIUM);
 
-        layout.setAlignItems(Alignment.CENTER);
+        VerticalLayout layout = new VerticalLayout(title, usernameField, emailField, buttons);
+        layout.setPadding(false);
+        layout.setAlignItems(Alignment.STRETCH);
 
         dialog.add(layout);
         dialog.open();
     }
 
     private void openDeleteDialog() {
-
         User user = userService.getCurrentUser();
 
         if (user == null) {
@@ -204,40 +179,33 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         Dialog dialog = new Dialog();
         dialog.setWidth("400px");
 
-        H2 title = new H2("Delete Account");
+        H3 title = new H3("Delete Account");
+        title.addClassNames(LumoUtility.Margin.Top.NONE, LumoUtility.Margin.Bottom.SMALL);
 
         Span message = new Span("Are you sure you want to delete your account? This action cannot be undone.");
+        message.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Bottom.MEDIUM);
 
         Button cancelButton = new Button("Cancel", e -> dialog.close());
 
-        Button confirmButton = new Button("Delete", e -> {
+        Button confirmButton = new Button("Delete", VaadinIcon.TRASH.create(), e -> {
             try {
                 userService.deleteUser(user.getUsername());
-
                 Notification.show("Account deleted successfully");
-
                 userService.logout();
                 dialog.close();
                 UI.getCurrent().navigate("login");
-
             } catch (Exception ex) {
                 Notification.show("Error deleting account");
             }
         });
-
-        confirmButton.getStyle()
-                .set("background-color", "#d32f2f")
-                .set("color", "white");
+        confirmButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_PRIMARY);
 
         HorizontalLayout buttons = new HorizontalLayout(cancelButton, confirmButton);
+        buttons.setWidthFull();
+        buttons.setJustifyContentMode(JustifyContentMode.END);
 
-        VerticalLayout layout = new VerticalLayout(
-                title,
-                message,
-                buttons
-        );
-
-        layout.setAlignItems(Alignment.CENTER);
+        VerticalLayout layout = new VerticalLayout(title, message, buttons);
+        layout.setPadding(false);
 
         dialog.add(layout);
         dialog.open();
