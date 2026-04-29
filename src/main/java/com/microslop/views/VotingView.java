@@ -46,6 +46,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private Long competitionId;
 
     private VerticalLayout projectsContainer;
+    private ComboBox<Category> categoryDropdown;
 
     public VotingView(CompetitionService competitionService,
                       ProjectService projectService,
@@ -204,7 +205,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("font-weight", "600")
                 .set("color", "#1a1a2e");
 
-        var categoryDropdown = new ComboBox<Category>();
+        categoryDropdown = new ComboBox<Category>();
         categoryDropdown.setItems(categoryService.getCategoriesByCompetition(competitionId));
         categoryDropdown.setItemLabelGenerator(Category::getName);
         categoryDropdown.setPlaceholder("Filter by category...");
@@ -335,6 +336,12 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     // ── Comments dialog ───────────────────────────────────────────────────
 
     private void openCommentsDialog(String projectName, Long projectId) {
+        Category selectedCategory = categoryDropdown.getValue();
+        if (selectedCategory == null) {
+            showNotification("Debes elegir una categoría antes de comentar.", NotificationVariant.LUMO_WARNING);
+            return;
+        }
+
         var dialog = new Dialog();
         dialog.setHeaderTitle("Comments for: " + projectName);
 
@@ -352,7 +359,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
             try {
                 String username = userService.getCurrentUsername();
-                commentService.saveComment(projectId, username, commentText);
+                commentService.saveComment(projectId, username, commentText, selectedCategory.getId());
                 showNotification("Comment saved successfully!", NotificationVariant.LUMO_SUCCESS);
                 dialog.close();
             } catch (Exception ex) {
@@ -385,8 +392,14 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
 
+        Category selectedCategory = categoryDropdown.getValue();
+        if (selectedCategory == null) {
+            showNotification("Debes elegir una categoría antes de votar.", NotificationVariant.LUMO_WARNING);
+            return;
+        }
+
         try {
-            voteService.submitVote(username, project.getId());
+            voteService.submitVote(username, project.getId(), selectedCategory.getId());
             showNotification("Vote submitted!", NotificationVariant.LUMO_SUCCESS);
             getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId));
         } catch (IllegalStateException ex) {

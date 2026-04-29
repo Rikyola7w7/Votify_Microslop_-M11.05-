@@ -31,10 +31,15 @@ public class ProjectComment {
     @Column(name = "creation_date", nullable = false)
     private LocalDateTime creationDate;
 
-    public ProjectComment(Project project, User user, String commentText) {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    public ProjectComment(Project project, User user, String commentText, Category category) {
         this.project = project;
         this.user = user;
         this.commentText = commentText;
+        this.category = category;
         this.creationDate = LocalDateTime.now();
     }
 

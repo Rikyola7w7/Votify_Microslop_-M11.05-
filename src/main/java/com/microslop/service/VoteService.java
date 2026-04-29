@@ -3,7 +3,7 @@ package com.microslop.service;
 
 public interface VoteService {
 
-    void submitVote(String userUsername, Long projectId);
+    void submitVote(String userUsername, Long projectId, Long categoryId);
 
     long countVotesByProject(Long projectId);
 

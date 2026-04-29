@@ -3,6 +3,7 @@ package com.microslop.service.impl;
 import com.microslop.entity.Vote;
 import com.microslop.factory.VoteFactory;
 import com.microslop.repository.VoteRepository;
+import com.microslop.repository.CategoryRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
 import com.microslop.service.VoteService;
@@ -19,25 +20,30 @@ public class VoteServiceImpl implements VoteService {
     private final ProjectService projectService;
     private final UserService    userService;
     private final VoteFactory    voteFactory;
+    private final CategoryRepository categoryRepository;
 
     public VoteServiceImpl(VoteRepository voteRepository,
                            ProjectService projectService,
                            UserService userService,
-                           VoteFactory voteFactory) {
+                           VoteFactory voteFactory,
+                           CategoryRepository categoryRepository) {
         this.voteRepository = voteRepository;
         this.projectService = projectService;
         this.userService    = userService;
         this.voteFactory    = voteFactory;
+        this.categoryRepository = categoryRepository;
     }
 
     // ── Write ─────────────────────────────────────────────────────────────
 
     @Override
-    public void submitVote(String userUsername, Long projectId) {
+    public void submitVote(String userUsername, Long projectId, Long categoryId) {
         var user        = userService.searchByUsernameIgnoreCase(userUsername)
                             .orElseThrow(() -> new IllegalStateException("User not found."));
         var project     = projectService.getById(projectId);
         var competition = project.getCompetition();
+        var category    = categoryRepository.findById(categoryId)
+                            .orElseThrow(() -> new IllegalStateException("Category not found."));
 
         if (!competition.isActive()) {
             throw new IllegalStateException("Competition is not active.");
@@ -49,7 +55,7 @@ public class VoteServiceImpl implements VoteService {
                 "You already voted for a project in this competition.");
         }
 
-        Vote vote = voteFactory.create(user, project);
+        Vote vote = voteFactory.create(user, project, category);
         voteRepository.save(vote);
     }
 
