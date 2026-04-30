@@ -3,6 +3,8 @@ package com.microslop.views.components;
 import com.microslop.entity.Project;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 /**
  * PodiumCardComponent - Reusable component for podium positions (1st, 2nd, 3rd)
@@ -80,23 +82,12 @@ public class PodiumCardComponent extends Div {
             .set("font-size", position.isGold() ? "1.6rem" : "1.2rem")
             .set("color", "#1a1a2e")
             .set("display", "block")
-            .set("margin-bottom", "0.8rem")
-            .setId("votes-" + project.getId()); // ID para actualizar fácilmente
+            .set("margin-bottom", "0.8rem");
 
         add(medalSpan, nameSpan, labelVotes, numVotes);
     }
 
-    /**
-     * Update the vote count displayed on this card
-     */
-    public void updateVoteCount(long newVoteCount) {
-        Span votesSpan = (Span) getElement().executeJs("return this.querySelector('[id^=\"votes-\"]');").as(com.vaadin.flow.dom.Element.class);
-        if (votesSpan != null) {
-            votesSpan.setText(formatNumber(newVoteCount));
-        }
-    }
-
     private static String formatNumber(long num) {
-        return java.text.NumberFormat.getNumberInstance(java.util.Locale.US).format(num);
+        return NumberFormat.getNumberInstance(Locale.US).format(num);
     }
 }
