@@ -1,13 +1,17 @@
-# Votify README
+# Votify
 
-- TODO Sprint 1
-- [ ] Arreglar barra vertical izquierda
-- [ ] CSS
-- [ ] Barra busqueda en competiciones
-- [ ] Actualizar securityConfig
-- [ ] Arreglar modelo de base de datos para actualizacion/borrado
+Votify es una plataforma web desarrollada con **Spring Boot** y **Vaadin** que permite la gestión de competiciones y la votación de proyectos. El sistema ofrece un entorno seguro e intuitivo para que los usuarios puedan registrarse, participar en competiciones, explorar proyectos categorizados y emitir sus votos.
 
-## Arquitectura y flujo request-response
+## Características Principales
+
+- **Gestión de Usuarios:** Registro, inicio de sesión seguro y perfiles de usuario.
+- **Competiciones y Proyectos:** Exploración de competiciones activas y los proyectos asociados a cada una.
+- **Categorización y Filtrado:** Los proyectos pueden tener múltiples categorías asignadas, permitiendo filtrar de manera eficiente en la vista de votaciones.
+- **Sistema de Votaciones:** Los usuarios pueden votar por sus proyectos favoritos dentro de una competición de manera sencilla.
+- **Interfaz Moderna y Responsiva:** UI construida con el sistema de diseño Vaadin Lumo, ofreciendo una experiencia fluida con tarjetas (cards), botones consistentes, iconos y diseño adaptable.
+
+## Arquitectura y Flujo Request-Response
+
 La aplicación sigue una arquitectura en capas. Cada acción del usuario recorre el siguiente ciclo completo:
 
 ```
@@ -15,13 +19,13 @@ CLIENTE (Navegador)
 │
 └── interacción UI
 ▼
-VIEW (Vaadin)
+VIEW (Vaadin - Frontend)
 • CompetitionView
 • LoginView
 • RegisterView
 • UserProfileView
 • UserProjectsView
-• VoteView
+• VotingView
 │
 └── llamada a método
 ▼
@@ -46,30 +50,24 @@ ENTITY (Modelo de dominio)
 • Competicion
 • Proyecto
 • Voto
+• Categoria
 ```
 
 Ejemplo de ciclo completo — un usuario vota un proyecto:
 
-El usuario pulsa "Votar" en VoteView.
-VoteView llama a VoteService.registerVote(userId, projectId).
-VoteService valida que el usuario no haya votado ya ese proyecto en esa competición.
-VoteService llama a VoteRepository.save(voto) para persistir el voto.
-El repositorio mapea el objeto Voto a su tabla en la BD mediante JPA.
-El resultado sube de vuelta hasta VoteView, que actualiza el contador en pantalla.
+1. El usuario pulsa "Votar" en `VotingView`.
+2. `VotingView` llama a `VoteService.registerVote(userId, projectId)`.
+3. `VoteService` valida que el usuario no haya votado ya ese proyecto en esa competición.
+4. `VoteService` llama a `VoteRepository.save(voto)` para persistir el voto.
+5. El repositorio mapea el objeto `Voto` a su tabla en la BD mediante JPA.
+6. El resultado sube de vuelta hasta `VotingView`, que actualiza el contador o estado del botón en pantalla.
 
+## Estructura del Proyecto
 
-## Estructura del proyecto
-
-
-
-## Project Structure
-
-This project has the following structure:
-
-```
+```text
 src
 ├── main/java
-│   └── [application package]
+│   └── com/microslop
 │       ├── base
 │       │   └── ui
 │       │       ├── ViewToolbar.java
@@ -79,94 +77,76 @@ src
 │       │   ├── Competicion.java
 │       │   ├── Proyecto.java
 │       │   ├── Voto.java
-│       │   └──...
+│       │   ├── Categoria.java
+│       │   └── ...
 │       ├── repository
 │       │   ├── UserRepository.java
 │       │   ├── CompetitionRepository.java
 │       │   ├── ProjectRepository.java
 │       │   ├── VoteRepository.java
-│       │   └──...
+│       │   └── ...
 │       ├── service
 │       │   ├── UserService.java
 │       │   ├── CompetitionService.java
 │       │   ├── ProjectService.java
-│       │   ├──VoteService.java
-│       │   └──...
-│       ├── factory
-│       │   └── [implementación de patrones de diseño]
+│       │   ├── VoteService.java
+│       │   └── ...
 │       ├── views
 │       │   ├── LoginView.java
 │       │   ├── RegisterView.java
 │       │   ├── CompetitionView.java
 │       │   ├── UserProfileView.java
 │       │   ├── UserProjectsView.java
-│       │   ├── VoteView.java
-|       |   └──...
+│       │   ├── VotingView.java
+│       │   └── ...
 │       └── Application.java
 ├── main/resources
 │   ├── META-INF/resources
 │   │   └── styles.css
 │   └── application.properties
 └── test/java
-    └── [application package]
-        └── [tests unitarios e integración]             
+    └── ...             
 ```
-El punto de entrada es Application.java, que contiene el método main() que arranca Spring Boot.
 
-## Descripción de capas
+El punto de entrada es `Application.java`, que contiene el método `main()` que arranca Spring Boot.
 
-entity/ — Clases que mapean las tablas de la base de datos mediante JPA/Hibernate.
-repository/ — Interfaces de acceso a datos; extienden JpaRepository para operaciones CRUD automáticas.
-service/ — Lógica de negocio; orquestan operaciones entre repositorios y aplican las reglas del dominio.
-factory/ — Implementación de patrones de diseño (Factory y otros) para la creación de objetos complejos.
-views/ — Frontend en Vaadin; cada clase es una pantalla con su lógica de presentación.
+### Descripción de capas
 
-## Workflow
+- **`entity/`** — Clases que mapean las tablas de la base de datos mediante JPA/Hibernate.
+- **`repository/`** — Interfaces de acceso a datos; extienden `JpaRepository` para operaciones CRUD automáticas.
+- **`service/`** — Lógica de negocio; orquestan operaciones entre repositorios y aplican las reglas del dominio.
+- **`views/`** — Frontend en Vaadin; cada clase es una pantalla con su lógica de presentación.
 
-`entity -> repository -> service -> patrones -> views`
+## Workflow de Desarrollo
 
-El workflow desado es: Primero la creación de la base de la clase entity y posteriormente su acceso en la base de
-datos en repository, posteriormente implementar la lógica y posibles patrones en service y factory... y por último
-el desarrollo de la UI en views.
+`entity -> repository -> service -> views`
 
+El flujo recomendado para añadir nuevas funcionalidades es:
+1. Creación o modificación de la clase en `entity`.
+2. Definición del acceso a base de datos en `repository`.
+3. Implementación de la lógica de negocio en `service`.
+4. Desarrollo de la interfaz gráfica y presentación en `views`.
 
-- TODO Sprint 2
-- [ ] Arreglar barra vertical izquierda
-- [ ] CSS
-- [ ] Barra busqueda en competiciones
-- [ ] Actualizar securityConfig
-- [ ] Arreglar modelo de base de datos para actualizacion/borrado
+## Ejecución y Despliegue
 
-## Starting in Development Mode
+### Modo Desarrollo
 
-To start the application in development mode, import it into your IDE and run the `Application` class. 
-You can also start the application from the command line by running: 
+Para arrancar la aplicación en modo desarrollo, puedes importarla en tu IDE y ejecutar la clase `Application.java`, o desde la terminal ejecutar:
 
 ```bash
-./mvnw
+./mvnw spring-boot:run
 ```
 
-## Building for Production
+### Producción
 
-To build the application in production mode, run:
+Para compilar la aplicación para producción:
 
 ```bash
-./mvnw package
+./mvnw package -Pproduction
 ```
 
-To build a Docker image, run:
+Para construir una imagen Docker:
 
 ```bash
-docker build -t my-application:latest .
+docker build -t votify-app:latest .
 ```
-
-If you use commercial components, pass the license key as a build secret:
-
-```bash
-docker build --secret id=proKey,src=$HOME/.vaadin/proKey .
-```
-
-## Next Steps
-
-The [Building Apps](https://vaadin.com/docs/v25/building-apps) guides contain hands-on advice for adding features to 
-your application.
