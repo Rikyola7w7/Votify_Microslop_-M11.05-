@@ -8,7 +8,7 @@ public interface ProjectCommentService {
     /**
      * Save a new comment for a project.
      */
-    void saveComment(Long projectId, String username, String commentText);
+    void saveComment(Long projectId, String username, String commentText, Long categoryId);
 
     /**
      * Get all comments for a project, ordered by creation date (newest first).

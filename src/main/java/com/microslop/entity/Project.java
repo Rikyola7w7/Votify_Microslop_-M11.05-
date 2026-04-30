@@ -11,7 +11,7 @@ import java.util.List;
 @Table(name = "project")
 @Data
 @NoArgsConstructor
-@ToString(exclude = {"participants", "votes", "comments"})
+@ToString(exclude = {"participants", "votes", "comments", "categories"})
 public class Project {
 
     @Id 
@@ -41,6 +41,14 @@ public class Project {
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<ProjectComment> comments = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "project_category",
+        joinColumns = @JoinColumn(name = "project_id"),
+        inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    private List<Category> categories = new ArrayList<>();
 
     public Project(String name, String description, Competition competition) {
         this.name       = name;
@@ -84,5 +92,15 @@ public class Project {
 
     public long getCommentCount() {
         return comments.size();
+    }
+
+    public void addCategory(Category category) {
+        if (!categories.contains(category)) {
+            categories.add(category);
+        }
+    }
+
+    public void removeCategory(Category category) {
+        categories.remove(category);
     }
 }

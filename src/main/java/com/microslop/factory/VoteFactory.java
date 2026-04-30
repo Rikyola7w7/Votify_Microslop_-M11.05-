@@ -8,13 +8,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class VoteFactory {
 
-    public Vote create(User user, Project project) {
+    public Vote create(User user, Project project, com.microslop.entity.Category category) {
         if (user == null) {
             throw new IllegalArgumentException("Vote must be associated with a user.");
         }
         if (project == null) {
             throw new IllegalArgumentException("Vote must be associated with a project.");
         }
-        return new Vote(user, project);
+        if (category == null) {
+            throw new IllegalArgumentException("Vote must be associated with a category.");
+        }
+        return new Vote(user, project, category);
     }
 }
