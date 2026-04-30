@@ -34,6 +34,8 @@ public interface CompetitionService {
 
     Competition getByIdOrFail(Long id);
 
+    Competition getByIdOrFailWithCategories(Long id);
+
     List<Competition> getActiveCompetitions();
 
     List<Competition> getFinishedCompetitions();

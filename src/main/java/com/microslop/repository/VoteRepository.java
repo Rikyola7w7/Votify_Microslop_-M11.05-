@@ -12,6 +12,15 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
     /** Total votes received by a project. */
     long countByProjectId(Long projectId);
 
+    /** Total votes received by a project in a specific category. */
+    @Query("""
+        SELECT COUNT(v) FROM Vote v
+        WHERE v.project.id = :projectId
+        AND v.category.id = :categoryId
+        """)
+    long countByProjectIdAndCategoryId(@Param("projectId") Long projectId,
+                                       @Param("categoryId") Long categoryId);
+
     /** Total votes cast by a user for a specific project. */
     long countByUserIdAndProjectId(Long userId, Long projectId);
 

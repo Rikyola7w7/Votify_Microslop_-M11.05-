@@ -7,6 +7,8 @@ public interface VoteService {
 
     long countVotesByProject(Long projectId);
 
+    long countVotesByProjectAndCategory(Long projectId, Long categoryId);
+
     long countVotesByUserAndProject(Long userId, Long projectId);
 
     long countVotesPerUserInCompetition(Long userId, Long competitionId);

@@ -69,6 +69,12 @@ public class VoteServiceImpl implements VoteService {
 
     @Override
     @Transactional(readOnly = true)
+    public long countVotesByProjectAndCategory(Long projectId, Long categoryId) {
+        return voteRepository.countByProjectIdAndCategoryId(projectId, categoryId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public long countVotesByUserAndProject(Long userId, Long projectId) {
         return voteRepository.countByUserIdAndProjectId(userId, projectId);
     }

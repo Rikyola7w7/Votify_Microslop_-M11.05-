@@ -1,12 +1,15 @@
 package com.microslop.views;
 
 import com.microslop.entity.Project;
+import com.microslop.entity.Category;
 import com.microslop.service.ProjectService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.VoteService;
+import com.microslop.views.components.PodiumCardComponent;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
@@ -47,6 +50,8 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     // ── State ────────────────────────────────────────────────────────────────
 
     private Long competitionId;
+    private Long selectedCategoryId;  // null means "General" (all projects)
+    private VerticalLayout bodyContainer;  // Reference to the body for easy updates
 
     // ── UI areas that refresh after voting ─────────────────────────────────
 
@@ -85,11 +90,95 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     // ── UI Building ────────────────────────────────────────────────────
 
     private void buildUi() {
-        var competition = competitionService.getByIdOrFail(competitionId);
-        var ranking     = projectService.getRanking(competitionId);
-
+        var competition = competitionService.getByIdOrFailWithCategories(competitionId);
+        selectedCategoryId = null;  // Reset to "General"
+        
         add(buildHeader(competition.getName()));
-        add(buildBody(ranking));
+        add(buildCategoryFilter(competition.getCategories()));
+        updateRanking();
+    }
+
+    // ── Category Filter ────────────────────────────────────────────────────────
+
+    private VerticalLayout buildCategoryFilter(List<Category> categories) {
+        var filterContainer = new VerticalLayout();
+        filterContainer.setWidthFull();
+        filterContainer.setAlignItems(Alignment.CENTER);
+        filterContainer.getStyle()
+            .set("padding", "1rem 1rem")
+            .set("background", "#f9fafb")
+            .set("border-bottom", "1px solid #e5e7eb");
+        filterContainer.setPadding(true);
+        filterContainer.setSpacing(false);
+
+        var label = new Span("Category:");
+        label.getStyle()
+            .set("font-weight", "600")
+            .set("color", "#333")
+            .set("margin-right", "1rem");
+
+        var comboBox = new ComboBox<String>();
+        comboBox.setWidth("300px");
+        comboBox.setPlaceholder("Select a category");
+        comboBox.setClearButtonVisible(false);
+
+        // Build category items: "General" + all categories
+        List<String> items = new java.util.ArrayList<>();
+        items.add("General");  // First item is "General"
+        for (Category cat : categories) {
+            items.add(cat.getName());
+        }
+        comboBox.setItems(items);
+        comboBox.setValue("General");
+
+        // When selection changes, update ranking
+        comboBox.addValueChangeListener(event -> {
+            String selectedValue = event.getValue();
+            if (selectedValue == null || "General".equals(selectedValue)) {
+                selectedCategoryId = null;
+                comboBox.setValue("General");  // Ensure General is always selected if null
+            } else {
+                // Find category ID by name
+                for (Category cat : categories) {
+                    if (cat.getName().equals(selectedValue)) {
+                        selectedCategoryId = cat.getId();
+                        break;
+                    }
+                }
+            }
+            updateRanking();
+        });
+
+        var controlsLayout = new HorizontalLayout();
+        controlsLayout.setAlignItems(Alignment.CENTER);
+        controlsLayout.add(label, comboBox);
+        controlsLayout.setMargin(false);
+        controlsLayout.setPadding(false);
+
+        filterContainer.add(controlsLayout);
+        return filterContainer;
+    }
+
+    // ── Update Ranking ─────────────────────────────────────────────────────────
+
+    private void updateRanking() {
+        List<Project> ranking;
+        if (selectedCategoryId == null) {
+            // Get general ranking
+            ranking = projectService.getRanking(competitionId);
+        } else {
+            // Get ranking by category
+            ranking = projectService.getRankingByCategory(selectedCategoryId);
+        }
+        
+        // Remove old body if present
+        if (bodyContainer != null) {
+            remove(bodyContainer);
+        }
+        
+        // Create and add new body
+        bodyContainer = buildBody(ranking);
+        add(bodyContainer);
     }
 
     // ── Header ────────────────────────────────────────────────────────────────
@@ -226,7 +315,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             .set("align-items", "flex-end")
             .set("gap", "1rem")
             .set("margin-bottom", "2.5rem");
-        renderPodium(ranking);
+        renderPodium(ranking, selectedCategoryId);
 
         // ── List (position 4+) ────────────────────────────────────────────────
         listSection = new VerticalLayout();
@@ -234,7 +323,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         listSection.getStyle().set("max-width", "760px");
         listSection.setPadding(false);
         listSection.setSpacing(false);
-        renderList(ranking);
+        renderList(ranking, selectedCategoryId);
 
         body.add(title, podiumSection, listSection);
         return body;
@@ -242,80 +331,34 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
 
     // ── Podium ─────────────────────────────────────────────────────────────────
 
-    private void renderPodium(List<Project> ranking) {
+    private void renderPodium(List<Project> ranking, Long categoryId) {
         podiumSection.removeAll();
 
         // Visual order: 2nd | 1st | 3rd
-        int[] order       = {1, 0, 2};
-        String[] medals = {"🥈", "🥇", "🥉"};
-        String[] bgColors = {
-            "linear-gradient(145deg, #e8e8e8, #c0c0c0)",   // silver
-            "linear-gradient(145deg, #fff4c2, #d4a017)",   // gold
-            "linear-gradient(145deg, #f4d9b0, #b87333)"    // bronze
+        int[] order = {1, 0, 2};
+        PodiumCardComponent.Position[] positions = {
+            PodiumCardComponent.Position.SECOND,
+            PodiumCardComponent.Position.FIRST,
+            PodiumCardComponent.Position.THIRD
         };
-        String[] borderColors = {"#aaa", "#c9a800", "#a0622a"};
 
         for (int slot = 0; slot < 3; slot++) {
             int idx = order[slot];
             if (idx >= ranking.size()) continue;
 
-            Project p      = ranking.get(idx);
-            int position      = idx + 1;
-            boolean isGold   = (position == 1);
-            long totalVotes = voteService.countVotesByProject(p.getId());
+            Project p = ranking.get(idx);
+            long totalVotes = (categoryId == null) 
+                ? voteService.countVotesByProject(p.getId())
+                : voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
 
-            var card = new Div();
-            card.getStyle()
-                .set("background", bgColors[slot])
-                .set("border", "2px solid " + borderColors[slot])
-                .set("border-radius", "16px")
-                .set("padding", isGold ? "2rem 1.5rem" : "1.5rem 1.2rem")
-                .set("text-align", "center")
-                .set("min-width", isGold ? "220px" : "180px")
-                .set("box-shadow", isGold
-                    ? "0 8px 24px rgba(212,160,23,0.35)"
-                    : "0 4px 12px rgba(0,0,0,0.15)")
-                .set("transform", isGold ? "translateY(-20px)" : "none")
-                .set("transition", "transform 0.2s ease, box-shadow 0.2s ease")
-                .set("cursor", "default");
-
-            var medalSpan = new Span(medals[slot]);
-            medalSpan.getStyle()
-                .set("font-size", isGold ? "3rem" : "2.2rem")
-                .set("display", "block")
-                .set("margin-bottom", "0.5rem");
-
-            var nameSpan = new Span(p.getName().toUpperCase());
-            nameSpan.getStyle()
-                .set("font-weight", "800")
-                .set("font-size", isGold ? "1.1rem" : "0.95rem")
-                .set("display", "block")
-                .set("margin-bottom", "0.4rem")
-                .set("color", "#1a1a2e");
-
-            var labelVotes = new Span(isGold ? "Total Votes:" : "Votes:");
-            labelVotes.getStyle()
-                .set("font-size", "0.8rem")
-                .set("color", "#444")
-                .set("display", "block");
-
-            var numVotes = new Span(formatNumber(totalVotes));
-            numVotes.getStyle()
-                .set("font-weight", "700")
-                .set("font-size", isGold ? "1.6rem" : "1.2rem")
-                .set("color", "#1a1a2e")
-                .set("display", "block")
-                .set("margin-bottom", "0.8rem");
-
-            card.add(medalSpan, nameSpan, labelVotes, numVotes);
-
-            podiumSection.add(card);
+            var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes);
+            podiumSection.add(podiumCard);
         }
     }
 
     // ── List (position 4+) ─────────────────────────────────────────────────────
 
-    private void renderList(List<Project> ranking) {
+    private void renderList(List<Project> ranking, Long categoryId) {
         listSection.removeAll();
 
         if (ranking.size() <= 3) return;
@@ -331,7 +374,9 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
 
         for (int i = 3; i < ranking.size(); i++) {
             Project p      = ranking.get(i);
-            long totalVotes = voteService.countVotesByProject(p.getId());
+            long totalVotes = (categoryId == null)
+                ? voteService.countVotesByProject(p.getId())
+                : voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
 
             listSection.add(buildListRow(p, i + 1, totalVotes));
         }

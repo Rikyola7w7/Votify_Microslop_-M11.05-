@@ -22,4 +22,8 @@ public interface CompetitionRepository extends JpaRepository<Competition, Long> 
     // Active competitions with their projects eager-loaded
     @Query("SELECT DISTINCT c FROM Competition c LEFT JOIN FETCH c.projects WHERE c.active = true")
     List<Competition> findActiveWithProjects();
+
+    // Find competition by ID with categories eager-loaded
+    @Query("SELECT c FROM Competition c LEFT JOIN FETCH c.categories WHERE c.id = :id")
+    Optional<Competition> findByIdWithCategories(Long id);
 }
