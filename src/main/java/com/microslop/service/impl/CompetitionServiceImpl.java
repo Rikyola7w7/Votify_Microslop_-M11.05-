@@ -158,6 +158,12 @@ public class CompetitionServiceImpl implements CompetitionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<Competition> getCompetitionsByCreator(String username) {
+        return competitionRepository.findByCreatedByIgnoreCase(username);
+    }
+
+    @Override
     public List<String> validateCompetitionCreation(String competitionName, String eventType, 
                                                     LocalDate startDate, LocalDate endDate, 
                                                     List<CategoryDTO> categories) {

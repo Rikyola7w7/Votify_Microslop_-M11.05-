@@ -100,6 +100,9 @@ public class MainView extends VerticalLayout {
             userMenu.addItem("My Projects", event -> {
                 getUI().ifPresent(ui -> ui.navigate(username + "/projects"));
             });
+            userMenu.addItem("My Competitions", event -> {
+                getUI().ifPresent(ui -> ui.navigate(username + "/competitions"));
+            });
             userMenu.addItem("Edit Profile", event -> {
                 getUI().ifPresent(ui -> ui.navigate(username));
             });

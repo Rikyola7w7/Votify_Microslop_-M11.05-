@@ -47,6 +47,13 @@ public interface CompetitionService {
     List<Competition> searchByName(List<Competition> competitions, String searchTerm);
 
     /**
+     * Get all competitions created by a specific user.
+     * @param username the username of the creator
+     * @return list of competitions created by this user
+     */
+    List<Competition> getCompetitionsByCreator(String username);
+
+    /**
      * Validate competition creation input.
      * @param competitionName the competition name
      * @param eventType the event type
