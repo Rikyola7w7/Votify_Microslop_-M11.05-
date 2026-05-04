@@ -23,7 +23,6 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
-import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 
 @PageTitle("Project Discussion | Votify")
@@ -36,7 +35,6 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
     private Project project;
     private Div commentsContainer;
 
-    @Autowired
     public ProjectDetailsView(ProjectService projectService) {
         this.projectService = projectService;
         initializeView();

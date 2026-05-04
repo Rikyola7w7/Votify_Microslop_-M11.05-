@@ -113,6 +113,13 @@ public class CompetitionServiceImpl implements CompetitionService {
 
     @Override
     @Transactional(readOnly = true)
+    public Competition getByIdOrFailWithCategories(Long id) {
+        return competitionRepository.findByIdWithCategories(id)
+                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Competition> getActiveCompetitions() {
         return competitionRepository.findActiveWithProjects();
     }

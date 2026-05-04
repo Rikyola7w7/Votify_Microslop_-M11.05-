@@ -11,16 +11,19 @@ import org.springframework.stereotype.Component;
 @Component
 public class ProjectCommentFactory {
 
-    public ProjectComment create(Project project, User user, String commentText) {
+    public ProjectComment create(Project project, User user, String commentText, com.microslop.entity.Category category) {
         if (project == null) {
             throw new IllegalArgumentException("Comment must be associated with a project.");
         }
         if (user == null) {
             throw new IllegalArgumentException("Comment must be associated with a user.");
         }
+        if (category == null) {
+            throw new IllegalArgumentException("Comment must be associated with a category.");
+        }
         validateNotEmpty(commentText, "Comment text cannot be empty.");
 
-        return new ProjectComment(project, user, commentText);
+        return new ProjectComment(project, user, commentText, category);
     }
 
     private void validateNotEmpty(String value, String message) {

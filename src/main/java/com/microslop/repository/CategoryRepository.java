@@ -4,6 +4,7 @@ import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import java.util.Optional;
 
 import java.util.List;
 
@@ -27,4 +28,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
      * @return list of categories for the competition
      */
     List<Category> findByCompetitionId(Long competitionId);
+
+    Optional<Category> findByCompetitionIdAndName(Long competitionId, String name);
 }

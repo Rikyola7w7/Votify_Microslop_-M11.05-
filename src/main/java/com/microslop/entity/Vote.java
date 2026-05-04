@@ -31,9 +31,14 @@ public class Vote {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    public Vote(User user, Project project) {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    public Vote(User user, Project project, Category category) {
         this.user      = user;
         this.project   = project;
+        this.category  = category;
         this.voteDate  = LocalDateTime.now();
     }
 }

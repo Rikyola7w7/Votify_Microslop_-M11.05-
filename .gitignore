@@ -14,5 +14,4 @@ src/main/frontend/generated/
 vite.generated.ts
 .env
 neon.session.sql
-test
 
