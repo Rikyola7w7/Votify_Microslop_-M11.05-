@@ -9,6 +9,7 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import java.time.format.DateTimeFormatter;
 
 /**
  * CompetitionCardComponent - A reusable card component displaying competition information.
@@ -35,7 +36,12 @@ public class CompetitionCardComponent extends Div {
             .set("justify-content", "space-between")
             .set("cursor", "pointer")
             .set("transition", "all 0.3s ease")
-            .set("border", "1px solid #e0e0e0");
+            .set("border", "1px solid #e0e0e0")
+            .set("position", "relative");
+
+        // Add status indicator
+        Div statusIndicator = createStatusIndicator();
+        add(statusIndicator);
 
         addAttachListener(event -> {
             getStyle().set("--hover-shadow", "0 8px 12px rgba(0, 0, 0, 0.15)");
@@ -60,16 +66,51 @@ public class CompetitionCardComponent extends Div {
         Div iconContainer = createIconContainer();
 
         H3 competitionTitle = new H3(competition.getName());
+        
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String startDateStr = "Start: " + competition.getStartDate().format(dateFormatter);
+        String endDateStr = "End: " + competition.getEndDate().format(dateFormatter);
+        
+        String truncatedDescription = truncateDescription(competition.getDescription(), 50);
+        H3 description = new H3(truncatedDescription);
+        H3 startdate = new H3(startDateStr);
+        H3 enddate = new H3(endDateStr);
+        
         competitionTitle.getStyle()
+            .set("margin", "20px 0 10px 0")
+            .set("color", "#1a3a5c")
+            .set("font-size", "28px")
+            .set("font-weight", "600")
+            .set("text-align", "center");
+
+        description.getStyle()
             .set("margin", "20px 0 10px 0")
             .set("color", "#1a3a5c")
             .set("font-size", "20px")
             .set("font-weight", "600")
-            .set("text-align", "center");
+            .set("text-align", "left");
+        
+        startdate.getStyle()
+            //.set("margin", "20px 0 10px 0")
+            .set("color", "#1a3a5c")
+            .set("font-size", "20px")
+            .set("font-weight", "600")
+            .set("text-align", "left");
+
+        enddate.getStyle()
+            //.set("margin", "20px 0 10px 0")
+            .set("color", "#1a3a5c")
+            .set("font-size", "20px")
+            .set("font-weight", "600")
+            .set("text-align", "left");
+        
 
 
         cardContent.add(iconContainer);
         cardContent.add(competitionTitle);
+        cardContent.add(startdate);
+        cardContent.add(enddate);
+        cardContent.add(description);
 
         add(cardContent);
         add(createViewButton());
@@ -94,7 +135,35 @@ public class CompetitionCardComponent extends Div {
         return iconContainer;
     }
 
-    
+    private Div createStatusIndicator() {
+        Div statusDot = new Div();
+        statusDot.setWidth(16, Unit.PIXELS);
+        statusDot.setHeight(16, Unit.PIXELS);
+        statusDot.getStyle()
+            .set("position", "absolute")
+            .set("top", "12px")
+            .set("right", "12px")
+            .set("border-radius", "50%")
+            .set("z-index", "10");
+        
+        if (competition.isActive()) {
+            statusDot.getStyle().set("background-color", "#4caf50"); // Green for active
+        } else {
+            statusDot.getStyle().set("background-color", "#f44336"); // Red for inactive
+        }
+        
+        return statusDot;
+    }
+
+    private String truncateDescription(String description, int maxLength) {
+        if (description == null || description.isEmpty()) {
+            return "";
+        }
+        if (description.length() > maxLength) {
+            return description.substring(0, maxLength) + "...";
+        }
+        return description;
+    }
 
     private Button createViewButton() {
         Button viewButton = new Button("VER");
