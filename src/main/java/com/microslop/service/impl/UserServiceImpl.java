@@ -137,4 +137,13 @@ public class UserServiceImpl implements UserService {
         }
         return "";
     }
+
+    @Override
+    public long getCurrentUserId() {
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            return currentUser.getId();
+        }
+        throw new IllegalStateException("No user is currently logged in");
+    }
 }

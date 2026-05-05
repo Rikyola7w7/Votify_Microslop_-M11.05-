@@ -413,20 +413,13 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
 
-        Category selectedCategory = categoryDropdown.getValue();
-        if (selectedCategory == null) {
-            showNotification("Debes elegir una categoría antes de votar.", NotificationVariant.LUMO_WARNING);
-            return;
-        }
-
         try {
             voteService.submitVote(username, project.getId(), selectedCategory.getId());
             
             // Update the vote counter
             var competition = competitionService.getByIdOrFail(competitionId);
             int remainingVotes = competition.getMaxVotes();
-            String currentUser = userService.getCurrentUsername();
-            long votesUsed = voteService.countVotesPerUserInCompetition(currentUser, competitionId);
+            long votesUsed = voteService.countVotesPerUserInCompetition(userService.getCurrentUserId(), competitionId);
             int votesLeft = Math.max(0, remainingVotes - (int)votesUsed);
             
             if (voteCounterSpan != null) {

@@ -23,4 +23,6 @@ public interface UserService {
     boolean isLoggedIn();
 
     String getCurrentUsername();
+
+    long getCurrentUserId();
 }

@@ -49,6 +49,9 @@ public class Competition {
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Judge> judges = new ArrayList<>();
 
+    @Column(nullable = false, name = "max_votes")
+    private int maxVotes = 1;
+
     public Competition(String name, String description,
                        LocalDateTime startDate, LocalDateTime endDate) {
         this.name      = name;
