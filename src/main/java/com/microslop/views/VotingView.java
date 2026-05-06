@@ -19,11 +19,15 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -44,6 +48,9 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private final CategoryService categoryService;
 
     private Long competitionId;
+    private Span maxVotesLabel;
+    private com.microslop.entity.Competition currentCompetition;
+    private com.microslop.entity.User currentUser;
 
     private VerticalLayout projectsContainer;
     private ComboBox<Category> categoryDropdown;
@@ -109,10 +116,43 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
     private void buildUi() {
         var competition = competitionService.getByIdOrFail(competitionId);
+        this.currentCompetition = competition;
+        this.currentUser = userService.getCurrentUser();
+        
         var projects    = projectService.listByCompetition(competitionId);
 
         add(buildHeader(competition.getName()));
         add(buildBody(projects, competition.getName()));
+    }
+
+    // ── Utility Methods ────────────────────────────────────────────────────
+
+    private int getAvailableVotes(Category selectedCategory) {
+        if (currentCompetition == null || currentCompetition.getMaxVotesPerPerson() == null || currentUser == null) {
+            return 0;
+        }
+        
+        long votesUsed = selectedCategory != null
+                ? voteService.countPointsByUserAndCategory(currentUser.getId(), selectedCategory.getId())
+                : 0;
+        
+        return Math.max(0, currentCompetition.getMaxVotesPerPerson() - (int) votesUsed);
+    }
+
+    private void updateMaxVotesLabel(Category selectedCategory) {
+        if (maxVotesLabel == null || currentCompetition == null) return;
+        
+        int available = getAvailableVotes(selectedCategory);
+        maxVotesLabel.setText("Tienes " + available + " votos a repartir");
+        
+        // Cambiar color según disponibilidad
+        if (available == 0) {
+            maxVotesLabel.getStyle().set("color", "#999999");
+        } else if (available <= 3) {
+            maxVotesLabel.getStyle().set("color", "#e67e22");
+        } else {
+            maxVotesLabel.getStyle().set("color", "#1a3a5c");
+        }
     }
 
     // ── Header ────────────────────────────────────────────────────────────
@@ -195,6 +235,22 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("display", "block")
                 .set("text-align", "center");
 
+        // Display max votes per person
+        var competition = competitionService.getById(competitionId).orElse(null);
+        maxVotesLabel = new Span();
+        if (competition != null && competition.getMaxVotesPerPerson() != null) {
+            maxVotesLabel.setText("Tienes " + competition.getMaxVotesPerPerson() + " votos a repartir");
+        } else {
+            maxVotesLabel.setText("Tienes votos disponibles");
+        }
+        maxVotesLabel.getStyle()
+                .set("font-size", "1.1rem")
+                .set("font-weight", "600")
+                .set("color", "#1a3a5c")
+                .set("margin-bottom", "1.5rem")
+                .set("display", "block")
+                .set("text-align", "center");
+
         var categoryLayout = new HorizontalLayout();
         categoryLayout.setAlignItems(Alignment.CENTER);
         categoryLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
@@ -219,8 +275,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         projectsContainer.setPadding(false);
         projectsContainer.setSpacing(false);
 
-        var currentUser = userService.getCurrentUser();
-        if (currentUser == null) {
+        var currentUserLocal = userService.getCurrentUser();
+        if (currentUserLocal == null) {
             Notification.show("User not found. Please log in again.");
             body.add(new Paragraph("Error: User not found. Please log in again."));
             return body;
@@ -229,8 +285,10 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         Runnable updateProjectsList = () -> {
             projectsContainer.removeAll();
             Category selectedCategory = categoryDropdown.getValue();
+            updateMaxVotesLabel(selectedCategory);
+            
             boolean hasVotedInCategory = selectedCategory != null && 
-                    voteService.countVotesByUserAndCategory(currentUser.getId(), selectedCategory.getId()) > 0;
+                    voteService.countVotesByUserAndCategory(currentUserLocal.getId(), selectedCategory.getId()) > 0;
 
             for (Project p : projects) {
                 boolean matches = true;
@@ -240,9 +298,9 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 }
                 if (matches) {
                     long alreadyVoted = selectedCategory != null
-                            ? voteService.countVotesByUserAndProjectAndCategory(currentUser.getId(), p.getId(), selectedCategory.getId())
-                            : voteService.countVotesByUserAndProject(currentUser.getId(), p.getId());
-                    projectsContainer.add(buildProjectCard(p, alreadyVoted > 0, hasVotedInCategory));
+                            ? voteService.countVotesByUserAndProjectAndCategory(currentUserLocal.getId(), p.getId(), selectedCategory.getId())
+                            : voteService.countVotesByUserAndProject(currentUserLocal.getId(), p.getId());
+                    projectsContainer.add(buildProjectCard(p, alreadyVoted > 0, hasVotedInCategory, selectedCategory));
                 }
             }
         };
@@ -251,13 +309,13 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         updateProjectsList.run();
 
-        body.add(title, subtitle, categoryLayout, projectsContainer);
+        body.add(title, subtitle, maxVotesLabel, categoryLayout, projectsContainer);
         return body;
     }
 
     // ── Project Card ──────────────────────────────────────────────────────
 
-    private Div buildProjectCard(Project p, boolean alreadySelected, boolean hasVotedInCategory) {
+    private Div buildProjectCard(Project p, boolean alreadySelected, boolean hasVotedInCategory, Category selectedCategory) {
         long totalVotes = voteService.countVotesByProject(p.getId());
         boolean otherProjectVoted = hasVotedInCategory && !alreadySelected;
 
@@ -296,17 +354,50 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         info.add(name, desc, votesLabel);
 
-        var voteButton = new Button(alreadySelected ? "Project selected" : otherProjectVoted ? "Already voted" : "Vote for this project");
-        voteButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        voteButton.setEnabled(!alreadySelected && !otherProjectVoted);
-        voteButton.getStyle()
-                .set("background", alreadySelected || otherProjectVoted ? "#cccccc" : "#1a3a5c")
-                .set("color", "white")
-                .set("font-weight", "700")
-                .set("padding", "0.75rem 1.25rem")
-                .set("border-radius", "8px")
-                .set("cursor", "pointer");
-        voteButton.addClickListener(e -> handleVote(p));
+        // Create points input field
+        var pointsInput = new IntegerField();
+        pointsInput.setLabel("Puntos");
+        pointsInput.setMin(0);
+        pointsInput.setValue(0);
+        pointsInput.setWidth("80px");
+        pointsInput.getStyle()
+                .set("font-weight", "600")
+                .set("text-align", "center")
+                .set("padding", "0.5rem");
+
+        // Create vote button to submit points
+        Button submitButton = new Button("Votar");
+        submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        
+        // Actualizar estado del botón basado en votos disponibles
+        int availableVotes = getAvailableVotes(selectedCategory);
+        if (availableVotes <= 0) {
+            submitButton.setEnabled(false);
+            submitButton.getStyle()
+                    .set("background", "rgba(26, 58, 92, 0.3)")
+                    .set("color", "rgba(255, 255, 255, 0.5)")
+                    .set("cursor", "not-allowed");
+        } else {
+            submitButton.getStyle()
+                    .set("background", "#1a3a5c")
+                    .set("color", "white")
+                    .set("font-weight", "700")
+                    .set("padding", "0.75rem 1.25rem")
+                    .set("border-radius", "8px")
+                    .set("cursor", "pointer");
+        }
+        
+        submitButton.setWidth("auto");
+        submitButton.getStyle().set("padding", "0.75rem 1.25rem").set("border-radius", "8px").set("font-weight", "700");
+        
+        submitButton.addClickListener(e -> handleVoteWithPoints(p, pointsInput.getValue() != null ? pointsInput.getValue() : 0, selectedCategory));
+
+        // Create points layout
+        var pointsLayout = new HorizontalLayout(pointsInput, submitButton);
+        pointsLayout.setAlignItems(Alignment.END);
+        pointsLayout.setSpacing(true);
+        pointsLayout.setPadding(false);
+        pointsLayout.setMargin(false);
 
         Button commentsBtn = new Button("Add Comments");
         commentsBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
@@ -320,7 +411,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("cursor", "pointer");
         commentsBtn.addClickListener(e -> openCommentsDialog(p.getName(), p.getId()));
 
-        var actions = new VerticalLayout(voteButton, commentsBtn);
+        var actions = new VerticalLayout(pointsLayout, commentsBtn);
         actions.setPadding(false);
         actions.setSpacing(true);
         actions.setAlignItems(Alignment.END);
@@ -387,6 +478,61 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     // ── Utilities ─────────────────────────────────────────────────────────
+
+    private void handleVoteWithPoints(Project project, int points, Category selectedCategory) {
+        String username = userService.getCurrentUsername();
+        if (username == null || username.isEmpty()) {
+            showNotification("You must be logged in to vote.", NotificationVariant.LUMO_CONTRAST);
+            return;
+        }
+
+        if (selectedCategory == null) {
+            showNotification("Debes elegir una categoría antes de votar.", NotificationVariant.LUMO_WARNING);
+            return;
+        }
+
+        if (points <= 0) {
+            showNotification("You must assign at least 1 point to vote.", NotificationVariant.LUMO_CONTRAST);
+            return;
+        }
+
+        // Validar que los puntos no superen los disponibles
+        int availableVotes = getAvailableVotes(selectedCategory);
+        if (points > availableVotes) {
+            showNotification("¡Error! Solo tienes " + availableVotes + " votos disponibles. No puedes asignar " + points + " puntos.", 
+                    NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
+        try {
+            voteService.submitVote(username, project.getId(), selectedCategory.getId(), points);
+            showNotification("¡Voto enviado! " + points + " puntos asignados.", NotificationVariant.LUMO_SUCCESS);
+            
+            // Recalcular votos disponibles
+            int remainingVotes = availableVotes - points;
+            
+            // Actualizar el contador
+            updateMaxVotesLabel(selectedCategory);
+            
+            // Si se acaban los votos, redirigir a ranking
+            if (remainingVotes == 0) {
+                getUI().ifPresent(ui -> {
+                    try {
+                        Thread.sleep(1500); // Pequeña demora para que se vea el mensaje
+                        ui.navigate("competition/" + competitionId);
+                    } catch (InterruptedException e) {
+                        ui.navigate("competition/" + competitionId);
+                    }
+                });
+            } else {
+                // Si aún hay votos, refrescar la vista
+                removeAll();
+                buildUi();
+            }
+        } catch (IllegalStateException ex) {
+            showNotification(ex.getMessage(), NotificationVariant.LUMO_CONTRAST);
+        }
+    }
 
     private void handleVote(Project project) {
         String username = userService.getCurrentUsername();

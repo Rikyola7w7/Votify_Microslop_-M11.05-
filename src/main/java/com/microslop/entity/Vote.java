@@ -23,6 +23,9 @@ public class Vote {
     @Column(name = "comment", length = 500)
     private String comment;
 
+    @Column(name = "points", nullable = false)
+    private Integer points = 1;
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -40,5 +43,14 @@ public class Vote {
         this.project   = project;
         this.category  = category;
         this.voteDate  = LocalDateTime.now();
+        this.points    = 1;
+    }
+
+    public Vote(User user, Project project, Category category, Integer points) {
+        this.user      = user;
+        this.project   = project;
+        this.category  = category;
+        this.voteDate  = LocalDateTime.now();
+        this.points    = points != null ? points : 1;
     }
 }

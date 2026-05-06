@@ -5,6 +5,8 @@ public interface VoteService {
 
     void submitVote(String userUsername, Long projectId, Long categoryId);
 
+    void submitVote(String userUsername, Long projectId, Long categoryId, int points);
+
     long countVotesByProject(Long projectId);
 
     long countVotesByProjectAndCategory(Long projectId, Long categoryId);
@@ -16,4 +18,6 @@ public interface VoteService {
     long countVotesByUserAndCategory(Long userId, Long categoryId);
 
     long countVotesByUserAndProjectAndCategory(Long userId, Long projectId, Long categoryId);
+
+    long countPointsByUserAndCategory(Long userId, Long categoryId);
 }
