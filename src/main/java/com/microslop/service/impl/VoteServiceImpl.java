@@ -59,6 +59,29 @@ public class VoteServiceImpl implements VoteService {
         voteRepository.save(vote);
     }
 
+    @Override
+    public void submitVote(String userUsername, Long projectId, Long categoryId, int points) {
+        var user        = userService.searchByUsernameIgnoreCase(userUsername)
+                            .orElseThrow(() -> new IllegalStateException("User not found."));
+        var project     = projectService.getById(projectId);
+        var competition = project.getCompetition();
+        var category    = categoryRepository.findById(categoryId)
+                            .orElseThrow(() -> new IllegalStateException("Category not found."));
+
+        if (!competition.isActive()) {
+            throw new IllegalStateException("Competition is not active.");
+        }
+
+        long alreadyCastInCategory = voteRepository.countByUserIdAndCategoryId(user.getId(), category.getId());
+        if (alreadyCastInCategory >= MAX_VOTES_PER_CATEGORY) {
+            throw new IllegalStateException(
+                "You already voted for a project in this category.");
+        }
+
+        Vote vote = new Vote(user, project, category, points);
+        voteRepository.save(vote);
+    }
+
     // ── Read ──────────────────────────────────────────────────────────────
 
     @Override
@@ -95,5 +118,11 @@ public class VoteServiceImpl implements VoteService {
     @Transactional(readOnly = true)
     public long countVotesByUserAndProjectAndCategory(Long userId, Long projectId, Long categoryId) {
         return voteRepository.countByUserIdAndProjectIdAndCategoryId(userId, projectId, categoryId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countPointsByUserAndCategory(Long userId, Long categoryId) {
+        return voteRepository.sumPointsByUserIdAndCategoryId(userId, categoryId);
     }
 }

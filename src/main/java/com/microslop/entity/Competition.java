@@ -40,6 +40,22 @@ public class Competition {
     @Column(name = "created_by", length = 255)
     private String createdBy;
 
+    // ── Voting Configuration ───────────────────────────────────────────────
+    @Column(name = "voter_type", length = 50)
+    private String voterType = "ALL"; // JUDGES, ALL
+
+    @Column(name = "auto_vote", columnDefinition = "boolean default false")
+    private Boolean autoVote = false;
+
+    @Column(name = "max_votes_per_person", columnDefinition = "integer default 1")
+    private Integer maxVotesPerPerson = 1;
+
+    @Column(name = "judge_weight_multiplier", columnDefinition = "double default 1.0")
+    private Double judgeWeightMultiplier = 1.0;
+
+    @Column(name = "standard_user_weight_multiplier", columnDefinition = "double default 1.0")
+    private Double standardUserWeightMultiplier = 1.0;
+
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Project> projects = new ArrayList<>();
 
@@ -88,5 +104,46 @@ public class Competition {
     public void removeJudge(Judge judge) {
         judges.remove(judge);
         judge.setCompetition(null);
+    }
+
+    // ── Getters and Setters for Voting Configuration ────────────────────
+    public String getVoterType() {
+        return voterType;
+    }
+
+    public void setVoterType(String voterType) {
+        this.voterType = voterType;
+    }
+
+    public boolean isAutoVote() {
+        return autoVote != null && autoVote;
+    }
+
+    public void setAutoVote(Boolean autoVote) {
+        this.autoVote = autoVote;
+    }
+
+    public Integer getMaxVotesPerPerson() {
+        return maxVotesPerPerson;
+    }
+
+    public void setMaxVotesPerPerson(Integer maxVotesPerPerson) {
+        this.maxVotesPerPerson = maxVotesPerPerson;
+    }
+
+    public Double getJudgeWeightMultiplier() {
+        return judgeWeightMultiplier;
+    }
+
+    public void setJudgeWeightMultiplier(Double judgeWeightMultiplier) {
+        this.judgeWeightMultiplier = judgeWeightMultiplier;
+    }
+
+    public Double getStandardUserWeightMultiplier() {
+        return standardUserWeightMultiplier;
+    }
+
+    public void setStandardUserWeightMultiplier(Double standardUserWeightMultiplier) {
+        this.standardUserWeightMultiplier = standardUserWeightMultiplier;
     }
 }
