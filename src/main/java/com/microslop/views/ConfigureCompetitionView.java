@@ -66,21 +66,21 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private TimePicker endTimePicker;
     private VerticalLayout categoriesContainer;
 
-    // PARTICIPACIÓN Section
+    // PARTICIPATION Section
     private ComboBox<String> voterTypeCombo;
     private ComboBox<String> autoVoteCombo;
     private IntegerField maxVotesPerPersonField;
 
     // JUECES Section
     private VerticalLayout judgesContainer;
-    private java.util.List<Judge> judgesToRemove; // Jueces a eliminar al guardar
-    private java.util.List<com.microslop.entity.User> judgesToAdd; // Usuarios a agregar como jueces al guardar
+    private java.util.List<Judge> judgesToRemove; // Judges to remove at save
+    private java.util.List<com.microslop.entity.User> judgesToAdd; // Users to add as judges at save
 
-    // CATEGORÍAS Section (para mantener cambios locales)
+    // CATEGORIES Section (to maintain local changes)
     private java.util.List<Category> categoriesToRemove;
     private java.util.Map<Long, Integer> categoryWeightChanges; // categoryId -> newWeight
 
-    // PONDERACIÓN DE VOTOS Section
+    // VOTE WEIGHTING Section
     private NumberField judgeWeightField;
     private NumberField standardUserWeightField;
 
@@ -164,13 +164,13 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         // ── GENERAL Section ─────────────────────────────────────────────────────
         VerticalLayout generalSection = buildGeneralSection();
 
-        // ── PARTICIPACIÓN Section ───────────────────────────────────────────────
+        // ── PARTICIPATION Section ───────────────────────────────────────────────
         VerticalLayout participationSection = buildParticipationSection();
 
         // ── JUECES Section ──────────────────────────────────────────────────────
         VerticalLayout judgesSection = buildJudgesSection();
 
-        // ── PONDERACIÓN DE VOTOS Section ────────────────────────────────────────
+        // ── VOTE WEIGHTING Section ────────────────────────────────────────
         VerticalLayout votingWeightSection = buildVotingWeightSection();
 
         // ── COMENTARIOS Section ──────────────────────────────────────────────────
@@ -280,7 +280,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         Span categoryName = new Span(category.getName());
         categoryName.getStyle().set("flex", "1").set("font-weight", "500");
 
-        // Weight editor field - mantiene cambios localmente
+        // Weight editor field - maintains local changes
         NumberField weightEditor = new NumberField();
         weightEditor.setValue((double) category.getWeight());
         weightEditor.setMin(1);
@@ -298,20 +298,20 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 int totalAfter = calculateTotalCategoryWeight() + difference;
                 
                 if (totalAfter > 100) {
-                    Notification notification = Notification.show("El peso total no puede exceder 100%. Máximo disponible: " + (100 - calculateTotalCategoryWeight() + currentWeight));
+                    Notification notification = Notification.show("Total weight cannot exceed 100%. Maximum available: " + (100 - calculateTotalCategoryWeight() + currentWeight));
                     notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
                     weightEditor.setValue((double) currentWeight);
                     return;
                 }
                 
-                // Almacenar cambio localmente, no guardar inmediatamente
+                // Store change locally, don't save immediately
                 category.setWeight(newWeight);
                 categoryWeightChanges.put(category.getId(), newWeight);
                 markAsChanged();
             }
         });
 
-        Span weightLabel = new Span("Peso:");
+        Span weightLabel = new Span("Weight:");
         weightLabel.getStyle().set("margin-right", "5px").set("color", "#666");
 
         HorizontalLayout weightLayout = new HorizontalLayout(weightLabel, weightEditor);
@@ -324,11 +324,11 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         deleteButton.setIcon(new Icon(VaadinIcon.TRASH));
         deleteButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
         deleteButton.addClickListener(e -> {
-            // Marcar para eliminación al guardar
+            // Mark for deletion at save
             categoriesToRemove.add(category);
             categoriesContainer.remove(row);
             markAsChanged();
-            Notification.show("Categoría marcada para eliminar", 2000, Notification.Position.BOTTOM_CENTER);
+            Notification.show("Category marked for deletion", 2000, Notification.Position.BOTTOM_CENTER);
         });
 
         row.add(categoryName, weightLayout, deleteButton);
@@ -375,7 +375,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             newCategory.setWeight(weightField.getValue());
             newCategory.setCompetition(currentCompetition);
 
-            // NO guardar inmediatamente, solo agregar localmente
+            // Don't save immediately, only add locally
             categoriesContainer.add(buildCategoryRow(newCategory));
             markAsChanged();
             dialog.close();
