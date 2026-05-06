@@ -17,11 +17,12 @@ import java.util.List;
 public interface JudgeRepository extends JpaRepository<Judge, Long> {
     
     /**
-     * Find all judges for a specific competition.
+     * Find all judges for a specific competition with eager loading of user.
      * @param competitionId the competition ID
      * @return list of judges for the competition
      */
-    List<Judge> findByCompetitionId(Long competitionId);
+    @Query("SELECT DISTINCT j FROM Judge j JOIN FETCH j.user WHERE j.competition.id = :competitionId")
+    List<Judge> findByCompetitionId(@Param("competitionId") Long competitionId);
     
     /**
      * Check if a user is a judge for a specific competition.

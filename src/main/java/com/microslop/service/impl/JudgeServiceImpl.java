@@ -27,7 +27,11 @@ public class JudgeServiceImpl implements JudgeService {
     @Override
     @Transactional(readOnly = true)
     public List<Judge> getJudgesByCompetition(Long competitionId) {
-        return judgeRepository.findByCompetitionId(competitionId);
+        // Fetch judges with eagerly loaded users to avoid LazyInitializationException
+        List<Judge> judges = judgeRepository.findByCompetitionId(competitionId);
+        // Force initialization of user data within transaction
+        judges.forEach(j -> j.getUser().getName());
+        return judges;
     }
     
     @Override
