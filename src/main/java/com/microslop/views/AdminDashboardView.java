@@ -253,7 +253,7 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         manageButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         manageButton.setIcon(new Icon(VaadinIcon.CLIPBOARD_TEXT));
         manageButton.addClickListener(e -> 
-            Notification.show("Functionality coming soon", 3000, Notification.Position.TOP_CENTER)
+                getUI().ifPresent(ui -> ui.navigate(currentUsername + "/competitions/manage/" + competition.getId()))
         );
 
         actionsLayout.add(configureButton, manageButton);
