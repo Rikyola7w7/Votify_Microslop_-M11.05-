@@ -55,6 +55,11 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByUsernameIgnoreCase(username);
     }
 
+    @Override
+    public Optional<User> getUserById(Long userId) {
+        return userRepository.findById(userId);
+    }
+
     public void login(String username, String password) {
         Optional<User> userOptional = userRepository.findByUsernameIgnoreCase(username);
         if (!userOptional.isPresent()) {

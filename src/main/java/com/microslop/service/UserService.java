@@ -12,6 +12,13 @@ public interface UserService {
 
     Optional<User> searchByUsernameIgnoreCase(String username);
 
+    /**
+     * Get a user by ID.
+     * @param userId the user ID
+     * @return Optional containing the user if found
+     */
+    Optional<User> getUserById(Long userId);
+
     void deleteUser(String username);
 
     User getCurrentUser();

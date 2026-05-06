@@ -56,6 +56,13 @@ public class Competition {
     @Column(name = "standard_user_weight_multiplier", columnDefinition = "double default 1.0")
     private Double standardUserWeightMultiplier = 1.0;
 
+    // ── Comments Configuration ─────────────────────────────────────────────
+    @Column(name = "comments_enabled", columnDefinition = "boolean default true")
+    private Boolean commentsEnabled = true;
+
+    @Column(name = "comments_required", columnDefinition = "boolean default false")
+    private Boolean commentsRequired = false;
+
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Project> projects = new ArrayList<>();
 

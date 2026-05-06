@@ -73,10 +73,20 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
     // JUECES Section
     private VerticalLayout judgesContainer;
+    private java.util.List<Judge> judgesToRemove; // Jueces a eliminar al guardar
+    private java.util.List<com.microslop.entity.User> judgesToAdd; // Usuarios a agregar como jueces al guardar
+
+    // CATEGORÍAS Section (para mantener cambios locales)
+    private java.util.List<Category> categoriesToRemove;
+    private java.util.Map<Long, Integer> categoryWeightChanges; // categoryId -> newWeight
 
     // PONDERACIÓN DE VOTOS Section
     private NumberField judgeWeightField;
     private NumberField standardUserWeightField;
+
+    // COMENTARIOS Section
+    private ComboBox<String> commentsEnabledCombo;
+    private ComboBox<String> commentsRequiredCombo;
 
     // Buttons
     private Button saveButton;
@@ -89,6 +99,10 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         this.userService = userService;
         this.categoryService = categoryService;
         this.judgeService = judgeService;
+        this.judgesToRemove = new java.util.ArrayList<>();
+        this.judgesToAdd = new java.util.ArrayList<>();
+        this.categoriesToRemove = new java.util.ArrayList<>();
+        this.categoryWeightChanges = new java.util.HashMap<>();
 
         setSpacing(true);
         setPadding(true);
@@ -159,10 +173,13 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         // ── PONDERACIÓN DE VOTOS Section ────────────────────────────────────────
         VerticalLayout votingWeightSection = buildVotingWeightSection();
 
+        // ── COMENTARIOS Section ──────────────────────────────────────────────────
+        VerticalLayout commentsSection = buildCommentsSection();
+
         // ── Buttons ─────────────────────────────────────────────────────────────
         HorizontalLayout buttonsLayout = buildButtonsLayout();
 
-        add(title, generalSection, participationSection, judgesSection, votingWeightSection, buttonsLayout);
+        add(title, generalSection, participationSection, judgesSection, votingWeightSection, commentsSection, buttonsLayout);
     }
 
     private VerticalLayout buildGeneralSection() {
@@ -191,7 +208,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         );
 
         // Start date
-        startDatePicker = new DatePicker("FECHA DE INICIO");
+        startDatePicker = new DatePicker("START DATE");
         if (currentCompetition.getStartDate() != null) {
             startDatePicker.setValue(currentCompetition.getStartDate().toLocalDate());
         }
@@ -199,7 +216,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         startDatePicker.addValueChangeListener(e -> markAsChanged());
 
         // Start time
-        startTimePicker = new TimePicker("HORA DE INICIO");
+        startTimePicker = new TimePicker("START TIME");
         if (currentCompetition.getStartDate() != null) {
             startTimePicker.setValue(currentCompetition.getStartDate().toLocalTime());
         }
@@ -207,7 +224,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         startTimePicker.addValueChangeListener(e -> markAsChanged());
 
         // End date
-        endDatePicker = new DatePicker("FECHA DE FINAL");
+        endDatePicker = new DatePicker("END DATE");
         if (currentCompetition.getEndDate() != null) {
             endDatePicker.setValue(currentCompetition.getEndDate().toLocalDate());
         }
@@ -215,7 +232,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         endDatePicker.addValueChangeListener(e -> markAsChanged());
 
         // End time
-        endTimePicker = new TimePicker("HORA DE FINAL");
+        endTimePicker = new TimePicker("END TIME");
         if (currentCompetition.getEndDate() != null) {
             endTimePicker.setValue(currentCompetition.getEndDate().toLocalTime());
         }
@@ -225,7 +242,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         dateTimeLayout.add(startDatePicker, startTimePicker, endDatePicker, endTimePicker);
 
         // ── Categories Section ────────────────────────────────
-        H4 categoriesTitle = new H4("CATEGORÍAS");
+        H4 categoriesTitle = new H4("CATEGORIES");
         categoriesTitle.getStyle().set("margin", "20px 0 10px 0").set("color", "#1a3a5c");
 
         categoriesContainer = new VerticalLayout();
@@ -240,7 +257,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         }
 
         // Add category button
-        Button addCategoryButton = new Button("+ Añadir Categoría");
+        Button addCategoryButton = new Button("+ Add Category");
         addCategoryButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         addCategoryButton.setIcon(new Icon(VaadinIcon.PLUS));
         addCategoryButton.addClickListener(e -> showAddCategoryDialog());
@@ -263,7 +280,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         Span categoryName = new Span(category.getName());
         categoryName.getStyle().set("flex", "1").set("font-weight", "500");
 
-        // Weight editor field
+        // Weight editor field - mantiene cambios localmente
         NumberField weightEditor = new NumberField();
         weightEditor.setValue((double) category.getWeight());
         weightEditor.setMin(1);
@@ -287,8 +304,9 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                     return;
                 }
                 
+                // Almacenar cambio localmente, no guardar inmediatamente
                 category.setWeight(newWeight);
-                categoryService.save(category);
+                categoryWeightChanges.put(category.getId(), newWeight);
                 markAsChanged();
             }
         });
@@ -306,10 +324,11 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         deleteButton.setIcon(new Icon(VaadinIcon.TRASH));
         deleteButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
         deleteButton.addClickListener(e -> {
-            categoryService.delete(category.getId());
+            // Marcar para eliminación al guardar
+            categoriesToRemove.add(category);
             categoriesContainer.remove(row);
             markAsChanged();
-            Notification.show("Categoría eliminada", 2000, Notification.Position.BOTTOM_CENTER);
+            Notification.show("Categoría marcada para eliminar", 2000, Notification.Position.BOTTOM_CENTER);
         });
 
         row.add(categoryName, weightLayout, deleteButton);
@@ -319,34 +338,34 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private void showAddCategoryDialog() {
         // Check if total weight already equals 100%
         if (calculateTotalCategoryWeight() >= 100) {
-            Notification notification = Notification.show("El peso total de categorías ya alcanza el 100%. No puedes añadir más.");
+            Notification notification = Notification.show("Total category weight already reaches 100%. You cannot add more categories.");
             notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
             return;
         }
 
         Dialog dialog = new Dialog();
-        dialog.setHeaderTitle("Añadir Nueva Categoría");
+        dialog.setHeaderTitle("Add New Category");
 
         VerticalLayout content = new VerticalLayout();
         content.setSpacing(true);
 
-        TextField nameField = new TextField("Nombre de la categoría");
+        TextField nameField = new TextField("Category Name");
         nameField.setWidth("100%");
 
-        IntegerField weightField = new IntegerField("Peso");
+        IntegerField weightField = new IntegerField("Weight");
         weightField.setValue(1);
         weightField.setMin(1);
         weightField.setWidth("100%");
 
-        Button saveButton = new Button("Guardar", e -> {
+        Button saveButton = new Button("Save", e -> {
             if (nameField.getValue().isEmpty()) {
-                Notification.show("El nombre es requerido");
+                Notification.show("Category name is required");
                 return;
             }
 
             int newTotal = calculateTotalCategoryWeight() + weightField.getValue();
             if (newTotal > 100) {
-                Notification notification = Notification.show("El peso total no puede exceder 100%. Máximo disponible: " + (100 - calculateTotalCategoryWeight()));
+                Notification notification = Notification.show("Total weight cannot exceed 100%. Maximum available: " + (100 - calculateTotalCategoryWeight()));
                 notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
                 return;
             }
@@ -356,14 +375,14 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             newCategory.setWeight(weightField.getValue());
             newCategory.setCompetition(currentCompetition);
 
-            categoryService.save(newCategory);
+            // NO guardar inmediatamente, solo agregar localmente
             categoriesContainer.add(buildCategoryRow(newCategory));
             markAsChanged();
             dialog.close();
-            Notification.show("Categoría añadida", 2000, Notification.Position.BOTTOM_CENTER);
+            Notification.show("Category added (pending save)", 2000, Notification.Position.BOTTOM_CENTER);
         });
 
-        Button cancelButton = new Button("Cancelar", e -> dialog.close());
+        Button cancelButton = new Button("Cancel", e -> dialog.close());
         
         content.add(nameField, weightField);
         dialog.add(content);
@@ -390,7 +409,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             .set("margin-bottom", "20px");
 
         // Section title
-        Span sectionTitle = new Span("PARTICIPACIÓN");
+        Span sectionTitle = new Span("PARTICIPATION");
         sectionTitle.getStyle()
             .set("font-weight", "bold")
             .set("color", "#1a3a5c")
@@ -402,16 +421,16 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             new FormLayout.ResponsiveStep("0px", 2)
         );
 
-        // QUIÉN PUEDE VOTAR
-        voterTypeCombo = new ComboBox<>("QUIÉN PUEDE VOTAR");
-        voterTypeCombo.setItems("Jueces", "Todos");
+        // WHO CAN VOTE
+        voterTypeCombo = new ComboBox<>("WHO CAN VOTE");
+        voterTypeCombo.setItems("Judges", "Everyone");
         voterTypeCombo.setValue(currentCompetition.getVoterType() != null && 
-            currentCompetition.getVoterType().equals("ALL") ? "Todos" : "Jueces");
+            currentCompetition.getVoterType().equals("ALL") ? "Everyone" : "Judges");
         voterTypeCombo.setWidth("100%");
         voterTypeCombo.addValueChangeListener(e -> markAsChanged());
 
-        // AUTOVOTO
-        autoVoteCombo = new ComboBox<>("AUTOVOTO");
+        // AUTO VOTE
+        autoVoteCombo = new ComboBox<>("AUTO VOTE");
         autoVoteCombo.setItems("OFF", "ON");
         autoVoteCombo.setValue(currentCompetition.isAutoVote() ? "ON" : "OFF");
         autoVoteCombo.setWidth("100%");
@@ -419,8 +438,8 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
         formLayout.add(voterTypeCombo, autoVoteCombo);
 
-        // CANTIDAD DE VOTOS POR PERSONA
-        maxVotesPerPersonField = new IntegerField("CANTIDAD DE VOTOS POR PERSONA");
+        // VOTES PER PERSON
+        maxVotesPerPersonField = new IntegerField("VOTES PER PERSON");
         maxVotesPerPersonField.setValue(currentCompetition.getMaxVotesPerPerson() != null 
             ? currentCompetition.getMaxVotesPerPerson() 
             : 1);
@@ -446,7 +465,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             .set("margin-bottom", "20px");
 
         // Section title
-        Span sectionTitle = new Span("AÑADIR JUECES");
+        Span sectionTitle = new Span("ADD JUDGES");
         sectionTitle.getStyle()
             .set("font-weight", "bold")
             .set("color", "#1a3a5c")
@@ -466,7 +485,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         }
 
         // Add judge button
-        Button addJudgeButton = new Button("+ Añadir Juez");
+        Button addJudgeButton = new Button("+ Add Judge");
         addJudgeButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         addJudgeButton.setIcon(new Icon(VaadinIcon.PLUS));
         addJudgeButton.addClickListener(e -> showAddJudgeDialog());
@@ -485,7 +504,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             .set("border-radius", "4px")
             .set("border-left", "3px solid #2d6a9f");
 
-        Span judgeName = new Span(judge.getUser().getFullName());
+        Span judgeName = new Span(judge.getUser().getName());
         judgeName.getStyle()
             .set("flex", "1")
             .set("font-weight", "500");
@@ -499,10 +518,10 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         deleteButton.setIcon(new Icon(VaadinIcon.TRASH));
         deleteButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
         deleteButton.addClickListener(e -> {
-            judgeService.removeJudge(judge.getUser().getId(), currentCompetition.getId());
+            // Mark for removal but don't save until handleSave() is called
+            judgesToRemove.add(judge);
             judgesContainer.remove(row);
             markAsChanged();
-            Notification.show("Juez eliminado", 2000, Notification.Position.BOTTOM_CENTER);
         });
 
         row.add(judgeName, judgeEmail, deleteButton);
@@ -511,51 +530,121 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
     private void showAddJudgeDialog() {
         Dialog dialog = new Dialog();
-        dialog.setHeaderTitle("Añadir Nuevo Juez");
+        dialog.setHeaderTitle("Add New Judge");
 
         VerticalLayout content = new VerticalLayout();
         content.setSpacing(true);
 
-        // Get list of users not yet judges
-        java.util.List<com.microslop.entity.User> allUsers = userService.getAllUsers();
-        java.util.List<Judge> existingJudges = judgeService.getJudgesByCompetition(currentCompetition.getId());
-        java.util.List<Long> judgeUserIds = existingJudges.stream()
-                .map(j -> j.getUser().getId())
-                .toList();
+        TextField judgeUsernameField = new TextField("Judge Username");
+        judgeUsernameField.setPlaceholder("Enter username");
+        judgeUsernameField.setWidth("100%");
 
-        java.util.List<com.microslop.entity.User> availableUsers = allUsers.stream()
-                .filter(u -> !judgeUserIds.contains(u.getId()))
-                .toList();
+        Button saveButton = new Button("Save", e -> {
+            String judgeUsername = judgeUsernameField.getValue().trim();
 
-        ComboBox<com.microslop.entity.User> userCombo = new ComboBox<>("Usuario");
-        userCombo.setItems(availableUsers);
-        userCombo.setItemLabelGenerator(u -> u.getFullName() + " (" + u.getEmail() + ")");
-        userCombo.setWidth("100%");
-
-        Button saveButton = new Button("Guardar", e -> {
-            if (userCombo.getValue() == null) {
-                Notification.show("Debes seleccionar un usuario");
+            // Validation - empty field
+            if (judgeUsername.isEmpty()) {
+                Notification notification = Notification.show("Please enter a judge username");
+                notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
                 return;
             }
 
-            try {
-                Judge newJudge = judgeService.addJudge(userCombo.getValue().getId(), currentCompetition.getId());
-                judgesContainer.add(buildJudgeRow(newJudge));
+            // Validation - check if user exists
+            java.util.Optional<com.microslop.entity.User> userOptional = userService.searchByUsernameIgnoreCase(judgeUsername);
+            if (userOptional.isEmpty()) {
+                Notification notification = Notification.show("User not found: " + judgeUsername);
+                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
+            }
+
+            com.microslop.entity.User selectedUser = userOptional.get();
+
+            // Get existing judge IDs
+            java.util.Set<Long> judgeUserIds = new java.util.HashSet<>();
+            judgeService.getJudgesByCompetition(currentCompetition.getId()).stream()
+                    .map(j -> j.getUser().getId())
+                    .forEach(judgeUserIds::add);
+            judgesToAdd.stream()
+                    .map(com.microslop.entity.User::getId)
+                    .forEach(judgeUserIds::add);
+            judgesToRemove.stream()
+                    .map(j -> j.getUser().getId())
+                    .forEach(judgeUserIds::remove);
+
+            // Check if judge already added
+            if (judgeUserIds.contains(selectedUser.getId())) {
+                Notification notification = Notification.show("This user is already a judge in this competition");
+                notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
+                return;
+            }
+
+            // Mark for addition but don't save until handleSave() is called
+            if (!judgesToAdd.contains(selectedUser)) {
+                judgesToAdd.add(selectedUser);
+                
+                // Create a temporary Judge object for display
+                Judge tempJudge = new Judge();
+                tempJudge.setUser(selectedUser);
+                judgesContainer.add(buildJudgeRowForNewJudge(tempJudge));
                 markAsChanged();
                 dialog.close();
-                Notification.show("Juez añadido", 2000, Notification.Position.BOTTOM_CENTER);
-            } catch (IllegalStateException ex) {
-                Notification notification = Notification.show(ex.getMessage());
+                Notification.show("Judge pending save", 2000, Notification.Position.BOTTOM_CENTER);
+            } else {
+                Notification notification = Notification.show("This user has already been added");
                 notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
             }
         });
 
-        Button cancelButton = new Button("Cancelar", e -> dialog.close());
-
-        content.add(userCombo);
+        Button cancelButton = new Button("Cancel", e -> dialog.close());
+        
+        content.add(judgeUsernameField);
         dialog.add(content);
         dialog.getFooter().add(cancelButton, saveButton);
         dialog.open();
+    }
+
+    /**
+     * Build judge row for newly added judges (not yet saved to DB).
+     */
+    private HorizontalLayout buildJudgeRowForNewJudge(Judge judge) {
+        HorizontalLayout row = new HorizontalLayout();
+        row.setAlignItems(FlexComponent.Alignment.CENTER);
+        row.setWidth("100%");
+        row.getStyle()
+            .set("background", "#e8f4f8")
+            .set("padding", "10px")
+            .set("border-radius", "4px")
+            .set("border-left", "3px solid #00bcd4")
+            .set("opacity", "0.8");
+
+        Span judgeName = new Span(judge.getUser().getName());
+        judgeName.getStyle()
+            .set("flex", "1")
+            .set("font-weight", "500");
+
+        Span judgeEmail = new Span(judge.getUser().getEmail());
+        judgeEmail.getStyle()
+            .set("color", "#666")
+            .set("margin-right", "15px");
+        
+        Span badgeSpan = new Span("(Pending)");
+        badgeSpan.getStyle()
+            .set("color", "#00bcd4")
+            .set("font-size", "12px")
+            .set("margin-right", "10px");
+
+        Button deleteButton = new Button();
+        deleteButton.setIcon(new Icon(VaadinIcon.TRASH));
+        deleteButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+        deleteButton.addClickListener(e -> {
+            // Remove from pending list
+            judgesToAdd.remove(judge.getUser());
+            judgesContainer.remove(row);
+            markAsChanged();
+        });
+
+        row.add(judgeName, judgeEmail, badgeSpan, deleteButton);
+        return row;
     }
 
     private VerticalLayout buildVotingWeightSection() {
@@ -570,15 +659,15 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             .set("margin-bottom", "20px");
 
         // Section title
-        Span sectionTitle = new Span("PONDERACIÓN DE VOTOS");
+        Span sectionTitle = new Span("VOTE WEIGHTING");
         sectionTitle.getStyle()
             .set("font-weight", "bold")
             .set("color", "#1a3a5c")
             .set("font-size", "16px")
             .set("margin-bottom", "15px");
 
-        // PESO POR ROL subtitle
-        Span rolWeightTitle = new Span("PESO POR ROL");
+        // WEIGHT BY ROLE subtitle
+        Span rolWeightTitle = new Span("WEIGHT BY ROLE");
         rolWeightTitle.getStyle()
             .set("font-weight", "600")
             .set("color", "#333")
@@ -591,7 +680,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         );
 
         // Judge weight multiplier
-        judgeWeightField = new NumberField("Juez Senior: x");
+        judgeWeightField = new NumberField("Senior Judge: x");
         judgeWeightField.setValue(currentCompetition.getJudgeWeightMultiplier() != null 
             ? currentCompetition.getJudgeWeightMultiplier() 
             : 2.0);
@@ -600,7 +689,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         judgeWeightField.addValueChangeListener(e -> markAsChanged());
 
         // Standard user weight multiplier
-        standardUserWeightField = new NumberField("Usuario Estándar: x");
+        standardUserWeightField = new NumberField("Standard User: x");
         standardUserWeightField.setValue(currentCompetition.getStandardUserWeightMultiplier() != null 
             ? currentCompetition.getStandardUserWeightMultiplier() 
             : 1.0);
@@ -614,6 +703,61 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         return section;
     }
 
+    private VerticalLayout buildCommentsSection() {
+        VerticalLayout section = new VerticalLayout();
+        section.setPadding(true);
+        section.setSpacing(true);
+        section.setWidth("100%");
+        section.getStyle()
+            .set("background", "white")
+            .set("border-radius", "8px")
+            .set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
+            .set("margin-bottom", "20px");
+
+        // Section title
+        Span sectionTitle = new Span("COMMENTS");
+        sectionTitle.getStyle()
+            .set("font-weight", "bold")
+            .set("color", "#1a3a5c")
+            .set("font-size", "16px")
+            .set("margin-bottom", "15px");
+
+        FormLayout formLayout = new FormLayout();
+        formLayout.setResponsiveSteps(
+            new FormLayout.ResponsiveStep("0px", 2)
+        );
+
+        // Comments enabled
+        commentsEnabledCombo = new ComboBox<>("ALLOW COMMENTS");
+        commentsEnabledCombo.setItems("YES", "NO");
+        commentsEnabledCombo.setValue(currentCompetition.getCommentsEnabled() != null && 
+            currentCompetition.getCommentsEnabled() ? "YES" : "NO");
+        commentsEnabledCombo.setWidth("100%");
+        commentsEnabledCombo.addValueChangeListener(e -> {
+            markAsChanged();
+            // Enable/disable comments required combo based on this setting
+            boolean enabled = "YES".equals(e.getValue());
+            commentsRequiredCombo.setEnabled(enabled);
+            if (!enabled) {
+                commentsRequiredCombo.setValue("NO");
+            }
+        });
+
+        // Comments required
+        commentsRequiredCombo = new ComboBox<>("REQUIRED COMMENTS");
+        commentsRequiredCombo.setItems("YES", "NO");
+        commentsRequiredCombo.setValue(currentCompetition.getCommentsRequired() != null && 
+            currentCompetition.getCommentsRequired() ? "YES" : "NO");
+        commentsRequiredCombo.setWidth("100%");
+        commentsRequiredCombo.setEnabled("YES".equals(commentsEnabledCombo.getValue()));
+        commentsRequiredCombo.addValueChangeListener(e -> markAsChanged());
+
+        formLayout.add(commentsEnabledCombo, commentsRequiredCombo);
+
+        section.add(sectionTitle, formLayout);
+        return section;
+    }
+
     private HorizontalLayout buildButtonsLayout() {
         HorizontalLayout layout = new HorizontalLayout();
         layout.setSpacing(true);
@@ -622,13 +766,13 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         layout.getStyle().set("margin-top", "20px");
 
         // Cancel button
-        cancelButton = new Button("Cancelar");
+        cancelButton = new Button("Cancel");
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         cancelButton.setIcon(new Icon(VaadinIcon.CLOSE));
         cancelButton.addClickListener(e -> handleCancel());
 
         // Save button
-        saveButton = new Button("Guardar");
+        saveButton = new Button("Save");
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         saveButton.setIcon(new Icon(VaadinIcon.CHECK));
         saveButton.addClickListener(e -> handleSave());
@@ -645,19 +789,24 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         if (hasChanges) {
             // Show confirmation dialog
             Dialog confirmDialog = new Dialog();
-            confirmDialog.setHeaderTitle("Confirmar Cancelación");
+            confirmDialog.setHeaderTitle("Confirm Exit");
 
             VerticalLayout content = new VerticalLayout();
-            content.add(new Span("¿Está seguro de que desea salir sin guardar los cambios?"));
+            content.add(new Span("Are you sure you want to exit without saving changes?"));
             confirmDialog.add(content);
 
-            Button confirmButton = new Button("Salir sin Guardar", e -> {
+            Button confirmButton = new Button("Exit Without Saving", e -> {
                 confirmDialog.close();
+                // Reset pending changes
+                judgesToRemove.clear();
+                judgesToAdd.clear();
+                categoriesToRemove.clear();
+                categoryWeightChanges.clear();
                 navigateBack();
             });
             confirmButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
 
-            Button keepWorkingButton = new Button("Seguir Editando", e -> confirmDialog.close());
+            Button keepWorkingButton = new Button("Continue Editing", e -> confirmDialog.close());
             keepWorkingButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
             confirmDialog.getFooter().add(keepWorkingButton, confirmButton);
@@ -671,7 +820,29 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         // Validate category weights total 100%
         int totalWeight = calculateTotalCategoryWeight();
         if (totalWeight != 100) {
-            Notification notification = Notification.show("Error: Las categorías deben sumar exactamente 100%. Actualmente suman " + totalWeight + "%.");
+            Notification notification = Notification.show("Error: Categories must total exactly 100%. Currently: " + totalWeight + "%.");
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
+        // Apply category changes (weights and deletions)
+        try {
+            // Remove categories marked for deletion
+            for (Category categoryToRemove : categoriesToRemove) {
+                categoryService.delete(categoryToRemove.getId());
+            }
+            categoriesToRemove.clear();
+            
+            // Update category weights
+            for (java.util.Map.Entry<Long, Integer> weightChange : categoryWeightChanges.entrySet()) {
+                Category category = categoryService.getById(weightChange.getKey())
+                        .orElseThrow(() -> new IllegalArgumentException("Category not found: " + weightChange.getKey()));
+                category.setWeight(weightChange.getValue());
+                categoryService.save(category);
+            }
+            categoryWeightChanges.clear();
+        } catch (Exception e) {
+            Notification notification = Notification.show("Error processing category changes: " + e.getMessage());
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
@@ -692,17 +863,40 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         }
         
         // Update voting configuration
-        currentCompetition.setVoterType("Todos".equals(voterTypeCombo.getValue()) ? "ALL" : "JUDGES");
+        currentCompetition.setVoterType("Everyone".equals(voterTypeCombo.getValue()) ? "ALL" : "JUDGES");
         currentCompetition.setAutoVote("ON".equals(autoVoteCombo.getValue()));
         currentCompetition.setMaxVotesPerPerson(maxVotesPerPersonField.getValue());
         currentCompetition.setJudgeWeightMultiplier(judgeWeightField.getValue());
         currentCompetition.setStandardUserWeightMultiplier(standardUserWeightField.getValue());
 
+        // Update comments configuration
+        currentCompetition.setCommentsEnabled("YES".equals(commentsEnabledCombo.getValue()));
+        currentCompetition.setCommentsRequired("YES".equals(commentsRequiredCombo.getValue()));
+
+        // Apply judge changes (add new judges and remove marked judges)
+        try {
+            // Remove judges marked for removal
+            for (Judge judgeToRemove : judgesToRemove) {
+                judgeService.removeJudge(judgeToRemove.getUser().getId(), currentCompetition.getId());
+            }
+            judgesToRemove.clear();
+            
+            // Add new judges
+            for (com.microslop.entity.User userToAdd : judgesToAdd) {
+                judgeService.addJudge(userToAdd.getId(), currentCompetition.getId());
+            }
+            judgesToAdd.clear();
+        } catch (Exception e) {
+            Notification notification = Notification.show("Error processing judge changes: " + e.getMessage());
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
         try {
             competitionService.save(currentCompetition);
             hasChanges = false;
             
-            Notification notification = Notification.show("Configuración guardada exitosamente");
+            Notification notification = Notification.show("Configuration saved successfully");
             notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             
             // Navigate back after a short delay
@@ -717,7 +911,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 });
             });
         } catch (Exception e) {
-            Notification notification = Notification.show("Error al guardar la configuración: " + e.getMessage());
+            Notification notification = Notification.show("Error saving configuration: " + e.getMessage());
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
