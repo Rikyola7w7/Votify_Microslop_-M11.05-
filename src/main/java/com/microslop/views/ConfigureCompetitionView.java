@@ -79,6 +79,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     // CATEGORIES Section (to maintain local changes)
     private java.util.List<Category> categoriesToRemove;
     private java.util.Map<Long, Integer> categoryWeightChanges; // categoryId -> newWeight
+    private java.util.Map<Long, Integer> initialCategoryWeights; // Store initial weights when view opens
 
     // VOTE WEIGHTING Section
     private NumberField judgeWeightField;
@@ -103,6 +104,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         this.judgesToAdd = new java.util.ArrayList<>();
         this.categoriesToRemove = new java.util.ArrayList<>();
         this.categoryWeightChanges = new java.util.HashMap<>();
+        this.initialCategoryWeights = new java.util.HashMap<>();
 
         setSpacing(true);
         setPadding(true);
@@ -156,6 +158,12 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
     private void initializeView() {
         removeAll();
+
+        // ── Capture initial category weights when view opens ────────────────────
+        java.util.List<Category> initialCategories = categoryService.getCategoriesByCompetition(currentCompetition.getId());
+        for (Category cat : initialCategories) {
+            initialCategoryWeights.put(cat.getId(), cat.getWeight());
+        }
 
         // ── Header ──────────────────────────────────────────────────────────────
         title = new H2("Configure Competition: " + currentCompetition.getName());
@@ -821,8 +829,30 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     }
 
     private void handleSave() {
-        // FIRST: Remove categories marked for deletion (with cascading vote deletion)
-        // This must be done BEFORE validating totals
+        // FIRST: Validate that remaining categories (after deletions) will sum to 100%
+        // Use initial category weights + changes, excluding those marked for removal
+        java.util.Set<Long> categoriesToRemoveIds = categoriesToRemove.stream()
+                .map(Category::getId)
+                .collect(java.util.stream.Collectors.toSet());
+        
+        int totalWeight = initialCategoryWeights.entrySet().stream()
+                .filter(entry -> !categoriesToRemoveIds.contains(entry.getKey()))  // Exclude categories marked for removal
+                .mapToInt(entry -> {
+                    // Use updated weight if changed, otherwise use initial weight
+                    return categoryWeightChanges.containsKey(entry.getKey())
+                        ? categoryWeightChanges.get(entry.getKey())
+                        : entry.getValue();
+                })
+                .sum();
+        
+        if (totalWeight != 100) {
+            Notification notification = Notification.show("Error: Categories must total exactly 100%. Currently: " + totalWeight + "%.");
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;  // Exit early, don't proceed with deletion
+        }
+
+        // THEN: Remove categories marked for deletion (with cascading vote deletion)
+        // Only proceed here if validation passed
         try {
             for (Category categoryToRemove : categoriesToRemove) {
                 // Delete category and all associated votes in one transactional call
@@ -831,23 +861,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             categoriesToRemove.clear();
         } catch (Exception e) {
             Notification notification = Notification.show("Error deleting categories: " + e.getMessage());
-            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            return;
-        }
-
-        // THEN: Calculate total weight AFTER deletions
-        java.util.List<Category> categories = categoryService.getCategoriesByCompetition(currentCompetition.getId());
-        int totalWeight = categories.stream()
-                .mapToInt(cat -> {
-                    // Use updated weight if changed, otherwise use current weight
-                    return categoryWeightChanges.containsKey(cat.getId()) 
-                        ? categoryWeightChanges.get(cat.getId()) 
-                        : cat.getWeight();
-                })
-                .sum();
-        
-        if (totalWeight != 100) {
-            Notification notification = Notification.show("Error: Categories must total exactly 100%. Currently: " + totalWeight + "%.");
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }

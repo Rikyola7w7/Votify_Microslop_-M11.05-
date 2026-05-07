@@ -26,7 +26,7 @@ public class Vote {
     @Column(name = "points", nullable = false)
     private Integer points = 1;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
