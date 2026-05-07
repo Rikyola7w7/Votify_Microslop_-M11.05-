@@ -78,6 +78,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
     // CATEGORIES Section (to maintain local changes)
     private java.util.List<Category> categoriesToRemove;
+    private java.util.List<Category> categoriesToAdd; // New categories pending save
     private java.util.Map<Long, Integer> categoryWeightChanges; // categoryId -> newWeight
     private java.util.Map<Long, Integer> initialCategoryWeights; // Store initial weights when view opens
 
@@ -103,6 +104,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         this.judgesToRemove = new java.util.ArrayList<>();
         this.judgesToAdd = new java.util.ArrayList<>();
         this.categoriesToRemove = new java.util.ArrayList<>();
+        this.categoriesToAdd = new java.util.ArrayList<>();
         this.categoryWeightChanges = new java.util.HashMap<>();
         this.initialCategoryWeights = new java.util.HashMap<>();
 
@@ -265,7 +267,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         }
 
         // Add category button
-        Button addCategoryButton = new Button("+ Add Category");
+        Button addCategoryButton = new Button("Add Category");
         addCategoryButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         addCategoryButton.setIcon(new Icon(VaadinIcon.PLUS));
         addCategoryButton.addClickListener(e -> showAddCategoryDialog());
@@ -386,7 +388,8 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             newCategory.setWeight(weightField.getValue());
             newCategory.setCompetition(currentCompetition);
 
-            // Don't save immediately, only add locally
+            // Track new category and add locally
+            categoriesToAdd.add(newCategory);
             categoriesContainer.add(buildCategoryRow(newCategory));
             markAsChanged();
             dialog.close();
@@ -402,11 +405,27 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     }
 
     private int calculateTotalCategoryWeight() {
-        java.util.List<Category> categories = categoryService.getCategoriesByCompetition(currentCompetition.getId());
-        return categories.stream()
-                .filter(cat -> !categoriesToRemove.contains(cat))
+        // Use initial weights + changes, excluding categories marked for removal
+        // Also include new categories pending save
+        java.util.Set<Long> categoriesToRemoveIds = categoriesToRemove.stream()
+                .map(Category::getId)
+                .collect(java.util.stream.Collectors.toSet());
+        
+        int existingTotal = initialCategoryWeights.entrySet().stream()
+                .filter(entry -> !categoriesToRemoveIds.contains(entry.getKey()))  // Exclude categories marked for removal
+                .mapToInt(entry -> {
+                    // Use updated weight if changed, otherwise use initial weight
+                    return categoryWeightChanges.containsKey(entry.getKey())
+                        ? categoryWeightChanges.get(entry.getKey())
+                        : entry.getValue();
+                })
+                .sum();
+        
+        int newCategoriesTotal = categoriesToAdd.stream()
                 .mapToInt(Category::getWeight)
                 .sum();
+        
+        return existingTotal + newCategoriesTotal;
     }
 
     private VerticalLayout buildParticipationSection() {
@@ -497,7 +516,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         }
 
         // Add judge button
-        Button addJudgeButton = new Button("+ Add Judge");
+        Button addJudgeButton = new Button("Add Judge");
         addJudgeButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         addJudgeButton.setIcon(new Icon(VaadinIcon.PLUS));
         addJudgeButton.addClickListener(e -> showAddJudgeDialog());
@@ -813,6 +832,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 judgesToRemove.clear();
                 judgesToAdd.clear();
                 categoriesToRemove.clear();
+                categoriesToAdd.clear();
                 categoryWeightChanges.clear();
                 navigateBack();
             });
@@ -829,13 +849,13 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     }
 
     private void handleSave() {
-        // FIRST: Validate that remaining categories (after deletions) will sum to 100%
-        // Use initial category weights + changes, excluding those marked for removal
+        // FIRST: Validate that remaining categories (after deletions + additions) will sum to 100%
+        // Use initial category weights + changes, excluding those marked for removal, plus new categories
         java.util.Set<Long> categoriesToRemoveIds = categoriesToRemove.stream()
                 .map(Category::getId)
                 .collect(java.util.stream.Collectors.toSet());
         
-        int totalWeight = initialCategoryWeights.entrySet().stream()
+        int existingTotal = initialCategoryWeights.entrySet().stream()
                 .filter(entry -> !categoriesToRemoveIds.contains(entry.getKey()))  // Exclude categories marked for removal
                 .mapToInt(entry -> {
                     // Use updated weight if changed, otherwise use initial weight
@@ -844,6 +864,12 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                         : entry.getValue();
                 })
                 .sum();
+        
+        int newCategoriesTotal = categoriesToAdd.stream()
+                .mapToInt(Category::getWeight)
+                .sum();
+        
+        int totalWeight = existingTotal + newCategoriesTotal;
         
         if (totalWeight != 100) {
             Notification notification = Notification.show("Error: Categories must total exactly 100%. Currently: " + totalWeight + "%.");
@@ -865,7 +891,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             return;
         }
 
-        // FINALLY: Apply category weight changes
+        // Apply category weight changes and add new categories
         try {
             
             // Update category weights
@@ -876,6 +902,12 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 categoryService.save(category);
             }
             categoryWeightChanges.clear();
+            
+            // Save new categories
+            for (Category newCategory : categoriesToAdd) {
+                categoryService.save(newCategory);
+            }
+            categoriesToAdd.clear();
         } catch (Exception e) {
             Notification notification = Notification.show("Error processing category changes: " + e.getMessage());
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
