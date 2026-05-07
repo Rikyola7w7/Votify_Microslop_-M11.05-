@@ -2,6 +2,7 @@ package com.microslop.repository;
 
 import com.microslop.entity.Vote;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -47,4 +48,8 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
         """)
     long sumPointsByUserIdAndCategoryId(@Param("userId") Long userId,
                                         @Param("categoryId") Long categoryId);
+
+    /** Delete all votes for a specific category. */
+    @Modifying
+    long deleteByCategory_Id(Long categoryId);
 }

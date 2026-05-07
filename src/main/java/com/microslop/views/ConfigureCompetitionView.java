@@ -295,10 +295,13 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 int newWeight = e.getValue().intValue();
                 int currentWeight = category.getWeight();
                 int difference = newWeight - currentWeight;
-                int totalAfter = calculateTotalCategoryWeight() + difference;
+                
+                // Calculate total excluding this category and categories marked for removal
+                int totalWithoutThis = calculateTotalCategoryWeight() - currentWeight;
+                int totalAfter = totalWithoutThis + newWeight;
                 
                 if (totalAfter > 100) {
-                    Notification notification = Notification.show("Total weight cannot exceed 100%. Maximum available: " + (100 - calculateTotalCategoryWeight() + currentWeight));
+                    Notification notification = Notification.show("Total weight cannot exceed 100%. Maximum available: " + (100 - totalWithoutThis));
                     notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
                     weightEditor.setValue((double) currentWeight);
                     return;
@@ -393,6 +396,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private int calculateTotalCategoryWeight() {
         java.util.List<Category> categories = categoryService.getCategoriesByCompetition(currentCompetition.getId());
         return categories.stream()
+                .filter(cat -> !categoriesToRemove.contains(cat))
                 .mapToInt(Category::getWeight)
                 .sum();
     }
@@ -817,21 +821,39 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     }
 
     private void handleSave() {
-        // Validate category weights total 100%
-        int totalWeight = calculateTotalCategoryWeight();
+        // FIRST: Remove categories marked for deletion (with cascading vote deletion)
+        // This must be done BEFORE validating totals
+        try {
+            for (Category categoryToRemove : categoriesToRemove) {
+                // Delete category and all associated votes in one transactional call
+                categoryService.deleteWithCascade(categoryToRemove.getId());
+            }
+            categoriesToRemove.clear();
+        } catch (Exception e) {
+            Notification notification = Notification.show("Error deleting categories: " + e.getMessage());
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
+        // THEN: Calculate total weight AFTER deletions
+        java.util.List<Category> categories = categoryService.getCategoriesByCompetition(currentCompetition.getId());
+        int totalWeight = categories.stream()
+                .mapToInt(cat -> {
+                    // Use updated weight if changed, otherwise use current weight
+                    return categoryWeightChanges.containsKey(cat.getId()) 
+                        ? categoryWeightChanges.get(cat.getId()) 
+                        : cat.getWeight();
+                })
+                .sum();
+        
         if (totalWeight != 100) {
             Notification notification = Notification.show("Error: Categories must total exactly 100%. Currently: " + totalWeight + "%.");
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
 
-        // Apply category changes (weights and deletions)
+        // FINALLY: Apply category weight changes
         try {
-            // Remove categories marked for deletion
-            for (Category categoryToRemove : categoriesToRemove) {
-                categoryService.delete(categoryToRemove.getId());
-            }
-            categoriesToRemove.clear();
             
             // Update category weights
             for (java.util.Map.Entry<Long, Integer> weightChange : categoryWeightChanges.entrySet()) {
@@ -875,17 +897,21 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
         // Apply judge changes (add new judges and remove marked judges)
         try {
-            // Remove judges marked for removal
-            for (Judge judgeToRemove : judgesToRemove) {
-                judgeService.removeJudge(judgeToRemove.getUser().getId(), currentCompetition.getId());
+            // Remove judges marked for removal (only if there are actually judges to remove)
+            if (!judgesToRemove.isEmpty()) {
+                for (Judge judgeToRemove : judgesToRemove) {
+                    judgeService.removeJudge(judgeToRemove.getUser().getId(), currentCompetition.getId());
+                }
+                judgesToRemove.clear();
             }
-            judgesToRemove.clear();
             
-            // Add new judges
-            for (com.microslop.entity.User userToAdd : judgesToAdd) {
-                judgeService.addJudge(userToAdd.getId(), currentCompetition.getId());
+            // Add new judges (only if there are actually judges to add)
+            if (!judgesToAdd.isEmpty()) {
+                for (com.microslop.entity.User userToAdd : judgesToAdd) {
+                    judgeService.addJudge(userToAdd.getId(), currentCompetition.getId());
+                }
+                judgesToAdd.clear();
             }
-            judgesToAdd.clear();
         } catch (Exception e) {
             Notification notification = Notification.show("Error processing judge changes: " + e.getMessage());
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);

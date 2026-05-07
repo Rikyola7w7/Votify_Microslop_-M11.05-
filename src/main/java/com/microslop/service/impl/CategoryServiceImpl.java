@@ -5,6 +5,7 @@ import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
 import com.microslop.repository.CategoryRepository;
 import com.microslop.repository.CompetitionRepository;
+import com.microslop.repository.VoteRepository;
 import com.microslop.service.CategoryService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,11 +23,14 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final CompetitionRepository competitionRepository;
+    private final VoteRepository voteRepository;
 
     public CategoryServiceImpl(CategoryRepository categoryRepository,
-                             CompetitionRepository competitionRepository) {
+                             CompetitionRepository competitionRepository,
+                             VoteRepository voteRepository) {
         this.categoryRepository = categoryRepository;
         this.competitionRepository = competitionRepository;
+        this.voteRepository = voteRepository;
     }
 
     // ── Write Operations ────────────────────────────────────────────────────────
@@ -61,6 +65,15 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void delete(Long id) {
         categoryRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public void deleteWithCascade(Long categoryId) {
+        // Delete all votes for this category first
+        voteRepository.deleteByCategory_Id(categoryId);
+        // Then delete the category itself
+        categoryRepository.deleteById(categoryId);
     }
 
     // ── Read Operations ──────────────────────────────────────────────────────

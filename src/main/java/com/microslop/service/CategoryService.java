@@ -34,6 +34,12 @@ public interface CategoryService {
     void delete(Long id);
 
     /**
+     * Delete a category and all its associated votes (cascade).
+     * @param categoryId the category ID
+     */
+    void deleteWithCascade(Long categoryId);
+
+    /**
      * Find a category by its ID.
      * @param id the category ID
      * @return Optional containing the category if found
