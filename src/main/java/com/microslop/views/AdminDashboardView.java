@@ -24,6 +24,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -206,8 +207,45 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
             .set("margin-bottom", "15px");
 
         // Competition title - use actual competition name
+        // Status badge
+        String statusText;
+        String statusColor;
+        String statusBg;
+        if (competition.isActive()) {
+            statusText = "Activa";
+            statusColor = "#4caf50";
+            statusBg = "rgba(76, 175, 80, 0.12)";
+        } else {
+            boolean hasEnded = competition.getEndDate() != null
+                    && LocalDateTime.now().isAfter(competition.getEndDate());
+            if (hasEnded) {
+                statusText = "Finalizada";
+                statusColor = "#f44336";
+                statusBg = "rgba(244, 67, 54, 0.12)";
+            } else {
+                statusText = "Pausada";
+                statusColor = "#ff9800";
+                statusBg = "rgba(255, 152, 0, 0.12)";
+            }
+        }
+        Span statusBadge = new Span(statusText);
+        statusBadge.getStyle()
+            .set("color", statusColor)
+            .set("background", statusBg)
+            .set("padding", "4px 12px")
+            .set("border-radius", "12px")
+            .set("font-size", "12px")
+            .set("font-weight", "700")
+            .set("letter-spacing", "0.5px")
+            .set("text-transform", "uppercase");
+
         H3 competitionTitle = new H3(competition.getName());
         competitionTitle.getStyle().set("margin-top", "0").set("color", "#1a3a5c");
+
+        HorizontalLayout titleRow = new HorizontalLayout(competitionTitle, statusBadge);
+        titleRow.setWidthFull();
+        titleRow.setAlignItems(FlexComponent.Alignment.CENTER);
+        titleRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
         // Competition details
         VerticalLayout detailsLayout = new VerticalLayout();
@@ -253,12 +291,12 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         manageButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         manageButton.setIcon(new Icon(VaadinIcon.CLIPBOARD_TEXT));
         manageButton.addClickListener(e -> 
-            Notification.show("Functionality coming soon", 3000, Notification.Position.TOP_CENTER)
+                getUI().ifPresent(ui -> ui.navigate(currentUsername + "/competitions/manage/" + competition.getId()))
         );
 
         actionsLayout.add(configureButton, manageButton);
 
-        cardLayout.add(competitionTitle, detailsLayout, actionsLayout);
+        cardLayout.add(titleRow, detailsLayout, actionsLayout);
         competitionsContainer.add(cardLayout);
     }
 
