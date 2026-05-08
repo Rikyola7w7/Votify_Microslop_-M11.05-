@@ -1,7 +1,7 @@
 package com.microslop.service.impl;
 
 import com.microslop.entity.Vote;
-import com.microslop.factory.VoteFactory;
+import com.microslop.factory.VoteCreator;
 import com.microslop.repository.VoteRepository;
 import com.microslop.repository.CategoryRepository;
 import com.microslop.service.ProjectService;
@@ -19,18 +19,18 @@ public class VoteServiceImpl implements VoteService {
     private final VoteRepository voteRepository;
     private final ProjectService projectService;
     private final UserService    userService;
-    private final VoteFactory    voteFactory;
+    private final VoteCreator voteCreator;
     private final CategoryRepository categoryRepository;
 
     public VoteServiceImpl(VoteRepository voteRepository,
                            ProjectService projectService,
                            UserService userService,
-                           VoteFactory voteFactory,
+                           VoteCreator voteCreator,
                            CategoryRepository categoryRepository) {
         this.voteRepository = voteRepository;
         this.projectService = projectService;
         this.userService    = userService;
-        this.voteFactory    = voteFactory;
+        this.voteCreator    = voteCreator;
         this.categoryRepository = categoryRepository;
     }
 
@@ -61,7 +61,7 @@ public class VoteServiceImpl implements VoteService {
                 "You already voted for a project in this category.");
         }
 
-        Vote vote = voteFactory.create(user, project, category);
+        Vote vote = voteCreator.create(user, project, category);
         voteRepository.save(vote);
     }
 

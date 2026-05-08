@@ -1,7 +1,7 @@
 package com.microslop.service.impl;
 
 import com.microslop.entity.*;
-import com.microslop.factory.VoteFactory;
+import com.microslop.factory.VoteCreator;
 import com.microslop.repository.CategoryRepository;
 import com.microslop.repository.VoteRepository;
 import com.microslop.service.ProjectService;
@@ -33,7 +33,7 @@ class VoteServiceImplTest {
     private UserService userService;
 
     @Mock
-    private VoteFactory voteFactory;
+    private VoteCreator voteCreator;
 
     @Mock
     private CategoryRepository categoryRepository;
@@ -83,7 +83,7 @@ class VoteServiceImplTest {
         when(projectService.getById(1L)).thenReturn(project);
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
         when(voteRepository.countByUserIdAndCategoryId(1L, 1L)).thenReturn(0L);
-        when(voteFactory.create(voter, project, category)).thenReturn(vote);
+        when(voteCreator.create(voter, project, category)).thenReturn(vote);
 
         voteService.submitVote("voter", 1L, 1L);
 
