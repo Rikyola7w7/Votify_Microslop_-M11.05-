@@ -32,7 +32,6 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
     private String currentUsername;
     private Div projectsContainer;
 
-    @Autowired
     public UserProjectsView(ProjectService projectService) {
         this.projectService = projectService;
         initializeView();
