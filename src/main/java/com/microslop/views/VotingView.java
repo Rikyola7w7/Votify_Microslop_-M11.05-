@@ -369,8 +369,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         // Create points input field
         var pointsInput = new IntegerField();
         pointsInput.setLabel("Puntos");
-        pointsInput.setMin(0);
-        pointsInput.setValue(0);
+        pointsInput.setMin(1);
+        pointsInput.setValue(1);
         pointsInput.setWidth("80px");
         pointsInput.getStyle()
                 .set("font-weight", "600")
@@ -402,7 +402,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         submitButton.setWidth("auto");
         submitButton.getStyle().set("padding", "0.75rem 1.25rem").set("border-radius", "8px").set("font-weight", "700");
         
-        submitButton.addClickListener(e -> handleVoteWithPoints(p, pointsInput.getValue() != null ? pointsInput.getValue() : 0, selectedCategory));
+        submitButton.addClickListener(e -> handleVoteWithPoints(p, pointsInput.getValue() != null ? pointsInput.getValue() : 1, selectedCategory));
 
         // Create points layout
         var pointsLayout = new HorizontalLayout(pointsInput, submitButton);

@@ -337,11 +337,17 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         deleteButton.setIcon(new Icon(VaadinIcon.TRASH));
         deleteButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
         deleteButton.addClickListener(e -> {
-            // Mark for deletion at save
-            categoriesToRemove.add(category);
+            // If category is new (no ID), remove from categoriesToAdd instead
+            if (category.getId() == null) {
+                categoriesToAdd.remove(category);
+                categoryWeightChanges.values().remove(category.getWeight());
+            } else {
+                // Existing category - mark for deletion at save
+                categoriesToRemove.add(category);
+            }
             categoriesContainer.remove(row);
             markAsChanged();
-            Notification.show("Category marked for deletion", 2000, Notification.Position.BOTTOM_CENTER);
+            Notification.show("Category removed", 2000, Notification.Position.BOTTOM_CENTER);
         });
 
         row.add(categoryName, weightLayout, deleteButton);
@@ -405,12 +411,13 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     }
 
     private int calculateTotalCategoryWeight() {
-        // Use initial weights + changes, excluding categories marked for removal
-        // Also include new categories pending save
+        // Collect IDs of categories marked for deletion (only those with valid IDs)
         java.util.Set<Long> categoriesToRemoveIds = categoriesToRemove.stream()
+                .filter(cat -> cat.getId() != null)  // Only include categories that have been persisted
                 .map(Category::getId)
                 .collect(java.util.stream.Collectors.toSet());
         
+        // Calculate total from existing categories, excluding those marked for removal
         int existingTotal = initialCategoryWeights.entrySet().stream()
                 .filter(entry -> !categoriesToRemoveIds.contains(entry.getKey()))  // Exclude categories marked for removal
                 .mapToInt(entry -> {
@@ -421,7 +428,9 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 })
                 .sum();
         
+        // Calculate total from new categories (excluding those marked for deletion)
         int newCategoriesTotal = categoriesToAdd.stream()
+                .filter(cat -> !categoriesToRemove.contains(cat))  // Exclude new categories marked for deletion
                 .mapToInt(Category::getWeight)
                 .sum();
         
@@ -849,11 +858,36 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     }
 
     private void handleSave() {
+        // VALIDATION: Ensure maxVotesPerPerson is at least 1
+        if (maxVotesPerPersonField.getValue() == null || maxVotesPerPersonField.getValue() < 1) {
+            Notification notification = Notification.show("Error: Max votes per person must be at least 1.");
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
         // FIRST: Validate that remaining categories (after deletions + additions) will sum to 100%
         // Use initial category weights + changes, excluding those marked for removal, plus new categories
         java.util.Set<Long> categoriesToRemoveIds = categoriesToRemove.stream()
+                .filter(cat -> cat.getId() != null)  // Only include categories that have been persisted
                 .map(Category::getId)
                 .collect(java.util.stream.Collectors.toSet());
+        
+        // Validate that all category weights are at least 1
+        for (java.util.Map.Entry<Long, Integer> weightChange : categoryWeightChanges.entrySet()) {
+            if (weightChange.getValue() < 1) {
+                Notification notification = Notification.show("Error: Category weight must be at least 1.");
+                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
+            }
+        }
+        
+        for (Category newCategory : categoriesToAdd) {
+            if (newCategory.getWeight() == null || newCategory.getWeight() < 1) {
+                Notification notification = Notification.show("Error: All category weights must be at least 1.");
+                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
+            }
+        }
         
         int existingTotal = initialCategoryWeights.entrySet().stream()
                 .filter(entry -> !categoriesToRemoveIds.contains(entry.getKey()))  // Exclude categories marked for removal
@@ -866,6 +900,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 .sum();
         
         int newCategoriesTotal = categoriesToAdd.stream()
+                .filter(cat -> !categoriesToRemove.contains(cat))  // Exclude new categories marked for deletion
                 .mapToInt(Category::getWeight)
                 .sum();
         
@@ -881,8 +916,10 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         // Only proceed here if validation passed
         try {
             for (Category categoryToRemove : categoriesToRemove) {
-                // Delete category and all associated votes in one transactional call
-                categoryService.deleteWithCascade(categoryToRemove.getId());
+                // Only delete categories that have been persisted (have valid IDs)
+                if (categoryToRemove.getId() != null) {
+                    categoryService.deleteWithCascade(categoryToRemove.getId());
+                }
             }
             categoriesToRemove.clear();
         } catch (Exception e) {

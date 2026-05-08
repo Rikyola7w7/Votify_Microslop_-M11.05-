@@ -23,4 +23,9 @@ public interface ProjectCommentRepository extends JpaRepository<ProjectComment, 
      * Count comments for a specific project.
      */
     long countByProjectId(Long projectId);
+
+    /**
+     * Delete all comments for a specific category.
+     */
+    void deleteByCategory_Id(Long categoryId);
 }

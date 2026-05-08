@@ -1,6 +1,7 @@
 package com.microslop.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,11 +25,12 @@ public class Vote {
     private String comment;
 
     @Column(name = "points", nullable = false)
+    @Min(value = 1, message = "Points per vote must be at least 1")
     private Integer points = 1;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private User user;  // NO cascade - User should not be deleted when Vote is deleted
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)

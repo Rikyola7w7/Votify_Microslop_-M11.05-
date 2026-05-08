@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Table(name = "project_comment")
 @Data
 @NoArgsConstructor
-@ToString(exclude = {"project", "user"})
+@ToString(exclude = {"project", "user", "category"})
 public class ProjectComment {
 
     @Id
@@ -21,9 +21,9 @@ public class ProjectComment {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private User user;  // NO cascade - User should not be deleted when ProjectComment is deleted
 
     @Column(name = "comment_text", nullable = false, length = 2000)
     private String commentText;

@@ -1,6 +1,7 @@
 package com.microslop.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -48,6 +49,7 @@ public class Competition {
     private Boolean autoVote = false;
 
     @Column(name = "max_votes_per_person", columnDefinition = "integer default 1")
+    @Min(value = 1, message = "Max votes per person must be at least 1")
     private Integer maxVotesPerPerson = 1;
 
     @Column(name = "judge_weight_multiplier", columnDefinition = "double default 1.0")
