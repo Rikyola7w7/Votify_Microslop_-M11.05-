@@ -15,11 +15,22 @@ import java.util.List;
 @NoArgsConstructor
 public class CompetitionDTO {
 
+    private Long id;
     private String name;
     private String description;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
+    private boolean active;
     private String eventType;
+    private String createdBy;
+    private String voterType;
+    private Boolean autoVote;
+    private Integer maxVotesPerPerson;
+    private Double judgeWeightMultiplier;
+    private Double standardUserWeightMultiplier;
+    private Boolean commentsEnabled;
+    private Boolean commentsRequired;
+    private int maxVotes;
     private List<CategoryDTO> categories = new ArrayList<>();
     private List<String> judgeUsernames = new ArrayList<>();
 

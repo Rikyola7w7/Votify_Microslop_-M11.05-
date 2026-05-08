@@ -14,8 +14,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CategoryDTO {
 
+    private Long id;
+    private Long competitionId;
     private String name;
-
     @Min(value = 1, message = "Category weight must be at least 1")
     private Integer weight;
+
+    public CategoryDTO(String name, Integer weight) {
+        this.name = name;
+        this.weight = weight;
+    }
 }
