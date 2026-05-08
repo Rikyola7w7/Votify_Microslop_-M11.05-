@@ -46,7 +46,13 @@ public class VoteServiceImpl implements VoteService {
                             .orElseThrow(() -> new IllegalStateException("Category not found."));
 
         if (!competition.isActive()) {
-            throw new IllegalStateException("Competition is not active.");
+            boolean hasEnded = competition.getEndDate() != null
+                    && java.time.LocalDateTime.now().isAfter(competition.getEndDate());
+            if (hasEnded) {
+                throw new IllegalStateException("Esta competición ha finalizado y ya no acepta votos.");
+            } else {
+                throw new IllegalStateException("Esta competición está pausada temporalmente. Inténtalo más tarde.");
+            }
         }
 
         long alreadyCastInCategory = voteRepository.countByUserIdAndCategoryId(user.getId(), category.getId());

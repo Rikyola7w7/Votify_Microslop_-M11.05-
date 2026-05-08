@@ -39,9 +39,7 @@ public class CompetitionCardComponent extends Div {
             .set("border", "1px solid #e0e0e0")
             .set("position", "relative");
 
-        // Add status indicator
-        Div statusIndicator = createStatusIndicator();
-        add(statusIndicator);
+
 
         addAttachListener(event -> {
             getStyle().set("--hover-shadow", "0 8px 12px rgba(0, 0, 0, 0.15)");
@@ -106,7 +104,10 @@ public class CompetitionCardComponent extends Div {
         
 
 
+        Div statusIndicator = createStatusIndicator();
+
         cardContent.add(iconContainer);
+        cardContent.add(statusIndicator);
         cardContent.add(competitionTitle);
         cardContent.add(startdate);
         cardContent.add(enddate);
@@ -136,23 +137,60 @@ public class CompetitionCardComponent extends Div {
     }
 
     private Div createStatusIndicator() {
-        Div statusDot = new Div();
-        statusDot.setWidth(16, Unit.PIXELS);
-        statusDot.setHeight(16, Unit.PIXELS);
-        statusDot.getStyle()
-            .set("position", "absolute")
-            .set("top", "12px")
-            .set("right", "12px")
-            .set("border-radius", "50%")
-            .set("z-index", "10");
-        
+        Div statusContainer = new Div();
+        statusContainer.getStyle()
+            .set("display", "flex")
+            .set("align-items", "center")
+            .set("justify-content", "center")
+            .set("gap", "6px")
+            .set("padding", "4px 10px")
+            .set("border-radius", "12px")
+            .set("font-size", "11px")
+            .set("font-weight", "700")
+            .set("letter-spacing", "0.5px")
+            .set("text-transform", "uppercase")
+            .set("margin-top", "8px")
+            .set("width", "fit-content")
+            .set("align-self", "center");
+
+        String label;
+        String bgColor;
+        String dotColor;
+
         if (competition.isActive()) {
-            statusDot.getStyle().set("background-color", "#4caf50"); // Green for active
+            label = "Activa";
+            bgColor = "rgba(76, 175, 80, 0.12)";
+            dotColor = "#4caf50";
         } else {
-            statusDot.getStyle().set("background-color", "#f44336"); // Red for inactive
+            boolean hasEnded = competition.getEndDate() != null
+                    && java.time.LocalDateTime.now().isAfter(competition.getEndDate());
+            if (hasEnded) {
+                label = "Finalizada";
+                bgColor = "rgba(244, 67, 54, 0.12)";
+                dotColor = "#f44336";
+            } else {
+                label = "Pausada";
+                bgColor = "rgba(255, 152, 0, 0.12)";
+                dotColor = "#ff9800";
+            }
         }
-        
-        return statusDot;
+
+        statusContainer.getStyle()
+            .set("background", bgColor)
+            .set("color", dotColor);
+
+        Div statusDot = new Div();
+        statusDot.setWidth(8, Unit.PIXELS);
+        statusDot.setHeight(8, Unit.PIXELS);
+        statusDot.getStyle()
+            .set("border-radius", "50%")
+            .set("background-color", dotColor)
+            .set("flex-shrink", "0");
+
+        com.vaadin.flow.component.html.Span statusLabel = new com.vaadin.flow.component.html.Span(label);
+
+        statusContainer.add(statusDot, statusLabel);
+        return statusContainer;
     }
 
     private String truncateDescription(String description, int maxLength) {

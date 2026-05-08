@@ -1,6 +1,7 @@
 package com.microslop.views;
 
 import com.microslop.entity.Competition;
+import java.time.LocalDateTime;
 import com.microslop.entity.Category;
 import com.microslop.entity.Project;
 import com.microslop.service.CategoryService;
@@ -87,9 +88,21 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         }
 
         var competition = competitionService.getByIdOrFail(competitionId);
+
         if (!competition.isActive()) {
-            Notification.show("This competition is not active and cannot accept votes.", 4000,
-                    Notification.Position.BOTTOM_CENTER);
+            boolean hasEnded = competition.getEndDate() != null
+                    && LocalDateTime.now().isAfter(competition.getEndDate());
+            if (hasEnded) {
+                Notification n = Notification.show(
+                        "Esta competición ha finalizado y ya no acepta votos.",
+                        4000, Notification.Position.BOTTOM_CENTER);
+                n.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            } else {
+                Notification n = Notification.show(
+                        "Esta competición está pausada temporalmente. Inténtalo más tarde.",
+                        4000, Notification.Position.BOTTOM_CENTER);
+                n.addThemeVariants(NotificationVariant.LUMO_WARNING);
+            }
             event.forwardTo("competition/" + competitionId);
             return;
         }
@@ -413,11 +426,26 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
 
+        // Re-check competition state before submitting the vote
+        var competition = competitionService.getByIdOrFail(competitionId);
+
+        if (!competition.isActive()) {
+            boolean hasEnded = competition.getEndDate() != null
+                    && LocalDateTime.now().isAfter(competition.getEndDate());
+            if (hasEnded) {
+                showNotification("Esta competición ha finalizado y ya no acepta votos.",
+                        NotificationVariant.LUMO_ERROR);
+            } else {
+                showNotification("Esta competición está pausada temporalmente. Inténtalo más tarde.",
+                        NotificationVariant.LUMO_WARNING);
+            }
+            return;
+        }
+
         try {
             voteService.submitVote(username, project.getId(), selectedCategory.getId());
             
             // Update the vote counter
-            var competition = competitionService.getByIdOrFail(competitionId);
             int remainingVotes = competition.getMaxVotes();
             long votesUsed = voteService.countVotesPerUserInCompetition(userService.getCurrentUserId(), competitionId);
             int votesLeft = Math.max(0, remainingVotes - (int)votesUsed);
