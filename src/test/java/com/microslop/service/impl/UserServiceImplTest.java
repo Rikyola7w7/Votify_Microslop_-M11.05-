@@ -119,4 +119,36 @@ class UserServiceImplTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Birth date cannot be in the future.");
     }
+
+    @Test
+    void should_find_user_by_username() {
+        User user = new User("Test User", "test@example.com", "testuser", "hashedpassword", LocalDateTime.now().minusYears(20));
+        when(userRepository.findByUsernameIgnoreCase("testuser")).thenReturn(java.util.Optional.of(user));
+
+        var result = userService.searchByUsernameIgnoreCase("testuser");
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getUsername()).isEqualTo("testuser");
+    }
+
+    @Test
+    void should_return_empty_when_user_not_found() {
+        when(userRepository.findByUsernameIgnoreCase("nonexistent")).thenReturn(java.util.Optional.empty());
+
+        var result = userService.searchByUsernameIgnoreCase("nonexistent");
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void should_find_user_by_id() {
+        User user = new User("Test User", "test@example.com", "testuser", "hashedpassword", LocalDateTime.now().minusYears(20));
+        user.setId(1L);
+        when(userRepository.findById(1L)).thenReturn(java.util.Optional.of(user));
+
+        var result = userService.getUserById(1L);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getId()).isEqualTo(1L);
+    }
 }
