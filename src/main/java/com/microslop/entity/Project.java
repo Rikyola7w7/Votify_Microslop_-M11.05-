@@ -56,6 +56,10 @@ public class Project {
         this.competition  = competition;
     }
 
+    public static com.microslop.builder.ProjectBuilder builder() {
+        return com.microslop.builder.ProjectBuilder.builder();
+    }
+
     public void addVote(Vote vote) {
         votes.add(vote);
         vote.setProject(this);

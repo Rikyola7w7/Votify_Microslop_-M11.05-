@@ -5,7 +5,6 @@ import com.microslop.entity.Competition;
 import com.microslop.entity.Project;
 import com.microslop.entity.ProjectComment;
 import com.microslop.entity.User;
-import com.microslop.factory.ProjectCommentFactory;
 import com.microslop.repository.CategoryRepository;
 import com.microslop.repository.ProjectCommentRepository;
 import com.microslop.repository.ProjectRepository;
@@ -39,8 +38,6 @@ class ProjectCommentServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
-    @Mock
-    private ProjectCommentFactory commentFactory;
 
     @Mock
     private CategoryRepository categoryRepository;
@@ -77,7 +74,7 @@ class ProjectCommentServiceImplTest {
         comment.setProject(project);
         comment.setUser(user);
         comment.setCategory(category);
-        comment.setCreationDate(LocalDateTime.now());
+        comment.setCreationDate(LocalDateTime.now().toLocalDate().atStartOfDay());
     }
 
     @Test
@@ -85,7 +82,13 @@ class ProjectCommentServiceImplTest {
         when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(userRepository.findByUsernameIgnoreCase("commenter")).thenReturn(Optional.of(user));
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(commentFactory.create(project, user, "Great project!", category)).thenReturn(comment);
+        // Use builder directly, since factory is removed
+        comment = ProjectComment.builder()
+            .project(project)
+            .user(user)
+            .commentText("Great project!")
+            .category(category)
+            .build();
 
         projectCommentService.saveComment(1L, "commenter", "Great project!", 1L);
 

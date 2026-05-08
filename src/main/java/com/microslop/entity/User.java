@@ -56,4 +56,8 @@ public class User {
         this.creationDate = LocalDateTime.now();
         this.birthDate = birthDate;
     }
+
+    public static com.microslop.builder.UserBuilder builder() {
+        return com.microslop.builder.UserBuilder.builder();
+    }
 }

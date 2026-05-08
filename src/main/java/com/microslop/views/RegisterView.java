@@ -2,7 +2,6 @@ package com.microslop.views;
 
 import com.microslop.entity.User;
 import com.microslop.service.UserService;
-import com.microslop.factory.UserCreator;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -36,12 +35,10 @@ import java.time.LocalDateTime;
 public class RegisterView extends VerticalLayout {
 
     private final UserService userService;
-    private final UserCreator userCreator;
     private byte[] profilePictureBytes = null;
 
-    public RegisterView(UserService userService, UserCreator userCreator) {
+    public RegisterView(UserService userService) {
         this.userService = userService;
-        this.userCreator = userCreator;
 
         setSizeFull();
         setAlignItems(Alignment.CENTER);
@@ -126,14 +123,14 @@ public class RegisterView extends VerticalLayout {
             try {
                 LocalDateTime birthDateLDT = birthDateField.getValue().atStartOfDay();
 
-                User newUser = userCreator.createUser(
-                        nameField.getValue().trim(),
-                        emailField.getValue().trim(),
-                        usernameField.getValue().trim(),
-                        passwordField.getValue().trim(),
-                        birthDateLDT,
-                        profilePictureBytes
-                );
+User newUser = User.builder()
+                    .name(nameField.getValue().trim())
+                    .email(emailField.getValue().trim())
+                    .username(usernameField.getValue().trim())
+                    .password(passwordField.getValue().trim())
+                    .birthDate(birthDateLDT)
+                    .profilePicture(profilePictureBytes)
+                    .build();
 
                 this.userService.registerUser(newUser);
 

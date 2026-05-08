@@ -58,6 +58,10 @@ public class Competition {
     @Column(name = "standard_user_weight_multiplier", columnDefinition = "double default 1.0")
     private Double standardUserWeightMultiplier = 1.0;
 
+    public static com.microslop.builder.CompetitionBuilder builder() {
+        return com.microslop.builder.CompetitionBuilder.builder();
+    }
+
     // ── Comments Configuration ─────────────────────────────────────────────
     @Column(name = "comments_enabled", columnDefinition = "boolean default true")
     private Boolean commentsEnabled = true;

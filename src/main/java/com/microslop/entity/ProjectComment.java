@@ -43,6 +43,10 @@ public class ProjectComment {
         this.creationDate = LocalDateTime.now();
     }
 
+    public static com.microslop.builder.ProjectCommentBuilder builder() {
+        return com.microslop.builder.ProjectCommentBuilder.builder();
+    }
+
     public String getUsername() { 
         return user != null ? user.getUsername() : null; 
     }
