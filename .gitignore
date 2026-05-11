@@ -15,3 +15,5 @@ vite.generated.ts
 .env
 neon.session.sql
 
+.agents
+skills-lock.json
