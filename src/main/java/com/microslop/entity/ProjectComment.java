@@ -1,0 +1,57 @@
+package com.microslop.entity;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "project_comment")
+@Data
+@NoArgsConstructor
+@ToString(exclude = {"project", "user", "category"})
+public class ProjectComment {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;  // NO cascade - User should not be deleted when ProjectComment is deleted
+
+    @Column(name = "comment_text", nullable = false, length = 2000)
+    private String commentText;
+
+    @Column(name = "creation_date", nullable = false)
+    private LocalDateTime creationDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    public ProjectComment(Project project, User user, String commentText, Category category) {
+        this.project = project;
+        this.user = user;
+        this.commentText = commentText;
+        this.category = category;
+        this.creationDate = LocalDateTime.now();
+    }
+
+    public static com.microslop.builder.ProjectCommentBuilder builder() {
+        return com.microslop.builder.ProjectCommentBuilder.builder();
+    }
+
+    public String getUsername() { 
+        return user != null ? user.getUsername() : null; 
+    }
+
+    public void setUsername(String username) { 
+        /* Campo deprecated - usar setUser() */ 
+    }
+}

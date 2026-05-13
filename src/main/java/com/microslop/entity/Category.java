@@ -1,0 +1,40 @@
+package com.microslop.entity;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "category", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"competition_id", "name"}, name = "uk_categoty_name_per_competition")
+})
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Category {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, name = "name")
+    private String name;
+
+    @Column(nullable = false, name = "weight")
+    @Min(value = 1, message = "Category weight must be at least 1")
+    private Integer weight;
+
+    @ManyToOne
+    @JoinColumn(name = "competition_id", nullable = false)
+    private Competition competition;
+
+    @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Vote> votes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<ProjectComment> projectComments = new ArrayList<>();
+}
