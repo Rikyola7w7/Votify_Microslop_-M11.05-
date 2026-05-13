@@ -2,12 +2,13 @@ package com.microslop.repository;
 
 import com.microslop.entity.ProjectComment;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface ProjectCommentRepository extends JpaRepository<ProjectComment, Long> {
+public interface ProjectCommentRepository extends JpaRepository<ProjectComment, Long>, JpaSpecificationExecutor<ProjectComment> {
 
     /**
      * Find all comments for a specific project.

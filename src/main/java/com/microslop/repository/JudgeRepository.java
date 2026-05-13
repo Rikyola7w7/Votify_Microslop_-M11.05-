@@ -2,6 +2,7 @@ package com.microslop.repository;
 
 import com.microslop.entity.Judge;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
@@ -14,7 +15,7 @@ import java.util.List;
  * Provides data access operations for judges in competitions.
  */
 @Repository
-public interface JudgeRepository extends JpaRepository<Judge, Long> {
+public interface JudgeRepository extends JpaRepository<Judge, Long>, JpaSpecificationExecutor<Judge> {
     
     /**
      * Find all judges for a specific competition with eager loading of user.
