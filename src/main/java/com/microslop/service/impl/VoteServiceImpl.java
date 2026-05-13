@@ -7,6 +7,8 @@ import com.microslop.repository.CategoryRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
 import com.microslop.service.VoteService;
+import com.microslop.command.CommandExecutor;
+import com.microslop.command.vote.SubmitVoteCommand;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,71 +23,54 @@ public class VoteServiceImpl implements VoteService {
     private final UserService    userService;
     private final VoteCreator voteCreator;
     private final CategoryRepository categoryRepository;
+    private final CommandExecutor commandExecutor;
 
     public VoteServiceImpl(VoteRepository voteRepository,
                            ProjectService projectService,
                            UserService userService,
                            VoteCreator voteCreator,
-                           CategoryRepository categoryRepository) {
+                           CategoryRepository categoryRepository,
+                           CommandExecutor commandExecutor) {
         this.voteRepository = voteRepository;
         this.projectService = projectService;
         this.userService    = userService;
         this.voteCreator    = voteCreator;
         this.categoryRepository = categoryRepository;
+        this.commandExecutor = commandExecutor;
     }
 
     // ── Write ─────────────────────────────────────────────────────────────
 
     @Override
     public void submitVote(String userUsername, Long projectId, Long categoryId) {
-        var user        = userService.searchByUsernameIgnoreCase(userUsername)
-                            .orElseThrow(() -> new IllegalStateException("User not found."));
-        var project     = projectService.getById(projectId);
-        var competition = project.getCompetition();
-        var category    = categoryRepository.findById(categoryId)
-                            .orElseThrow(() -> new IllegalStateException("Category not found."));
-
-        if (!competition.isActive()) {
-            boolean hasEnded = competition.getEndDate() != null
-                    && java.time.LocalDateTime.now().isAfter(competition.getEndDate());
-            if (hasEnded) {
-                throw new IllegalStateException("Esta competición ha finalizado y ya no acepta votos.");
-            } else {
-                throw new IllegalStateException("Esta competición está pausada temporalmente. Inténtalo más tarde.");
-            }
+        // Execute command through command executor
+        SubmitVoteCommand command = new SubmitVoteCommand(
+            userUsername, projectId, categoryId,
+            voteRepository, projectService, userService, voteCreator, categoryRepository
+        );
+        try {
+            commandExecutor.execute(command);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to submit vote", e);
         }
-
-        long alreadyCastInCategory = voteRepository.countByUserIdAndCategoryId(user.getId(), category.getId());
-        if (alreadyCastInCategory >= MAX_VOTES_PER_CATEGORY) {
-            throw new IllegalStateException(
-                "You already voted for a project in this category.");
-        }
-
-        Vote vote = voteCreator.create(user, project, category);
-        voteRepository.save(vote);
     }
 
     @Override
     public void submitVote(String userUsername, Long projectId, Long categoryId, int points) {
-        var user        = userService.searchByUsernameIgnoreCase(userUsername)
-                            .orElseThrow(() -> new IllegalStateException("User not found."));
-        var project     = projectService.getById(projectId);
-        var competition = project.getCompetition();
-        var category    = categoryRepository.findById(categoryId)
-                            .orElseThrow(() -> new IllegalStateException("Category not found."));
-
-        if (!competition.isActive()) {
-            throw new IllegalStateException("Competition is not active.");
+        // Execute command through command executor
+        SubmitVoteCommand command = new SubmitVoteCommand(
+            userUsername, projectId, categoryId, points,
+            voteRepository, projectService, userService, voteCreator, categoryRepository
+        );
+        try {
+            commandExecutor.execute(command);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to submit vote with points", e);
         }
-
-        long alreadyCastInCategory = voteRepository.countByUserIdAndCategoryId(user.getId(), category.getId());
-        if (alreadyCastInCategory >= MAX_VOTES_PER_CATEGORY) {
-            throw new IllegalStateException(
-                "You already voted for a project in this category.");
-        }
-
-        Vote vote = new Vote(user, project, category, points);
-        voteRepository.save(vote);
     }
 
     // ── Read ──────────────────────────────────────────────────────────────

@@ -8,6 +8,7 @@ import com.microslop.entity.Judge;
 import com.microslop.entity.User;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.UserRepository;
+import com.microslop.command.CommandExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +36,9 @@ class CompetitionServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private CommandExecutor commandExecutor;
 
     @InjectMocks
     private CompetitionServiceImpl competitionService;

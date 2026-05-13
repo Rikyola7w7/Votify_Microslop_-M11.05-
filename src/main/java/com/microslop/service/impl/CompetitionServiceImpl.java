@@ -9,6 +9,10 @@ import com.microslop.entity.User;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.UserRepository;
 import com.microslop.service.CompetitionService;
+import com.microslop.command.CommandExecutor;
+import com.microslop.command.competition.CreateCompetitionCommand;
+import com.microslop.command.competition.ActivateCompetitionCommand;
+import com.microslop.command.competition.DeactivateCompetitionCommand;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
@@ -22,11 +26,14 @@ public class CompetitionServiceImpl implements CompetitionService {
 
     private final CompetitionRepository competitionRepository;
     private final UserRepository userRepository;
+    private final CommandExecutor commandExecutor;
 
     public CompetitionServiceImpl(CompetitionRepository competitionRepository,
-                                 UserRepository userRepository) {
+                                 UserRepository userRepository,
+                                 CommandExecutor commandExecutor) {
         this.competitionRepository = competitionRepository;
         this.userRepository = userRepository;
+        this.commandExecutor = commandExecutor;
     }
 
     // ── Write Operations ────────────────────────────────────────────────────────
@@ -42,39 +49,46 @@ public class CompetitionServiceImpl implements CompetitionService {
         userRepository.findByUsernameIgnoreCase(creatorUsername)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + creatorUsername));
 
-        // Create new competition from DTO
-        Competition competition = new Competition();
-        competition.setName(competitionDTO.getName());
-        competition.setDescription(competitionDTO.getDescription());
-        competition.setStartDate(competitionDTO.getStartDate());
-        competition.setEndDate(competitionDTO.getEndDate());
-        competition.setEventType(competitionDTO.getEventType());
-        competition.setCreatedBy(creatorUsername);
-        competition.setActive(true);
-
-        // Save competition to get generated ID
-        Competition savedCompetition = competitionRepository.save(competition);
-
-        // Create and add categories
-        for (CategoryDTO categoryDTO : competitionDTO.getCategories()) {
-            Category category = new Category();
-            category.setName(categoryDTO.getName());
-            category.setWeight(categoryDTO.getWeight());
-            category.setCompetition(savedCompetition);
-            savedCompetition.addCategory(category);
-        }
-
-        // Create and add judges
-        for (String judgeUsername : competitionDTO.getJudgeUsernames()) {
-            User judge = userRepository.findByUsernameIgnoreCase(judgeUsername)
-                    .orElseThrow(() -> new IllegalArgumentException("Judge user not found: " + judgeUsername));
+        // Execute command through command executor
+        CreateCompetitionCommand command = new CreateCompetitionCommand(
+            competitionDTO.getName(),
+            competitionDTO.getDescription(),
+            competitionDTO.getStartDate(),
+            competitionDTO.getEndDate(),
+            competitionDTO.getEventType(),
+            creatorUsername,
+            competitionRepository
+        );
+        
+        try {
+            commandExecutor.execute(command);
+            Competition savedCompetition = command.getLastResult();
             
-            Judge judgeEntity = new Judge(judge, savedCompetition);
-            savedCompetition.addJudge(judgeEntity);
-        }
+            // Create and add categories
+            for (CategoryDTO categoryDTO : competitionDTO.getCategories()) {
+                Category category = new Category();
+                category.setName(categoryDTO.getName());
+                category.setWeight(categoryDTO.getWeight());
+                category.setCompetition(savedCompetition);
+                savedCompetition.addCategory(category);
+            }
 
-        // Save competition with categories and judges
-        return competitionRepository.save(savedCompetition);
+            // Create and add judges
+            for (String judgeUsername : competitionDTO.getJudgeUsernames()) {
+                User judge = userRepository.findByUsernameIgnoreCase(judgeUsername)
+                        .orElseThrow(() -> new IllegalArgumentException("Judge user not found: " + judgeUsername));
+                
+                Judge judgeEntity = new Judge(judge, savedCompetition);
+                savedCompetition.addJudge(judgeEntity);
+            }
+
+            // Save competition with categories and judges
+            return competitionRepository.save(savedCompetition);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create competition", e);
+        }
     }
 
     @Override
@@ -84,16 +98,36 @@ public class CompetitionServiceImpl implements CompetitionService {
 
     @Override
     public Competition activate(Long id) {
-        Competition c = getByIdOrFail(id);
-        c.setActive(true);
-        return competitionRepository.save(c);
+        // Execute command through command executor
+        ActivateCompetitionCommand command = new ActivateCompetitionCommand(
+            id, competitionRepository
+        );
+        try {
+            commandExecutor.execute(command);
+            return competitionRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to activate competition", e);
+        }
     }
 
     @Override
     public Competition deactivate(Long id) {
-        Competition c = getByIdOrFail(id);
-        c.setActive(false);
-        return competitionRepository.save(c);
+        // Execute command through command executor
+        DeactivateCompetitionCommand command = new DeactivateCompetitionCommand(
+            id, competitionRepository
+        );
+        try {
+            commandExecutor.execute(command);
+            return competitionRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to deactivate competition", e);
+        }
     }
 
     // ── Read Operations ──────────────────────────────────────────────────────

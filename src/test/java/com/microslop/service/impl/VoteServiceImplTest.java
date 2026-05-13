@@ -6,6 +6,7 @@ import com.microslop.repository.CategoryRepository;
 import com.microslop.repository.VoteRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
+import com.microslop.command.CommandExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,6 +38,9 @@ class VoteServiceImplTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private CommandExecutor commandExecutor;
 
     @InjectMocks
     private VoteServiceImpl voteService;

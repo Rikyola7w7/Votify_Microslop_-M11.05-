@@ -9,6 +9,7 @@ import com.microslop.repository.CategoryRepository;
 import com.microslop.repository.ProjectCommentRepository;
 import com.microslop.repository.ProjectRepository;
 import com.microslop.repository.UserRepository;
+import com.microslop.command.CommandExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,9 +39,11 @@ class ProjectCommentServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
-
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private CommandExecutor commandExecutor;
 
     @InjectMocks
     private ProjectCommentServiceImpl projectCommentService;

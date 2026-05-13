@@ -6,6 +6,8 @@ import com.microslop.repository.ProjectRepository;
 import com.microslop.repository.UserRepository;
 import com.microslop.repository.CategoryRepository;
 import com.microslop.service.ProjectCommentService;
+import com.microslop.command.CommandExecutor;
+import com.microslop.command.comment.SubmitCommentCommand;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,35 +21,34 @@ public class ProjectCommentServiceImpl implements ProjectCommentService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final CommandExecutor commandExecutor;
 
     public ProjectCommentServiceImpl(ProjectCommentRepository commentRepository,
                                      ProjectRepository projectRepository,
                                      UserRepository userRepository,
-                                     CategoryRepository categoryRepository) {
+                                     CategoryRepository categoryRepository,
+                                     CommandExecutor commandExecutor) {
         this.commentRepository = commentRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
+        this.commandExecutor = commandExecutor;
     }
 
     @Override
     public void saveComment(Long projectId, String username, String commentText, Long categoryId) {
-        var project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
-        
-        var user = userRepository.findByUsernameIgnoreCase(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
-
-        var category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalArgumentException("Category not found: " + categoryId));
-
-        var comment = ProjectComment.builder()
-            .project(project)
-            .user(user)
-            .commentText(commentText)
-            .category(category)
-            .build();
-        commentRepository.save(comment);
+        // Execute command through command executor
+        SubmitCommentCommand command = new SubmitCommentCommand(
+            username, projectId, categoryId, commentText,
+            commentRepository, projectRepository, userRepository, categoryRepository
+        );
+        try {
+            commandExecutor.execute(command);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save comment", e);
+        }
     }
 
     @Override

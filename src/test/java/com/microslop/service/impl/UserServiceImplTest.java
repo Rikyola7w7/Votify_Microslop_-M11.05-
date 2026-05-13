@@ -2,6 +2,7 @@ package com.microslop.service.impl;
 
 import com.microslop.entity.User;
 import com.microslop.repository.UserRepository;
+import com.microslop.command.CommandExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +28,9 @@ class UserServiceImplTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private CommandExecutor commandExecutor;
 
     @InjectMocks
     private UserServiceImpl userService;

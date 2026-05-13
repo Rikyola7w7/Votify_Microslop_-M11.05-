@@ -3,6 +3,8 @@ package com.microslop.service.impl;
 import com.microslop.entity.Project;
 import com.microslop.repository.ProjectRepository;
 import com.microslop.service.ProjectService;
+import com.microslop.command.CommandExecutor;
+import com.microslop.command.project.CreateProjectCommand;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -12,9 +14,12 @@ import java.util.List;
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final CommandExecutor commandExecutor;
 
-    public ProjectServiceImpl(ProjectRepository projectRepository) {
+    public ProjectServiceImpl(ProjectRepository projectRepository,
+                            CommandExecutor commandExecutor) {
         this.projectRepository = projectRepository;
+        this.commandExecutor = commandExecutor;
     }
 
     // ── Write Operations ────────────────────────────────────────────────────────────
