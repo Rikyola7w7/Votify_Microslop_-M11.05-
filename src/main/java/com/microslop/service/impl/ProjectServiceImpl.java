@@ -1,6 +1,7 @@
 package com.microslop.service.impl;
 
 import com.microslop.entity.Project;
+import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.ProjectRepository;
 import com.microslop.service.ProjectService;
 import org.springframework.stereotype.Service;
@@ -12,9 +13,12 @@ import java.util.List;
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final CompetitionRepository competitionRepository;
 
-    public ProjectServiceImpl(ProjectRepository projectRepository) {
+    public ProjectServiceImpl(ProjectRepository projectRepository,
+                              CompetitionRepository competitionRepository) {
         this.projectRepository = projectRepository;
+        this.competitionRepository = competitionRepository;
     }
 
     // ── Write Operations ────────────────────────────────────────────────────────────
@@ -48,6 +52,10 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public List<Project> getRanking(Long competitionId) {
+        var competition = competitionRepository.findById(competitionId).orElse(null);
+        if (competition != null && "CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
+            return projectRepository.findRankingByChecklistCompetition(competitionId);
+        }
         return projectRepository.findRankingByCompetition(competitionId);
     }
 

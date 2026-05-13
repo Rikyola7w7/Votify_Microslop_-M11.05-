@@ -2,8 +2,11 @@ package com.microslop.views;
 
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Category;
+import com.microslop.entity.ChecklistItem;
 import com.microslop.entity.Competition;
 import com.microslop.entity.Judge;
+import com.microslop.repository.ChecklistItemRepository;
+import com.microslop.repository.ChecklistVoteRepository;
 import com.microslop.service.CategoryService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.JudgeService;
@@ -52,6 +55,8 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private final UserService userService;
     private final CategoryService categoryService;
     private final JudgeService judgeService;
+    private final ChecklistItemRepository checklistItemRepository;
+    private final ChecklistVoteRepository checklistVoteRepository;
 
     private Competition currentCompetition;
     private Competition originalCompetition; // Store original to detect changes
@@ -86,6 +91,14 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private NumberField judgeWeightField;
     private NumberField standardUserWeightField;
 
+    // VOTE TYPE Section
+    private ComboBox<String> voteTypeCombo;
+
+    // CHECKLIST Section
+    private VerticalLayout checklistItemsContainer;
+    private java.util.List<ChecklistItem> checklistItemsToRemove;
+    private java.util.List<ChecklistItem> checklistItemsToAdd;
+
     // COMENTARIOS Section
     private ComboBox<String> commentsEnabledCombo;
     private ComboBox<String> commentsRequiredCombo;
@@ -96,17 +109,22 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
     private boolean hasChanges = false;
 
-    public ConfigureCompetitionView(CompetitionService competitionService, UserService userService, CategoryService categoryService, JudgeService judgeService) {
+    public ConfigureCompetitionView(CompetitionService competitionService, UserService userService, CategoryService categoryService, JudgeService judgeService,
+                                    ChecklistItemRepository checklistItemRepository, ChecklistVoteRepository checklistVoteRepository) {
         this.competitionService = competitionService;
         this.userService = userService;
         this.categoryService = categoryService;
         this.judgeService = judgeService;
+        this.checklistItemRepository = checklistItemRepository;
+        this.checklistVoteRepository = checklistVoteRepository;
         this.judgesToRemove = new java.util.ArrayList<>();
         this.judgesToAdd = new java.util.ArrayList<>();
         this.categoriesToRemove = new java.util.ArrayList<>();
         this.categoriesToAdd = new java.util.ArrayList<>();
         this.categoryWeightChanges = new java.util.HashMap<>();
         this.initialCategoryWeights = new java.util.HashMap<>();
+        this.checklistItemsToRemove = new java.util.ArrayList<>();
+        this.checklistItemsToAdd = new java.util.ArrayList<>();
 
         setSpacing(true);
         setPadding(true);
@@ -156,6 +174,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         originalCompetition.setMaxVotesPerPerson(currentCompetition.getMaxVotesPerPerson());
         originalCompetition.setJudgeWeightMultiplier(currentCompetition.getJudgeWeightMultiplier());
         originalCompetition.setStandardUserWeightMultiplier(currentCompetition.getStandardUserWeightMultiplier());
+        originalCompetition.setVoteType(currentCompetition.getVoteType());
     }
 
     private void initializeView() {
@@ -180,6 +199,10 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         // ── JUECES Section ──────────────────────────────────────────────────────
         VerticalLayout judgesSection = buildJudgesSection();
 
+        // ── VOTE TYPE & CHECKLIST Section ───────────────────────────────────────
+        VerticalLayout voteTypeSection = buildVoteTypeSection();
+        VerticalLayout checklistSection = buildChecklistSection();
+
         // ── VOTE WEIGHTING Section ────────────────────────────────────────
         VerticalLayout votingWeightSection = buildVotingWeightSection();
 
@@ -189,7 +212,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         // ── Buttons ─────────────────────────────────────────────────────────────
         HorizontalLayout buttonsLayout = buildButtonsLayout();
 
-        add(title, generalSection, participationSection, judgesSection, votingWeightSection, commentsSection, buttonsLayout);
+        add(title, generalSection, participationSection, judgesSection, voteTypeSection, checklistSection, votingWeightSection, commentsSection, buttonsLayout);
     }
 
     private VerticalLayout buildGeneralSection() {
@@ -687,6 +710,135 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         return row;
     }
 
+    private VerticalLayout buildVoteTypeSection() {
+        VerticalLayout section = new VerticalLayout();
+        section.setPadding(true);
+        section.setSpacing(true);
+        section.setWidth("100%");
+        section.getStyle()
+            .set("background", "white")
+            .set("border-radius", "8px")
+            .set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
+            .set("margin-bottom", "20px");
+
+        Span sectionTitle = new Span("VOTE TYPE");
+        sectionTitle.getStyle()
+            .set("font-weight", "bold")
+            .set("color", "#1a3a5c")
+            .set("font-size", "16px")
+            .set("margin-bottom", "15px");
+
+        voteTypeCombo = new ComboBox<>("VOTING MODE");
+        voteTypeCombo.setItems("Normal", "Checklist");
+        voteTypeCombo.setValue("CHECKLIST".equalsIgnoreCase(currentCompetition.getVoteType()) ? "Checklist" : "Normal");
+        voteTypeCombo.setWidth("100%");
+        voteTypeCombo.addValueChangeListener(e -> markAsChanged());
+
+        section.add(sectionTitle, voteTypeCombo);
+        return section;
+    }
+
+    private VerticalLayout buildChecklistSection() {
+        VerticalLayout section = new VerticalLayout();
+        section.setPadding(true);
+        section.setSpacing(true);
+        section.setWidth("100%");
+        section.getStyle()
+            .set("background", "white")
+            .set("border-radius", "8px")
+            .set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
+            .set("margin-bottom", "20px");
+
+        Span sectionTitle = new Span("CHECKLIST ITEMS");
+        sectionTitle.getStyle()
+            .set("font-weight", "bold")
+            .set("color", "#1a3a5c")
+            .set("font-size", "16px")
+            .set("margin-bottom", "15px");
+
+        checklistItemsContainer = new VerticalLayout();
+        checklistItemsContainer.setPadding(false);
+        checklistItemsContainer.setSpacing(true);
+        checklistItemsContainer.setWidth("100%");
+
+        java.util.List<ChecklistItem> items = checklistItemRepository.findByCompetitionId(currentCompetition.getId());
+        for (ChecklistItem item : items) {
+            checklistItemsContainer.add(buildChecklistItemRow(item));
+        }
+
+        Button addItemButton = new Button("Add Checklist Item");
+        addItemButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        addItemButton.setIcon(new Icon(VaadinIcon.PLUS));
+        addItemButton.addClickListener(e -> showAddChecklistItemDialog());
+
+        section.add(sectionTitle, checklistItemsContainer, addItemButton);
+        return section;
+    }
+
+    private HorizontalLayout buildChecklistItemRow(ChecklistItem item) {
+        HorizontalLayout row = new HorizontalLayout();
+        row.setAlignItems(FlexComponent.Alignment.CENTER);
+        row.setWidth("100%");
+        row.getStyle()
+            .set("background", "#f9f9f9")
+            .set("padding", "10px")
+            .set("border-radius", "4px")
+            .set("border-left", "3px solid #1e5ba8");
+
+        Span itemText = new Span(item.getText());
+        itemText.getStyle().set("flex", "1").set("font-weight", "500");
+
+        Button deleteButton = new Button();
+        deleteButton.setIcon(new Icon(VaadinIcon.TRASH));
+        deleteButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+        deleteButton.addClickListener(e -> {
+            if (item.getId() == null) {
+                checklistItemsToAdd.remove(item);
+            } else {
+                checklistItemsToRemove.add(item);
+            }
+            checklistItemsContainer.remove(row);
+            markAsChanged();
+        });
+
+        row.add(itemText, deleteButton);
+        return row;
+    }
+
+    private void showAddChecklistItemDialog() {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Add New Checklist Item");
+
+        VerticalLayout content = new VerticalLayout();
+        content.setSpacing(true);
+
+        TextField textField = new TextField("Item Description");
+        textField.setWidth("100%");
+
+        Button saveButton = new Button("Save", e -> {
+            if (textField.getValue().trim().isEmpty()) {
+                Notification.show("Item description is required");
+                return;
+            }
+
+            ChecklistItem newItem = new ChecklistItem();
+            newItem.setText(textField.getValue().trim());
+            newItem.setCompetition(currentCompetition);
+
+            checklistItemsToAdd.add(newItem);
+            checklistItemsContainer.add(buildChecklistItemRow(newItem));
+            markAsChanged();
+            dialog.close();
+        });
+
+        Button cancelButton = new Button("Cancel", e -> dialog.close());
+
+        content.add(textField);
+        dialog.add(content);
+        dialog.getFooter().add(cancelButton, saveButton);
+        dialog.open();
+    }
+
     private VerticalLayout buildVotingWeightSection() {
         VerticalLayout section = new VerticalLayout();
         section.setPadding(true);
@@ -843,6 +995,8 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 categoriesToRemove.clear();
                 categoriesToAdd.clear();
                 categoryWeightChanges.clear();
+                checklistItemsToRemove.clear();
+                checklistItemsToAdd.clear();
                 navigateBack();
             });
             confirmButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
@@ -972,10 +1126,31 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         currentCompetition.setMaxVotesPerPerson(maxVotesPerPersonField.getValue());
         currentCompetition.setJudgeWeightMultiplier(judgeWeightField.getValue());
         currentCompetition.setStandardUserWeightMultiplier(standardUserWeightField.getValue());
+        currentCompetition.setVoteType("Checklist".equals(voteTypeCombo.getValue()) ? "CHECKLIST" : "NORMAL");
 
         // Update comments configuration
         currentCompetition.setCommentsEnabled("YES".equals(commentsEnabledCombo.getValue()));
         currentCompetition.setCommentsRequired("YES".equals(commentsRequiredCombo.getValue()));
+
+        // Apply checklist item changes
+        try {
+            for (ChecklistItem itemToRemove : checklistItemsToRemove) {
+                if (itemToRemove.getId() != null) {
+                    checklistVoteRepository.deleteByChecklistItem_Id(itemToRemove.getId());
+                    checklistItemRepository.deleteById(itemToRemove.getId());
+                }
+            }
+            checklistItemsToRemove.clear();
+
+            for (ChecklistItem newItem : checklistItemsToAdd) {
+                checklistItemRepository.save(newItem);
+            }
+            checklistItemsToAdd.clear();
+        } catch (Exception e) {
+            Notification notification = Notification.show("Error processing checklist item changes: " + e.getMessage());
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
 
         // Apply judge changes (add new judges and remove marked judges)
         try {

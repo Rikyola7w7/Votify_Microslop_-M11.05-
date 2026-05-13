@@ -45,6 +45,10 @@ public class VoteServiceImpl implements VoteService {
         var category    = categoryRepository.findById(categoryId)
                             .orElseThrow(() -> new IllegalStateException("Category not found."));
 
+        if ("CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
+            throw new IllegalStateException("This competition uses checklist voting. Please use the checklist voting interface.");
+        }
+
         if (!competition.isActive()) {
             boolean hasEnded = competition.getEndDate() != null
                     && java.time.LocalDateTime.now().isAfter(competition.getEndDate());
@@ -73,6 +77,10 @@ public class VoteServiceImpl implements VoteService {
         var competition = project.getCompetition();
         var category    = categoryRepository.findById(categoryId)
                             .orElseThrow(() -> new IllegalStateException("Category not found."));
+
+        if ("CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
+            throw new IllegalStateException("This competition uses checklist voting. Please use the checklist voting interface.");
+        }
 
         if (!competition.isActive()) {
             throw new IllegalStateException("Competition is not active.");

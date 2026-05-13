@@ -1,10 +1,13 @@
 package com.microslop.views;
 
+import com.microslop.entity.ChecklistItem;
 import com.microslop.entity.Competition;
 import java.time.LocalDateTime;
 import com.microslop.entity.Category;
 import com.microslop.entity.Project;
+import com.microslop.repository.ChecklistItemRepository;
 import com.microslop.service.CategoryService;
+import com.microslop.service.ChecklistVoteService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.ProjectCommentService;
 import com.microslop.service.UserService;
@@ -48,6 +51,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private final ProjectCommentService commentService;
     private final UserService userService;
     private final CategoryService categoryService;
+    private final ChecklistVoteService checklistVoteService;
+    private final ChecklistItemRepository checklistItemRepository;
 
     private Long competitionId;
     private Span maxVotesLabel;
@@ -63,13 +68,17 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                       VoteService voteService,
                       ProjectCommentService commentService,
                       UserService userService,
-                      CategoryService categoryService) {
+                      CategoryService categoryService,
+                      ChecklistVoteService checklistVoteService,
+                      ChecklistItemRepository checklistItemRepository) {
         this.competitionService = competitionService;
         this.projectService     = projectService;
         this.voteService        = voteService;
         this.commentService     = commentService;
         this.userService        = userService;
         this.categoryService    = categoryService;
+        this.checklistVoteService = checklistVoteService;
+        this.checklistItemRepository = checklistItemRepository;
 
         setSizeFull();
         setPadding(false);
@@ -137,7 +146,11 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         var projects    = projectService.listByCompetition(competitionId);
 
         add(buildHeader(competition));
-        add(buildBody(projects, competition.getName()));
+        if ("CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
+            add(buildChecklistBody(projects, competition.getName()));
+        } else {
+            add(buildBody(projects, competition.getName()));
+        }
     }
 
     // ── Utility Methods ────────────────────────────────────────────────────
@@ -336,6 +349,131 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         body.add(title, subtitle, maxVotesLabel, categoryLayout, projectsContainer);
         return body;
+    }
+
+    // ── Checklist Body ────────────────────────────────────────────────────
+
+    private VerticalLayout buildChecklistBody(List<Project> projects, String competitionName) {
+        var body = new VerticalLayout();
+        body.setWidthFull();
+        body.setAlignItems(Alignment.CENTER);
+        body.getStyle().set("padding", "2rem 1rem");
+
+        var title = new H1("CHECKLIST VOTING");
+        title.getStyle()
+                .set("font-size", "2rem")
+                .set("font-weight", "800")
+                .set("color", "#1a1a2e")
+                .set("margin", "0 0 0.25rem 0")
+                .set("text-align", "center");
+
+        var subtitle = new Span("Competition: " + competitionName);
+        subtitle.getStyle()
+                .set("font-size", "1rem")
+                .set("color", "#555")
+                .set("font-style", "italic")
+                .set("margin-bottom", "1rem")
+                .set("display", "block")
+                .set("text-align", "center");
+
+        var instruction = new Span("Evaluate ALL projects by checking the items that apply.");
+        instruction.getStyle()
+                .set("font-size", "1rem")
+                .set("color", "#1a3a5c")
+                .set("font-weight", "600")
+                .set("margin-bottom", "1.5rem")
+                .set("display", "block")
+                .set("text-align", "center");
+
+        var checklistItems = checklistItemRepository.findByCompetitionId(competitionId);
+
+        projectsContainer = new VerticalLayout();
+        projectsContainer.setWidthFull();
+        projectsContainer.getStyle().set("max-width", "760px");
+        projectsContainer.setPadding(false);
+        projectsContainer.setSpacing(false);
+
+        int evaluatedCount = 0;
+        for (Project p : projects) {
+            long checkedCount = currentUser != null
+                    ? checklistVoteService.countCheckedItemsByUserForProject(currentUser.getId(), p.getId())
+                    : 0;
+            if (checkedCount >= checklistItems.size()) {
+                evaluatedCount++;
+            }
+            projectsContainer.add(buildChecklistProjectCard(p, checklistItems));
+        }
+
+        var progress = new Span("Projects evaluated: " + evaluatedCount + " / " + projects.size());
+        progress.getStyle()
+                .set("font-size", "1rem")
+                .set("font-weight", "600")
+                .set("color", "#1a3a5c")
+                .set("margin-bottom", "1.5rem")
+                .set("display", "block")
+                .set("text-align", "center");
+
+        body.add(title, subtitle, instruction, progress, projectsContainer);
+        return body;
+    }
+
+    private Div buildChecklistProjectCard(Project p, List<ChecklistItem> checklistItems) {
+        var card = new Div();
+        card.getStyle()
+                .set("background", "white")
+                .set("border-radius", "12px")
+                .set("padding", "1.25rem 1.5rem")
+                .set("margin-bottom", "1rem")
+                .set("box-shadow", "0 2px 8px rgba(0,0,0,0.08)")
+                .set("width", "100%")
+                .set("box-sizing", "border-box");
+
+        var name = new Span(p.getName());
+        name.getStyle()
+                .set("font-weight", "700")
+                .set("font-size", "1.1rem")
+                .set("color", "#1a1a2e")
+                .set("display", "block")
+                .set("margin-bottom", "0.75rem");
+
+        card.add(name);
+
+        var currentUserLocal = userService.getCurrentUser();
+        for (ChecklistItem item : checklistItems) {
+            boolean isChecked = currentUserLocal != null &&
+                    checklistVoteService.hasUserCheckedItem(currentUserLocal.getId(), p.getId(), item.getId());
+
+            var checkbox = new com.vaadin.flow.component.checkbox.Checkbox(item.getText());
+            checkbox.setValue(isChecked);
+            checkbox.getStyle().set("margin-bottom", "0.4rem");
+            checkbox.addValueChangeListener(e -> {
+                String username = userService.getCurrentUsername();
+                if (e.getValue()) {
+                    try {
+                        checklistVoteService.submitChecklistVote(username, p.getId(), item.getId());
+                        showNotification("Item checked!", NotificationVariant.LUMO_SUCCESS);
+                    } catch (IllegalStateException ex) {
+                        showNotification(ex.getMessage(), NotificationVariant.LUMO_ERROR);
+                        checkbox.setValue(false);
+                    }
+                } else {
+                    try {
+                        checklistVoteService.removeChecklistVote(username, p.getId(), item.getId());
+                        showNotification("Item unchecked!", NotificationVariant.LUMO_CONTRAST);
+                    } catch (IllegalStateException ex) {
+                        showNotification(ex.getMessage(), NotificationVariant.LUMO_ERROR);
+                        checkbox.setValue(true);
+                    }
+                }
+                // Refresh progress
+                removeAll();
+                buildUi();
+            });
+
+            card.add(checkbox);
+        }
+
+        return card;
     }
 
     // ── Project Card ──────────────────────────────────────────────────────

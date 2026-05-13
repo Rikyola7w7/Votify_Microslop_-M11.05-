@@ -58,6 +58,9 @@ public class Competition {
     @Column(name = "standard_user_weight_multiplier", columnDefinition = "double default 1.0")
     private Double standardUserWeightMultiplier = 1.0;
 
+    @Column(name = "vote_type", length = 20)
+    private String voteType = "NORMAL"; // NORMAL, CHECKLIST
+
     public static com.microslop.builder.CompetitionBuilder builder() {
         return com.microslop.builder.CompetitionBuilder.builder();
     }
@@ -77,6 +80,9 @@ public class Competition {
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Judge> judges = new ArrayList<>();
+
+    @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChecklistItem> checklistItems = new ArrayList<>();
 
     @Column(nullable = false, name = "max_votes")
     private int maxVotes = 1;
@@ -119,6 +125,16 @@ public class Competition {
         judge.setCompetition(null);
     }
 
+    public void addChecklistItem(ChecklistItem item) {
+        checklistItems.add(item);
+        item.setCompetition(this);
+    }
+
+    public void removeChecklistItem(ChecklistItem item) {
+        checklistItems.remove(item);
+        item.setCompetition(null);
+    }
+
     // ── Getters and Setters for Voting Configuration ────────────────────
     public String getVoterType() {
         return voterType;
@@ -158,5 +174,13 @@ public class Competition {
 
     public void setStandardUserWeightMultiplier(Double standardUserWeightMultiplier) {
         this.standardUserWeightMultiplier = standardUserWeightMultiplier;
+    }
+
+    public String getVoteType() {
+        return voteType;
+    }
+
+    public void setVoteType(String voteType) {
+        this.voteType = voteType;
     }
 }

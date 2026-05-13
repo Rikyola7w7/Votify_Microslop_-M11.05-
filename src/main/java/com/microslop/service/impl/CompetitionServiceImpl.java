@@ -51,6 +51,7 @@ public class CompetitionServiceImpl implements CompetitionService {
         competition.setEventType(competitionDTO.getEventType());
         competition.setCreatedBy(creatorUsername);
         competition.setActive(true);
+        competition.setVoteType(competitionDTO.getVoteType() != null ? competitionDTO.getVoteType() : "NORMAL");
 
         // Save competition to get generated ID
         Competition savedCompetition = competitionRepository.save(competition);
@@ -73,7 +74,17 @@ public class CompetitionServiceImpl implements CompetitionService {
             savedCompetition.addJudge(judgeEntity);
         }
 
-        // Save competition with categories and judges
+        // Create and add checklist items if vote type is CHECKLIST
+        if ("CHECKLIST".equalsIgnoreCase(savedCompetition.getVoteType())) {
+            for (var itemDTO : competitionDTO.getChecklistItems()) {
+                var item = new com.microslop.entity.ChecklistItem();
+                item.setText(itemDTO.getText());
+                item.setCompetition(savedCompetition);
+                savedCompetition.addChecklistItem(item);
+            }
+        }
+
+        // Save competition with categories, judges and checklist items
         return competitionRepository.save(savedCompetition);
     }
 
@@ -164,9 +175,17 @@ public class CompetitionServiceImpl implements CompetitionService {
     }
 
     @Override
-    public List<String> validateCompetitionCreation(String competitionName, String eventType, 
-                                                    LocalDate startDate, LocalDate endDate, 
+    public List<String> validateCompetitionCreation(String competitionName, String eventType,
+                                                    LocalDate startDate, LocalDate endDate,
                                                     List<CategoryDTO> categories) {
+        return validateCompetitionCreation(competitionName, eventType, startDate, endDate, categories, "NORMAL", null);
+    }
+
+    @Override
+    public List<String> validateCompetitionCreation(String competitionName, String eventType,
+                                                    LocalDate startDate, LocalDate endDate,
+                                                    List<CategoryDTO> categories,
+                                                    String voteType, List<String> checklistItems) {
         List<String> errors = new ArrayList<>();
 
         // Validate competition name
@@ -199,6 +218,18 @@ public class CompetitionServiceImpl implements CompetitionService {
             int totalWeight = categories.stream().mapToInt(CategoryDTO::getWeight).sum();
             if (totalWeight != 100) {
                 errors.add("• Category weights must total exactly 100% (current: " + totalWeight + "%)");
+            }
+        }
+
+        // Validate checklist items for CHECKLIST vote type
+        if ("CHECKLIST".equalsIgnoreCase(voteType)) {
+            if (checklistItems == null || checklistItems.isEmpty()) {
+                errors.add("• At least one checklist item is required for checklist voting");
+            } else {
+                boolean hasEmpty = checklistItems.stream().anyMatch(i -> i == null || i.trim().isEmpty());
+                if (hasEmpty) {
+                    errors.add("• Checklist items cannot be empty");
+                }
             }
         }
 

@@ -44,6 +44,16 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         """)
     List<Project> findRankingByCategory(@Param("categoryId") Long categoryId);
 
+    // Projects of a competition ordered by checklist vote count
+    @Query("""
+        SELECT p FROM Project p
+        WHERE p.competition.id = :competitionId
+        ORDER BY (
+            SELECT COUNT(cv) FROM ChecklistVote cv WHERE cv.project.id = p.id
+        ) DESC
+        """)
+    List<Project> findRankingByChecklistCompetition(@Param("competitionId") Long competitionId);
+
     @Query("SELECT p FROM Project p LEFT JOIN FETCH p.votes v LEFT JOIN FETCH v.user WHERE p.id = :projectId")
     Optional<Project> findByIdWithVotesAndUsers(@Param("projectId") Long projectId);
 }

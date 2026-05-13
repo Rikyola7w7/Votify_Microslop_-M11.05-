@@ -38,10 +38,14 @@ public class PodiumCardComponent extends Div {
     }
 
     public PodiumCardComponent(Project project, Position position, long totalVotes) {
-        buildCard(project, position, totalVotes);
+        this(project, position, totalVotes, false);
     }
 
-    private void buildCard(Project project, Position position, long totalVotes) {
+    public PodiumCardComponent(Project project, Position position, long totalVotes, boolean isChecklistMode) {
+        buildCard(project, position, totalVotes, isChecklistMode);
+    }
+
+    private void buildCard(Project project, Position position, long totalVotes, boolean isChecklistMode) {
         getStyle()
             .set("background", position.getBgColor())
             .set("border", "2px solid " + position.getBorderColor())
@@ -70,7 +74,10 @@ public class PodiumCardComponent extends Div {
             .set("margin-bottom", "0.4rem")
             .set("color", "#1a1a2e");
 
-        var labelVotes = new Span(position.isGold() ? "Total Votes:" : "Votes:");
+        String votesLabel = isChecklistMode
+                ? (position.isGold() ? "Total Checks:" : "Checks:")
+                : (position.isGold() ? "Total Votes:" : "Votes:");
+        var labelVotes = new Span(votesLabel);
         labelVotes.getStyle()
             .set("font-size", "0.8rem")
             .set("color", "#444")

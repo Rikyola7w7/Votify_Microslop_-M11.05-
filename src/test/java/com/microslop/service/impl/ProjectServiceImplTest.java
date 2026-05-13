@@ -3,6 +3,7 @@ package com.microslop.service.impl;
 import com.microslop.entity.Competition;
 import com.microslop.entity.Project;
 import com.microslop.entity.User;
+import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.ProjectRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,9 @@ class ProjectServiceImplTest {
 
     @Mock
     private ProjectRepository projectRepository;
+
+    @Mock
+    private CompetitionRepository competitionRepository;
 
     @InjectMocks
     private ProjectServiceImpl projectService;
@@ -120,6 +124,7 @@ class ProjectServiceImplTest {
 
         List<Project> ranking = Arrays.asList(project1, project2);
         when(projectRepository.findRankingByCompetition(1L)).thenReturn(ranking);
+        when(competitionRepository.findById(1L)).thenReturn(Optional.of(competition));
 
         List<Project> result = projectService.getRanking(1L);
 

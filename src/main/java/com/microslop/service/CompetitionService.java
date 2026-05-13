@@ -62,7 +62,23 @@ public interface CompetitionService {
      * @param categories the list of categories
      * @return a list of error messages (empty if valid)
      */
-    List<String> validateCompetitionCreation(String competitionName, String eventType, 
-                                            LocalDate startDate, LocalDate endDate, 
+    List<String> validateCompetitionCreation(String competitionName, String eventType,
+                                            LocalDate startDate, LocalDate endDate,
                                             List<CategoryDTO> categories);
+
+    /**
+     * Validate competition creation input including vote type and checklist items.
+     * @param competitionName the competition name
+     * @param eventType the event type
+     * @param startDate the start date
+     * @param endDate the end date
+     * @param categories the list of categories
+     * @param voteType the vote type (NORMAL or CHECKLIST)
+     * @param checklistItems the list of checklist item texts
+     * @return a list of error messages (empty if valid)
+     */
+    List<String> validateCompetitionCreation(String competitionName, String eventType,
+                                            LocalDate startDate, LocalDate endDate,
+                                            List<CategoryDTO> categories,
+                                            String voteType, List<String> checklistItems);
 }
