@@ -3,11 +3,17 @@ package com.microslop.service;
 import com.microslop.dto.CompetitionDTO;
 import com.microslop.dto.CategoryDTO;
 import com.microslop.entity.Competition;
+import com.microslop.observer.subject.CompetitionEventSubject;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-public interface CompetitionService {
+/**
+ * Service interface for competition management.
+ * Extends CompetitionEventSubject to support observer pattern for competition events.
+ * Handles competition lifecycle, creation, and state transitions.
+ */
+public interface CompetitionService extends CompetitionEventSubject {
     
     /**
      * Save an existing competition.

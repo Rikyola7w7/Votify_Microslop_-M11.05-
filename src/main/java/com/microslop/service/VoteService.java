@@ -1,7 +1,13 @@
 package com.microslop.service;
 
+import com.microslop.observer.subject.VoteEventSubject;
 
-public interface VoteService {
+/**
+ * Service interface for vote management.
+ * Extends VoteEventSubject to support observer pattern for vote events.
+ * Handles vote submission, counting, and event notification.
+ */
+public interface VoteService extends VoteEventSubject {
 
     void submitVote(String userUsername, Long projectId, Long categoryId);
 

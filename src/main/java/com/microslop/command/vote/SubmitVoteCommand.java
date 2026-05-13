@@ -208,4 +208,14 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
     public boolean isUndoable() {
         return true;
     }
+
+    /**
+     * Gets the vote that was created by this command.
+     * Used by observers to access vote details after command execution.
+     *
+     * @return the created vote, or null if command has not been executed
+     */
+    public Vote getCreatedVote() {
+        return createdVote;
+    }
 }
