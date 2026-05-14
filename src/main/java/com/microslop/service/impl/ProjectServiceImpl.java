@@ -3,6 +3,8 @@ package com.microslop.service.impl;
 import com.microslop.entity.Project;
 import com.microslop.repository.ProjectRepository;
 import com.microslop.service.ProjectService;
+import com.microslop.specification.project.ProjectsByCompetitionSpecification;
+import com.microslop.specification.project.ProjectsByCreatorSpecification;
 import com.microslop.command.CommandExecutor;
 import com.microslop.command.project.CreateProjectCommand;
 import org.springframework.stereotype.Service;
@@ -47,7 +49,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public List<Project> listByCompetition(Long competitionId) {
-        return projectRepository.findByCompetitionId(competitionId);
+        return projectRepository.findAll(new ProjectsByCompetitionSpecification(competitionId));
     }
 
     @Override
@@ -77,5 +79,11 @@ public class ProjectServiceImpl implements ProjectService {
             }
         });
         return projects;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Project> getUserProjectsByUserId(Long userId) {
+        return projectRepository.findAll(new ProjectsByCreatorSpecification(userId));
     }
 }

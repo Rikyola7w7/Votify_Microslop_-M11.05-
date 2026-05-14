@@ -20,6 +20,6 @@ public class ProjectsByCreatorSpecification extends AbstractSpecification<Projec
 
     @Override
     protected Predicate getPredicates(Root<Project> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
-        return cb.equal(root.get("createdByUser").get("id"), userId);
+        return cb.isMember(userId, root.get("participants"));
     }
 }

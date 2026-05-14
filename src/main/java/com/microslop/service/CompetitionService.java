@@ -60,6 +60,14 @@ public interface CompetitionService extends CompetitionEventSubject {
     List<Competition> getCompetitionsByCreator(String username);
 
     /**
+     * Get active competitions created by a specific user.
+     * Uses composed Specification pattern for DB-level filtering.
+     * @param username the username of the creator
+     * @return list of active competitions created by this user
+     */
+    List<Competition> getActiveCompetitionsByCreator(String username);
+
+    /**
      * Validate competition creation input.
      * @param competitionName the competition name
      * @param eventType the event type

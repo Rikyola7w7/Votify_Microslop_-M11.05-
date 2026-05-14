@@ -14,11 +14,15 @@ import com.microslop.observer.subject.CompetitionEventSubject;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.UserRepository;
 import com.microslop.service.CompetitionService;
+import com.microslop.specification.competition.CompetitionByCreatorSpecification;
+import com.microslop.specification.competition.CompetitionByNameSpecification;
+import com.microslop.specification.competition.CompetitionByStatusSpecification;
 import com.microslop.command.CommandExecutor;
 import com.microslop.command.competition.CreateCompetitionCommand;
 import com.microslop.command.competition.ActivateCompetitionCommand;
 import com.microslop.command.competition.DeactivateCompetitionCommand;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
@@ -255,7 +259,7 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
     @Override
     @Transactional(readOnly = true)
     public List<Competition> getFinishedCompetitions() {
-        return competitionRepository.findByActiveFalse();
+        return competitionRepository.findAll(new CompetitionByStatusSpecification(false));
     }
 
     @Override
@@ -264,9 +268,7 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
             return findAll();
         }
-        return competitionRepository.findAll().stream()
-            .filter(comp -> comp.getName().toLowerCase().contains(searchTerm.toLowerCase()))
-            .toList();
+        return competitionRepository.findAll(new CompetitionByNameSpecification(searchTerm));
     }
 
     @Override
@@ -283,7 +285,15 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
     @Override
     @Transactional(readOnly = true)
     public List<Competition> getCompetitionsByCreator(String username) {
-        return competitionRepository.findByCreatedByIgnoreCase(username);
+        return competitionRepository.findAll(new CompetitionByCreatorSpecification(username));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Competition> getActiveCompetitionsByCreator(String username) {
+        Specification<Competition> spec = new CompetitionByStatusSpecification(true)
+            .and(new CompetitionByCreatorSpecification(username));
+        return competitionRepository.findAll(spec);
     }
 
     @Override
