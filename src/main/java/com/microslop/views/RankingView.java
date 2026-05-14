@@ -5,19 +5,23 @@ import com.microslop.entity.Competition;
 import com.microslop.entity.CompetitionStatus;
 import com.microslop.service.CategoryService;
 import com.microslop.service.CompetitionService;
+import com.microslop.service.UserService;
+import com.microslop.service.VoterService;
 import com.microslop.service.VoteService;
 import com.microslop.views.components.PodiumCardComponent;
 import com.microslop.entity.Project;
 import com.microslop.service.ProjectService;
-import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -25,6 +29,7 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -43,6 +48,8 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     private final CategoryService categoryService;
     private final VoteService voteService;
     private final ProjectService projectService;
+    private final UserService userService;
+    private final VoterService voterService;
 
     private Long competitionId;
     private Long categoryId;
@@ -53,11 +60,15 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     public RankingView(CompetitionService competitionService,
                        CategoryService categoryService,
                        VoteService voteService,
-                       ProjectService projectService) {
+                       ProjectService projectService,
+                       UserService userService,
+                       VoterService voterService) {
         this.competitionService = competitionService;
         this.categoryService = categoryService;
         this.voteService = voteService;
         this.projectService = projectService;
+        this.userService = userService;
+        this.voterService = voterService;
 
         setSizeFull();
         setPadding(false);
@@ -100,12 +111,13 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     private void buildUi() {
         add(buildHeader());
         add(buildSummaryCard());
-        add(buildRankingOptions());
+        add(buildRankingFilter());
         rankingContainer = new VerticalLayout();
         rankingContainer.setWidthFull();
         rankingContainer.setAlignItems(FlexComponent.Alignment.CENTER);
         rankingContainer.setPadding(false);
         add(rankingContainer);
+        loadRanking(true);
     }
 
     private HorizontalLayout buildHeader() {
@@ -139,11 +151,111 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("flex", "1")
             .set("text-align", "center");
 
-        var spacer = new Div();
-        spacer.setWidth(120, Unit.PIXELS);
+        var rightSection = new HorizontalLayout();
+        rightSection.setAlignItems(FlexComponent.Alignment.CENTER);
+        rightSection.setSpacing(true);
+        rightSection.setMargin(false);
+        rightSection.setPadding(false);
 
-        header.add(backButton, title, spacer);
+        Button voteButton = new Button("Vote");
+        voteButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        voteButton.getStyle()
+            .set("font-weight", "600")
+            .set("color", "#1a3a5c")
+            .set("background", "white")
+            .set("border", "none")
+            .set("cursor", "pointer");
+        voteButton.addClickListener(e -> handleVoteClick());
+
+        rightSection.add(voteButton);
+        header.add(backButton, title, rightSection);
         return header;
+    }
+
+    private void handleVoteClick() {
+        if (!userService.isLoggedIn()) {
+            VaadinSession session = VaadinSession.getCurrent();
+            if (session != null) {
+                session.setAttribute("postLoginRoute",
+                    "competition/" + competitionId + "/categories/" + categoryId + "/ranking");
+            }
+            getUI().ifPresent(ui -> ui.navigate("login"));
+            return;
+        }
+
+        long userId = userService.getCurrentUserId();
+        boolean isRegistered = voterService.isRegisteredVoter(userId, competitionId, categoryId);
+
+        if (isRegistered) {
+            navigateToVoting();
+        } else {
+            showVoterRegistrationDialog(userId);
+        }
+    }
+
+    private void showVoterRegistrationDialog(long userId) {
+        var dialog = new Dialog();
+        dialog.setHeaderTitle("Register as Voter");
+
+        var content = new VerticalLayout();
+        content.setPadding(false);
+        content.setSpacing(true);
+        content.setWidth("400px");
+
+        var message = new Paragraph(
+            "You are not registered as a voter for this competition. "
+            + "Would you like to register as a voter to participate in voting?");
+        message.getStyle()
+            .set("color", "#333")
+            .set("font-size", "1rem")
+            .set("line-height", "1.5");
+
+        content.add(message);
+
+        var yesButton = new Button("Yes, register me");
+        yesButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        yesButton.getStyle()
+            .set("background", "#1e5ba8")
+            .set("color", "white")
+            .set("font-weight", "600")
+            .set("padding", "0.5rem 1.5rem")
+            .set("border-radius", "6px");
+        yesButton.addClickListener(e -> {
+            try {
+                voterService.registerVoter(userId, competitionId, categoryId);
+                Notification.show("Successfully registered as a voter!", 3000,
+                    Notification.Position.BOTTOM_CENTER);
+                dialog.close();
+                navigateToVoting();
+            } catch (IllegalStateException ex) {
+                Notification.show(ex.getMessage(), 3000,
+                    Notification.Position.BOTTOM_CENTER);
+                dialog.close();
+            }
+        });
+
+        var noButton = new Button("No, stay here");
+        noButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        noButton.getStyle()
+            .set("color", "#666")
+            .set("border", "1px solid #ddd")
+            .set("padding", "0.5rem 1.5rem")
+            .set("border-radius", "6px");
+        noButton.addClickListener(e -> dialog.close());
+
+        var buttonLayout = new HorizontalLayout(yesButton, noButton);
+        buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        buttonLayout.setSpacing(true);
+        buttonLayout.setWidthFull();
+
+        content.add(buttonLayout);
+        dialog.add(content);
+        dialog.open();
+    }
+
+    private void navigateToVoting() {
+        getUI().ifPresent(ui ->
+            ui.navigate("competition/" + competitionId + "/vote"));
     }
 
     private Div buildSummaryCard() {
@@ -228,113 +340,45 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         return card;
     }
 
-    private VerticalLayout buildRankingOptions() {
-        var optionsContainer = new VerticalLayout();
-        optionsContainer.setWidthFull();
-        optionsContainer.setAlignItems(FlexComponent.Alignment.CENTER);
-        optionsContainer.setPadding(true);
-        optionsContainer.setSpacing(false);
-        optionsContainer.getStyle().set("padding", "2rem");
+    private VerticalLayout buildRankingFilter() {
+        var filterContainer = new VerticalLayout();
+        filterContainer.setWidthFull();
+        filterContainer.setAlignItems(FlexComponent.Alignment.CENTER);
+        filterContainer.setPadding(true);
+        filterContainer.setSpacing(false);
+        filterContainer.getStyle()
+            .set("padding", "1.5rem 2rem")
+            .set("background", "#f9fafb")
+            .set("border-bottom", "1px solid #e5e7eb");
 
-        var title = new H3("Select ranking type");
-        title.getStyle()
-            .set("font-size", "1.3rem")
-            .set("font-weight", "700")
-            .set("color", "#1a3a5c")
-            .set("margin", "0 0 1.5rem 0")
-            .set("text-align", "center");
+        var label = new Span("Ranking type:");
+        label.getStyle()
+            .set("font-weight", "600")
+            .set("color", "#333")
+            .set("margin-right", "1rem");
 
-        var optionsGrid = new Div();
-        optionsGrid.getStyle()
-            .set("display", "grid")
-            .set("grid-template-columns", "repeat(2, 1fr)")
-            .set("gap", "1.5rem")
-            .set("max-width", "600px")
-            .set("width", "100%");
+        var rankingComboBox = new ComboBox<String>();
+        rankingComboBox.setWidth("300px");
+        rankingComboBox.setItems("Judges' Ranking", "Popular Ranking");
+        rankingComboBox.setValue("Judges' Ranking");
+        rankingComboBox.setClearButtonVisible(false);
 
-        var judgesCard = createRankingOptionCard(
-            "Judges' Ranking",
-            "Based on votes from assigned judges",
-            VaadinIcon.USERS.create(),
-            "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            () -> loadRanking(true)
-        );
+        rankingComboBox.addValueChangeListener(event -> {
+            String selectedValue = event.getValue();
+            if (selectedValue != null) {
+                boolean isJudgesRanking = "Judges' Ranking".equals(selectedValue);
+                loadRanking(isJudgesRanking);
+            }
+        });
 
-        var popularCard = createRankingOptionCard(
-            "Popular Ranking",
-            "Based on votes from all users",
-            VaadinIcon.GROUP.create(),
-            "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-            () -> loadRanking(false)
-        );
+        var controlsLayout = new HorizontalLayout();
+        controlsLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        controlsLayout.add(label, rankingComboBox);
+        controlsLayout.setMargin(false);
+        controlsLayout.setPadding(false);
 
-        optionsGrid.add(judgesCard, popularCard);
-        optionsContainer.add(title, optionsGrid);
-        return optionsContainer;
-    }
-
-    private Div createRankingOptionCard(String title, String description,
-                                         Icon icon, String gradient,
-                                         Runnable action) {
-        var card = new Div();
-        card.setWidthFull();
-        card.setHeight(200, Unit.PIXELS);
-        card.getStyle()
-            .set("background", "#ffffff")
-            .set("border-radius", "12px")
-            .set("box-shadow", "0 4px 6px rgba(0, 0, 0, 0.1)")
-            .set("padding", "24px")
-            .set("display", "flex")
-            .set("flex-direction", "column")
-            .set("align-items", "center")
-            .set("justify-content", "center")
-            .set("cursor", "pointer")
-            .set("transition", "all 0.3s ease")
-            .set("border", "1px solid #e0e0e0")
-            .set("text-align", "center");
-
-        card.getElement().addEventListener("mouseenter", event ->
-            card.getStyle()
-                .set("box-shadow", "0 8px 12px rgba(0, 0, 0, 0.15)")
-                .set("transform", "translateY(-4px)")
-        );
-        card.getElement().addEventListener("mouseleave", event ->
-            card.getStyle()
-                .set("box-shadow", "0 4px 6px rgba(0, 0, 0, 0.1)")
-                .set("transform", "translateY(0)")
-        );
-
-        var iconContainer = new Div();
-        iconContainer.setWidth(80, Unit.PIXELS);
-        iconContainer.setHeight(80, Unit.PIXELS);
-        iconContainer.getStyle()
-            .set("background", gradient)
-            .set("border-radius", "50%")
-            .set("display", "flex")
-            .set("align-items", "center")
-            .set("justify-content", "center")
-            .set("margin-bottom", "1rem");
-
-        icon.setSize("36px");
-        icon.getElement().getStyle().set("color", "#ffffff");
-        iconContainer.add(icon);
-
-        var titleSpan = new Span(title);
-        titleSpan.getStyle()
-            .set("font-size", "1.1rem")
-            .set("font-weight", "700")
-            .set("color", "#1a3a5c")
-            .set("margin-bottom", "0.5rem");
-
-        var descSpan = new Span(description);
-        descSpan.getStyle()
-            .set("font-size", "0.85rem")
-            .set("color", "#666");
-
-        card.add(iconContainer, titleSpan, descSpan);
-        card.addClickListener(event -> action.run());
-
-        return card;
+        filterContainer.add(controlsLayout);
+        return filterContainer;
     }
 
     private void loadRanking(boolean isJudgesRanking) {
@@ -352,7 +396,12 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         rankingContainer.add(title);
 
-        List<Project> ranking = projectService.getRankingByCategory(categoryId);
+        List<Project> ranking;
+        if (isJudgesRanking) {
+            ranking = projectService.getJudgeRankingByCategory(categoryId);
+        } else {
+            ranking = projectService.getPopularRankingByCategory(categoryId);
+        }
 
         if (ranking.isEmpty()) {
             var noProjects = new Div("No projects in this category");

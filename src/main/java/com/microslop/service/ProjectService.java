@@ -16,6 +16,10 @@ public interface ProjectService {
 
     java.util.List<Project> getRankingByCategory(Long categoryId);
 
+    java.util.List<Project> getJudgeRankingByCategory(Long categoryId);
+
+    java.util.List<Project> getPopularRankingByCategory(Long categoryId);
+
     java.util.List<Project> getUserProjects(String username);
 
     /**

@@ -55,7 +55,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private com.microslop.entity.User currentUser;
 
     private VerticalLayout projectsContainer;
-    private Span voteCounterSpan;
     private ComboBox<Category> categoryDropdown;
 
     public VotingView(CompetitionService competitionService,
@@ -158,9 +157,9 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         if (maxVotesLabel == null || currentCompetition == null) return;
         
         int available = getAvailableVotes(selectedCategory);
-        maxVotesLabel.setText("Tienes " + available + " votos a repartir");
+        maxVotesLabel.setText("You have " + available + " votes to distribute");
         
-        // Cambiar color según disponibilidad
+        // Change color based on availability
         if (available == 0) {
             maxVotesLabel.getStyle().set("color", "#999999");
         } else if (available <= 3) {
@@ -208,16 +207,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         rightSection.setMargin(false);
         rightSection.setPadding(false);
 
-        // Add vote counter display
-        voteCounterSpan = new Span("Votes: " + competition.getMaxVotes());
-        voteCounterSpan.getStyle()
-            .set("color", "white")
-            .set("font-weight", "600")
-            .set("font-size", "1rem")
-            .set("background", "#2d6a9f")
-            .set("padding", "0.4rem 0.8rem")
-            .set("border-radius", "6px");
-
         var avatar = new Avatar();
         avatar.setName(userService.getUserDisplayName());
         avatar.getStyle().set("cursor", "pointer").set("background", "#2d6a9f");
@@ -230,7 +219,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             getUI().ifPresent(ui -> ui.navigate(""));
         });
 
-        rightSection.add(voteCounterSpan, avatar);
+        rightSection.add(avatar);
         header.add(backButton, title, rightSection);
         return header;
     }
@@ -264,9 +253,9 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         var competition = competitionService.getById(competitionId).orElse(null);
         maxVotesLabel = new Span();
         if (competition != null && competition.getMaxVotesPerPerson() != null) {
-            maxVotesLabel.setText("Tienes " + competition.getMaxVotesPerPerson() + " votos a repartir");
+            maxVotesLabel.setText("You have " + competition.getMaxVotesPerPerson() + " votes to distribute");
         } else {
-            maxVotesLabel.setText("Tienes votos disponibles");
+            maxVotesLabel.setText("Votes available");
         }
         maxVotesLabel.getStyle()
                 .set("font-size", "1.1rem")
@@ -381,7 +370,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         // Create points input field
         var pointsInput = new IntegerField();
-        pointsInput.setLabel("Puntos");
+        pointsInput.setLabel("Points");
         pointsInput.setMin(1);
         pointsInput.setValue(1);
         pointsInput.setWidth("80px");
@@ -391,10 +380,15 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("padding", "0.5rem");
 
         // Create vote button to submit points
-        Button submitButton = new Button("Votar");
+        Button submitButton = new Button("Vote");
         submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        submitButton.setWidth("auto");
+        submitButton.getStyle()
+                .set("padding", "0.75rem 1.25rem")
+                .set("border-radius", "8px")
+                .set("font-weight", "700");
         
-        // Actualizar estado del botón basado en votos disponibles
+        // Disable button if no votes available
         int availableVotes = getAvailableVotes(selectedCategory);
         if (availableVotes <= 0) {
             submitButton.setEnabled(false);
@@ -406,14 +400,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             submitButton.getStyle()
                     .set("background", "#1a3a5c")
                     .set("color", "white")
-                    .set("font-weight", "700")
-                    .set("padding", "0.75rem 1.25rem")
-                    .set("border-radius", "8px")
                     .set("cursor", "pointer");
         }
-        
-        submitButton.setWidth("auto");
-        submitButton.getStyle().set("padding", "0.75rem 1.25rem").set("border-radius", "8px").set("font-weight", "700");
         
         submitButton.addClickListener(e -> handleVoteWithPoints(p, pointsInput.getValue() != null ? pointsInput.getValue() : 1, selectedCategory));
 
@@ -590,15 +578,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         try {
             voteService.submitVote(username, project.getId(), selectedCategory.getId());
-            
-            // Update the vote counter
-            int remainingVotes = competition.getMaxVotes();
-            long votesUsed = voteService.countVotesPerUserInCompetition(userService.getCurrentUserId(), competitionId);
-            int votesLeft = Math.max(0, remainingVotes - (int)votesUsed);
-            
-            if (voteCounterSpan != null) {
-                voteCounterSpan.setText("Votes: " + votesLeft);
-            }
             
             showNotification("Vote submitted!", NotificationVariant.LUMO_SUCCESS);
             getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId));

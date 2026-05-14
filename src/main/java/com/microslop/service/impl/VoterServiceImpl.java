@@ -1,0 +1,59 @@
+package com.microslop.service.impl;
+
+import com.microslop.entity.Category;
+import com.microslop.entity.Competition;
+import com.microslop.entity.User;
+import com.microslop.entity.Voter;
+import com.microslop.repository.VoterRepository;
+import com.microslop.service.CategoryService;
+import com.microslop.service.CompetitionService;
+import com.microslop.service.UserService;
+import com.microslop.service.VoterService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Implementation of VoterService.
+ * Handles voter registration for competition categories.
+ */
+@Service
+@RequiredArgsConstructor
+public class VoterServiceImpl implements VoterService {
+
+    private final VoterRepository voterRepository;
+    private final UserService userService;
+    private final CompetitionService competitionService;
+    private final CategoryService categoryService;
+
+    @Override
+    @Transactional
+    public Voter registerVoter(Long userId, Long competitionId, Long categoryId) {
+        if (voterRepository.existsByUserIdAndCompetitionIdAndCategoryId(userId, competitionId, categoryId)) {
+            throw new IllegalStateException("You are already registered as a voter for this category.");
+        }
+
+        User user = userService.getUserById(userId)
+                .orElseThrow(() -> new IllegalStateException("User not found."));
+
+        Competition competition = competitionService.getById(competitionId)
+                .orElseThrow(() -> new IllegalStateException("Competition not found."));
+
+        Category category = categoryService.getByIdOrFail(categoryId);
+
+        Voter voter = new Voter(user, competition, category);
+        return voterRepository.save(voter);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isRegisteredVoter(Long userId, Long competitionId, Long categoryId) {
+        return voterRepository.existsByUserIdAndCompetitionIdAndCategoryId(userId, competitionId, categoryId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isRegisteredVoterInCompetition(Long userId, Long competitionId) {
+        return voterRepository.existsByUserIdAndCompetitionId(userId, competitionId);
+    }
+}

@@ -45,6 +45,30 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
         """)
     List<Project> findRankingByCategory(@Param("categoryId") Long categoryId);
 
+    // Judge-only ranking: projects ordered by count of votes from judges
+    @Query("""
+        SELECT p FROM Project p
+        LEFT JOIN p.votes v
+        LEFT JOIN p.categories c
+        LEFT JOIN com.microslop.entity.Judge j ON j.user = v.user AND j.competition = p.competition
+        WHERE c.id = :categoryId AND j.id IS NOT NULL
+        GROUP BY p
+        ORDER BY COUNT(v) DESC
+        """)
+    List<Project> findJudgeRankingByCategory(@Param("categoryId") Long categoryId);
+
+    // Popular ranking: projects ordered by count of votes from non-judges
+    @Query("""
+        SELECT p FROM Project p
+        LEFT JOIN p.votes v
+        LEFT JOIN p.categories c
+        LEFT JOIN com.microslop.entity.Judge j ON j.user = v.user AND j.competition = p.competition
+        WHERE c.id = :categoryId AND j.id IS NULL AND v.id IS NOT NULL
+        GROUP BY p
+        ORDER BY COUNT(v) DESC
+        """)
+    List<Project> findPopularRankingByCategory(@Param("categoryId") Long categoryId);
+
     @Query("SELECT p FROM Project p LEFT JOIN FETCH p.votes v LEFT JOIN FETCH v.user WHERE p.id = :projectId")
     Optional<Project> findByIdWithVotesAndUsers(@Param("projectId") Long projectId);
 }
