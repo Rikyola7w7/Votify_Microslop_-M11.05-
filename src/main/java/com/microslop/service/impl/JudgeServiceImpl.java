@@ -7,6 +7,7 @@ import com.microslop.repository.JudgeRepository;
 import com.microslop.service.JudgeService;
 import com.microslop.service.UserService;
 import com.microslop.service.CompetitionService;
+import com.microslop.specification.judge.JudgesByCompetitionSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,9 +28,7 @@ public class JudgeServiceImpl implements JudgeService {
     @Override
     @Transactional(readOnly = true)
     public List<Judge> getJudgesByCompetition(Long competitionId) {
-        // Fetch judges with eagerly loaded users to avoid LazyInitializationException
-        List<Judge> judges = judgeRepository.findByCompetitionId(competitionId);
-        // Force initialization of user data within transaction
+        List<Judge> judges = judgeRepository.findAll(new JudgesByCompetitionSpecification(competitionId));
         judges.forEach(j -> j.getUser().getName());
         return judges;
     }
@@ -37,7 +36,6 @@ public class JudgeServiceImpl implements JudgeService {
     @Override
     @Transactional
     public Judge addJudge(Long userId, Long competitionId) {
-        // Check if user is already a judge
         if (judgeRepository.existsByUserIdAndCompetitionId(userId, competitionId)) {
             throw new IllegalStateException("El usuario ya es juez de esta competencia");
         }

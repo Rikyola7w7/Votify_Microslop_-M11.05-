@@ -252,7 +252,7 @@ class CompetitionServiceImplTest {
         finished2.setName("Finished 2");
 
         List<Competition> finishedList = Arrays.asList(finished1, finished2);
-        when(competitionRepository.findByActiveFalse()).thenReturn(finishedList);
+        when(competitionRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class))).thenReturn(finishedList);
 
         List<Competition> result = competitionService.getFinishedCompetitions();
 
@@ -282,7 +282,7 @@ class CompetitionServiceImplTest {
          comp.setName("Java Competition");
 
          List<Competition> allComps = Arrays.asList(comp);
-         when(competitionRepository.findAll()).thenReturn(allComps);
+         when(competitionRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class))).thenReturn(allComps);
 
          List<Competition> result = competitionService.searchByName("Java");
 

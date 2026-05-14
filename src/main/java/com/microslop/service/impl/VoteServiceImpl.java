@@ -11,9 +11,13 @@ import com.microslop.repository.CategoryRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
 import com.microslop.service.VoteService;
+import com.microslop.specification.vote.VotesByUserSpecification;
+import com.microslop.specification.vote.VotesByProjectSpecification;
+import com.microslop.specification.vote.VotesByCategorySpecification;
 import com.microslop.command.CommandExecutor;
 import com.microslop.command.vote.SubmitVoteCommand;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
@@ -207,5 +211,33 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
     @Transactional(readOnly = true)
     public long countPointsByUserAndCategory(Long userId, Long categoryId) {
         return voteRepository.sumPointsByUserIdAndCategoryId(userId, categoryId);
+    }
+
+    // ── Specification-based Queries ─────────────────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Vote> getVotesByUser(Long userId) {
+        return voteRepository.findAll(new VotesByUserSpecification(userId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Vote> getVotesByProject(Long projectId) {
+        return voteRepository.findAll(new VotesByProjectSpecification(projectId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Vote> getVotesByCategory(Long categoryId) {
+        return voteRepository.findAll(new VotesByCategorySpecification(categoryId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Vote> getVotesByUserAndProject(Long userId, Long projectId) {
+        Specification<Vote> spec = new VotesByUserSpecification(userId)
+            .and(new VotesByProjectSpecification(projectId));
+        return voteRepository.findAll(spec);
     }
 }
