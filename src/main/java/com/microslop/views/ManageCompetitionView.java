@@ -2,6 +2,7 @@ package com.microslop.views;
 
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Competition;
+import com.microslop.entity.CompetitionStatus;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.UserService;
 import com.vaadin.flow.component.button.Button;
@@ -237,40 +238,47 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     }
 
     private void updateUIState() {
-        LocalDateTime now = LocalDateTime.now();
-        boolean hasEnded = competition.getEndDate() != null && now.isAfter(competition.getEndDate());
-        boolean hasStarted = competition.getStartDate() == null || !now.isBefore(competition.getStartDate());
+        CompetitionStatus status = competition.getStatus();
 
-        boolean isEffectivelyEnded = hasEnded || (!competition.isActive() && hasEnded);
-
-        if (isEffectivelyEnded) {
-            statusBadge.setText("Ended");
-            statusBadge.getStyle().set("background-color", "#e74c3c");
-            pauseButton.setVisible(false);
-            resumeButton.setVisible(false);
-            endNowButton.setVisible(false);
-            reopenButton.setVisible(true);
-        } else if (!competition.isActive()) {
-            statusBadge.setText("Paused");
-            statusBadge.getStyle().set("background-color", "#f39c12");
-            pauseButton.setVisible(false);
-            resumeButton.setVisible(true);
-            endNowButton.setVisible(true);
-            reopenButton.setVisible(false);
-        } else {
-            if (!hasStarted) {
-                statusBadge.setText("Scheduled (Not Started)");
-                statusBadge.getStyle().set("background-color", "#3498db");
+        switch (status) {
+            case DRAFT -> {
+                statusBadge.setText("Draft");
+                statusBadge.getStyle().set("background-color", "#95a5a6");
+                pauseButton.setVisible(false);
+                resumeButton.setVisible(false);
+                endNowButton.setVisible(false);
+                reopenButton.setVisible(false);
+            }
+            case ACTIVE -> {
+                statusBadge.setText("Active");
+                statusBadge.getStyle().set("background-color", "#2ecc71");
                 pauseButton.setVisible(false);
                 resumeButton.setVisible(false);
                 endNowButton.setVisible(true);
                 reopenButton.setVisible(false);
-            } else {
-                statusBadge.setText("Active");
-                statusBadge.getStyle().set("background-color", "#2ecc71");
+            }
+            case VOTING_OPEN -> {
+                statusBadge.setText("Voting Open");
+                statusBadge.getStyle().set("background-color", "#27ae60");
                 pauseButton.setVisible(true);
                 resumeButton.setVisible(false);
                 endNowButton.setVisible(true);
+                reopenButton.setVisible(false);
+            }
+            case CONCLUDED -> {
+                statusBadge.setText("Concluded");
+                statusBadge.getStyle().set("background-color", "#e74c3c");
+                pauseButton.setVisible(false);
+                resumeButton.setVisible(false);
+                endNowButton.setVisible(false);
+                reopenButton.setVisible(true);
+            }
+            case ARCHIVED -> {
+                statusBadge.setText("Archived");
+                statusBadge.getStyle().set("background-color", "#7f8c8d");
+                pauseButton.setVisible(false);
+                resumeButton.setVisible(false);
+                endNowButton.setVisible(false);
                 reopenButton.setVisible(false);
             }
         }
@@ -296,8 +304,12 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     }
 
     private void togglePause(boolean pause) {
-        competition.setActive(!pause);
-        competitionService.save(competition);
+        if (pause) {
+            competitionService.pauseVoting(competitionId);
+        } else {
+            competitionService.openVoting(competitionId);
+        }
+        competition = competitionService.getByIdOrFail(competitionId);
         String msg = pause ? "Voting paused." : "Voting resumed.";
         Notification.show(msg, 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
@@ -305,23 +317,22 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     }
 
     private void endVotingNow() {
-        competition.setActive(false);
-        competition.setEndDate(LocalDateTime.now());
+        competitionService.conclude(competitionId);
+        competition = competitionService.getByIdOrFail(competitionId);
         endDatePicker.setValue(competition.getEndDate());
-        competitionService.save(competition);
         Notification.show("Voting has been ended.", 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         updateUIState();
     }
     
     private void reopenVoting() {
-        competition.setActive(true);
+        competitionService.reopen(competitionId);
+        competition = competitionService.getByIdOrFail(competitionId);
         if (competition.getEndDate() != null && LocalDateTime.now().isAfter(competition.getEndDate())) {
-            // Extend by 1 day if it was past
             competition.setEndDate(LocalDateTime.now().plusDays(1));
             endDatePicker.setValue(competition.getEndDate());
+            competitionService.save(competition);
         }
-        competitionService.save(competition);
         Notification.show("Voting reopened.", 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         updateUIState();

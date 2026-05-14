@@ -1,5 +1,6 @@
 package com.microslop.entity;
 
+import com.microslop.state.CompetitionState;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import lombok.Data;
@@ -34,6 +35,10 @@ public class Competition {
 
     @Column(nullable = false, name = "active")
     private boolean active = true;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private CompetitionStatus status = CompetitionStatus.DRAFT;
 
     @Column(name = "event_type", length = 100)
     private String eventType;
@@ -117,6 +122,112 @@ public class Competition {
     public void removeJudge(Judge judge) {
         judges.remove(judge);
         judge.setCompetition(null);
+    }
+
+    // ── State Pattern Methods ─────────────────────────────────────────────
+
+    /**
+     * Delegates to current state object to transition to ACTIVE.
+     */
+    public void activate() {
+        this.status.getState().activate(this);
+    }
+
+    /**
+     * Delegates to current state object to deactivate (back to DRAFT).
+     */
+    public void deactivate() {
+        this.status.getState().deactivate(this);
+    }
+
+    /**
+     * Delegates to current state object to open voting.
+     */
+    public void openVoting() {
+        this.status.getState().openVoting(this);
+    }
+
+    /**
+     * Delegates to current state object to pause voting.
+     */
+    public void pauseVoting() {
+        this.status.getState().pauseVoting(this);
+    }
+
+    /**
+     * Delegates to current state object to conclude.
+     */
+    public void conclude() {
+        this.status.getState().conclude(this);
+    }
+
+    /**
+     * Delegates to current state object to archive.
+     */
+    public void archive() {
+        this.status.getState().archive(this);
+    }
+
+    /**
+     * Delegates to current state object to reopen.
+     */
+    public void reopen() {
+        this.status.getState().reopen(this);
+    }
+
+    /**
+     * Whether voting is currently allowed based on state.
+     */
+    public boolean canVote() {
+        return status != null && status.getState().canVote();
+    }
+
+    /**
+     * Whether projects can be submitted based on state.
+     */
+    public boolean canSubmitProjects() {
+        return status != null && status.getState().canSubmitProjects();
+    }
+
+    /**
+     * Whether configuration can be edited based on state.
+     */
+    public boolean canEditConfiguration() {
+        return status != null && status.getState().canEditConfiguration();
+    }
+
+    /**
+     * Whether this state is terminal (no further transitions).
+     */
+    public boolean isTerminal() {
+        return status != null && status.getState().isTerminal();
+    }
+
+    /**
+     * Computed property: derives active status from the current state.
+     * Replaces the direct boolean field for reads.
+     */
+    public boolean isActive() {
+        return status != null && status.getState().isActiveLegacy();
+    }
+
+    /**
+     * @deprecated Use state transition methods (activate, deactivate, etc.) instead.
+     * Kept for backward compatibility. Sets status to ACTIVE or DRAFT.
+     */
+    @Deprecated
+    public void setActive(boolean active) {
+        if (active) {
+            if (this.status == null || this.status == CompetitionStatus.DRAFT
+                    || this.status == CompetitionStatus.CONCLUDED) {
+                this.status = CompetitionStatus.ACTIVE;
+            }
+        } else {
+            if (this.status == CompetitionStatus.ACTIVE
+                    || this.status == CompetitionStatus.VOTING_OPEN) {
+                this.status = CompetitionStatus.DRAFT;
+            }
+        }
     }
 
     // ── Getters and Setters for Voting Configuration ────────────────────

@@ -3,6 +3,7 @@ package com.microslop.service;
 import com.microslop.dto.CompetitionDTO;
 import com.microslop.dto.CategoryDTO;
 import com.microslop.entity.Competition;
+import com.microslop.entity.CompetitionStatus;
 import com.microslop.observer.subject.CompetitionEventSubject;
 import java.time.LocalDate;
 import java.util.List;
@@ -35,6 +36,16 @@ public interface CompetitionService extends CompetitionEventSubject {
     Competition activate(Long id);
 
     Competition deactivate(Long id);
+
+    Competition openVoting(Long id);
+
+    Competition pauseVoting(Long id);
+
+    Competition conclude(Long id);
+
+    Competition archive(Long id);
+
+    Competition reopen(Long id);
 
     Optional<Competition> getById(Long id);
 

@@ -35,7 +35,31 @@ public interface CompetitionObserver {
      * @param event the competition concluded event
      */
     void onCompetitionConcluded(CompetitionEvent event);
-    
+
+    /**
+     * Called when voting is opened for a competition.
+     * @param event the voting opened event
+     */
+    default void onVotingOpened(CompetitionEvent event) {}
+
+    /**
+     * Called when voting is paused for a competition.
+     * @param event the voting paused event
+     */
+    default void onVotingPaused(CompetitionEvent event) {}
+
+    /**
+     * Called when a competition is archived.
+     * @param event the archived event
+     */
+    default void onCompetitionArchived(CompetitionEvent event) {}
+
+    /**
+     * Called when a concluded competition is reopened.
+     * @param event the reopened event
+     */
+    default void onCompetitionReopened(CompetitionEvent event) {}
+
     /**
      * Gets the observer name for logging and debugging.
      * 

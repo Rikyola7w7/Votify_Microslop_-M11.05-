@@ -96,7 +96,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         var competition = competitionService.getByIdOrFail(competitionId);
 
-        if (!competition.isActive()) {
+        if (!competition.canVote()) {
             boolean hasEnded = competition.getEndDate() != null
                     && LocalDateTime.now().isAfter(competition.getEndDate());
             if (hasEnded) {
@@ -106,7 +106,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 n.addThemeVariants(NotificationVariant.LUMO_ERROR);
             } else {
                 Notification n = Notification.show(
-                        "Esta competición está pausada temporalmente. Inténtalo más tarde.",
+                        "Esta competición no acepta votos en este momento.",
                         4000, Notification.Position.BOTTOM_CENTER);
                 n.addThemeVariants(NotificationVariant.LUMO_WARNING);
             }
@@ -575,14 +575,14 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         // Re-check competition state before submitting the vote
         var competition = competitionService.getByIdOrFail(competitionId);
 
-        if (!competition.isActive()) {
+        if (!competition.canVote()) {
             boolean hasEnded = competition.getEndDate() != null
                     && LocalDateTime.now().isAfter(competition.getEndDate());
             if (hasEnded) {
                 showNotification("Esta competición ha finalizado y ya no acepta votos.",
                         NotificationVariant.LUMO_ERROR);
             } else {
-                showNotification("Esta competición está pausada temporalmente. Inténtalo más tarde.",
+                showNotification("Esta competición no acepta votos en este momento.",
                         NotificationVariant.LUMO_WARNING);
             }
             return;

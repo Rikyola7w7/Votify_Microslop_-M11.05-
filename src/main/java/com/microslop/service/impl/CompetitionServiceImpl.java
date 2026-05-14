@@ -4,11 +4,17 @@ import com.microslop.dto.CategoryDTO;
 import com.microslop.dto.CompetitionDTO;
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
+import com.microslop.entity.CompetitionStatus;
 import com.microslop.entity.Judge;
 import com.microslop.entity.User;
 import com.microslop.event.CompetitionActivatedEvent;
 import com.microslop.event.CompetitionDeactivatedEvent;
+import com.microslop.event.CompetitionConcludedEvent;
 import com.microslop.event.CompetitionEvent;
+import com.microslop.event.CompetitionVotingOpenedEvent;
+import com.microslop.event.CompetitionVotingPausedEvent;
+import com.microslop.event.CompetitionArchivedEvent;
+import com.microslop.event.CompetitionReopenedEvent;
 import com.microslop.observer.observer.CompetitionObserver;
 import com.microslop.observer.subject.CompetitionEventSubject;
 import com.microslop.repository.CompetitionRepository;
@@ -100,12 +106,15 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
         }
         for (CompetitionObserver observer : competitionObservers) {
             try {
-                if (event.getEventType().equals("COMPETITION_ACTIVATED")) {
-                    observer.onCompetitionActivated(event);
-                } else if (event.getEventType().equals("COMPETITION_DEACTIVATED")) {
-                    observer.onCompetitionDeactivated(event);
-                } else if (event.getEventType().equals("COMPETITION_CONCLUDED")) {
-                    observer.onCompetitionConcluded(event);
+                switch (event.getEventType()) {
+                    case "COMPETITION_ACTIVATED" -> observer.onCompetitionActivated(event);
+                    case "COMPETITION_DEACTIVATED" -> observer.onCompetitionDeactivated(event);
+                    case "COMPETITION_CONCLUDED" -> observer.onCompetitionConcluded(event);
+                    case "COMPETITION_VOTING_OPENED" -> observer.onVotingOpened(event);
+                    case "COMPETITION_VOTING_PAUSED" -> observer.onVotingPaused(event);
+                    case "COMPETITION_ARCHIVED" -> observer.onCompetitionArchived(event);
+                    case "COMPETITION_REOPENED" -> observer.onCompetitionReopened(event);
+                    default -> log.warn("Unknown event type: {}", event.getEventType());
                 }
             } catch (Exception e) {
                 log.error("Error notifying observer {}: {}", 
@@ -181,7 +190,6 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
 
     @Override
     public Competition activate(Long id) {
-        // Execute command through command executor
         ActivateCompetitionCommand command = new ActivateCompetitionCommand(
             id, competitionRepository
         );
@@ -189,10 +197,7 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
             commandExecutor.execute(command);
             Competition competition = competitionRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
-            
-            // Notify observers after successful activation
             notifyCompetitionObservers(new CompetitionActivatedEvent(competition));
-            
             return competition;
         } catch (RuntimeException e) {
             throw e;
@@ -203,7 +208,6 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
 
     @Override
     public Competition deactivate(Long id) {
-        // Execute command through command executor
         DeactivateCompetitionCommand command = new DeactivateCompetitionCommand(
             id, competitionRepository
         );
@@ -211,16 +215,63 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
             commandExecutor.execute(command);
             Competition competition = competitionRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
-            
-            // Notify observers after successful deactivation
             notifyCompetitionObservers(new CompetitionDeactivatedEvent(competition));
-            
             return competition;
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException("Failed to deactivate competition", e);
         }
+    }
+
+    @Override
+    public Competition openVoting(Long id) {
+        Competition competition = competitionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+        competition.openVoting();
+        competitionRepository.save(competition);
+        notifyCompetitionObservers(new CompetitionVotingOpenedEvent(competition));
+        return competition;
+    }
+
+    @Override
+    public Competition pauseVoting(Long id) {
+        Competition competition = competitionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+        competition.pauseVoting();
+        competitionRepository.save(competition);
+        notifyCompetitionObservers(new CompetitionVotingPausedEvent(competition));
+        return competition;
+    }
+
+    @Override
+    public Competition conclude(Long id) {
+        Competition competition = competitionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+        competition.conclude();
+        competitionRepository.save(competition);
+        notifyCompetitionObservers(new CompetitionConcludedEvent(competition));
+        return competition;
+    }
+
+    @Override
+    public Competition archive(Long id) {
+        Competition competition = competitionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+        competition.archive();
+        competitionRepository.save(competition);
+        notifyCompetitionObservers(new CompetitionArchivedEvent(competition));
+        return competition;
+    }
+
+    @Override
+    public Competition reopen(Long id) {
+        Competition competition = competitionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+        competition.reopen();
+        competitionRepository.save(competition);
+        notifyCompetitionObservers(new CompetitionReopenedEvent(competition));
+        return competition;
     }
 
     // ── Read Operations ──────────────────────────────────────────────────────

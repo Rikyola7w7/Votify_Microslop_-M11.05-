@@ -1,5 +1,6 @@
 package com.microslop.specification.competition;
 
+import com.microslop.entity.CompetitionStatus;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -60,6 +61,29 @@ class CompetitionSpecificationsTest {
         CompetitionByStatusSpecification activeSpec = new CompetitionByStatusSpecification(true);
         CompetitionByStatusSpecification inactiveSpec = new CompetitionByStatusSpecification(false);
         var orSpec = activeSpec.or(inactiveSpec);
+        assertNotNull(orSpec);
+    }
+
+    @Test
+    void testCompetitionByStatusEnumSpecificationCreation() {
+        CompetitionByStatusEnumSpecification draftSpec = new CompetitionByStatusEnumSpecification(CompetitionStatus.DRAFT);
+        CompetitionByStatusEnumSpecification activeSpec = new CompetitionByStatusEnumSpecification(CompetitionStatus.ACTIVE);
+        CompetitionByStatusEnumSpecification votingSpec = new CompetitionByStatusEnumSpecification(CompetitionStatus.VOTING_OPEN);
+        assertNotNull(draftSpec);
+        assertNotNull(activeSpec);
+        assertNotNull(votingSpec);
+    }
+
+    @Test
+    void testCompetitionByStatusEnumSpecificationWithNullThrowsException() {
+        assertThrows(IllegalArgumentException.class, () -> new CompetitionByStatusEnumSpecification(null));
+    }
+
+    @Test
+    void testCompetitionByStatusEnumSpecificationComposition() {
+        CompetitionByStatusEnumSpecification activeSpec = new CompetitionByStatusEnumSpecification(CompetitionStatus.ACTIVE);
+        CompetitionByStatusEnumSpecification votingSpec = new CompetitionByStatusEnumSpecification(CompetitionStatus.VOTING_OPEN);
+        var orSpec = activeSpec.or(votingSpec);
         assertNotNull(orSpec);
     }
 }
