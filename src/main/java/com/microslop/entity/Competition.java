@@ -63,6 +63,12 @@ public class Competition {
     @Column(name = "standard_user_weight_multiplier", columnDefinition = "double default 1.0")
     private Double standardUserWeightMultiplier = 1.0;
 
+    @Column(name = "voting_strategy_type", length = 50)
+    private String votingStrategyType = "ALL";
+
+    @Column(name = "ranking_strategy_type", length = 50)
+    private String rankingStrategyType = "WEIGHTED";
+
     public static com.microslop.builder.CompetitionBuilder builder() {
         return com.microslop.builder.CompetitionBuilder.builder();
     }
@@ -269,5 +275,21 @@ public class Competition {
 
     public void setStandardUserWeightMultiplier(Double standardUserWeightMultiplier) {
         this.standardUserWeightMultiplier = standardUserWeightMultiplier;
+    }
+
+    public String getVotingStrategyType() {
+        return votingStrategyType;
+    }
+
+    public void setVotingStrategyType(String votingStrategyType) {
+        this.votingStrategyType = votingStrategyType;
+    }
+
+    public String getRankingStrategyType() {
+        return rankingStrategyType;
+    }
+
+    public void setRankingStrategyType(String rankingStrategyType) {
+        this.rankingStrategyType = rankingStrategyType;
     }
 }

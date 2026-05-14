@@ -14,6 +14,8 @@ import com.microslop.service.VoteService;
 import com.microslop.specification.vote.VotesByUserSpecification;
 import com.microslop.specification.vote.VotesByProjectSpecification;
 import com.microslop.specification.vote.VotesByCategorySpecification;
+import com.microslop.strategy.StrategyRegistry;
+import com.microslop.strategy.voting.VotingStrategy;
 import com.microslop.command.CommandExecutor;
 import com.microslop.command.vote.SubmitVoteCommand;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,13 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * Implementation of VoteService with observer pattern support.
- * Manages vote submission and provides event notification to registered observers.
- *
- * @author Votify Team
- * @version 1.0
- */
 @Service
 @Transactional
 public class VoteServiceImpl implements VoteService, VoteEventSubject {
@@ -46,26 +41,16 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
     private final VoteCreator voteCreator;
     private final CategoryRepository categoryRepository;
     private final CommandExecutor commandExecutor;
+    private final StrategyRegistry strategyRegistry;
     private final List<VoteObserver> voteObservers;
 
-    /**
-     * Creates a new VoteServiceImpl with observer injection.
-     * Observers are optional - system works fine with none registered.
-     *
-     * @param voteRepository vote repository
-     * @param projectService project service
-     * @param userService user service
-     * @param voteCreator vote factory
-     * @param categoryRepository category repository
-     * @param commandExecutor command executor
-     * @param observers optional list of vote observers
-     */
     public VoteServiceImpl(VoteRepository voteRepository,
                           ProjectService projectService,
                           UserService userService,
                           VoteCreator voteCreator,
                           CategoryRepository categoryRepository,
                           CommandExecutor commandExecutor,
+                          StrategyRegistry strategyRegistry,
                           @Autowired(required = false) List<VoteObserver> observers) {
         this.voteRepository = voteRepository;
         this.projectService = projectService;
@@ -73,6 +58,7 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
         this.voteCreator = voteCreator;
         this.categoryRepository = categoryRepository;
         this.commandExecutor = commandExecutor;
+        this.strategyRegistry = strategyRegistry;
         this.voteObservers = new CopyOnWriteArrayList<>(
             observers != null ? observers : new ArrayList<>()
         );
@@ -129,14 +115,13 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
 
     @Override
     public void submitVote(String userUsername, Long projectId, Long categoryId) {
-        // Execute command through command executor
         SubmitVoteCommand command = new SubmitVoteCommand(
             userUsername, projectId, categoryId,
-            voteRepository, projectService, userService, voteCreator, categoryRepository
+            voteRepository, projectService, userService, voteCreator, categoryRepository,
+            strategyRegistry
         );
         try {
             commandExecutor.execute(command);
-            // Notify observers after successful vote submission
             Vote createdVote = command.getCreatedVote();
             if (createdVote != null) {
                 notifyVoteObservers(new VoteSubmittedEvent(createdVote, userUsername));
@@ -150,14 +135,13 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
 
     @Override
     public void submitVote(String userUsername, Long projectId, Long categoryId, int points) {
-        // Execute command through command executor
         SubmitVoteCommand command = new SubmitVoteCommand(
             userUsername, projectId, categoryId, points,
-            voteRepository, projectService, userService, voteCreator, categoryRepository
+            voteRepository, projectService, userService, voteCreator, categoryRepository,
+            strategyRegistry
         );
         try {
             commandExecutor.execute(command);
-            // Notify observers after successful vote submission
             Vote createdVote = command.getCreatedVote();
             if (createdVote != null) {
                 notifyVoteObservers(new VoteSubmittedEvent(createdVote, userUsername));
@@ -239,5 +223,10 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
         Specification<Vote> spec = new VotesByUserSpecification(userId)
             .and(new VotesByProjectSpecification(projectId));
         return voteRepository.findAll(spec);
+    }
+
+    @Override
+    public StrategyRegistry getStrategyRegistry() {
+        return strategyRegistry;
     }
 }

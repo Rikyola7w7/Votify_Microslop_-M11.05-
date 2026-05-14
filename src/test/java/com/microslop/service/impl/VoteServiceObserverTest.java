@@ -7,6 +7,9 @@ import com.microslop.entity.User;
 import com.microslop.entity.Vote;
 import com.microslop.event.VoteEvent;
 import com.microslop.observer.observer.VoteObserver;
+import com.microslop.strategy.StrategyRegistry;
+import com.microslop.strategy.voting.AllVotingStrategy;
+import com.microslop.strategy.ranking.WeightedScoreRankingStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,9 +23,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for VoteService observer functionality.
- */
 @ExtendWith(MockitoExtension.class)
 class VoteServiceObserverTest {
 
@@ -37,8 +37,11 @@ class VoteServiceObserverTest {
     @BeforeEach
     void setUp() {
         List<VoteObserver> observers = new ArrayList<>();
+        List<com.microslop.strategy.voting.VotingStrategy> votingStrategies = List.of(new AllVotingStrategy());
+        List<com.microslop.strategy.ranking.RankingStrategy> rankingStrategies = List.of(new WeightedScoreRankingStrategy(null));
+        StrategyRegistry strategyRegistry = new StrategyRegistry(votingStrategies, rankingStrategies);
         voteService = new VoteServiceImpl(
-            null, null, null, null, null, null,
+            null, null, null, null, null, null, null,
             observers
         );
     }

@@ -2,20 +2,21 @@
 
 ## Overview
 
-The Votify project features a **comprehensive test suite with 203 passing unit and integration tests** covering all major functionality and design patterns. This document outlines the test architecture, key testing patterns, common failure fixes, and best practices for maintaining and extending the test suite.
+The Votify project features a **comprehensive test suite with 315 passing unit and integration tests** covering all major functionality and design patterns. This document outlines the test architecture, key testing patterns, common failure fixes, and best practices for maintaining and extending the test suite.
 
-**Test Suite Status:** ✅ **ALL 203 TESTS PASSING**
+**Test Suite Status:** ✅ **ALL 315 TESTS PASSING**
 
 ### Key Statistics
-- **Total Tests:** 203 (all passing)
-- **Test Files:** 40+
+- **Total Tests:** 315 (all passing)
+- **Test Files:** 50+
 - **Service Tests:** 8 test classes (comprehensive behavior coverage)
-- **Entity Tests:** 7 test classes
+- **Entity Tests:** 8 test classes
 - **Specification Tests:** 4 test classes (query predicate logic, composability)
+- **Strategy Tests:** 6 test classes (41 tests for voting and ranking strategies)
 - **Integration Tests:** 10+ test classes
 - **Observer/Event Tests:** 25+ (event immutability, observer notifications)
 - **Command Tests:** 7+ (execute/undo/redo cycles)
-- **Coverage:** Command Pattern execution, Observer Pattern notifications, Specification Pattern queries, business logic, data validation
+- **Coverage:** Command Pattern execution, Observer Pattern notifications, Specification Pattern queries, Strategy Pattern algorithms, business logic, data validation
 
 ---
 
@@ -53,6 +54,16 @@ src/test/java/com/microslop/
 │   │   └── VoteSpecificationsTest.java
 │   └── judge/
 │       └── JudgeSpecificationsTest.java
+│
+├── strategy/                        # 6 strategy pattern tests (41 tests)
+│   ├── StrategyRegistryTest.java    # Registry lookup and caching
+│   ├── voting/
+│   │   ├── AllVotingStrategyTest.java
+│   │   └── JudgesOnlyVotingStrategyTest.java
+│   └── ranking/
+│       ├── WeightedScoreRankingStrategyTest.java
+│       ├── AverageScoreRankingStrategyTest.java
+│       └── NormalizedScoreRankingStrategyTest.java
 │
 ├── observer/                        # 25+ observer & event tests
 │   ├── VoteEventTest.java           # Event immutability, timestamp validation
@@ -329,7 +340,273 @@ class CompetitionSpecificationsTest {
 
 ---
 
-## 4. Recent Test Fixes & Improvements
+## 4. Strategy Pattern Mocking Strategy
+
+### Why This Matters
+
+The Votify architecture uses the **Strategy Pattern** for implementing interchangeable voting eligibility and project ranking algorithms. The `StrategyRegistry` provides centralized strategy lookup, and services use `VotingStrategy` or `RankingStrategy` implementations based on competition configuration.
+
+### Core Components
+
+| Component | Type | Purpose |
+|-----------|------|---------|
+| `StrategyRegistry` | Service | Central registry providing strategy lookup with caching |
+| `StrategyType` | Enum | Defines strategy types: `ALL_VOTING`, `JUDGES_ONLY_VOTING`, `WEIGHTED_RANKING`, `AVERAGE_RANKING`, `NORMALIZED_RANKING` |
+| `VotingStrategy` | Interface | `canVote()`, `calculateVotePoints()`, `getStrategyName()` |
+| `RankingStrategy` | Interface | `calculateScore()`, `rankProjects()`, `getStrategyName()` |
+
+### Voting Strategy Tests
+
+#### AllVotingStrategyTest
+
+Tests that any authenticated user can vote with standard weight multiplier:
+
+```java
+class AllVotingStrategyTest {
+
+    @Test
+    void testCanVoteReturnsTrueForAnyUser() {
+        AllVotingStrategy strategy = new AllVotingStrategy();
+        User regularUser = new User(/* ... */);
+        Competition competition = new Competition(/* ... */);
+
+        boolean result = strategy.canVote(regularUser, competition);
+
+        assertTrue(result);
+    }
+
+    @Test
+    void testCalculateVotePointsAppliesStandardMultiplier() {
+        AllVotingStrategy strategy = new AllVotingStrategy();
+        User user = new User(/* ... */);
+        user.setStandardUserWeightMultiplier(1.5);
+        Competition competition = new Competition(/* ... */);
+        competition.setStandardUserWeightMultiplier(1.5);
+
+        int basePoints = 10;
+        int result = strategy.calculateVotePoints(user, competition, basePoints);
+
+        assertEquals(15, result); // 10 * 1.5 = 15
+    }
+
+    @Test
+    void testGetStrategyNameReturnsAll() {
+        AllVotingStrategy strategy = new AllVotingStrategy();
+        assertEquals("ALL", strategy.getStrategyName());
+    }
+}
+```
+
+#### JudgesOnlyVotingStrategyTest
+
+Tests that only assigned judges can vote with judge weight multiplier:
+
+```java
+class JudgesOnlyVotingStrategyTest {
+
+    @Mock private JudgeRepository judgeRepository;
+
+    @Test
+    void testCanVoteReturnsTrueForAssignedJudge() {
+        JudgesOnlyVotingStrategy strategy = new JudgesOnlyVotingStrategy(judgeRepository);
+        User judgeUser = new User(/* ... */);
+        Competition competition = new Competition(/* ... */);
+        Judge judge = new Judge(/* ... */);
+
+        when(judgeRepository.findByUserAndCompetition(judgeUser, competition))
+            .thenReturn(Optional.of(judge));
+
+        boolean result = strategy.canVote(judgeUser, competition);
+
+        assertTrue(result);
+    }
+
+    @Test
+    void testCanVoteReturnsFalseForNonJudge() {
+        JudgesOnlyVotingStrategy strategy = new JudgesOnlyVotingStrategy(judgeRepository);
+        User regularUser = new User(/* ... */);
+        Competition competition = new Competition(/* ... */);
+
+        when(judgeRepository.findByUserAndCompetition(regularUser, competition))
+            .thenReturn(Optional.empty());
+
+        boolean result = strategy.canVote(regularUser, competition);
+
+        assertFalse(result);
+    }
+
+    @Test
+    void testCalculateVotePointsAppliesJudgeMultiplier() {
+        JudgesOnlyVotingStrategy strategy = new JudgesOnlyVotingStrategy(judgeRepository);
+        User judgeUser = new User(/* ... */);
+        Judge judge = new Judge(/* ... */);
+        judge.setWeightMultiplier(2.0);
+        Competition competition = new Competition(/* ... */);
+
+        when(judgeRepository.findByUserAndCompetition(judgeUser, competition))
+            .thenReturn(Optional.of(judge));
+
+        int basePoints = 10;
+        int result = strategy.calculateVotePoints(judgeUser, competition, basePoints);
+
+        assertEquals(20, result); // 10 * 2.0 = 20
+    }
+}
+```
+
+### Ranking Strategy Tests
+
+#### WeightedScoreRankingStrategyTest
+
+Tests weighted sum calculation for project ranking:
+
+```java
+class WeightedScoreRankingStrategyTest {
+
+    @Mock private VoteRepository voteRepository;
+
+    @Test
+    void testCalculateScoreSumsWeightedVotes() {
+        WeightedScoreRankingStrategy strategy = new WeightedScoreRankingStrategy(voteRepository);
+        Project project = new Project(/* ... */);
+        List<Vote> votes = Arrays.asList(/* votes with different weights */);
+        Competition competition = new Competition(/* ... */);
+
+        double score = strategy.calculateScore(project, votes, competition);
+
+        assertTrue(score > 0);
+    }
+
+    @Test
+    void testRankProjectsReturnsSortedMap() {
+        WeightedScoreRankingStrategy strategy = new WeightedScoreRankingStrategy(voteRepository);
+        List<Project> projects = Arrays.asList(project1, project2, project3);
+        List<Vote> votes = Arrays.asList(/* votes */);
+        Competition competition = new Competition(/* ... */);
+
+        Map<Project, Double> rankings = strategy.rankProjects(projects, votes, competition);
+
+        // Verify sorted by score descending
+        assertEquals(project1, rankings.entrySet().iterator().next().getKey());
+    }
+
+    @Test
+    void testGetStrategyNameReturnsWeighted() {
+        WeightedScoreRankingStrategy strategy = new WeightedScoreRankingStrategy(voteRepository);
+        assertEquals("WEIGHTED", strategy.getStrategyName());
+    }
+}
+```
+
+#### AverageScoreRankingStrategyTest
+
+Tests average score calculation:
+
+```java
+class AverageScoreRankingStrategyTest {
+
+    @Test
+    void testCalculateScoreComputesWeightedAverage() {
+        AverageScoreRankingStrategy strategy = new AverageScoreRankingStrategy(voteRepository);
+        // ... test implementation
+    }
+
+    @Test
+    void testRankProjectsSortsByAverageDescending() {
+        AverageScoreRankingStrategy strategy = new AverageScoreRankingStrategy(voteRepository);
+        // ... test implementation
+    }
+}
+```
+
+#### NormalizedScoreRankingStrategyTest
+
+Tests normalized percentage calculation (0-100):
+
+```java
+class NormalizedScoreRankingStrategyTest {
+
+    @Test
+    void testCalculateScoreReturnsPercentage() {
+        NormalizedScoreRankingStrategy strategy = new NormalizedScoreRankingStrategy(voteRepository);
+        // ... test implementation
+
+        double score = strategy.calculateScore(project, votes, competition);
+
+        assertTrue(score >= 0 && score <= 100);
+    }
+
+    @Test
+    void testRankProjectsNormalizesAgainstMaxScore() {
+        NormalizedScoreRankingStrategy strategy = new NormalizedScoreRankingStrategy(voteRepository);
+        // ... test implementation
+    }
+}
+```
+
+### StrategyRegistryTest
+
+Tests centralized strategy lookup and caching:
+
+```java
+class StrategyRegistryTest {
+
+    @Test
+    void testGetVotingStrategyReturnsCorrectStrategy() {
+        StrategyRegistry registry = new StrategyRegistry(
+            allVotingStrategy, judgesOnlyVotingStrategy,
+            weightedRankingStrategy, averageRankingStrategy, normalizedRankingStrategy
+        );
+
+        VotingStrategy result = registry.getVotingStrategy(StrategyType.ALL_VOTING);
+
+        assertEquals("ALL", result.getStrategyName());
+    }
+
+    @Test
+    void testGetRankingStrategyReturnsCorrectStrategy() {
+        StrategyRegistry registry = new StrategyRegistry(
+            allVotingStrategy, judgesOnlyVotingStrategy,
+            weightedRankingStrategy, averageRankingStrategy, normalizedRankingStrategy
+        );
+
+        RankingStrategy result = registry.getRankingStrategy(StrategyType.WEIGHTED_RANKING);
+
+        assertEquals("WEIGHTED", result.getStrategyName());
+    }
+}
+```
+
+### Integration with Other Patterns
+
+**Command Pattern Integration:**
+```java
+// SubmitVoteCommand uses VotingStrategy for validation
+when(strategyRegistry.getVotingStrategy(any()))
+    .thenReturn(allVotingStrategy);
+
+when(allVotingStrategy.canVote(any(), any())).thenReturn(true);
+```
+
+**Observer Pattern Integration:**
+```java
+// RankingUpdateObserver triggers RankingService which uses RankingStrategy
+when(strategyRegistry.getRankingStrategy(any()))
+    .thenReturn(weightedRankingStrategy);
+
+when(weightedRankingStrategy.rankProjects(any(), any(), any()))
+    .thenReturn(expectedRankings);
+```
+
+**State Pattern Integration:**
+```java
+// VotingStrategy.canVote() respects competition state
+when(competition.getStatus().getState().canVote()).thenReturn(true);
+```
+
+---
+
+## 5. Recent Test Fixes & Improvements
 
 ### Fix #1: VoteEntityTest - Vote Points Default
 
@@ -1260,16 +1537,16 @@ ArgumentCaptor.forClass(...)   // Capture arguments
 | Field | Value |
 |-------|-------|
 | **Title** | Votify Test Suite Documentation |
-| **Version** | 3.0 |
+| **Version** | 4.0 |
 | **Last Updated** | May 2026 |
 | **Status** | Complete & Current |
-| **Test Suite Status** | ✅ 203/203 Tests Passing |
+| **Test Suite Status** | ✅ 315/315 Tests Passing |
 | **Maintainer** | Votify Development Team |
 | **Created** | May 2026 |
 
 ---
 
-**Total Test Suite Size:** 203 tests across 40+ test files
+**Total Test Suite Size:** 315 tests across 50+ test files
 **Execution Time:** ~15-30 seconds (full suite)
 **Coverage:** ~90% of business-critical code paths
 **Maintenance Burden:** Low (well-organized, clear patterns)
