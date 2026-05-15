@@ -21,6 +21,7 @@ import com.microslop.specification.vote.VotesByCategorySpecification;
 import com.microslop.strategy.StrategyRegistry;
 import com.microslop.strategy.voting.VotingStrategy;
 import com.microslop.command.CommandExecutor;
+import com.microslop.command.vote.SubmitScaleVoteCommand;
 import com.microslop.command.vote.SubmitVoteCommand;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
@@ -211,34 +212,22 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
 
     @Override
     public void submitScaleVote(String userUsername, Long projectId, Long categoryId, int score) {
-        var user        = userService.searchByUsernameIgnoreCase(userUsername)
-                            .orElseThrow(() -> new IllegalStateException("User not found."));
-        var project     = projectService.getById(projectId);
-        var competition = project.getCompetition();
-        var category    = categoryRepository.findById(categoryId)
-                            .orElseThrow(() -> new IllegalStateException("Category not found."));
-
-        if (!"SCALE".equalsIgnoreCase(competition.getVoteType())) {
-            throw new IllegalStateException("This competition does not use scale voting.");
-        }
-
-        if (!competition.isActive()) {
-            boolean hasEnded = competition.getEndDate() != null
-                    && java.time.LocalDateTime.now().isAfter(competition.getEndDate());
-            if (hasEnded) {
-                throw new IllegalStateException("Esta competición ha finalizado y ya no acepta votos.");
-            } else {
-                throw new IllegalStateException("Esta competición está pausada temporalmente. Inténtalo más tarde.");
+        SubmitScaleVoteCommand command = new SubmitScaleVoteCommand(
+            userUsername, projectId, categoryId, score,
+            voteRepository, projectService, userService, scaleVoteCreator,
+            categoryRepository, strategyRegistry
+        );
+        try {
+            commandExecutor.execute(command);
+            Vote createdVote = command.getCreatedVote();
+            if (createdVote != null) {
+                notifyVoteObservers(new VoteSubmittedEvent(createdVote, userUsername));
             }
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to submit scale vote", e);
         }
-
-        long alreadyCastInCategory = voteRepository.countByUserIdAndCategoryId(user.getId(), category.getId());
-        if (alreadyCastInCategory >= MAX_VOTES_PER_CATEGORY) {
-            throw new IllegalStateException("You already voted for a project in this category.");
-        }
-
-        Vote vote = scaleVoteCreator.create(user, project, category, score, competition);
-        voteRepository.save(vote);
     }
 
     @Override

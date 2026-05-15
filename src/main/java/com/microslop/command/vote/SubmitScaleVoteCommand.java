@@ -8,13 +8,15 @@ import com.microslop.repository.CategoryRepository;
 import com.microslop.repository.VoteRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
+import com.microslop.strategy.StrategyRegistry;
+import com.microslop.strategy.voting.VotingStrategy;
+import com.microslop.factory.VoteCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SubmitScaleVoteCommand extends AbstractCommand<Void> {
 
     private static final Logger log = LoggerFactory.getLogger(SubmitScaleVoteCommand.class);
-    private static final int MAX_VOTES_PER_CATEGORY = 1;
 
     private final String userUsername;
     private final Long projectId;
@@ -26,13 +28,15 @@ public class SubmitScaleVoteCommand extends AbstractCommand<Void> {
     private final UserService userService;
     private final ScaleVoteCreator scaleVoteCreator;
     private final CategoryRepository categoryRepository;
+    private final StrategyRegistry strategyRegistry;
 
     private Vote createdVote;
 
     public SubmitScaleVoteCommand(String userUsername, Long projectId, Long categoryId, int score,
                                   VoteRepository voteRepository, ProjectService projectService,
                                   UserService userService, ScaleVoteCreator scaleVoteCreator,
-                                  CategoryRepository categoryRepository) {
+                                  CategoryRepository categoryRepository,
+                                  StrategyRegistry strategyRegistry) {
         this.userUsername = userUsername;
         this.projectId = projectId;
         this.categoryId = categoryId;
@@ -42,6 +46,7 @@ public class SubmitScaleVoteCommand extends AbstractCommand<Void> {
         this.userService = userService;
         this.scaleVoteCreator = scaleVoteCreator;
         this.categoryRepository = categoryRepository;
+        this.strategyRegistry = strategyRegistry;
     }
 
     @Override
@@ -62,6 +67,16 @@ public class SubmitScaleVoteCommand extends AbstractCommand<Void> {
             throw new IllegalStateException("Competition not found for project: " + projectId);
         }
 
+        if ("CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
+            throw new IllegalStateException("This competition uses checklist voting. Please use the checklist voting interface.");
+        }
+
+        VotingStrategy votingStrategy = strategyRegistry.resolveVotingStrategy(competition.getVotingStrategyType());
+
+        if (!votingStrategy.canVote(user, competition)) {
+            throw new IllegalStateException("User is not allowed to vote in this competition");
+        }
+
         if (!"SCALE".equalsIgnoreCase(competition.getVoteType())) {
             throw new IllegalStateException("This competition does not use scale voting.");
         }
@@ -79,9 +94,9 @@ public class SubmitScaleVoteCommand extends AbstractCommand<Void> {
         var category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new IllegalStateException("Category not found: " + categoryId));
 
-        long alreadyCastInCategory = voteRepository.countByUserIdAndCategoryId(user.getId(), category.getId());
-        if (alreadyCastInCategory >= MAX_VOTES_PER_CATEGORY) {
-            throw new IllegalStateException("You already voted for a project in this category.");
+        long alreadyVotedProject = voteRepository.countByUserIdAndProjectIdAndCategoryId(user.getId(), project.getId(), category.getId());
+        if (alreadyVotedProject > 0) {
+            throw new IllegalStateException("You have already rated this project in this category.");
         }
 
         createdVote = scaleVoteCreator.create(user, project, category, score, competition);
@@ -123,5 +138,9 @@ public class SubmitScaleVoteCommand extends AbstractCommand<Void> {
     @Override
     public boolean isUndoable() {
         return true;
+    }
+
+    public Vote getCreatedVote() {
+        return createdVote;
     }
 }

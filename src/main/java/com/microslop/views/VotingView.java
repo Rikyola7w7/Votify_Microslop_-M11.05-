@@ -517,7 +517,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("display", "block")
                 .set("text-align", "center");
 
-        var instruction = new Span("Rate each project from " + scaleMin + " to " + scaleMax + " per category.");
+        var instruction = new Span("You must rate ALL projects from " + scaleMin + " to " + scaleMax + " per category before submitting.");
         instruction.getStyle()
                 .set("font-size", "1rem")
                 .set("color", "#1a3a5c")
@@ -544,12 +544,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         categoryLayout.add(categoryLabel, categoryDropdown);
 
-        projectsContainer = new VerticalLayout();
-        projectsContainer.setWidthFull();
-        projectsContainer.getStyle().set("max-width", "760px");
-        projectsContainer.setPadding(false);
-        projectsContainer.setSpacing(false);
-
         var currentUserLocal = userService.getCurrentUser();
         if (currentUserLocal == null) {
             Notification.show("User not found. Please log in again.");
@@ -557,11 +551,31 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             return body;
         }
 
-        categoryDropdown.setRequired(true);
-        categoryDropdown.setValue(categoryService.getCategoriesByCompetition(competitionId).stream().findFirst().orElse(null));
+        java.util.List<Category> categories = categoryService.getCategoriesByCompetition(competitionId);
+        if (!categories.isEmpty()) {
+            categoryDropdown.setValue(categories.get(0));
+        }
+
+        projectsContainer = new VerticalLayout();
+        projectsContainer.setWidthFull();
+        projectsContainer.getStyle().set("max-width", "760px");
+        projectsContainer.setPadding(false);
+        projectsContainer.setSpacing(false);
+
+        var progressLabel = new Span("");
+        progressLabel.getStyle()
+                .set("font-size", "1rem")
+                .set("font-weight", "600")
+                .set("color", "#1a3a5c")
+                .set("margin-bottom", "1rem")
+                .set("display", "block")
+                .set("text-align", "center");
+
+        java.util.Map<Long, IntegerField> scoreFields = new java.util.LinkedHashMap<>();
 
         Runnable updateProjectsList = () -> {
             projectsContainer.removeAll();
+            scoreFields.clear();
             Category selectedCategory = categoryDropdown.getValue();
 
             if (selectedCategory == null) {
@@ -572,140 +586,181 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                         .set("text-align", "center")
                         .set("width", "100%");
                 projectsContainer.add(noCategory);
+                progressLabel.setText("");
                 return;
             }
+
+            long votedCount = 0;
+            long totalInCategory = 0;
 
             for (Project p : projects) {
                 boolean matches = p.getCategories().stream()
                         .anyMatch(c -> c.getId().equals(selectedCategory.getId()));
-                if (matches) {
-                    boolean alreadyVoted = voteService.countVotesByUserAndProjectAndCategory(
-                            currentUserLocal.getId(), p.getId(), selectedCategory.getId()) > 0;
-                    projectsContainer.add(buildScaleProjectCard(p, selectedCategory, alreadyVoted, scaleMin, scaleMax));
+                if (!matches) continue;
+                totalInCategory++;
+
+                boolean alreadyVoted = voteService.countVotesByUserAndProjectAndCategory(
+                        currentUserLocal.getId(), p.getId(), selectedCategory.getId()) > 0;
+                if (alreadyVoted) votedCount++;
+
+                var card = new Div();
+                card.getStyle()
+                        .set("background", alreadyVoted ? "#f0f8f0" : "white")
+                        .set("border-radius", "12px")
+                        .set("padding", "1.25rem 1.5rem")
+                        .set("margin-bottom", "1rem")
+                        .set("box-shadow", alreadyVoted ? "none" : "0 2px 8px rgba(0,0,0,0.08)")
+                        .set("border", alreadyVoted ? "2px solid #4caf50" : "2px solid #e0e0e0")
+                        .set("width", "100%")
+                        .set("box-sizing", "border-box");
+
+                var info = new VerticalLayout();
+                info.setPadding(false);
+                info.setSpacing(false);
+                info.getStyle().set("flex", "1");
+
+                var name = new Span(p.getName());
+                name.getStyle()
+                        .set("font-weight", "700")
+                        .set("font-size", "1rem")
+                        .set("color", "#1a1a2e");
+
+                var desc = new Span(p.getDescription() != null ? p.getDescription() : "");
+                desc.getStyle()
+                        .set("font-size", "0.85rem")
+                        .set("color", "#666")
+                        .set("margin-top", "0.25rem");
+
+                if (alreadyVoted) {
+                    var votedBadge = new Span("Voted");
+                    votedBadge.getStyle()
+                            .set("background", "#4caf50")
+                            .set("color", "white")
+                            .set("padding", "0.3rem 0.8rem")
+                            .set("border-radius", "6px")
+                            .set("font-weight", "600")
+                            .set("font-size", "0.85rem");
+                    var nameRow = new HorizontalLayout(name, votedBadge);
+                    nameRow.setAlignItems(Alignment.CENTER);
+                    nameRow.setSpacing(true);
+                    nameRow.setPadding(false);
+                    nameRow.setMargin(false);
+                    info.add(nameRow, desc);
+                } else {
+                    info.add(name, desc);
                 }
+
+                if (!alreadyVoted) {
+                    var scoreInput = new IntegerField();
+                    scoreInput.setLabel("Score (" + scaleMin + "-" + scaleMax + ")");
+                    scoreInput.setMin(scaleMin);
+                    scoreInput.setMax(scaleMax);
+                    scoreInput.setWidth("100px");
+                    scoreInput.setPlaceholder(scaleMin + "-" + scaleMax);
+                    scoreInput.setRequiredIndicatorVisible(true);
+                    scoreInput.getStyle()
+                            .set("font-weight", "600")
+                            .set("text-align", "center");
+
+                    scoreFields.put(p.getId(), scoreInput);
+
+                    var voteLayout = new HorizontalLayout(scoreInput);
+                    voteLayout.setAlignItems(Alignment.END);
+                    voteLayout.setSpacing(true);
+                    voteLayout.setPadding(false);
+                    voteLayout.setMargin(false);
+
+                    var row = new HorizontalLayout(info, voteLayout);
+                    row.setWidthFull();
+                    row.setAlignItems(Alignment.CENTER);
+                    row.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+                    row.setSpacing(true);
+                    row.setPadding(false);
+                    card.add(row);
+                } else {
+                    card.add(info);
+                }
+
+                projectsContainer.add(card);
             }
+
+            progressLabel.setText("Progress: " + votedCount + " / " + totalInCategory + " projects rated in this category");
         };
 
-        categoryDropdown.addValueChangeListener(e -> updateProjectsList.run());
-
-        updateProjectsList.run();
-
-        body.add(title, subtitle, instruction, categoryLayout, projectsContainer);
-        return body;
-    }
-
-    private Div buildScaleProjectCard(Project p, Category selectedCategory, boolean alreadyVoted, int scaleMin, int scaleMax) {
-        var card = new Div();
-        card.getStyle()
-                .set("background", "white")
-                .set("border-radius", "12px")
-                .set("padding", "1.25rem 1.5rem")
-                .set("margin-bottom", "1rem")
-                .set("box-shadow", "0 2px 8px rgba(0,0,0,0.08)")
-                .set("width", "100%")
-                .set("box-sizing", "border-box");
-
-        if (alreadyVoted) {
-            card.getStyle().set("opacity", "0.6").set("border", "2px solid #ccc");
-        }
-
-        var info = new VerticalLayout();
-        info.setPadding(false);
-        info.setSpacing(false);
-        info.getStyle().set("flex", "1");
-
-        var name = new Span(p.getName());
-        name.getStyle()
-                .set("font-weight", "700")
-                .set("font-size", "1rem")
-                .set("color", "#1a1a2e");
-
-        var desc = new Span("Project info: " + p.getName());
-        desc.getStyle()
-                .set("font-size", "0.85rem")
-                .set("color", "#666")
-                .set("margin-top", "0.25rem");
-
-        double avgScore = voteService.getAverageScoreByProjectAndCategory(p.getId(), selectedCategory.getId());
-        var scoreLabel = new Span(String.format("Average score: %.1f/%d", avgScore, scaleMax));
-        scoreLabel.getStyle()
-                .set("font-size", "0.85rem")
-                .set("color", "#444")
-                .set("margin-top", "0.75rem");
-
-        info.add(name, desc, scoreLabel);
-
-        if (alreadyVoted) {
-            var votedBadge = new Span("Already voted");
-            votedBadge.getStyle()
-                    .set("background", "#4caf50")
-                    .set("color", "white")
-                    .set("padding", "0.5rem 1rem")
-                    .set("border-radius", "8px")
-                    .set("font-weight", "700")
-                    .set("font-size", "0.9rem");
-            var row = new HorizontalLayout(info, votedBadge);
-            row.setWidthFull();
-            row.setAlignItems(Alignment.CENTER);
-            row.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-            row.setSpacing(true);
-            row.setPadding(false);
-            card.add(row);
-            return card;
-        }
-
-        var scoreInput = new IntegerField();
-        scoreInput.setLabel("Score (" + scaleMin + "-" + scaleMax + ")");
-        scoreInput.setMin(scaleMin);
-        scoreInput.setMax(scaleMax);
-        scoreInput.setValue(scaleMin);
-        scoreInput.setWidth("100px");
-        scoreInput.getStyle()
-                .set("font-weight", "600")
-                .set("text-align", "center");
-
-        Button submitButton = new Button("Vote");
-        submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        submitButton.getStyle()
+        var submitAllButton = new Button("Submit All Votes");
+        submitAllButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        submitAllButton.getStyle()
                 .set("background", "#1a3a5c")
                 .set("color", "white")
                 .set("font-weight", "700")
-                .set("padding", "0.75rem 1.25rem")
+                .set("padding", "0.75rem 2rem")
                 .set("border-radius", "8px")
-                .set("cursor", "pointer");
-        submitButton.setWidth("auto");
+                .set("cursor", "pointer")
+                .set("font-size", "1rem")
+                .set("margin-top", "1.5rem");
+        submitAllButton.setWidth("auto");
 
-        submitButton.addClickListener(e -> handleScaleVote(p, scoreInput.getValue() != null ? scoreInput.getValue() : scaleMin, selectedCategory, scaleMin, scaleMax));
+        submitAllButton.addClickListener(e -> {
+            Category selectedCategory = categoryDropdown.getValue();
+            if (selectedCategory == null) {
+                showNotification("Select a category first.", NotificationVariant.LUMO_WARNING);
+                return;
+            }
 
-        var voteLayout = new HorizontalLayout(scoreInput, submitButton);
-        voteLayout.setAlignItems(Alignment.END);
-        voteLayout.setSpacing(true);
-        voteLayout.setPadding(false);
-        voteLayout.setMargin(false);
+            if (scoreFields.isEmpty()) {
+                showNotification("All projects in this category have already been rated!", NotificationVariant.LUMO_SUCCESS);
+                return;
+            }
 
-        Button commentsBtn = new Button("Comments");
-        commentsBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-        commentsBtn.getStyle()
-                .set("background", "#2d6a9f")
-                .set("color", "white")
-                .set("font-weight", "600")
-                .set("border-radius", "8px")
-                .set("cursor", "pointer");
+            for (var entry : scoreFields.entrySet()) {
+                Long projectId = entry.getKey();
+                IntegerField field = entry.getValue();
+                Integer value = field.getValue();
+                int score = (value != null) ? value : 0;
+                if (score < scaleMin || score > scaleMax) {
+                    showNotification("Score must be between " + scaleMin + " and " + scaleMax + ".", NotificationVariant.LUMO_ERROR);
+                    return;
+                }
+            }
 
-        var actions = new VerticalLayout(voteLayout, commentsBtn);
-        actions.setPadding(false);
-        actions.setSpacing(true);
-        actions.setAlignItems(Alignment.END);
+            String username = userService.getCurrentUsername();
+            if (username == null || username.isEmpty()) {
+                showNotification("You must be logged in to vote.", NotificationVariant.LUMO_CONTRAST);
+                return;
+            }
 
-        var row = new HorizontalLayout(info, actions);
-        row.setWidthFull();
-        row.setAlignItems(Alignment.CENTER);
-        row.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        row.setSpacing(true);
-        row.setPadding(false);
+            int successCount = 0;
+            for (var entry : scoreFields.entrySet()) {
+                Long projectId = entry.getKey();
+                int score = (entry.getValue().getValue() != null) ? entry.getValue().getValue() : 0;
+                try {
+                    voteService.submitScaleVote(username, projectId, selectedCategory.getId(), score);
+                    successCount++;
+                } catch (IllegalStateException ex) {
+                    showNotification("Error: " + ex.getMessage(), NotificationVariant.LUMO_ERROR);
+                    return;
+                }
+            }
 
-        card.add(row);
-        return card;
+            showNotification("All " + successCount + " votes submitted successfully!", NotificationVariant.LUMO_SUCCESS);
+
+            getUI().ifPresent(ui -> {
+                ui.access(() -> {
+                    try {
+                        Thread.sleep(1500);
+                        ui.navigate("competition/" + competitionId);
+                    } catch (InterruptedException ex) {
+                        ui.navigate("competition/" + competitionId);
+                    }
+                });
+            });
+        });
+
+        categoryDropdown.addValueChangeListener(e -> updateProjectsList.run());
+        updateProjectsList.run();
+
+        body.add(title, subtitle, instruction, categoryLayout, progressLabel, projectsContainer, submitAllButton);
+        return body;
     }
 
     private void handleScaleVote(Project project, int score, Category selectedCategory, int scaleMin, int scaleMax) {
