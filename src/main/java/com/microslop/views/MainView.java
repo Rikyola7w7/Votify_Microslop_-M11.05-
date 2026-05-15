@@ -6,9 +6,7 @@ import com.microslop.service.UserService;
 import com.microslop.views.components.CompetitionCardComponent;
 import com.microslop.views.components.BallotLoadingComponent;
 import com.microslop.base.ui.MainLayout;
-import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
@@ -23,7 +21,6 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.VaadinSession;
 import java.util.List;
 
 @PageTitle("Votify")
@@ -63,8 +60,8 @@ public class MainView extends VerticalLayout {
         HorizontalLayout header = new HorizontalLayout();
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         header.addClassName("votify-header");
+        header.getStyle().set("padding", "2rem");
 
         Span title = new Span("Discover Competitions");
         title.getStyle()
@@ -73,29 +70,7 @@ public class MainView extends VerticalLayout {
             .set("color", "var(--dark)")
             .set("letter-spacing", "-0.3px");
 
-        Avatar userAvatar = new Avatar();
-        userAvatar.setName(userService.getUserDisplayName());
-        userAvatar.setWidth("40px");
-        userAvatar.setHeight("40px");
-        userAvatar.getStyle().set("cursor", "pointer");
-
-        ContextMenu userMenu = new ContextMenu(userAvatar);
-        userMenu.setOpenOnClick(true);
-
-        boolean isLoggedIn = userService.isLoggedIn();
-
-        if (isLoggedIn) {
-            String username = userService.getCurrentUsername();
-            userMenu.addItem("My Projects", event -> getUI().ifPresent(ui -> ui.navigate(username + "/projects")));
-            userMenu.addItem("My Competitions", event -> getUI().ifPresent(ui -> ui.navigate(username + "/competitions")));
-            userMenu.addItem("Edit Profile", event -> getUI().ifPresent(ui -> ui.navigate("profile")));
-            userMenu.addItem("Sign Out", event -> handleLogout());
-        } else {
-            userMenu.addItem("Sign In", event -> getUI().ifPresent(ui -> ui.navigate("login")));
-            userMenu.addItem("Register", event -> getUI().ifPresent(ui -> ui.navigate("register")));
-        }
-
-        header.add(title, userAvatar);
+        header.add(title);
         return header;
     }
 
@@ -282,15 +257,6 @@ public class MainView extends VerticalLayout {
 
         emptyState.add(emptyIcon, title, message);
         cardsContainer.add(emptyState);
-    }
-
-    private void handleLogout() {
-        VaadinSession session = VaadinSession.getCurrent();
-        if (session != null) {
-            session.getSession().invalidate();
-        }
-        getUI().ifPresent(ui -> ui.navigate(""));
-        Notification.show("Logged out successfully");
     }
 
     private void showErrorNotification(String message) {
