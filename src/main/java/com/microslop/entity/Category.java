@@ -23,6 +23,9 @@ public class Category {
     @Column(nullable = false, name = "name")
     private String name;
 
+    @Column(nullable = false, name = "weight")
+    private int weight = 1;
+
     @ManyToOne
     @JoinColumn(name = "competition_id", nullable = false)
     private Competition competition;
