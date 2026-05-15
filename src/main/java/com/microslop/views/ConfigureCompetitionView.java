@@ -88,8 +88,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private java.util.List<ChecklistItem> checklistItemsToAdd;
 
     // SCALE Section
-    private IntegerField scaleMinConfigField;
-    private IntegerField scaleMaxConfigField;
     private VerticalLayout scaleConfigSection;
 
     // COMENTARIOS Section
@@ -751,32 +749,16 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
         Span sectionTitle = new Span("SCALE CONFIGURATION");
         sectionTitle.getStyle()
             .set("font-weight", "bold")
-            .set("color", "#1a3a5c")
+            .set("color", "var(--text-primary)")
             .set("font-size", "16px")
             .set("margin-bottom", "15px");
 
-        FormLayout formLayout = new FormLayout();
-        formLayout.setResponsiveSteps(
-            new FormLayout.ResponsiveStep("0px", 2)
-        );
+        Span scaleInfo = new Span("Scale range is fixed: 0 – 10");
+        scaleInfo.getStyle()
+            .set("font-size", "0.95rem")
+            .set("color", "var(--text-muted)");
 
-        scaleMinConfigField = new IntegerField("Minimum Score");
-        scaleMinConfigField.setValue(currentCompetition.getScaleMin() != null ? currentCompetition.getScaleMin() : 0);
-        scaleMinConfigField.setMin(0);
-        scaleMinConfigField.setMax(100);
-        scaleMinConfigField.setWidth("100%");
-        scaleMinConfigField.addValueChangeListener(e -> markAsChanged());
-
-        scaleMaxConfigField = new IntegerField("Maximum Score");
-        scaleMaxConfigField.setValue(currentCompetition.getScaleMax() != null ? currentCompetition.getScaleMax() : 10);
-        scaleMaxConfigField.setMin(1);
-        scaleMaxConfigField.setMax(100);
-        scaleMaxConfigField.setWidth("100%");
-        scaleMaxConfigField.addValueChangeListener(e -> markAsChanged());
-
-        formLayout.add(scaleMinConfigField, scaleMaxConfigField);
-
-        section.add(sectionTitle, formLayout);
+        section.add(sectionTitle, scaleInfo);
         return section;
     }
 
@@ -999,8 +981,8 @@ categoryWeightChanges.clear();
 
         // Update scale configuration
         if ("SCALE".equalsIgnoreCase(currentCompetition.getVoteType())) {
-            currentCompetition.setScaleMin(scaleMinConfigField.getValue() != null ? scaleMinConfigField.getValue() : 0);
-            currentCompetition.setScaleMax(scaleMaxConfigField.getValue() != null ? scaleMaxConfigField.getValue() : 10);
+            currentCompetition.setScaleMin(0);
+            currentCompetition.setScaleMax(10);
         }
 
         currentCompetition.setCommentsEnabled("YES".equals(commentsEnabledCombo.getValue()));

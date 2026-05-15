@@ -497,31 +497,39 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         body.getStyle().set("padding", "2rem 1rem");
 
         var competition = competitionService.getById(competitionId).orElse(null);
-        int scaleMin = competition != null && competition.getScaleMin() != null ? competition.getScaleMin() : 0;
-        int scaleMax = competition != null && competition.getScaleMax() != null ? competition.getScaleMax() : 10;
+        int scaleMin = 0;
+        int scaleMax = 10;
+
+        var titleWrapper = new Div();
+        titleWrapper.setWidthFull();
+        titleWrapper.getStyle()
+                .set("max-width", "760px")
+                .set("padding", "0 0 1.5rem 0");
 
         var title = new H1("SCALE VOTING (" + scaleMin + "-" + scaleMax + ")");
         title.getStyle()
                 .set("font-size", "2rem")
                 .set("font-weight", "800")
-                .set("color", "#1a1a2e")
+                .set("color", "var(--text-primary)")
                 .set("margin", "0 0 0.25rem 0")
                 .set("text-align", "center");
 
         var subtitle = new Span("Competition: " + competitionName);
         subtitle.getStyle()
                 .set("font-size", "1rem")
-                .set("color", "#555")
+                .set("color", "var(--text-muted)")
                 .set("font-style", "italic")
                 .set("margin-bottom", "1rem")
                 .set("display", "block")
                 .set("text-align", "center");
 
-        var instruction = new Span("You must rate ALL projects from " + scaleMin + " to " + scaleMax + " per category before submitting.");
+        titleWrapper.add(title, subtitle);
+
+        var instruction = new Span("Rate ALL projects from " + scaleMin + " to " + scaleMax + " per category, then submit.");
         instruction.getStyle()
-                .set("font-size", "1rem")
-                .set("color", "#1a3a5c")
-                .set("font-weight", "600")
+                .set("font-size", "0.95rem")
+                .set("color", "var(--text-muted)")
+                .set("font-style", "italic")
                 .set("margin-bottom", "1.5rem")
                 .set("display", "block")
                 .set("text-align", "center");
@@ -534,13 +542,14 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         var categoryLabel = new Span("Category:");
         categoryLabel.getStyle()
                 .set("font-weight", "600")
-                .set("color", "#1a1a2e");
+                .set("color", "var(--text-primary)");
 
         categoryDropdown = new ComboBox<Category>();
         categoryDropdown.setItems(categoryService.getCategoriesByCompetition(competitionId));
         categoryDropdown.setItemLabelGenerator(Category::getName);
-        categoryDropdown.setPlaceholder("Select a category...");
-        categoryDropdown.setClearButtonVisible(false);
+        categoryDropdown.setPlaceholder("Filter by category...");
+        categoryDropdown.setClearButtonVisible(true);
+        categoryDropdown.addClassName("votify-input");
 
         categoryLayout.add(categoryLabel, categoryDropdown);
 
@@ -562,14 +571,21 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         projectsContainer.setPadding(false);
         projectsContainer.setSpacing(false);
 
-        var progressLabel = new Span("");
+        Span progressLabel = new Span("");
         progressLabel.getStyle()
-                .set("font-size", "1rem")
+                .set("font-size", "0.95rem")
                 .set("font-weight", "600")
-                .set("color", "#1a3a5c")
+                .set("padding", "0.5rem 1.25rem")
+                .set("border-radius", "var(--radius-pill)")
+                .set("display", "inline-block")
+                .set("text-align", "center")
                 .set("margin-bottom", "1rem")
-                .set("display", "block")
-                .set("text-align", "center");
+                .set("color", "var(--secondary)")
+                .set("background", "rgba(0, 206, 201, 0.1)");
+
+        var progressWrapper = new Div(progressLabel);
+        progressWrapper.setWidthFull();
+        progressWrapper.getStyle().set("text-align", "center");
 
         java.util.Map<Long, IntegerField> scoreFields = new java.util.LinkedHashMap<>();
 
@@ -581,7 +597,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             if (selectedCategory == null) {
                 var noCategory = new Span("Please select a category to vote.");
                 noCategory.getStyle()
-                        .set("color", "#999")
+                        .set("color", "var(--text-muted)")
                         .set("font-style", "italic")
                         .set("text-align", "center")
                         .set("width", "100%");
@@ -592,6 +608,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
             long votedCount = 0;
             long totalInCategory = 0;
+            int staggerIdx = 1;
 
             for (Project p : projects) {
                 boolean matches = p.getCategories().stream()
@@ -604,42 +621,53 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 if (alreadyVoted) votedCount++;
 
                 var card = new Div();
-                card.getStyle()
-                        .set("background", alreadyVoted ? "#f0f8f0" : "white")
-                        .set("border-radius", "12px")
-                        .set("padding", "1.25rem 1.5rem")
-                        .set("margin-bottom", "1rem")
-                        .set("box-shadow", alreadyVoted ? "none" : "0 2px 8px rgba(0,0,0,0.08)")
-                        .set("border", alreadyVoted ? "2px solid #4caf50" : "2px solid #e0e0e0")
-                        .set("width", "100%")
-                        .set("box-sizing", "border-box");
+                card.addClassName("votify-card-static");
+                card.addClassName("animate-fade-in");
+                if (staggerIdx <= 8) card.addClassName("stagger-" + staggerIdx);
+                staggerIdx++;
+
+                if (alreadyVoted) {
+                    card.getStyle()
+                            .set("background", "rgba(0, 184, 148, 0.08)")
+                            .set("border-left", "4px solid var(--success)")
+                            .set("padding", "1.25rem 1.5rem")
+                            .set("margin-bottom", "1rem")
+                            .set("width", "100%")
+                            .set("box-sizing", "border-box");
+                } else {
+                    card.getStyle()
+                            .set("border-left", "4px solid var(--primary)")
+                            .set("padding", "1.25rem 1.5rem")
+                            .set("margin-bottom", "1rem")
+                            .set("width", "100%")
+                            .set("box-sizing", "border-box");
+                }
 
                 var info = new VerticalLayout();
                 info.setPadding(false);
                 info.setSpacing(false);
-                info.getStyle().set("flex", "1");
+                info.getStyle()
+                        .set("flex", "1")
+                        .set("margin-right", "1rem");
 
                 var name = new Span(p.getName());
                 name.getStyle()
                         .set("font-weight", "700")
-                        .set("font-size", "1rem")
-                        .set("color", "#1a1a2e");
+                        .set("font-size", "16px")
+                        .set("color", "var(--text-primary)");
 
                 var desc = new Span(p.getDescription() != null ? p.getDescription() : "");
                 desc.getStyle()
-                        .set("font-size", "0.85rem")
-                        .set("color", "#666")
+                        .set("font-size", "14px")
+                        .set("color", "var(--text-muted)")
                         .set("margin-top", "0.25rem");
 
                 if (alreadyVoted) {
-                    var votedBadge = new Span("Voted");
+                    var votedBadge = new Span("\u2713 Voted");
+                    votedBadge.addClassName("votify-badge");
+                    votedBadge.addClassName("votify-badge-active");
                     votedBadge.getStyle()
-                            .set("background", "#4caf50")
-                            .set("color", "white")
-                            .set("padding", "0.3rem 0.8rem")
-                            .set("border-radius", "6px")
-                            .set("font-weight", "600")
-                            .set("font-size", "0.85rem");
+                            .set("font-size", "0.8rem");
                     var nameRow = new HorizontalLayout(name, votedBadge);
                     nameRow.setAlignItems(Alignment.CENTER);
                     nameRow.setSpacing(true);
@@ -651,26 +679,73 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 }
 
                 if (!alreadyVoted) {
-                    var scoreInput = new IntegerField();
-                    scoreInput.setLabel("Score (" + scaleMin + "-" + scaleMax + ")");
-                    scoreInput.setMin(scaleMin);
-                    scoreInput.setMax(scaleMax);
-                    scoreInput.setWidth("100px");
-                    scoreInput.setPlaceholder(scaleMin + "-" + scaleMax);
-                    scoreInput.setRequiredIndicatorVisible(true);
-                    scoreInput.getStyle()
-                            .set("font-weight", "600")
-                            .set("text-align", "center");
+                    var scoreContainer = new VerticalLayout();
+                    scoreContainer.setPadding(false);
+                    scoreContainer.setSpacing(false);
+                    scoreContainer.setMargin(false);
+                    scoreContainer.getStyle()
+                            .set("gap", "6px")
+                            .set("margin-left", "1.5rem")
+                            .set("min-width", "max-content");
 
-                    scoreFields.put(p.getId(), scoreInput);
+                    var scoreLabel = new Span("Score:");
+                    scoreLabel.getStyle()
+                            .set("font-size", "0.85rem")
+                            .set("color", "var(--text-muted)")
+                            .set("font-weight", "600");
 
-                    var voteLayout = new HorizontalLayout(scoreInput);
-                    voteLayout.setAlignItems(Alignment.END);
-                    voteLayout.setSpacing(true);
-                    voteLayout.setPadding(false);
-                    voteLayout.setMargin(false);
+                    var buttonsRow = new HorizontalLayout();
+                    buttonsRow.setPadding(false);
+                    buttonsRow.setSpacing(false);
+                    buttonsRow.setMargin(false);
+                    buttonsRow.getStyle().set("gap", "6px").set("flex-wrap", "wrap");
 
-                    var row = new HorizontalLayout(info, voteLayout);
+                    IntegerField hiddenScore = new IntegerField();
+                    hiddenScore.setMin(scaleMin);
+                    hiddenScore.setMax(scaleMax);
+                    hiddenScore.setValue(null);
+                    hiddenScore.setVisible(false);
+
+                    for (int i = scaleMin; i <= scaleMax; i++) {
+                        final int scoreVal = i;
+                        var scoreBtn = new Button(String.valueOf(i));
+                        scoreBtn.addThemeVariants(ButtonVariant.LUMO_SMALL);
+                        scoreBtn.getStyle()
+                                .set("min-width", "38px")
+                                .set("padding", "4px 8px")
+                                .set("font-size", "0.85rem")
+                                .set("font-weight", "600")
+                                .set("border", "2px solid var(--border)")
+                                .set("border-radius", "var(--radius-sm)")
+                                .set("background", "var(--surface)")
+                                .set("color", "var(--text-primary)")
+                                .set("cursor", "pointer")
+                                .set("transition", "all 150ms ease");
+
+                        scoreBtn.addClickListener(ev -> {
+                            hiddenScore.setValue(scoreVal);
+                            buttonsRow.getChildren().forEach(c -> {
+                                if (c instanceof Button) {
+                                    c.getStyle()
+                                            .set("background", "var(--surface)")
+                                            .set("color", "var(--text-primary)")
+                                            .set("border", "2px solid var(--border)")
+                                            .set("box-shadow", "none");
+                                }
+                            });
+                            scoreBtn.getStyle()
+                                    .set("background", "var(--primary)")
+                                    .set("color", "white")
+                                    .set("border", "2px solid var(--primary)")
+                                    .set("box-shadow", "0 2px 8px rgba(108, 92, 231, 0.3)");
+                        });
+                        buttonsRow.add(scoreBtn);
+                    }
+
+                    scoreContainer.add(scoreLabel, buttonsRow);
+                    scoreFields.put(p.getId(), hiddenScore);
+
+                    var row = new HorizontalLayout(info, scoreContainer);
                     row.setWidthFull();
                     row.setAlignItems(Alignment.CENTER);
                     row.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
@@ -684,19 +759,23 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 projectsContainer.add(card);
             }
 
-            progressLabel.setText("Progress: " + votedCount + " / " + totalInCategory + " projects rated in this category");
+            progressLabel.setText(votedCount + " / " + totalInCategory + " rated");
+            if (votedCount >= totalInCategory) {
+                progressLabel.getStyle()
+                        .set("color", "var(--success)")
+                        .set("background", "rgba(0, 184, 148, 0.12)");
+            } else {
+                progressLabel.getStyle()
+                        .set("color", "var(--secondary)")
+                        .set("background", "rgba(0, 206, 201, 0.1)");
+            }
         };
 
         var submitAllButton = new Button("Submit All Votes");
         submitAllButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        submitAllButton.addClassName("votify-btn-primary");
         submitAllButton.getStyle()
-                .set("background", "#1a3a5c")
-                .set("color", "white")
-                .set("font-weight", "700")
                 .set("padding", "0.75rem 2rem")
-                .set("border-radius", "8px")
-                .set("cursor", "pointer")
-                .set("font-size", "1rem")
                 .set("margin-top", "1.5rem");
         submitAllButton.setWidth("auto");
 
@@ -713,11 +792,13 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             }
 
             for (var entry : scoreFields.entrySet()) {
-                Long projectId = entry.getKey();
                 IntegerField field = entry.getValue();
                 Integer value = field.getValue();
-                int score = (value != null) ? value : 0;
-                if (score < scaleMin || score > scaleMax) {
+                if (value == null) {
+                    showNotification("Please rate ALL projects before submitting. Select a score for each project.", NotificationVariant.LUMO_WARNING);
+                    return;
+                }
+                if (value < scaleMin || value > scaleMax) {
                     showNotification("Score must be between " + scaleMin + " and " + scaleMax + ".", NotificationVariant.LUMO_ERROR);
                     return;
                 }
@@ -731,10 +812,10 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
             int successCount = 0;
             for (var entry : scoreFields.entrySet()) {
-                Long projectId = entry.getKey();
-                int score = (entry.getValue().getValue() != null) ? entry.getValue().getValue() : 0;
+                Long projId = entry.getKey();
+                int score = entry.getValue().getValue();
                 try {
-                    voteService.submitScaleVote(username, projectId, selectedCategory.getId(), score);
+                    voteService.submitScaleVote(username, projId, selectedCategory.getId(), score);
                     successCount++;
                 } catch (IllegalStateException ex) {
                     showNotification("Error: " + ex.getMessage(), NotificationVariant.LUMO_ERROR);
@@ -759,7 +840,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         categoryDropdown.addValueChangeListener(e -> updateProjectsList.run());
         updateProjectsList.run();
 
-        body.add(title, subtitle, instruction, categoryLayout, progressLabel, projectsContainer, submitAllButton);
+        body.add(titleWrapper, instruction, categoryLayout, progressWrapper, projectsContainer, submitAllButton);
         return body;
     }
 

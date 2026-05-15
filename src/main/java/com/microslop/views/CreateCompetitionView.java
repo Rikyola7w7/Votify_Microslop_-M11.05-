@@ -63,8 +63,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
     private final VerticalLayout checklistSection;
 
     // Scale configuration
-    private final IntegerField scaleMinField;
-    private final IntegerField scaleMaxField;
     private final VerticalLayout scaleSection;
 
     @Override
@@ -280,38 +278,18 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         checklistSection.setVisible(false);
 
         // ── Scale Configuration Section ──────────────────────────────────────────
-        Span scaleTitle = new Span("Scale Configuration");
+        Span scaleTitle = new Span("Scale: 0 – 10 (fixed)");
         scaleTitle.getStyle()
                 .set("font-weight", "bold")
                 .set("font-size", "16px")
-                .set("color", "#1a3a5c")
+                .set("color", "var(--text-muted)")
                 .set("margin-top", "1em");
-
-        HorizontalLayout scaleInputLayout = new HorizontalLayout();
-        scaleInputLayout.setSpacing(true);
-        scaleInputLayout.setAlignItems(Alignment.END);
-
-        scaleMinField = new IntegerField("Minimum Score");
-        scaleMinField.setValue(0);
-        scaleMinField.setMin(0);
-        scaleMinField.setMax(100);
-        scaleMinField.setWidth("120px");
-        scaleMinField.setHelperText("Default: 0");
-
-        scaleMaxField = new IntegerField("Maximum Score");
-        scaleMaxField.setValue(10);
-        scaleMaxField.setMin(1);
-        scaleMaxField.setMax(100);
-        scaleMaxField.setWidth("120px");
-        scaleMaxField.setHelperText("Default: 10");
-
-        scaleInputLayout.add(scaleMinField, scaleMaxField);
 
         scaleSection = new VerticalLayout();
         scaleSection.setSpacing(true);
         scaleSection.setPadding(false);
         scaleSection.setWidth("100%");
-        scaleSection.add(scaleTitle, scaleInputLayout);
+        scaleSection.add(scaleTitle);
         scaleSection.setVisible(false);
 
         voteTypeCombo.addValueChangeListener(e -> {
@@ -558,8 +536,8 @@ private void addChecklistItem() {
 
             // Add scale configuration
             if ("SCALE".equals(voteType)) {
-                dto.setScaleMin(scaleMinField.getValue() != null ? scaleMinField.getValue() : 0);
-                dto.setScaleMax(scaleMaxField.getValue() != null ? scaleMaxField.getValue() : 10);
+                dto.setScaleMin(0);
+                dto.setScaleMax(10);
             }
 
             for (CategoryDTO category : selectedCategories) {

@@ -461,8 +461,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             voteLabel = "Total Checks: " + formatNumber(totalVotes);
         } else if (isScaleMode) {
             var competition = competitionService.getByIdOrFail(competitionId);
-            int scaleMax = competition.getScaleMax() != null ? competition.getScaleMax() : 10;
-            voteLabel = String.format("Avg. Score: %.1f/%d", avgScore, scaleMax);
+            voteLabel = String.format("Avg. Score: %.1f/10", avgScore);
         } else {
             voteLabel = "Total Votes: " + formatNumber(totalVotes);
         }
