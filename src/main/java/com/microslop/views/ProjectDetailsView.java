@@ -8,9 +8,9 @@ import com.microslop.service.ProjectService;
 import com.microslop.views.components.CommentCardComponent;
 import com.microslop.base.ui.MainLayout;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -58,7 +58,6 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
             return;
         }
 
-        // Check if the user is logged in and accessing their own projects
         String loggedInUsername = getLoggedInUsername();
         if (loggedInUsername == null) {
             event.forwardTo("login");
@@ -71,7 +70,6 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
             return;
         }
 
-        // Load project and comments
         loadProjectAndComments();
     }
 
@@ -79,9 +77,7 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
         setSizeFull();
         setPadding(false);
         setSpacing(false);
-        getStyle()
-            .set("background", "#f0f2f5")
-            .set("font-family", "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif");
+        getStyle().set("background", "var(--background)");
 
         add(buildHeader());
 
@@ -99,21 +95,20 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
         HorizontalLayout header = new HorizontalLayout();
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.getStyle()
-            .set("background", "#ffffff")
-            .set("padding", "20px 40px")
-            .set("box-shadow", "0 2px 4px rgba(0, 0, 0, 0.1)");
+        header.setSpacing(true);
+        header.addClassName("votify-header");
 
         Button backButton = new Button(new Icon(VaadinIcon.ARROW_LEFT));
-        backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        backButton.addClassName("votify-btn-secondary");
+        backButton.setHeight("40px");
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/projects")));
 
-        H1 title = new H1("Project Discussion");
+        H2 title = new H2("Project Discussion");
         title.getStyle()
             .set("margin", "0")
-            .set("color", "#1a3a5c")
-            .set("font-size", "28px")
-            .set("font-weight", "600")
+            .set("color", "var(--text-primary)")
+            .set("font-size", "1.4rem")
+            .set("font-weight", "700")
             .set("flex", "1");
 
         header.add(backButton, title);
@@ -123,44 +118,54 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
     private void loadProjectAndComments() {
         try {
             project = projectService.getById(projectId);
-            
+
             commentsContainer.removeAll();
 
-            // Project title
-            H1 projectTitle = new H1(project.getName().toUpperCase());
+            Div projectTitleWrapper = new Div();
+            projectTitleWrapper.addClassName("animate-slide-up");
+            projectTitleWrapper.setWidthFull();
+            projectTitleWrapper.getStyle().set("text-align", "center").set("margin-bottom", "32px");
+
+            Span projectTitle = new Span(project.getName());
             projectTitle.getStyle()
-                .set("text-align", "center")
-                .set("color", "#1a3a5c")
-                .set("margin-bottom", "40px")
-                .set("font-size", "32px")
-                .set("font-weight", "700");
+                .set("font-size", "1.6rem")
+                .set("font-weight", "700")
+                .set("color", "var(--text-primary)")
+                .set("display", "block");
 
-            commentsContainer.add(projectTitle);
+            projectTitleWrapper.add(projectTitle);
+            commentsContainer.add(projectTitleWrapper);
 
-            // Get all comments (both votes with comments and ProjectComment)
             List<Vote> votes = project.getVotes();
             List<ProjectComment> comments = project.getComments();
-            
-            boolean hasComments = false;
 
-            // Display votes with comments
+            boolean hasComments = false;
+            int staggerIndex = 1;
+
             if (votes != null) {
                 for (Vote vote : votes) {
                     if (vote.getComment() != null && !vote.getComment().trim().isEmpty()) {
-                        commentsContainer.add(createCommentCard(vote));
+                        Div wrapper = new Div(createCommentCard(vote));
+                        wrapper.addClassName("animate-fade-in");
+                        wrapper.addClassName("stagger-" + Math.min(staggerIndex++, 8));
+                        wrapper.setWidthFull();
+                        commentsContainer.add(wrapper);
                         hasComments = true;
                     }
                 }
             }
-            
-            // Display ProjectComment entries
+
             if (comments != null) {
                 for (ProjectComment comment : comments) {
-                    commentsContainer.add(createProjectCommentCard(comment));
+                    Div wrapper = new Div(createProjectCommentCard(comment));
+                    wrapper.addClassName("animate-fade-in");
+                    wrapper.addClassName("stagger-" + Math.min(staggerIndex++, 8));
+                    wrapper.setWidthFull();
+                    commentsContainer.add(wrapper);
                     hasComments = true;
                 }
             }
-            
+
             if (!hasComments) {
                 showNoCommentsMessage();
             }
@@ -178,14 +183,23 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
     }
 
     private void showNoCommentsMessage() {
-        Div noDataDiv = new Div();
-        noDataDiv.setText("No comments yet.");
-        noDataDiv.getStyle()
-            .set("text-align", "center")
-            .set("font-size", "18px")
-            .set("color", "#999")
-            .set("padding", "60px 20px");
-        commentsContainer.add(noDataDiv);
+        Div emptyState = new Div();
+        emptyState.addClassName("empty-state");
+        emptyState.addClassName("animate-fade-in");
+
+        Span icon = new Span();
+        icon.addClassName("empty-state-icon");
+        icon.addClassName("animate-float");
+        icon.setText("\uD83D\uDCAC");
+
+        Span title = new Span("No comments yet");
+        title.addClassName("empty-state-title");
+
+        Span message = new Span("Start the discussion by leaving a comment.");
+        message.addClassName("empty-state-message");
+
+        emptyState.add(icon, title, message);
+        commentsContainer.add(emptyState);
     }
 
     private void showAccessDeniedNotification() {

@@ -72,11 +72,9 @@ class CompetitionServiceImplTest {
         // Add categories
         CategoryDTO categoryDTO1 = new CategoryDTO();
         categoryDTO1.setName("Category 1");
-        categoryDTO1.setWeight(50);
 
         CategoryDTO categoryDTO2 = new CategoryDTO();
         categoryDTO2.setName("Category 2");
-        categoryDTO2.setWeight(50);
 
         competitionDTO.setCategories(Arrays.asList(categoryDTO1, categoryDTO2));
 

@@ -59,7 +59,6 @@ public class CategoryServiceImpl implements CategoryService {
         // Create new category from DTO
         Category category = new Category();
         category.setName(categoryDTO.getName());
-        category.setWeight(categoryDTO.getWeight());
         category.setCompetition(competition);
 
         // Save to database

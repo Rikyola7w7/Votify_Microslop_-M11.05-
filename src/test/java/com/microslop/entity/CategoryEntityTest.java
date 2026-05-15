@@ -20,14 +20,12 @@ class CategoryEntityTest {
 
         category = new Category();
         category.setName("Test Category");
-        category.setWeight(100);
         category.setCompetition(competition);
     }
 
     @Test
     void should_create_category_with_all_fields() {
         assertThat(category.getName()).isEqualTo("Test Category");
-        assertThat(category.getWeight()).isEqualTo(100);
         assertThat(category.getCompetition()).isEqualTo(competition);
     }
 
@@ -41,10 +39,8 @@ class CategoryEntityTest {
     @Test
     void should_update_category_fields() {
         category.setName("Updated Category");
-        category.setWeight(50);
 
         assertThat(category.getName()).isEqualTo("Updated Category");
-        assertThat(category.getWeight()).isEqualTo(50);
     }
 
     @Test

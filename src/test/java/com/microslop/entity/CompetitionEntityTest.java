@@ -81,7 +81,6 @@ class CompetitionEntityTest {
     void should_add_category() {
         Category category = new Category();
         category.setName("Test Category");
-        category.setWeight(100);
         category.setCompetition(competition);
         competition.addCategory(category);
 

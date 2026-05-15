@@ -52,12 +52,10 @@ class CategoryServiceImplTest {
         category = new Category();
         category.setId(1L);
         category.setName("Test Category");
-        category.setWeight(100);
         category.setCompetition(competition);
 
         categoryDTO = new CategoryDTO();
         categoryDTO.setName("Test Category");
-        categoryDTO.setWeight(100);
     }
 
     @Test
@@ -81,7 +79,6 @@ class CategoryServiceImplTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getName()).isEqualTo("Test Category");
-        assertThat(result.getWeight()).isEqualTo(100);
     }
 
     @Test

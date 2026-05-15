@@ -4,13 +4,15 @@ import com.microslop.entity.Competition;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.UserService;
 import com.microslop.views.components.CompetitionCardComponent;
+import com.microslop.views.components.BallotLoadingComponent;
 import com.microslop.base.ui.MainLayout;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.contextmenu.ContextMenu;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -32,12 +34,14 @@ public class MainView extends VerticalLayout {
     private final UserService userService;
     private Div cardsContainer;
     private List<Competition> currentCompetitions;
+    private Button btnAll;
+    private Button btnActive;
+    private Button btnFinished;
 
     public MainView(CompetitionService competitionService, UserService userService) {
         this.competitionService = competitionService;
         this.userService = userService;
         initializeView();
-        // Load all competitions initially to fix the "3 in DB, only 2 showing" issue
         refreshCompetitions("All");
     }
 
@@ -46,23 +50,13 @@ public class MainView extends VerticalLayout {
         setPadding(false);
         setSpacing(false);
         getStyle()
-            .set("background", "#f0f2f5")
-            .set("font-family", "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif");
+            .set("background", "var(--background)")
+            .set("font-family", "var(--font-main)");
 
         add(buildHeader());
-        add(buildToolbar());
-
-        cardsContainer = new Div();
-        cardsContainer.setWidthFull();
-        cardsContainer.getStyle()
-            .set("padding", "20px 40px")
-            .set("display", "flex")
-            .set("flex-wrap", "wrap")
-            .set("gap", "30px")
-            .set("justify-content", "center")
-            .set("align-items", "flex-start");
-
-        add(cardsContainer);
+        add(buildHeroSection());
+        add(buildFilterBar());
+        add(buildCardsContainer());
     }
 
     private HorizontalLayout buildHeader() {
@@ -70,42 +64,31 @@ public class MainView extends VerticalLayout {
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        header.getStyle()
-            .set("background", "#ffffff")
-            .set("padding", "20px 40px")
-            .set("box-shadow", "0 2px 4px rgba(0, 0, 0, 0.1)");
+        header.addClassName("votify-header");
 
-        H1 title = new H1("Competitions");
+        Span title = new Span("Discover Competitions");
         title.getStyle()
-            .set("margin", "0")
-            .set("color", "#1a3a5c")
-            .set("font-size", "28px")
-            .set("font-weight", "600");
+            .set("font-size", "20px")
+            .set("font-weight", "700")
+            .set("color", "var(--dark)")
+            .set("letter-spacing", "-0.3px");
 
         Avatar userAvatar = new Avatar();
         userAvatar.setName(userService.getUserDisplayName());
-        userAvatar.getStyle()
-            .set("width", "48px")
-            .set("height", "48px")
-            .set("cursor", "pointer");
+        userAvatar.setWidth("40px");
+        userAvatar.setHeight("40px");
+        userAvatar.getStyle().set("cursor", "pointer");
 
-        // Profile Dropdown Menu
         ContextMenu userMenu = new ContextMenu(userAvatar);
         userMenu.setOpenOnClick(true);
-        
+
         boolean isLoggedIn = userService.isLoggedIn();
-        
+
         if (isLoggedIn) {
             String username = userService.getCurrentUsername();
-            userMenu.addItem("My Projects", event -> {
-                getUI().ifPresent(ui -> ui.navigate(username + "/projects"));
-            });
-            userMenu.addItem("My Competitions", event -> {
-                getUI().ifPresent(ui -> ui.navigate(username + "/competitions"));
-            });
-            userMenu.addItem("Edit Profile", event -> {
-                getUI().ifPresent(ui -> ui.navigate(username));
-            });
+            userMenu.addItem("My Projects", event -> getUI().ifPresent(ui -> ui.navigate(username + "/projects")));
+            userMenu.addItem("My Competitions", event -> getUI().ifPresent(ui -> ui.navigate(username + "/competitions")));
+            userMenu.addItem("Edit Profile", event -> getUI().ifPresent(ui -> ui.navigate("profile")));
             userMenu.addItem("Sign Out", event -> handleLogout());
         } else {
             userMenu.addItem("Sign In", event -> getUI().ifPresent(ui -> ui.navigate("login")));
@@ -115,63 +98,119 @@ public class MainView extends VerticalLayout {
         header.add(title, userAvatar);
         return header;
     }
-    
-    private HorizontalLayout buildToolbar() {
-        HorizontalLayout toolbar = new HorizontalLayout();
-        toolbar.setWidthFull();
-        toolbar.setPadding(true);
-        toolbar.setAlignItems(Alignment.CENTER);
-        toolbar.setJustifyContentMode(JustifyContentMode.BETWEEN);
-        toolbar.getStyle().set("padding", "20px 40px 0 40px");
 
-        // Filter Buttons Logic
+    private Div buildHeroSection() {
+        Div hero = new Div();
+        hero.setWidthFull();
+        hero.getStyle()
+            .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))")
+            .set("padding", "48px 40px")
+            .set("text-align", "center");
+
+        Icon ballotIcon = VaadinIcon.CHECK_SQUARE_O.create();
+        ballotIcon.setSize("48px");
+        ballotIcon.getStyle()
+            .set("color", "white")
+            .set("margin-bottom", "12px")
+            .set("display", "block")
+            .set("margin-left", "auto")
+            .set("margin-right", "auto")
+            .set("animation", "float 3s ease-in-out infinite");
+
+        H2 heading = new H2("Discover Competitions");
+        heading.getStyle()
+            .set("color", "white")
+            .set("margin", "0 0 8px")
+            .set("font-size", "2.5rem")
+            .set("font-weight", "700")
+            .set("letter-spacing", "-0.5px");
+
+        Span subtitle = new Span("Find and vote for the best projects");
+        subtitle.getStyle()
+            .set("color", "rgba(255, 255, 255, 0.9)")
+            .set("font-size", "1.1rem")
+            .set("font-weight", "400");
+
+        hero.add(ballotIcon, heading, subtitle);
+        return hero;
+    }
+
+    private HorizontalLayout buildFilterBar() {
+        HorizontalLayout filterBar = new HorizontalLayout();
+        filterBar.setWidthFull();
+        filterBar.setAlignItems(FlexComponent.Alignment.CENTER);
+        filterBar.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        filterBar.setPadding(true);
+        filterBar.getStyle()
+            .set("padding", "20px 40px")
+            .set("background", "var(--surface)")
+            .set("border-bottom", "1px solid var(--border)");
+
         HorizontalLayout filters = new HorizontalLayout();
-        Button btnAll = new Button("All");
-        Button btnActive = new Button("Active");
-        Button btnFinished = new Button("Finished");
+        filters.setSpacing(true);
+        filters.setPadding(false);
 
-        btnAll.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        
+        btnAll = new Button("All");
+        btnActive = new Button("Active");
+        btnFinished = new Button("Finished");
+
+        btnAll.addClassName("votify-btn-primary");
+        btnActive.addClassName("votify-btn-secondary");
+        btnFinished.addClassName("votify-btn-secondary");
+
         btnAll.addClickListener(e -> {
             resetFilterButtons(btnAll, btnActive, btnFinished);
             refreshCompetitions("All");
         });
-        
         btnActive.addClickListener(e -> {
             resetFilterButtons(btnActive, btnAll, btnFinished);
             refreshCompetitions("Active");
         });
-        
         btnFinished.addClickListener(e -> {
             resetFilterButtons(btnFinished, btnAll, btnActive);
             refreshCompetitions("Finished");
         });
-        
+
         filters.add(btnAll, btnActive, btnFinished);
 
-        TextField searchField = new TextField("Search competition...");
+        TextField searchField = new TextField();
+        searchField.setPlaceholder("Search competitions...");
         searchField.setPrefixComponent(new Icon(VaadinIcon.SEARCH));
-        searchField.setWidth("300px");
+        searchField.setWidth("320px");
         searchField.setClearButtonVisible(true);
+        searchField.addClassName("votify-input");
         searchField.addValueChangeListener(e -> filterByName(e.getValue()));
 
-        toolbar.add(filters, searchField);
-        return toolbar;
+        filterBar.add(filters, searchField);
+        return filterBar;
+    }
+
+    private Div buildCardsContainer() {
+        cardsContainer = new Div();
+        cardsContainer.setWidthFull();
+        cardsContainer.getStyle()
+            .set("display", "flex")
+            .set("flex-wrap", "wrap")
+            .set("gap", "24px")
+            .set("justify-content", "center")
+            .set("padding", "32px 40px")
+            .set("max-width", "1200px")
+            .set("margin", "0 auto");
+
+        return cardsContainer;
     }
 
     private void resetFilterButtons(Button selected, Button... others) {
-        selected.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        selected.removeClassName("votify-btn-secondary");
+        selected.addClassName("votify-btn-primary");
         for (Button b : others) {
-            b.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            b.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+            b.removeClassName("votify-btn-primary");
+            b.addClassName("votify-btn-secondary");
         }
     }
 
     private void refreshCompetitions(String filterType) {
         try {
-            // Use competitionService.getActiveCompetitions() for Active, 
-            // and findAll() for all competitions.
-            
             if (filterType.equals("Active")) {
                 currentCompetitions = competitionService.getActiveCompetitions();
             } else if (filterType.equals("Finished")) {
@@ -179,7 +218,6 @@ public class MainView extends VerticalLayout {
             } else {
                 currentCompetitions = competitionService.findAll();
             }
-
             displayCompetitions(currentCompetitions);
         } catch (Exception e) {
             showErrorNotification("Error loading competitions: " + e.getMessage());
@@ -188,13 +226,38 @@ public class MainView extends VerticalLayout {
 
     private void displayCompetitions(List<Competition> competitions) {
         cardsContainer.removeAll();
+        
         if (competitions.isEmpty()) {
-            showNoCompetitionsMessage("matching");
-        } else {
-            competitions.forEach(competition ->
-                cardsContainer.add(new CompetitionCardComponent(competition))
-            );
+            showEmptyState();
+            return;
         }
+        
+        // Show loading animation
+        BallotLoadingComponent loading = new BallotLoadingComponent("Loading competitions...");
+        cardsContainer.add(loading);
+        
+        // Add cards but hidden
+        Div cardsGrid = new Div();
+        cardsGrid.getElement().setAttribute("id", "main-cards-grid");
+        cardsGrid.setWidthFull();
+        cardsGrid.getStyle().set("display", "none");
+        
+        for (int i = 0; i < competitions.size(); i++) {
+            CompetitionCardComponent card = new CompetitionCardComponent(competitions.get(i));
+            int staggerIndex = (i % 8) + 1;
+            card.addClassNames("animate-fade-in", "stagger-" + staggerIndex);
+            cardsGrid.add(card);
+        }
+        cardsContainer.add(cardsGrid);
+        
+        // After 800ms, hide loading and show cards
+        getElement().executeJs(
+            "setTimeout(function() {" +
+            "  var loadings = document.querySelectorAll('.votify-loading');" +
+            "  loadings.forEach(function(l) { l.style.display = 'none'; });" +
+            "  var grid = document.getElementById('main-cards-grid');" +
+            "  if (grid) { grid.style.display = 'flex'; grid.style.flexWrap = 'wrap'; grid.style.gap = '24px'; grid.style.justifyContent = 'center'; }" +
+            "}, 800)");
     }
 
     private void filterByName(String searchTerm) {
@@ -202,15 +265,23 @@ public class MainView extends VerticalLayout {
         displayCompetitions(filtered);
     }
 
-    private void showNoCompetitionsMessage(String type) {
-        Div noDataDiv = new Div();
-        noDataDiv.setText("No " + type.toLowerCase() + " competitions available.");
-        noDataDiv.getStyle()
-            .set("text-align", "center")
-            .set("font-size", "18px")
-            .set("color", "#666")
-            .set("padding", "60px 20px");
-        cardsContainer.add(noDataDiv);
+    private void showEmptyState() {
+        Div emptyState = new Div();
+        emptyState.addClassName("empty-state");
+
+        Icon emptyIcon = VaadinIcon.CHECK_SQUARE_O.create();
+        emptyIcon.addClassName("empty-state-icon");
+        emptyIcon.setSize("48px");
+        emptyIcon.getStyle().set("color", "var(--text-muted)");
+
+        Span title = new Span("No competitions found");
+        title.addClassName("empty-state-title");
+
+        Span message = new Span("There are no competitions matching your criteria.");
+        message.addClassName("empty-state-message");
+
+        emptyState.add(emptyIcon, title, message);
+        cardsContainer.add(emptyState);
     }
 
     private void handleLogout() {

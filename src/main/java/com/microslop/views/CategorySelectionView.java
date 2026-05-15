@@ -6,9 +6,9 @@ import com.microslop.entity.CompetitionStatus;
 import com.microslop.service.CategoryService;
 import com.microslop.service.CompetitionService;
 import com.microslop.views.components.CategoryCard;
+import com.microslop.views.components.BallotLoadingComponent;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -27,13 +27,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * CategorySelectionView - Screen for selecting a category within a competition.
- * Route: /competition/{competitionId}/categories
- *
- * Displays all categories for a competition with search functionality.
- * Each category card navigates to RankingView for ranking type selection.
- */
 @PageTitle("Category Selection")
 @Route("competition/:competitionId/categories")
 public class CategorySelectionView extends VerticalLayout implements BeforeEnterObserver {
@@ -56,8 +49,8 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         setPadding(false);
         setSpacing(false);
         getStyle()
-            .set("background", "#f0f2f5")
-            .set("font-family", "'Segoe UI', Arial, sans-serif");
+            .set("background", "var(--background)")
+            .set("font-family", "var(--font-main)");
     }
 
     @Override
@@ -100,53 +93,59 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        header.getStyle()
-            .set("background", "#1a3a5c")
-            .set("padding", "0 2rem")
-            .set("height", "64px")
-            .set("box-shadow", "0 2px 8px rgba(0,0,0,0.3)");
+        header.addClassName("votify-header-dark");
 
-        Button backButton = new Button("← Categories for: " + currentCompetition.getName());
-        backButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        Button backButton = new Button();
+        backButton.setIcon(new Icon(VaadinIcon.ARROW_LEFT));
+        backButton.addClassName("votify-btn-secondary");
         backButton.getStyle()
             .set("color", "white")
-            .set("background", "transparent")
-            .set("cursor", "pointer")
-            .set("font-weight", "600");
-        backButton.addClickListener(e ->
-            getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId)));
+            .set("background", "rgba(255, 255, 255, 0.15)")
+            .set("border", "1px solid rgba(255, 255, 255, 0.3)")
+            .set("border-radius", "var(--radius-md)");
+        backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
 
-        var title = new H2("CATEGORIES");
+        Span backLabel = new Span("Back");
+        backLabel.getStyle()
+            .set("color", "rgba(255, 255, 255, 0.9)")
+            .set("font-size", "14px")
+            .set("font-weight", "500");
+
+        HorizontalLayout leftSection = new HorizontalLayout(backButton, backLabel);
+        leftSection.setAlignItems(FlexComponent.Alignment.CENTER);
+        leftSection.setSpacing(true);
+        leftSection.setPadding(false);
+
+        Span title = new Span("Categories for: " + currentCompetition.getName());
         title.getStyle()
             .set("color", "white")
-            .set("margin", "0")
-            .set("font-size", "1.3rem")
+            .set("font-size", "18px")
             .set("font-weight", "700")
-            .set("letter-spacing", "0.05em")
-            .set("flex", "1")
-            .set("text-align", "center");
+            .set("letter-spacing", "-0.2px");
 
-        var spacer = new Div();
+        Div spacer = new Div();
         spacer.setWidth(120, Unit.PIXELS);
 
-        header.add(backButton, title, spacer);
+        header.add(leftSection, title, spacer);
         return header;
     }
 
     private Div buildSummaryCard() {
         var card = new Div();
         card.setWidthFull();
+        card.addClassName("votify-card-static");
         card.getStyle()
-            .set("background", "#ffffff")
-            .set("padding", "1.5rem 2rem")
-            .set("box-shadow", "0 2px 4px rgba(0,0,0,0.06)")
-            .set("border-bottom", "1px solid #e5e7eb");
+            .set("border-left", "4px solid var(--primary)")
+            .set("margin", "24px 40px 0")
+            .set("padding", "0");
 
         var content = new HorizontalLayout();
         content.setWidthFull();
         content.setAlignItems(FlexComponent.Alignment.CENTER);
         content.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        content.setPadding(true);
         content.setPadding(false);
+        content.getStyle().set("padding", "20px 24px");
 
         var leftSection = new VerticalLayout();
         leftSection.setPadding(false);
@@ -161,7 +160,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         competitionName.getStyle()
             .set("font-size", "1.4rem")
             .set("font-weight", "700")
-            .set("color", "#1a3a5c");
+            .set("color", "var(--text-primary)");
 
         Span statusBadge = createStatusBadge();
 
@@ -171,7 +170,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         datesRow.setAlignItems(FlexComponent.Alignment.CENTER);
         datesRow.setSpacing(true);
         datesRow.setPadding(false);
-        datesRow.getStyle().set("margin-top", "0.5rem");
+        datesRow.getStyle().set("margin-top", "8px");
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -185,27 +184,25 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         var startDate = new Span("Start: " + startDateStr);
         startDate.getStyle()
             .set("font-size", "0.9rem")
-            .set("color", "#666");
+            .set("color", "var(--text-muted)");
 
         var separator = new Span("|");
         separator.getStyle()
-            .set("color", "#ddd")
+            .set("color", "var(--border)")
             .set("font-size", "0.9rem");
 
         var endDate = new Span("End: " + endDateStr);
         endDate.getStyle()
             .set("font-size", "0.9rem")
-            .set("color", "#666");
+            .set("color", "var(--text-muted)");
 
         datesRow.add(startDate, separator, endDate);
 
         leftSection.add(nameRow, datesRow);
 
         var categoryCount = new Span(allCategories.size() + " categories");
-        categoryCount.getStyle()
-            .set("font-size", "0.95rem")
-            .set("color", "#2d6a9f")
-            .set("font-weight", "600");
+        categoryCount.addClassName("votify-badge");
+        categoryCount.addClassName("votify-badge-active");
 
         content.add(leftSection, categoryCount);
         card.add(content);
@@ -214,20 +211,10 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
 
     private Span createStatusBadge() {
         Span badge = new Span();
-        badge.getStyle()
-            .set("display", "flex")
-            .set("align-items", "center")
-            .set("gap", "6px")
-            .set("padding", "4px 10px")
-            .set("border-radius", "12px")
-            .set("font-size", "11px")
-            .set("font-weight", "700")
-            .set("letter-spacing", "0.5px")
-            .set("text-transform", "uppercase");
+        badge.addClassName("votify-badge");
 
+        String badgeClass;
         String label;
-        String bgColor;
-        String dotColor;
 
         CompetitionStatus status = currentCompetition.getStatus();
         boolean hasEnded = currentCompetition.getEndDate() != null
@@ -235,33 +222,17 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
 
         if (status == CompetitionStatus.VOTING_OPEN || status == CompetitionStatus.ACTIVE) {
             label = "ACTIVE";
-            bgColor = "rgba(76, 175, 80, 0.12)";
-            dotColor = "#4caf50";
+            badgeClass = "votify-badge-active";
         } else if (status == CompetitionStatus.CONCLUDED || hasEnded) {
             label = "FINISHED";
-            bgColor = "rgba(244, 67, 54, 0.12)";
-            dotColor = "#f44336";
+            badgeClass = "votify-badge-finished";
         } else {
             label = "PAUSED";
-            bgColor = "rgba(255, 152, 0, 0.12)";
-            dotColor = "#ff9800";
+            badgeClass = "votify-badge-paused";
         }
 
-        badge.getStyle()
-            .set("background", bgColor)
-            .set("color", dotColor);
-
-        Div dot = new Div();
-        dot.setWidth(8, Unit.PIXELS);
-        dot.setHeight(8, Unit.PIXELS);
-        dot.getStyle()
-            .set("border-radius", "50%")
-            .set("background-color", dotColor)
-            .set("flex-shrink", "0");
-
-        Span labelSpan = new Span(label);
-
-        badge.add(dot, labelSpan);
+        badge.addClassName(badgeClass);
+        badge.add(new Span(label));
         return badge;
     }
 
@@ -271,26 +242,17 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         searchBarContainer.setAlignItems(FlexComponent.Alignment.CENTER);
         searchBarContainer.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         searchBarContainer.getStyle()
-            .set("padding", "1.5rem 2rem")
-            .set("background", "#f9fafb")
-            .set("border-bottom", "1px solid #e5e7eb");
+            .set("padding", "20px 40px");
 
         searchField = new TextField();
         searchField.setPlaceholder("Search category...");
         searchField.setWidth("400px");
         searchField.setClearButtonVisible(true);
         searchField.setValueChangeMode(ValueChangeMode.EAGER);
-        searchField.addClassName("search-field");
-
-        searchField.getStyle()
-            .set("border-radius", "8px")
-            .set("border", "1px solid #e0e0e0")
-            .set("padding", "0.5rem 1rem")
-            .set("font-size", "0.95rem");
+        searchField.addClassName("votify-input");
 
         Icon searchIcon = VaadinIcon.SEARCH.create();
-        searchIcon.getStyle().set("color", "#999");
-
+        searchIcon.getStyle().set("color", "var(--text-muted)");
         searchField.setPrefixComponent(searchIcon);
 
         searchField.addValueChangeListener(event -> filterCategories(event.getValue()));
@@ -314,30 +276,52 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
                 .collect(Collectors.toList());
         }
 
-        for (Category category : filteredCategories) {
-            CategoryCard card = new CategoryCard(category, currentCompetition, () -> {
-                getUI().ifPresent(ui -> ui.navigate(
-                    "competition/" + competitionId + "/categories/" + category.getId() + "/ranking"
-                ));
-            });
-            gridContainer.add(card);
-        }
-
         if (filteredCategories.isEmpty()) {
-            var noResults = new Div("No categories found");
-            noResults.getStyle()
-                .set("color", "#666")
-                .set("font-size", "1rem")
-                .set("padding", "2rem")
-                .set("text-align", "center");
-            gridContainer.add(noResults);
+            Div emptyState = new Div();
+            emptyState.addClassName("empty-state");
+
+            Icon emptyIcon = VaadinIcon.FOLDER_OPEN.create();
+            emptyIcon.addClassName("empty-state-icon");
+            emptyIcon.setSize("48px");
+            emptyIcon.getStyle().set("color", "var(--text-muted)");
+
+            Span title = new Span("No categories found");
+            title.addClassName("empty-state-title");
+
+            Span message = new Span("There are no categories matching your search.");
+            message.addClassName("empty-state-message");
+
+            emptyState.add(emptyIcon, title, message);
+            gridContainer.add(emptyState);
+        } else {
+            var grid = new Div();
+            grid.setWidthFull();
+            grid.getStyle()
+                .set("display", "flex")
+                .set("flex-wrap", "wrap")
+                .set("gap", "24px")
+                .set("justify-content", "center");
+
+            for (int i = 0; i < filteredCategories.size(); i++) {
+                Category category = filteredCategories.get(i);
+                CategoryCard card = new CategoryCard(category, currentCompetition, () -> {
+                    getUI().ifPresent(ui -> ui.navigate(
+                        "competition/" + competitionId + "/categories/" + category.getId() + "/ranking"
+                    ));
+                });
+                int staggerIndex = (i % 8) + 1;
+                card.addClassNames("animate-fade-in", "stagger-" + staggerIndex);
+                grid.add(card);
+            }
+
+            gridContainer.add(grid);
         }
     }
 
     private Div buildCategoriesGrid() {
         var gridWrapper = new Div();
         gridWrapper.setWidthFull();
-        gridWrapper.getStyle().set("padding", "2rem");
+        gridWrapper.getStyle().set("padding", "0 40px 32px");
 
         gridContainer = new VerticalLayout();
         gridContainer.setWidthFull();
@@ -345,25 +329,42 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         gridContainer.setPadding(false);
         gridContainer.setSpacing(false);
 
+        // Show loading
+        BallotLoadingComponent loading = new BallotLoadingComponent("Loading categories...");
+        gridContainer.add(loading);
+
+        // Build grid but hidden
         var grid = new Div();
+        grid.getElement().setAttribute("id", "cat-cards-grid");
         grid.setWidthFull();
         grid.getStyle()
-            .set("display", "grid")
-            .set("grid-template-columns", "repeat(auto-fill, minmax(280px, 1fr))")
-            .set("gap", "1.5rem")
-            .set("max-width", "1200px")
-            .set("margin", "0 auto");
+            .set("display", "none")
+            .set("flex-wrap", "wrap")
+            .set("gap", "24px")
+            .set("justify-content", "center");
 
-        for (Category category : allCategories) {
+        for (int i = 0; i < allCategories.size(); i++) {
+            Category category = allCategories.get(i);
             CategoryCard card = new CategoryCard(category, currentCompetition, () -> {
                 getUI().ifPresent(ui -> ui.navigate(
                     "competition/" + competitionId + "/categories/" + category.getId() + "/ranking"
                 ));
             });
+            int staggerIndex = (i % 8) + 1;
+            card.addClassNames("animate-fade-in", "stagger-" + staggerIndex);
             grid.add(card);
         }
-
         gridContainer.add(grid);
+
+        // After 800ms, hide loading and show grid
+        getElement().executeJs(
+            "setTimeout(function() {" +
+            "  var loadings = document.querySelectorAll('.votify-loading');" +
+            "  loadings.forEach(function(l) { l.style.display = 'none'; });" +
+            "  var g = document.getElementById('cat-cards-grid');" +
+            "  if (g) { g.style.display = 'flex'; g.style.flexWrap = 'wrap'; g.style.gap = '24px'; g.style.justifyContent = 'center'; }" +
+            "}, 800)");
+
         gridWrapper.add(gridContainer);
         return gridWrapper;
     }

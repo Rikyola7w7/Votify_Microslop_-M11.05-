@@ -70,7 +70,6 @@ class VoteServiceImplTest {
         category = new Category();
         category.setId(1L);
         category.setName("Test Category");
-        category.setWeight(100);
 
         project = new Project();
         project.setId(1L);

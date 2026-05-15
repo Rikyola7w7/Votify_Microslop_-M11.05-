@@ -160,7 +160,6 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
             for (CategoryDTO categoryDTO : competitionDTO.getCategories()) {
                 Category category = new Category();
                 category.setName(categoryDTO.getName());
-                category.setWeight(categoryDTO.getWeight());
                 category.setCompetition(savedCompetition);
                 savedCompetition.addCategory(category);
             }
@@ -379,11 +378,6 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
         // Validate categories
         if (categories == null || categories.isEmpty()) {
             errors.add("• At least one category is required");
-        } else {
-            int totalWeight = categories.stream().mapToInt(CategoryDTO::getWeight).sum();
-            if (totalWeight != 100) {
-                errors.add("• Category weights must total exactly 100% (current: " + totalWeight + "%)");
-            }
         }
 
         return errors;
