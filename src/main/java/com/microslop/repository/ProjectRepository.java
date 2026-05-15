@@ -2,6 +2,7 @@ package com.microslop.repository;
 
 import com.microslop.entity.Project;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -10,7 +11,7 @@ import java.util.Optional;
 import java.util.List;
 
 @Repository
-public interface ProjectRepository extends JpaRepository<Project, Long> {
+public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpecificationExecutor<Project> {
 
     // Find projects by competition ID
     List<Project> findByCompetitionId(Long competitionId);
@@ -44,7 +45,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         """)
     List<Project> findRankingByCategory(@Param("categoryId") Long categoryId);
 
-    // Projects of a competition ordered by checklist vote count
+// Projects of a competition ordered by checklist vote count
     @Query("""
         SELECT p FROM Project p
         WHERE p.competition.id = :competitionId
@@ -53,6 +54,30 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         ) DESC
         """)
     List<Project> findRankingByChecklistCompetition(@Param("competitionId") Long competitionId);
+
+    // Judge-only ranking: projects ordered by count of votes from judges
+    @Query("""
+        SELECT p FROM Project p
+        LEFT JOIN p.votes v
+        LEFT JOIN p.categories c
+        LEFT JOIN com.microslop.entity.Judge j ON j.user = v.user AND j.competition = p.competition
+        WHERE c.id = :categoryId AND j.id IS NOT NULL
+        GROUP BY p
+        ORDER BY COUNT(v) DESC
+        """)
+    List<Project> findJudgeRankingByCategory(@Param("categoryId") Long categoryId);
+
+    // Popular ranking: projects ordered by count of votes from non-judges
+    @Query("""
+        SELECT p FROM Project p
+        LEFT JOIN p.votes v
+        LEFT JOIN p.categories c
+        LEFT JOIN com.microslop.entity.Judge j ON j.user = v.user AND j.competition = p.competition
+        WHERE c.id = :categoryId AND j.id IS NULL AND v.id IS NOT NULL
+        GROUP BY p
+        ORDER BY COUNT(v) DESC
+        """)
+    List<Project> findPopularRankingByCategory(@Param("categoryId") Long categoryId);
 
     @Query("SELECT p FROM Project p LEFT JOIN FETCH p.votes v LEFT JOIN FETCH v.user WHERE p.id = :projectId")
     Optional<Project> findByIdWithVotesAndUsers(@Param("projectId") Long projectId);

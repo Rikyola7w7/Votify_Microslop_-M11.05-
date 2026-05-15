@@ -3,6 +3,8 @@ package com.microslop.service.impl;
 import com.microslop.entity.User;
 import com.microslop.repository.UserRepository;
 import com.microslop.service.UserService;
+import com.microslop.command.CommandExecutor;
+import com.microslop.command.user.UpdateUserProfileCommand;
 import com.vaadin.flow.server.VaadinSession;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
@@ -14,10 +16,13 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CommandExecutor commandExecutor;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                         CommandExecutor commandExecutor) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.commandExecutor = commandExecutor;
     }
 
     public void registerUser(User newUser) {
@@ -74,25 +79,21 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User updateProfile(String currentUsername, String newUsername, String email) {
-
-        User user = userRepository.findByUsernameIgnoreCase(currentUsername)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-        User newUser = new User();
-        newUser.setUsername(newUsername);
-        newUser.setEmail(email);
-        newUser.setPassword(user.getPassword());
-        newUser.setBirthDate(user.getBirthDate());
-        newUser.setCreationDate(user.getCreationDate());
-        newUser.setName(user.getName());
-        newUser.setProfilePicture(user.getProfilePicture());
-
-        userRepository.delete(user);
-
-        User savedUser = userRepository.save(newUser);
-        VaadinSession.getCurrent().setAttribute(User.class, savedUser);
-
-        return savedUser;
+        // Execute command through command executor
+        UpdateUserProfileCommand command = new UpdateUserProfileCommand(
+            currentUsername, newUsername, email,
+            userRepository
+        );
+        try {
+            commandExecutor.execute(command);
+            User updatedUser = command.getLastResult();
+            VaadinSession.getCurrent().setAttribute(User.class, updatedUser);
+            return updatedUser;
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update user profile", e);
+        }
     }
 
     @Override

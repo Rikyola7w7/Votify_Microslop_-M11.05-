@@ -2,30 +2,53 @@ package com.microslop.service.impl;
 
 import com.microslop.entity.Vote;
 import com.microslop.entity.Competition;
+import com.microslop.entity.Vote;
+import com.microslop.event.VoteEvent;
+import com.microslop.event.VoteSubmittedEvent;
 import com.microslop.factory.ScaleVoteCreator;
 import com.microslop.factory.VoteCreator;
+import com.microslop.observer.observer.VoteObserver;
+import com.microslop.observer.subject.VoteEventSubject;
 import com.microslop.repository.VoteRepository;
 import com.microslop.repository.CategoryRepository;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
 import com.microslop.service.VoteService;
+import com.microslop.specification.vote.VotesByUserSpecification;
+import com.microslop.specification.vote.VotesByProjectSpecification;
+import com.microslop.specification.vote.VotesByCategorySpecification;
+import com.microslop.strategy.StrategyRegistry;
+import com.microslop.strategy.voting.VotingStrategy;
+import com.microslop.command.CommandExecutor;
+import com.microslop.command.vote.SubmitVoteCommand;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 @Transactional
-public class VoteServiceImpl implements VoteService {
+public class VoteServiceImpl implements VoteService, VoteEventSubject {
 
+    private static final Logger log = LoggerFactory.getLogger(VoteServiceImpl.class);
     private static final int MAX_VOTES_PER_CATEGORY = 1;
 
     private final VoteRepository voteRepository;
     private final ProjectService projectService;
-    private final UserService    userService;
+    private final UserService userService;
     private final VoteCreator voteCreator;
     private final ScaleVoteCreator scaleVoteCreator;
     private final CategoryRepository categoryRepository;
     private final CompetitionRepository competitionRepository;
+    private final CommandExecutor commandExecutor;
+    private final StrategyRegistry strategyRegistry;
+    private final List<VoteObserver> voteObservers;
 
     public VoteServiceImpl(VoteRepository voteRepository,
                            ProjectService projectService,
@@ -33,84 +56,111 @@ public class VoteServiceImpl implements VoteService {
                            VoteCreator voteCreator,
                            ScaleVoteCreator scaleVoteCreator,
                            CategoryRepository categoryRepository,
-                           CompetitionRepository competitionRepository) {
+                           CompetitionRepository competitionRepository,
+                           CommandExecutor commandExecutor,
+                           StrategyRegistry strategyRegistry,
+                           @Autowired(required = false) List<VoteObserver> observers) {
         this.voteRepository = voteRepository;
         this.projectService = projectService;
-        this.userService    = userService;
-        this.voteCreator    = voteCreator;
+        this.userService = userService;
+        this.voteCreator = voteCreator;
         this.scaleVoteCreator = scaleVoteCreator;
         this.categoryRepository = categoryRepository;
         this.competitionRepository = competitionRepository;
+        this.commandExecutor = commandExecutor;
+        this.strategyRegistry = strategyRegistry;
+        this.voteObservers = new CopyOnWriteArrayList<>(
+            observers != null ? observers : new ArrayList<>()
+        );
+    }
+
+    // ── Observer Management ────────────────────────────────────────────────
+
+    @Override
+    public void registerVoteObserver(VoteObserver observer) {
+        if (observer == null) {
+            throw new IllegalArgumentException("Observer cannot be null");
+        }
+        if (!voteObservers.contains(observer)) {
+            voteObservers.add(observer);
+            log.debug("Registered observer: {}", observer.getObserverName());
+        }
+    }
+
+    @Override
+    public void unregisterVoteObserver(VoteObserver observer) {
+        if (observer != null && voteObservers.remove(observer)) {
+            log.debug("Unregistered observer: {}", observer.getObserverName());
+        }
+    }
+
+    @Override
+    public void notifyVoteObservers(VoteEvent event) {
+        if (event == null) {
+            log.warn("Cannot notify observers: event is null");
+            return;
+        }
+        for (VoteObserver observer : voteObservers) {
+            try {
+                if (event instanceof VoteSubmittedEvent) {
+                    observer.onVoteSubmitted(event);
+                } else if (event.getEventType().equals("VOTE_UNDONE")) {
+                    observer.onVoteUndone(event);
+                } else if (event.getEventType().equals("VOTE_REDONE")) {
+                    observer.onVoteRedone(event);
+                }
+            } catch (Exception e) {
+                log.error("Error notifying observer {}: {}", 
+                         observer.getObserverName(), e.getMessage(), e);
+            }
+        }
+    }
+
+    @Override
+    public int getVoteObserverCount() {
+        return voteObservers.size();
     }
 
     // ── Write ─────────────────────────────────────────────────────────────
 
     @Override
     public void submitVote(String userUsername, Long projectId, Long categoryId) {
-        var user        = userService.searchByUsernameIgnoreCase(userUsername)
-                            .orElseThrow(() -> new IllegalStateException("User not found."));
-        var project     = projectService.getById(projectId);
-        var competition = project.getCompetition();
-        var category    = categoryRepository.findById(categoryId)
-                            .orElseThrow(() -> new IllegalStateException("Category not found."));
-
-        if ("CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
-            throw new IllegalStateException("This competition uses checklist voting. Please use the checklist voting interface.");
-        }
-
-        if ("SCALE".equalsIgnoreCase(competition.getVoteType())) {
-            throw new IllegalStateException("This competition uses scale voting. Please use the scale voting interface.");
-        }
-
-        if (!competition.isActive()) {
-            boolean hasEnded = competition.getEndDate() != null
-                    && java.time.LocalDateTime.now().isAfter(competition.getEndDate());
-            if (hasEnded) {
-                throw new IllegalStateException("Esta competición ha finalizado y ya no acepta votos.");
-            } else {
-                throw new IllegalStateException("Esta competición está pausada temporalmente. Inténtalo más tarde.");
+        SubmitVoteCommand command = new SubmitVoteCommand(
+            userUsername, projectId, categoryId,
+            voteRepository, projectService, userService, voteCreator, categoryRepository,
+            strategyRegistry
+        );
+        try {
+            commandExecutor.execute(command);
+            Vote createdVote = command.getCreatedVote();
+            if (createdVote != null) {
+                notifyVoteObservers(new VoteSubmittedEvent(createdVote, userUsername));
             }
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to submit vote", e);
         }
-
-        long alreadyCastInCategory = voteRepository.countByUserIdAndCategoryId(user.getId(), category.getId());
-        if (alreadyCastInCategory >= MAX_VOTES_PER_CATEGORY) {
-            throw new IllegalStateException(
-                "You already voted for a project in this category.");
-        }
-
-        Vote vote = voteCreator.create(user, project, category);
-        voteRepository.save(vote);
     }
 
     @Override
     public void submitVote(String userUsername, Long projectId, Long categoryId, int points) {
-        var user        = userService.searchByUsernameIgnoreCase(userUsername)
-                            .orElseThrow(() -> new IllegalStateException("User not found."));
-        var project     = projectService.getById(projectId);
-        var competition = project.getCompetition();
-        var category    = categoryRepository.findById(categoryId)
-                            .orElseThrow(() -> new IllegalStateException("Category not found."));
-
-        if ("CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
-            throw new IllegalStateException("This competition uses checklist voting. Please use the checklist voting interface.");
+        SubmitVoteCommand command = new SubmitVoteCommand(
+            userUsername, projectId, categoryId, points,
+            voteRepository, projectService, userService, voteCreator, categoryRepository,
+            strategyRegistry
+        );
+        try {
+            commandExecutor.execute(command);
+            Vote createdVote = command.getCreatedVote();
+            if (createdVote != null) {
+                notifyVoteObservers(new VoteSubmittedEvent(createdVote, userUsername));
+            }
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to submit vote with points", e);
         }
-
-        if ("SCALE".equalsIgnoreCase(competition.getVoteType())) {
-            throw new IllegalStateException("This competition uses scale voting. Please use the scale voting interface.");
-        }
-
-        if (!competition.isActive()) {
-            throw new IllegalStateException("Competition is not active.");
-        }
-
-        long alreadyCastInCategory = voteRepository.countByUserIdAndCategoryId(user.getId(), category.getId());
-        if (alreadyCastInCategory >= MAX_VOTES_PER_CATEGORY) {
-            throw new IllegalStateException(
-                "You already voted for a project in this category.");
-        }
-
-        Vote vote = new Vote(user, project, category, points);
-        voteRepository.save(vote);
     }
 
     // ── Read ──────────────────────────────────────────────────────────────
@@ -157,7 +207,7 @@ public class VoteServiceImpl implements VoteService {
         return voteRepository.sumPointsByUserIdAndCategoryId(userId, categoryId);
     }
 
-    // ── Scale Voting ──────────────────────────────────────────────────────
+// ── Scale Voting ──────────────────────────────────────────────────────
 
     @Override
     public void submitScaleVote(String userUsername, Long projectId, Long categoryId, int score) {
@@ -213,5 +263,38 @@ public class VoteServiceImpl implements VoteService {
     @Transactional(readOnly = true)
     public long getSumScoreByProjectAndCategory(Long projectId, Long categoryId) {
         return voteRepository.sumScoreByProjectIdAndCategoryId(projectId, categoryId);
+    }
+
+    // ── Specification-based Queries ─────────────────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Vote> getVotesByUser(Long userId) {
+        return voteRepository.findAll(new VotesByUserSpecification(userId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Vote> getVotesByProject(Long projectId) {
+        return voteRepository.findAll(new VotesByProjectSpecification(projectId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Vote> getVotesByCategory(Long categoryId) {
+        return voteRepository.findAll(new VotesByCategorySpecification(categoryId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Vote> getVotesByUserAndProject(Long userId, Long projectId) {
+        Specification<Vote> spec = new VotesByUserSpecification(userId)
+            .and(new VotesByProjectSpecification(projectId));
+        return voteRepository.findAll(spec);
+    }
+
+    @Override
+    public StrategyRegistry getStrategyRegistry() {
+        return strategyRegistry;
     }
 }

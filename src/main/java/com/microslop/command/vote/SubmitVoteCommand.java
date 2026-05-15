@@ -2,27 +2,17 @@ package com.microslop.command.vote;
 
 import com.microslop.command.AbstractCommand;
 import com.microslop.entity.Vote;
+import com.microslop.entity.Competition;
 import com.microslop.repository.VoteRepository;
 import com.microslop.repository.CategoryRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
+import com.microslop.strategy.StrategyRegistry;
+import com.microslop.strategy.voting.VotingStrategy;
 import com.microslop.factory.VoteCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Command to submit a vote for a project in a specific category.
- * This command encapsulates the vote submission logic and supports undo/redo operations.
- *
- * The command will validate that:
- * - The user exists
- * - The project exists
- * - The category exists
- * - The competition is active
- * - The user has not already voted in this category
- *
- * @see AbstractCommand
- */
 public class SubmitVoteCommand extends AbstractCommand<Void> {
 
     private static final Logger log = LoggerFactory.getLogger(SubmitVoteCommand.class);
@@ -38,47 +28,24 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
     private final UserService userService;
     private final VoteCreator voteCreator;
     private final CategoryRepository categoryRepository;
+    private final StrategyRegistry strategyRegistry;
 
-    // Store the created vote for undo operation
     private Vote createdVote;
 
-    /**
-     * Creates a new SubmitVoteCommand with default points (1).
-     *
-     * @param userUsername the username of the user submitting the vote
-     * @param projectId the ID of the project being voted for
-     * @param categoryId the ID of the category for this vote
-     * @param voteRepository the repository to persist votes
-     * @param projectService the service to retrieve project information
-     * @param userService the service to retrieve user information
-     * @param voteCreator the factory to create votes
-     * @param categoryRepository the repository to retrieve category information
-     */
     public SubmitVoteCommand(String userUsername, Long projectId, Long categoryId,
                             VoteRepository voteRepository, ProjectService projectService,
                             UserService userService, VoteCreator voteCreator,
-                            CategoryRepository categoryRepository) {
-        this(userUsername, projectId, categoryId, 1, voteRepository, projectService, 
-             userService, voteCreator, categoryRepository);
+                            CategoryRepository categoryRepository,
+                            StrategyRegistry strategyRegistry) {
+        this(userUsername, projectId, categoryId, 1, voteRepository, projectService,
+             userService, voteCreator, categoryRepository, strategyRegistry);
     }
 
-    /**
-     * Creates a new SubmitVoteCommand with a specific number of points.
-     *
-     * @param userUsername the username of the user submitting the vote
-     * @param projectId the ID of the project being voted for
-     * @param categoryId the ID of the category for this vote
-     * @param points the number of points to assign to this vote
-     * @param voteRepository the repository to persist votes
-     * @param projectService the service to retrieve project information
-     * @param userService the service to retrieve user information
-     * @param voteCreator the factory to create votes
-     * @param categoryRepository the repository to retrieve category information
-     */
     public SubmitVoteCommand(String userUsername, Long projectId, Long categoryId, Integer points,
                             VoteRepository voteRepository, ProjectService projectService,
                             UserService userService, VoteCreator voteCreator,
-                            CategoryRepository categoryRepository) {
+                            CategoryRepository categoryRepository,
+                            StrategyRegistry strategyRegistry) {
         this.userUsername = userUsername;
         this.projectId = projectId;
         this.categoryId = categoryId;
@@ -88,42 +55,36 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
         this.userService = userService;
         this.voteCreator = voteCreator;
         this.categoryRepository = categoryRepository;
+        this.strategyRegistry = strategyRegistry;
     }
 
-    /**
-     * {@inheritDoc}
-     * Executes the vote submission with all necessary validations.
-     */
     @Override
     protected Void executeCommand() throws Exception {
-        log.debug("Submitting vote for user: {}, project: {}, category: {}", 
+        log.debug("Submitting vote for user: {}, project: {}, category: {}",
                   userUsername, projectId, categoryId);
 
-        // Validate and retrieve user
         var user = userService.searchByUsernameIgnoreCase(userUsername)
                 .orElseThrow(() -> new IllegalStateException("User not found: " + userUsername));
 
-        // Validate and retrieve project
         var project = projectService.getById(projectId);
         if (project == null) {
             throw new IllegalStateException("Project not found: " + projectId);
         }
 
-        // Validate and retrieve competition
         var competition = project.getCompetition();
         if (competition == null) {
             throw new IllegalStateException("Competition not found for project: " + projectId);
         }
 
-        if ("CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
+if ("CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
             throw new IllegalStateException("This competition uses checklist voting. Please use the checklist voting interface.");
         }
 
-        if ("SCALE".equalsIgnoreCase(competition.getVoteType())) {
-            throw new IllegalStateException("This competition uses scale voting. Please use the scale voting interface.");
-        }
+        VotingStrategy votingStrategy = strategyRegistry.resolveVotingStrategy(competition.getVotingStrategyType());
 
-        // Validate competition is active
+        if (!votingStrategy.canVote(user, competition)) {
+            throw new IllegalStateException("User is not allowed to vote in this competition");
+        }
         if (!competition.isActive()) {
             boolean hasEnded = competition.getEndDate() != null
                     && java.time.LocalDateTime.now().isAfter(competition.getEndDate());
@@ -136,11 +97,9 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
             }
         }
 
-        // Validate and retrieve category
         var category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new IllegalStateException("Category not found: " + categoryId));
 
-        // Check if user has already voted in this category
         long alreadyCastInCategory = voteRepository.countByUserIdAndCategoryId(
             user.getId(), category.getId());
         if (alreadyCastInCategory >= MAX_VOTES_PER_CATEGORY) {
@@ -148,24 +107,21 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
                 "You already voted for a project in this category.");
         }
 
-        // Create and persist the vote
-        if (points > 1) {
-            createdVote = new Vote(user, project, category, points);
+        int effectivePoints = votingStrategy.calculateVotePoints(user, competition, this.points);
+
+        if (effectivePoints > 1) {
+            createdVote = new Vote(user, project, category, effectivePoints);
         } else {
             createdVote = voteCreator.create(user, project, category);
         }
-        
+
         createdVote = voteRepository.save(createdVote);
-        log.info("Vote successfully submitted - User: {}, Project: {}, Category: {}, Vote ID: {}", 
+        log.info("Vote successfully submitted - User: {}, Project: {}, Category: {}, Vote ID: {}",
                  userUsername, projectId, categoryId, createdVote.getId());
 
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     * Undoes the vote submission by deleting the created vote from the repository.
-     */
     @Override
     public void undo() throws Exception {
         if (createdVote == null || createdVote.getId() == null) {
@@ -177,43 +133,36 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
         log.info("Vote successfully undone - Vote ID: {}", createdVote.getId());
     }
 
-    /**
-     * {@inheritDoc}
-     * Redoes the vote submission by recreating and persisting the vote.
-     */
     @Override
     public Void redo() throws Exception {
         if (createdVote == null) {
             throw new IllegalStateException("Cannot redo: Vote information was not preserved");
         }
 
-        log.debug("Redoing vote submission - User: {}, Project: {}, Category: {}", 
+        log.debug("Redoing vote submission - User: {}, Project: {}, Category: {}",
                   userUsername, projectId, categoryId);
-        
-        // Recreate the vote with the same data
-        Vote redoneVote = new Vote(createdVote.getUser(), createdVote.getProject(), 
+
+        Vote redoneVote = new Vote(createdVote.getUser(), createdVote.getProject(),
                                     createdVote.getCategory(), createdVote.getPoints());
         redoneVote = voteRepository.save(redoneVote);
-        createdVote.setId(redoneVote.getId()); // Update ID for future undo/redo cycles
-        
+        createdVote.setId(redoneVote.getId());
+
         log.info("Vote successfully redone - Vote ID: {}", redoneVote.getId());
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getDescription() {
-        return String.format("Submit vote from user '%s' for project %d in category %d", 
+        return String.format("Submit vote from user '%s' for project %d in category %d",
                            userUsername, projectId, categoryId);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean isUndoable() {
         return true;
+    }
+
+    public Vote getCreatedVote() {
+        return createdVote;
     }
 }

@@ -4,29 +4,128 @@ import com.microslop.dto.CategoryDTO;
 import com.microslop.dto.CompetitionDTO;
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
+import com.microslop.entity.CompetitionStatus;
 import com.microslop.entity.Judge;
 import com.microslop.entity.User;
+import com.microslop.event.CompetitionActivatedEvent;
+import com.microslop.event.CompetitionDeactivatedEvent;
+import com.microslop.event.CompetitionConcludedEvent;
+import com.microslop.event.CompetitionEvent;
+import com.microslop.event.CompetitionVotingOpenedEvent;
+import com.microslop.event.CompetitionVotingPausedEvent;
+import com.microslop.event.CompetitionArchivedEvent;
+import com.microslop.event.CompetitionReopenedEvent;
+import com.microslop.observer.observer.CompetitionObserver;
+import com.microslop.observer.subject.CompetitionEventSubject;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.UserRepository;
 import com.microslop.service.CompetitionService;
+import com.microslop.specification.competition.CompetitionByCreatorSpecification;
+import com.microslop.specification.competition.CompetitionByNameSpecification;
+import com.microslop.specification.competition.CompetitionByStatusSpecification;
+import com.microslop.command.CommandExecutor;
+import com.microslop.command.competition.CreateCompetitionCommand;
+import com.microslop.command.competition.ActivateCompetitionCommand;
+import com.microslop.command.competition.DeactivateCompetitionCommand;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * Implementation of CompetitionService with observer pattern support.
+ * Manages competition lifecycle and provides event notification to registered observers.
+ *
+ * @author Votify Team
+ * @version 1.0
+ */
 @Service
 @Transactional
-public class CompetitionServiceImpl implements CompetitionService {
+public class CompetitionServiceImpl implements CompetitionService, CompetitionEventSubject {
+
+    private static final Logger log = LoggerFactory.getLogger(CompetitionServiceImpl.class);
 
     private final CompetitionRepository competitionRepository;
     private final UserRepository userRepository;
+    private final CommandExecutor commandExecutor;
+    private final List<CompetitionObserver> competitionObservers;
 
+    /**
+     * Creates a new CompetitionServiceImpl with observer injection.
+     * Observers are optional - system works fine with none registered.
+     *
+     * @param competitionRepository competition repository
+     * @param userRepository user repository
+     * @param commandExecutor command executor
+     * @param observers optional list of competition observers
+     */
     public CompetitionServiceImpl(CompetitionRepository competitionRepository,
-                                 UserRepository userRepository) {
+                                 UserRepository userRepository,
+                                 CommandExecutor commandExecutor,
+                                 @Autowired(required = false) List<CompetitionObserver> observers) {
         this.competitionRepository = competitionRepository;
         this.userRepository = userRepository;
+        this.commandExecutor = commandExecutor;
+        this.competitionObservers = new CopyOnWriteArrayList<>(
+            observers != null ? observers : new ArrayList<>()
+        );
+    }
+
+    // ── Observer Management ────────────────────────────────────────────────
+
+    @Override
+    public void registerCompetitionObserver(CompetitionObserver observer) {
+        if (observer == null) {
+            throw new IllegalArgumentException("Observer cannot be null");
+        }
+        if (!competitionObservers.contains(observer)) {
+            competitionObservers.add(observer);
+            log.debug("Registered observer: {}", observer.getObserverName());
+        }
+    }
+
+    @Override
+    public void unregisterCompetitionObserver(CompetitionObserver observer) {
+        if (observer != null && competitionObservers.remove(observer)) {
+            log.debug("Unregistered observer: {}", observer.getObserverName());
+        }
+    }
+
+    @Override
+    public void notifyCompetitionObservers(CompetitionEvent event) {
+        if (event == null) {
+            log.warn("Cannot notify observers: event is null");
+            return;
+        }
+        for (CompetitionObserver observer : competitionObservers) {
+            try {
+                switch (event.getEventType()) {
+                    case "COMPETITION_ACTIVATED" -> observer.onCompetitionActivated(event);
+                    case "COMPETITION_DEACTIVATED" -> observer.onCompetitionDeactivated(event);
+                    case "COMPETITION_CONCLUDED" -> observer.onCompetitionConcluded(event);
+                    case "COMPETITION_VOTING_OPENED" -> observer.onVotingOpened(event);
+                    case "COMPETITION_VOTING_PAUSED" -> observer.onVotingPaused(event);
+                    case "COMPETITION_ARCHIVED" -> observer.onCompetitionArchived(event);
+                    case "COMPETITION_REOPENED" -> observer.onCompetitionReopened(event);
+                    default -> log.warn("Unknown event type: {}", event.getEventType());
+                }
+            } catch (Exception e) {
+                log.error("Error notifying observer {}: {}", 
+                         observer.getObserverName(), e.getMessage(), e);
+            }
+        }
+    }
+
+    @Override
+    public int getCompetitionObserverCount() {
+        return competitionObservers.size();
     }
 
     // ── Write Operations ────────────────────────────────────────────────────────
@@ -52,6 +151,8 @@ public class CompetitionServiceImpl implements CompetitionService {
         competition.setCreatedBy(creatorUsername);
         competition.setActive(true);
         competition.setVoteType(competitionDTO.getVoteType() != null ? competitionDTO.getVoteType() : "NORMAL");
+        competition.setVotingStrategyType(competitionDTO.getVoterType() != null ?
+                ("ALL".equalsIgnoreCase(competitionDTO.getVoterType()) ? "ALL" : "JUDGES_ONLY") : "ALL");
 
         if ("SCALE".equalsIgnoreCase(competition.getVoteType())) {
             competition.setScaleMin(competitionDTO.getScaleMin() != null ? competitionDTO.getScaleMin() : 0);
@@ -65,7 +166,6 @@ public class CompetitionServiceImpl implements CompetitionService {
         for (CategoryDTO categoryDTO : competitionDTO.getCategories()) {
             Category category = new Category();
             category.setName(categoryDTO.getName());
-            category.setWeight(categoryDTO.getWeight());
             category.setCompetition(savedCompetition);
             savedCompetition.addCategory(category);
         }
@@ -100,16 +200,88 @@ public class CompetitionServiceImpl implements CompetitionService {
 
     @Override
     public Competition activate(Long id) {
-        Competition c = getByIdOrFail(id);
-        c.setActive(true);
-        return competitionRepository.save(c);
+        ActivateCompetitionCommand command = new ActivateCompetitionCommand(
+            id, competitionRepository
+        );
+        try {
+            commandExecutor.execute(command);
+            Competition competition = competitionRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+            notifyCompetitionObservers(new CompetitionActivatedEvent(competition));
+            return competition;
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to activate competition", e);
+        }
     }
 
     @Override
     public Competition deactivate(Long id) {
-        Competition c = getByIdOrFail(id);
-        c.setActive(false);
-        return competitionRepository.save(c);
+        DeactivateCompetitionCommand command = new DeactivateCompetitionCommand(
+            id, competitionRepository
+        );
+        try {
+            commandExecutor.execute(command);
+            Competition competition = competitionRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+            notifyCompetitionObservers(new CompetitionDeactivatedEvent(competition));
+            return competition;
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to deactivate competition", e);
+        }
+    }
+
+    @Override
+    public Competition openVoting(Long id) {
+        Competition competition = competitionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+        competition.openVoting();
+        competitionRepository.save(competition);
+        notifyCompetitionObservers(new CompetitionVotingOpenedEvent(competition));
+        return competition;
+    }
+
+    @Override
+    public Competition pauseVoting(Long id) {
+        Competition competition = competitionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+        competition.pauseVoting();
+        competitionRepository.save(competition);
+        notifyCompetitionObservers(new CompetitionVotingPausedEvent(competition));
+        return competition;
+    }
+
+    @Override
+    public Competition conclude(Long id) {
+        Competition competition = competitionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+        competition.conclude();
+        competitionRepository.save(competition);
+        notifyCompetitionObservers(new CompetitionConcludedEvent(competition));
+        return competition;
+    }
+
+    @Override
+    public Competition archive(Long id) {
+        Competition competition = competitionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+        competition.archive();
+        competitionRepository.save(competition);
+        notifyCompetitionObservers(new CompetitionArchivedEvent(competition));
+        return competition;
+    }
+
+    @Override
+    public Competition reopen(Long id) {
+        Competition competition = competitionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+        competition.reopen();
+        competitionRepository.save(competition);
+        notifyCompetitionObservers(new CompetitionReopenedEvent(competition));
+        return competition;
     }
 
     // ── Read Operations ──────────────────────────────────────────────────────
@@ -148,7 +320,7 @@ public class CompetitionServiceImpl implements CompetitionService {
     @Override
     @Transactional(readOnly = true)
     public List<Competition> getFinishedCompetitions() {
-        return competitionRepository.findByActiveFalse();
+        return competitionRepository.findAll(new CompetitionByStatusSpecification(false));
     }
 
     @Override
@@ -157,9 +329,7 @@ public class CompetitionServiceImpl implements CompetitionService {
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
             return findAll();
         }
-        return competitionRepository.findAll().stream()
-            .filter(comp -> comp.getName().toLowerCase().contains(searchTerm.toLowerCase()))
-            .toList();
+        return competitionRepository.findAll(new CompetitionByNameSpecification(searchTerm));
     }
 
     @Override
@@ -176,7 +346,15 @@ public class CompetitionServiceImpl implements CompetitionService {
     @Override
     @Transactional(readOnly = true)
     public List<Competition> getCompetitionsByCreator(String username) {
-        return competitionRepository.findByCreatedByIgnoreCase(username);
+        return competitionRepository.findAll(new CompetitionByCreatorSpecification(username));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Competition> getActiveCompetitionsByCreator(String username) {
+        Specification<Competition> spec = new CompetitionByStatusSpecification(true)
+            .and(new CompetitionByCreatorSpecification(username));
+        return competitionRepository.findAll(spec);
     }
 
     @Override
@@ -219,11 +397,6 @@ public class CompetitionServiceImpl implements CompetitionService {
         // Validate categories
         if (categories == null || categories.isEmpty()) {
             errors.add("• At least one category is required");
-        } else {
-            int totalWeight = categories.stream().mapToInt(CategoryDTO::getWeight).sum();
-            if (totalWeight != 100) {
-                errors.add("• Category weights must total exactly 100% (current: " + totalWeight + "%)");
-            }
         }
 
         // Validate checklist items for CHECKLIST vote type

@@ -3,6 +3,7 @@ package com.microslop.repository;
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
@@ -13,7 +14,7 @@ import java.util.List;
  * Provides database access methods for Category objects.
  */
 @Repository
-public interface CategoryRepository extends JpaRepository<Category, Long> {
+public interface CategoryRepository extends JpaRepository<Category, Long>, JpaSpecificationExecutor<Category> {
 
     /**
      * Find all categories belonging to a specific competition.

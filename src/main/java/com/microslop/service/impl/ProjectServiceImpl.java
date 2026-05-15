@@ -4,6 +4,10 @@ import com.microslop.entity.Project;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.ProjectRepository;
 import com.microslop.service.ProjectService;
+import com.microslop.specification.project.ProjectsByCompetitionSpecification;
+import com.microslop.specification.project.ProjectsByCreatorSpecification;
+import com.microslop.command.CommandExecutor;
+import com.microslop.command.project.CreateProjectCommand;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -14,11 +18,14 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
     private final CompetitionRepository competitionRepository;
+    private final CommandExecutor commandExecutor;
 
     public ProjectServiceImpl(ProjectRepository projectRepository,
-                              CompetitionRepository competitionRepository) {
+                              CompetitionRepository competitionRepository,
+                              CommandExecutor commandExecutor) {
         this.projectRepository = projectRepository;
         this.competitionRepository = competitionRepository;
+        this.commandExecutor = commandExecutor;
     }
 
     // ── Write Operations ────────────────────────────────────────────────────────────
@@ -46,7 +53,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public List<Project> listByCompetition(Long competitionId) {
-        return projectRepository.findByCompetitionId(competitionId);
+        return projectRepository.findAll(new ProjectsByCompetitionSpecification(competitionId));
     }
 
     @Override
@@ -70,6 +77,18 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Project> getJudgeRankingByCategory(Long categoryId) {
+        return projectRepository.findJudgeRankingByCategory(categoryId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Project> getPopularRankingByCategory(Long categoryId) {
+        return projectRepository.findPopularRankingByCategory(categoryId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Project> getUserProjects(String username) {
         List<Project> projects = projectRepository.findProjectsByParticipantUsername(username);
         // Access all fields within transaction to prevent lazy loading errors
@@ -83,5 +102,11 @@ public class ProjectServiceImpl implements ProjectService {
             }
         });
         return projects;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Project> getUserProjectsByUserId(Long userId) {
+        return projectRepository.findAll(new ProjectsByCreatorSpecification(userId));
     }
 }

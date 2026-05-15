@@ -59,4 +59,14 @@ public abstract class AbstractCommand<R> implements Command<R> {
     public String getDescription() {
         return this.getClass().getSimpleName();
     }
+
+    /**
+     * Returns the last result from the most recent command execution.
+     * This is useful for retrieving the return value of the command after execution.
+     *
+     * @return the result from the last execution, or null if the command has not been executed
+     */
+    public R getLastResult() {
+        return lastResult;
+    }
 }

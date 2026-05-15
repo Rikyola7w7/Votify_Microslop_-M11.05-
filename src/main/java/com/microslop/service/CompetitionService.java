@@ -3,11 +3,18 @@ package com.microslop.service;
 import com.microslop.dto.CompetitionDTO;
 import com.microslop.dto.CategoryDTO;
 import com.microslop.entity.Competition;
+import com.microslop.entity.CompetitionStatus;
+import com.microslop.observer.subject.CompetitionEventSubject;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-public interface CompetitionService {
+/**
+ * Service interface for competition management.
+ * Extends CompetitionEventSubject to support observer pattern for competition events.
+ * Handles competition lifecycle, creation, and state transitions.
+ */
+public interface CompetitionService extends CompetitionEventSubject {
     
     /**
      * Save an existing competition.
@@ -29,6 +36,16 @@ public interface CompetitionService {
     Competition activate(Long id);
 
     Competition deactivate(Long id);
+
+    Competition openVoting(Long id);
+
+    Competition pauseVoting(Long id);
+
+    Competition conclude(Long id);
+
+    Competition archive(Long id);
+
+    Competition reopen(Long id);
 
     Optional<Competition> getById(Long id);
 
@@ -52,6 +69,14 @@ public interface CompetitionService {
      * @return list of competitions created by this user
      */
     List<Competition> getCompetitionsByCreator(String username);
+
+    /**
+     * Get active competitions created by a specific user.
+     * Uses composed Specification pattern for DB-level filtering.
+     * @param username the username of the creator
+     * @return list of active competitions created by this user
+     */
+    List<Competition> getActiveCompetitionsByCreator(String username);
 
     /**
      * Validate competition creation input.

@@ -3,17 +3,14 @@ package com.microslop.views.components;
 import com.microslop.entity.Competition;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import java.time.format.DateTimeFormatter;
 
-/**
- * CompetitionCardComponent - A reusable card component displaying competition information.
- */
 public class CompetitionCardComponent extends Div {
 
     private final Competition competition;
@@ -24,173 +21,126 @@ public class CompetitionCardComponent extends Div {
     }
 
     private void buildCard() {
-        setWidth(280, Unit.PIXELS);
-        setHeight(380, Unit.PIXELS);
+        setWidth("100%");
+        setMaxWidth(280, Unit.PIXELS);
+        addClassName("votify-card");
         getStyle()
-            .set("background", "#ffffff")
-            .set("border-radius", "12px")
-            .set("box-shadow", "0 4px 6px rgba(0, 0, 0, 0.1)")
-            .set("padding", "24px")
+            .set("padding", "0")
             .set("display", "flex")
             .set("flex-direction", "column")
-            .set("justify-content", "space-between")
-            .set("cursor", "pointer")
-            .set("transition", "all 0.3s ease")
-            .set("border", "1px solid #e0e0e0")
-            .set("position", "relative");
-
-
-
-        addAttachListener(event -> {
-            getStyle().set("--hover-shadow", "0 8px 12px rgba(0, 0, 0, 0.15)");
-        });
-        
-        getElement().addEventListener("mouseenter", event ->
-            getStyle()
-                .set("box-shadow", "0 8px 12px rgba(0, 0, 0, 0.15)")
-                .set("transform", "translateY(-4px)")
-        );
-        getElement().addEventListener("mouseleave", event ->
-            getStyle()
-                .set("box-shadow", "0 4px 6px rgba(0, 0, 0, 0.1)")
-                .set("transform", "translateY(0)")
-        );
+            .set("overflow", "hidden");
 
         VerticalLayout cardContent = new VerticalLayout();
         cardContent.setPadding(false);
         cardContent.setSpacing(false);
         cardContent.setSizeFull();
 
-        Div iconContainer = createIconContainer();
+        Div ribbonStripe = createRibbonStripe();
+        Div iconBlock = createIconBlock();
+        Span statusBadge = createStatusBadge();
 
-        H3 competitionTitle = new H3(competition.getName());
-        
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        String startDateStr = "Start: " + competition.getStartDate().format(dateFormatter);
-        String endDateStr = "End: " + competition.getEndDate().format(dateFormatter);
-        
-        String truncatedDescription = truncateDescription(competition.getDescription(), 50);
-        H3 description = new H3(truncatedDescription);
-        H3 startdate = new H3(startDateStr);
-        H3 enddate = new H3(endDateStr);
-        
-        competitionTitle.getStyle()
-            .set("margin", "20px 0 10px 0")
-            .set("color", "#1a3a5c")
-            .set("font-size", "28px")
-            .set("font-weight", "600")
+        H3 title = new H3(competition.getName());
+        title.getStyle()
+            .set("margin", "12px 16px 4px")
+            .set("color", "var(--text-primary)")
+            .set("font-size", "18px")
+            .set("font-weight", "700")
             .set("text-align", "center");
 
+        String truncatedDescription = truncateDescription(competition.getDescription(), 60);
+        Span description = new Span(truncatedDescription);
         description.getStyle()
-            .set("margin", "20px 0 10px 0")
-            .set("color", "#1a3a5c")
-            .set("font-size", "20px")
-            .set("font-weight", "600")
-            .set("text-align", "left");
-        
-        startdate.getStyle()
-            //.set("margin", "20px 0 10px 0")
-            .set("color", "#1a3a5c")
-            .set("font-size", "20px")
-            .set("font-weight", "600")
-            .set("text-align", "left");
+            .set("color", "var(--text-muted)")
+            .set("font-size", "14px")
+            .set("text-align", "center")
+            .set("display", "block")
+            .set("padding", "0 16px");
 
-        enddate.getStyle()
-            //.set("margin", "20px 0 10px 0")
-            .set("color", "#1a3a5c")
-            .set("font-size", "20px")
-            .set("font-weight", "600")
-            .set("text-align", "left");
-        
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        Span startDate = new Span("Start: " + competition.getStartDate().format(dateFormatter));
+        startDate.getStyle()
+            .set("color", "var(--text-muted)")
+            .set("font-size", "13px")
+            .set("display", "block")
+            .set("padding", "0 16px")
+            .set("margin-top", "4px");
 
+        Span endDate = new Span("End: " + competition.getEndDate().format(dateFormatter));
+        endDate.getStyle()
+            .set("color", "var(--text-muted)")
+            .set("font-size", "13px")
+            .set("display", "block")
+            .set("padding", "0 16px");
 
-        Div statusIndicator = createStatusIndicator();
+        Button viewButton = createViewButton();
 
-        cardContent.add(iconContainer);
-        cardContent.add(statusIndicator);
-        cardContent.add(competitionTitle);
-        cardContent.add(startdate);
-        cardContent.add(enddate);
-        cardContent.add(description);
+        Div spacer = new Div();
+        spacer.setHeight(1, Unit.PIXELS);
+        spacer.setWidthFull();
+        spacer.getStyle().set("flex", "1");
 
+        cardContent.add(ribbonStripe, iconBlock, statusBadge, title, description, startDate, endDate, spacer, viewButton);
         add(cardContent);
-        add(createViewButton());
     }
 
-    private Div createIconContainer() {
+    private Div createRibbonStripe() {
+        Div ribbon = new Div();
+        ribbon.setWidthFull();
+        ribbon.setHeight(10, Unit.PIXELS);
+        ribbon.getStyle()
+            .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))")
+            .set("flex-shrink", "0");
+        return ribbon;
+    }
+
+    private Div createIconBlock() {
         Div iconContainer = new Div();
         iconContainer.setWidthFull();
-        iconContainer.setHeight(120, Unit.PIXELS);
+        iconContainer.setHeight(70, Unit.PIXELS);
         iconContainer.getStyle()
-            .set("background", "linear-gradient(135deg, #667eea 0%, #764ba2 100%)")
-            .set("border-radius", "8px")
+            .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))")
             .set("display", "flex")
             .set("align-items", "center")
-            .set("justify-content", "center");
+            .set("justify-content", "center")
+            .set("flex-shrink", "0");
 
         Icon chartIcon = VaadinIcon.CHART_3D.create();
-        chartIcon.setSize("64px");
+        chartIcon.setSize("40px");
         chartIcon.getElement().getStyle().set("color", "#ffffff");
 
         iconContainer.add(chartIcon);
         return iconContainer;
     }
 
-    private Div createStatusIndicator() {
-        Div statusContainer = new Div();
-        statusContainer.getStyle()
-            .set("display", "flex")
-            .set("align-items", "center")
-            .set("justify-content", "center")
-            .set("gap", "6px")
-            .set("padding", "4px 10px")
-            .set("border-radius", "12px")
-            .set("font-size", "11px")
-            .set("font-weight", "700")
-            .set("letter-spacing", "0.5px")
-            .set("text-transform", "uppercase")
-            .set("margin-top", "8px")
+    private Span createStatusBadge() {
+        Span badge = new Span();
+        badge.addClassName("votify-badge");
+        badge.getStyle()
+            .set("margin-top", "10px")
             .set("width", "fit-content")
             .set("align-self", "center");
 
         String label;
-        String bgColor;
-        String dotColor;
+        String badgeClass;
 
         if (competition.isActive()) {
-            label = "Activa";
-            bgColor = "rgba(76, 175, 80, 0.12)";
-            dotColor = "#4caf50";
+            label = "Active";
+            badgeClass = "votify-badge-active";
         } else {
             boolean hasEnded = competition.getEndDate() != null
                     && java.time.LocalDateTime.now().isAfter(competition.getEndDate());
             if (hasEnded) {
-                label = "Finalizada";
-                bgColor = "rgba(244, 67, 54, 0.12)";
-                dotColor = "#f44336";
+                label = "Finished";
+                badgeClass = "votify-badge-finished";
             } else {
-                label = "Pausada";
-                bgColor = "rgba(255, 152, 0, 0.12)";
-                dotColor = "#ff9800";
+                label = "Paused";
+                badgeClass = "votify-badge-paused";
             }
         }
 
-        statusContainer.getStyle()
-            .set("background", bgColor)
-            .set("color", dotColor);
-
-        Div statusDot = new Div();
-        statusDot.setWidth(8, Unit.PIXELS);
-        statusDot.setHeight(8, Unit.PIXELS);
-        statusDot.getStyle()
-            .set("border-radius", "50%")
-            .set("background-color", dotColor)
-            .set("flex-shrink", "0");
-
-        com.vaadin.flow.component.html.Span statusLabel = new com.vaadin.flow.component.html.Span(label);
-
-        statusContainer.add(statusDot, statusLabel);
-        return statusContainer;
+        badge.addClassName(badgeClass);
+        badge.add(new Span(label));
+        return badge;
     }
 
     private String truncateDescription(String description, int maxLength) {
@@ -204,24 +154,16 @@ public class CompetitionCardComponent extends Div {
     }
 
     private Button createViewButton() {
-        Button viewButton = new Button("VER");
-        viewButton.setWidthFull();
-        viewButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        Button viewButton = new Button("VIEW");
+        viewButton.setWidth("calc(100% - 32px)");
+        viewButton.addClassName("votify-btn-primary");
         viewButton.getStyle()
-            .set("margin-top", "20px")
-            .set("padding", "12px")
-            .set("font-weight", "600")
-            .set("font-size", "14px")
-            .set("letter-spacing", "0.5px")
-            .set("background", "#1e5ba8")
-            .set("color", "#ffffff")
-            .set("border-radius", "6px")
-            .set("cursor", "pointer")
-            .set("transition", "background-color 0.3s ease");
+            .set("margin", "12px 16px 16px")
+            .set("font-size", "14px");
 
         viewButton.addClickListener(event -> {
             getUI().ifPresent(ui -> ui.navigate(
-                "competition/" + competition.getId()
+                "competition/" + competition.getId() + "/categories"
             ));
         });
 

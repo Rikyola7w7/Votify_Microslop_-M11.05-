@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -104,7 +105,7 @@ class ProjectServiceImplTest {
         project2.setCompetition(competition);
 
         List<Project> projects = Arrays.asList(project1, project2);
-        when(projectRepository.findByCompetitionId(1L)).thenReturn(projects);
+        when(projectRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class))).thenReturn(projects);
 
         List<Project> result = projectService.listByCompetition(1L);
 

@@ -65,10 +65,10 @@ class VoteEntityTest {
         assertThat(vote.getVoteDate()).isEqualTo(voteDate);
     }
 
-    @Test
-    void should_have_default_points() {
-        assertThat(vote.getPoints()).isEqualTo(0);
-    }
+     @Test
+     void should_have_default_points() {
+         assertThat(vote.getPoints()).isEqualTo(1);
+     }
 
     @Test
     void should_update_points() {

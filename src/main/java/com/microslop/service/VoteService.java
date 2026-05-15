@@ -1,7 +1,10 @@
 package com.microslop.service;
 
+import com.microslop.entity.Vote;
+import com.microslop.observer.subject.VoteEventSubject;
+import java.util.List;
 
-public interface VoteService {
+public interface VoteService extends VoteEventSubject {
 
     void submitVote(String userUsername, Long projectId, Long categoryId);
 
@@ -21,7 +24,7 @@ public interface VoteService {
 
     long countPointsByUserAndCategory(Long userId, Long categoryId);
 
-    void submitScaleVote(String userUsername, Long projectId, Long categoryId, int score);
+void submitScaleVote(String userUsername, Long projectId, Long categoryId, int score);
 
     double getAverageScoreByProject(Long projectId);
 
@@ -30,4 +33,14 @@ public interface VoteService {
     long getSumScoreByProject(Long projectId);
 
     long getSumScoreByProjectAndCategory(Long projectId, Long categoryId);
+
+    List<Vote> getVotesByUser(Long userId);
+
+    List<Vote> getVotesByProject(Long projectId);
+
+    List<Vote> getVotesByCategory(Long categoryId);
+
+    List<Vote> getVotesByUserAndProject(Long userId, Long projectId);
+
+    com.microslop.strategy.StrategyRegistry getStrategyRegistry();
 }

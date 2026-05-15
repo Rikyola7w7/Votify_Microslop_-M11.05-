@@ -3,15 +3,10 @@ package com.microslop.views.components;
 import com.microslop.entity.ProjectComment;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 
 import java.time.format.DateTimeFormatter;
 
-/**
- * ProjectCommentCardComponent - A reusable card component displaying a project comment.
- * Used in ProjectDetailsView to show all comments associated with a project.
- */
 public class ProjectCommentCardComponent extends Div {
 
     private final ProjectComment projectComment;
@@ -23,19 +18,13 @@ public class ProjectCommentCardComponent extends Div {
 
     private void buildCard() {
         setWidthFull();
+        addClassName("chat-bubble");
         getStyle()
-            .set("background", "#ffffff")
-            .set("border-radius", "8px")
-            .set("padding", "20px")
-            .set("margin-bottom", "16px")
-            .set("box-shadow", "0 2px 6px rgba(0, 0, 0, 0.08)")
             .set("display", "flex")
-            .set("gap", "16px");
+            .set("gap", "12px")
+            .set("margin-bottom", "12px");
 
-        // Avatar
         Avatar avatar = createAvatar();
-
-        // Content
         Div content = createContentDiv();
 
         add(avatar, content);
@@ -45,8 +34,8 @@ public class ProjectCommentCardComponent extends Div {
         Avatar avatar = new Avatar();
         avatar.setName(projectComment.getUsername());
         avatar.getStyle()
-            .set("width", "48px")
-            .set("height", "48px")
+            .set("width", "40px")
+            .set("height", "40px")
             .set("flex-shrink", "0");
         return avatar;
     }
@@ -55,30 +44,28 @@ public class ProjectCommentCardComponent extends Div {
         Div content = new Div();
         content.getStyle().set("flex", "1");
 
-        // User name
-        H2 userName = new H2(projectComment.getUsername());
+        Span userName = new Span(projectComment.getUsername());
         userName.getStyle()
-            .set("margin", "0 0 4px 0")
-            .set("color", "#1a3a5c")
-            .set("font-size", "16px")
-            .set("font-weight", "600");
+            .set("color", "var(--primary)")
+            .set("font-size", "14px")
+            .set("font-weight", "700")
+            .set("display", "block");
 
-        // Comment date
-        Paragraph dateText = new Paragraph(
+        Span dateText = new Span(
             projectComment.getCreationDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
         );
         dateText.getStyle()
-            .set("margin", "0 0 12px 0")
-            .set("color", "#999")
-            .set("font-size", "12px");
+            .set("color", "var(--text-muted)")
+            .set("font-size", "12px")
+            .set("display", "block")
+            .set("margin-bottom", "6px");
 
-        // Comment text
-        Div commentText = new Div();
-        commentText.setText(projectComment.getCommentText());
+        Span commentText = new Span(projectComment.getCommentText());
         commentText.getStyle()
-            .set("color", "#333")
+            .set("color", "var(--text-primary)")
             .set("font-size", "14px")
             .set("line-height", "1.5")
+            .set("display", "block")
             .set("word-wrap", "break-word");
 
         content.add(userName, dateText, commentText);

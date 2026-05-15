@@ -1,5 +1,6 @@
 package com.microslop.entity;
 
+import com.microslop.state.CompetitionState;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import lombok.Data;
@@ -35,6 +36,10 @@ public class Competition {
     @Column(nullable = false, name = "active")
     private boolean active = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private CompetitionStatus status = CompetitionStatus.DRAFT;
+
     @Column(name = "event_type", length = 100)
     private String eventType;
 
@@ -58,7 +63,7 @@ public class Competition {
     @Column(name = "standard_user_weight_multiplier", columnDefinition = "double default 1.0")
     private Double standardUserWeightMultiplier = 1.0;
 
-    @Column(name = "vote_type", length = 20)
+@Column(name = "vote_type", length = 20)
     private String voteType = "NORMAL"; // NORMAL, CHECKLIST, SCALE
 
     @Column(name = "scale_min")
@@ -66,6 +71,12 @@ public class Competition {
 
     @Column(name = "scale_max")
     private Integer scaleMax = 10;
+
+    @Column(name = "voting_strategy_type", length = 50)
+    private String votingStrategyType = "ALL";
+
+    @Column(name = "ranking_strategy_type", length = 50)
+    private String rankingStrategyType = "WEIGHTED";
 
     public static com.microslop.builder.CompetitionBuilder builder() {
         return com.microslop.builder.CompetitionBuilder.builder();
@@ -131,7 +142,7 @@ public class Competition {
         judge.setCompetition(null);
     }
 
-    public void addChecklistItem(ChecklistItem item) {
+public void addChecklistItem(ChecklistItem item) {
         checklistItems.add(item);
         item.setCompetition(this);
     }
@@ -139,6 +150,71 @@ public class Competition {
     public void removeChecklistItem(ChecklistItem item) {
         checklistItems.remove(item);
         item.setCompetition(null);
+    }
+
+    // ── State Pattern Methods ─────────────────────────────────────────────
+
+    public void activate() {
+        this.status.getState().activate(this);
+    }
+
+    public void deactivate() {
+        this.status.getState().deactivate(this);
+    }
+
+    public void openVoting() {
+        this.status.getState().openVoting(this);
+    }
+
+    public void pauseVoting() {
+        this.status.getState().pauseVoting(this);
+    }
+
+    public void conclude() {
+        this.status.getState().conclude(this);
+    }
+
+    public void archive() {
+        this.status.getState().archive(this);
+    }
+
+    public void reopen() {
+        this.status.getState().reopen(this);
+    }
+
+    public boolean canVote() {
+        return status != null && status.getState().canVote();
+    }
+
+    public boolean canSubmitProjects() {
+        return status != null && status.getState().canSubmitProjects();
+    }
+
+    public boolean canEditConfiguration() {
+        return status != null && status.getState().canEditConfiguration();
+    }
+
+    public boolean isTerminal() {
+        return status != null && status.getState().isTerminal();
+    }
+
+    public boolean isActive() {
+        return status != null && status.getState().isActiveLegacy();
+    }
+
+    @Deprecated
+    public void setActive(boolean active) {
+        if (active) {
+            if (this.status == null || this.status == CompetitionStatus.DRAFT
+                    || this.status == CompetitionStatus.CONCLUDED) {
+                this.status = CompetitionStatus.ACTIVE;
+            }
+        } else {
+            if (this.status == CompetitionStatus.ACTIVE
+                    || this.status == CompetitionStatus.VOTING_OPEN) {
+                this.status = CompetitionStatus.DRAFT;
+            }
+        }
     }
 
     // ── Getters and Setters for Voting Configuration ────────────────────
@@ -182,11 +258,43 @@ public class Competition {
         this.standardUserWeightMultiplier = standardUserWeightMultiplier;
     }
 
-    public String getVoteType() {
+public String getVoteType() {
         return voteType;
     }
 
     public void setVoteType(String voteType) {
         this.voteType = voteType;
+    }
+
+    public Integer getScaleMin() {
+        return scaleMin;
+    }
+
+    public void setScaleMin(Integer scaleMin) {
+        this.scaleMin = scaleMin;
+    }
+
+    public Integer getScaleMax() {
+        return scaleMax;
+    }
+
+    public void setScaleMax(Integer scaleMax) {
+        this.scaleMax = scaleMax;
+    }
+
+    public String getVotingStrategyType() {
+        return votingStrategyType;
+    }
+
+    public void setVotingStrategyType(String votingStrategyType) {
+        this.votingStrategyType = votingStrategyType;
+    }
+
+    public String getRankingStrategyType() {
+        return rankingStrategyType;
+    }
+
+    public void setRankingStrategyType(String rankingStrategyType) {
+        this.rankingStrategyType = rankingStrategyType;
     }
 }

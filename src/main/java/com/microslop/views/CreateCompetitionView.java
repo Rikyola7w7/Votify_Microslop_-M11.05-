@@ -12,6 +12,7 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -19,9 +20,9 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -33,11 +34,6 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * View for creating a new competition.
- * Provides a form with fields for competition details, event type, voting window, and categories.
- * Route: /:username/competitions/create-competition
- */
 @Route(value = ":username/competitions/create-competition", layout = MainLayout.class)
 @PageTitle("Create Competition | Votify")
 public class CreateCompetitionView extends VerticalLayout implements BeforeEnterObserver {
@@ -52,11 +48,10 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
     private final DatePicker endDatePicker;
     private final ComboBox<String> voteTypeCombo;
     private final TextField categoryNameField;
-    private final IntegerField categoryWeightField;
     private final VerticalLayout categoriesContainer;
-    private final Span categoryTotalWeightSpan;
+    private final Span categoryCountSpan;
     private final List<CategoryDTO> selectedCategories;
-    
+
     private final TextField judgeUsernameField;
     private final VerticalLayout judgesContainer;
     private final List<String> selectedJudges;
@@ -96,48 +91,66 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         this.selectedJudges = new ArrayList<>();
         this.selectedChecklistItems = new ArrayList<>();
 
-        setSpacing(true);
+        setSizeFull();
         setPadding(true);
-        setWidth("100%");
-        setMaxWidth("800px");
-        getStyle().set("margin", "0 auto");
+        setSpacing(true);
+        getStyle().set("background", "var(--background)");
 
-        // ── Header ──────────────────────────────────────────────────────────────
+        HorizontalLayout header = new HorizontalLayout();
+        header.addClassName("votify-header");
+        header.setWidthFull();
+        header.setAlignItems(Alignment.CENTER);
+
+        Button backButton = new Button("Back");
+        backButton.addClassName("votify-btn-secondary");
+        backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        backButton.addClickListener(e -> navigateBack());
+
         H2 title = new H2("Create Competition");
-        title.getStyle().set("color", "#1a3a5c").set("margin-bottom", "2em");
+        title.getStyle().set("color", "var(--dark)").set("margin", "0").set("font-weight", "800");
 
-        // ── Form Layout ─────────────────────────────────────────────────────────
+        header.add(backButton, title);
+
+        VerticalLayout contentCard = new VerticalLayout();
+        contentCard.addClassName("votify-card-static");
+        contentCard.addClassName("animate-fade-in");
+        contentCard.setMaxWidth("800px");
+        contentCard.setWidth("100%");
+        contentCard.setPadding(true);
+        contentCard.setSpacing(true);
+        contentCard.getStyle().set("margin", "20px auto 0 auto");
+
         FormLayout formLayout = new FormLayout();
         formLayout.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0px", 1),
                 new FormLayout.ResponsiveStep("600px", 2)
         );
 
-        // Competition Name
         competitionNameField = new TextField("Competition Name *");
+        competitionNameField.addClassName("votify-input");
         competitionNameField.setPlaceholder("Enter competition name (max 20 characters)");
         competitionNameField.setWidth("100%");
         competitionNameField.setMaxLength(20);
 
-        // Description
         descriptionArea = new TextArea("Description");
+        descriptionArea.addClassName("votify-input");
         descriptionArea.setPlaceholder("Enter competition description");
         descriptionArea.setWidth("100%");
         descriptionArea.setHeight("100px");
 
-        // Event Type
         eventTypeCombo = new ComboBox<>("Event Type *");
+        eventTypeCombo.addClassName("votify-input");
         eventTypeCombo.setItems("Tech", "Art", "Music", "Sports", "Business", "Education", "Other");
         eventTypeCombo.setAllowCustomValue(true);
         eventTypeCombo.setWidth("100%");
 
-        // Start Date (Voting Window)
         startDatePicker = new DatePicker("Start Date *");
+        startDatePicker.addClassName("votify-input");
         startDatePicker.setWidth("100%");
         startDatePicker.setValue(LocalDate.now());
 
-        // End Date (Voting Window)
         endDatePicker = new DatePicker("End Date *");
+        endDatePicker.addClassName("votify-input");
         endDatePicker.setWidth("100%");
         endDatePicker.setValue(LocalDate.now().plusDays(7));
 
@@ -157,88 +170,76 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
                 voteTypeCombo
         );
 
-        // ── Categories Section ──────────────────────────────────────────────────
-        Span categoriesTitle = new Span("Categories");
+        H4 categoriesTitle = new H4("Categories");
         categoriesTitle.getStyle()
-                .set("font-weight", "bold")
-                .set("font-size", "16px")
-                .set("color", "#1a3a5c")
-                .set("margin-top", "1em");
+                .set("font-weight", "700")
+                .set("color", "var(--dark)")
+                .set("margin", "16px 0 8px 0");
 
-        // Category Input Fields
         HorizontalLayout categoryInputLayout = new HorizontalLayout();
         categoryInputLayout.setSpacing(true);
         categoryInputLayout.setAlignItems(Alignment.END);
 
         categoryNameField = new TextField("Category Name");
+        categoryNameField.addClassName("votify-input");
         categoryNameField.setPlaceholder("e.g., Gaming, Design, etc.");
         categoryNameField.setWidth("200px");
 
-        categoryWeightField = new IntegerField("Weight (%)");
-        categoryWeightField.setValue(1);
-        categoryWeightField.setMin(1);
-        categoryWeightField.setMax(100);
-        categoryWeightField.setWidth("200px");
-        categoryWeightField.setHelperText("Enter weight as percentage");
-
         Button addCategoryButton = new Button("Add Category");
-        addCategoryButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        addCategoryButton.addClassName("votify-btn-primary");
         addCategoryButton.setIcon(new Icon(VaadinIcon.PLUS));
         addCategoryButton.addClickListener(e -> addCategory());
 
-        categoryInputLayout.add(categoryNameField, categoryWeightField, addCategoryButton);
+        categoryInputLayout.add(categoryNameField, addCategoryButton);
 
-        // Total Weight Indicator
-        categoryTotalWeightSpan = new Span("Total Weight: 0%");
-        categoryTotalWeightSpan.getStyle().set("font-weight", "bold").set("color", "#ff6b6b");
+        categoryCountSpan = new Span("0 categories added");
+        categoryCountSpan.getStyle().set("font-weight", "bold").set("color", "var(--text-muted)");
 
-        // Categories Display Container
         categoriesContainer = new VerticalLayout();
         categoriesContainer.setSpacing(true);
         categoriesContainer.setPadding(false);
         categoriesContainer.setWidth("100%");
-        categoriesContainer.getStyle().set("border", "1px solid #e0e0e0")
-                .set("border-radius", "4px")
+        categoriesContainer.getStyle()
+                .set("border", "1px solid var(--border)")
+                .set("border-radius", "var(--radius-sm)")
                 .set("padding", "10px")
-                .set("background-color", "#f9f9f9")
+                .set("background-color", "var(--background)")
                 .set("min-height", "60px");
 
-        // ── Judges Section ──────────────────────────────────────────────────
-        Span judgesTitle = new Span("Judges");
+        H4 judgesTitle = new H4("Judges");
         judgesTitle.getStyle()
-                .set("font-weight", "bold")
-                .set("font-size", "16px")
-                .set("color", "#1a3a5c")
-                .set("margin-top", "1em");
+                .set("font-weight", "700")
+                .set("color", "var(--dark)")
+                .set("margin", "16px 0 8px 0");
 
-        // Judge Input Fields
         HorizontalLayout judgeInputLayout = new HorizontalLayout();
         judgeInputLayout.setSpacing(true);
         judgeInputLayout.setAlignItems(Alignment.END);
 
         judgeUsernameField = new TextField("Judge Username");
+        judgeUsernameField.addClassName("votify-input");
         judgeUsernameField.setPlaceholder("Enter judge username");
         judgeUsernameField.setWidth("250px");
 
         Button addJudgeButton = new Button("Add Judge");
-        addJudgeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        addJudgeButton.addClassName("votify-btn-primary");
         addJudgeButton.setIcon(new Icon(VaadinIcon.PLUS));
         addJudgeButton.addClickListener(e -> addJudge());
 
         judgeInputLayout.add(judgeUsernameField, addJudgeButton);
 
-        // Judges Display Container
         judgesContainer = new VerticalLayout();
         judgesContainer.setSpacing(true);
         judgesContainer.setPadding(false);
         judgesContainer.setWidth("100%");
-        judgesContainer.getStyle().set("border", "1px solid #e0e0e0")
-                .set("border-radius", "4px")
+        judgesContainer.getStyle()
+                .set("border", "1px solid var(--border)")
+                .set("border-radius", "var(--radius-sm)")
                 .set("padding", "10px")
-                .set("background-color", "#f9f9f9")
+                .set("background-color", "var(--background)")
                 .set("min-height", "60px");
 
-        // ── Checklist Items Section ─────────────────────────────────────────────
+// ── Checklist Items Section ─────────────────────────────────────────────
         Span checklistTitle = new Span("Checklist Items");
         checklistTitle.getStyle()
                 .set("font-weight", "bold")
@@ -319,27 +320,23 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
             checklistSection.setVisible(isChecklist);
             scaleSection.setVisible(isScale);
         });
-
         HorizontalLayout buttonsLayout = new HorizontalLayout();
         buttonsLayout.setSpacing(true);
         buttonsLayout.setJustifyContentMode(JustifyContentMode.END);
 
         Button cancelButton = new Button("Cancel", e -> navigateBack());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancelButton.addClassName("votify-btn-secondary");
 
         Button createButton = new Button("Create", e -> createCompetition());
-        createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        createButton.getStyle().set("background-color", "#1e5ba8");
+        createButton.addClassName("votify-btn-primary");
 
         buttonsLayout.add(cancelButton, createButton);
 
-        // ── Assemble the view ───────────────────────────────────────────────────
-        add(
-                title,
+        contentCard.add(
                 formLayout,
                 categoriesTitle,
                 categoryInputLayout,
-                categoryTotalWeightSpan,
+                categoryCountSpan,
                 categoriesContainer,
                 judgesTitle,
                 judgeInputLayout,
@@ -349,29 +346,19 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
                 createEmptySpace(),
                 buttonsLayout
         );
+
+        add(header, contentCard);
     }
 
-    /**
-     * Add a category to the selected categories list and display it.
-     */
     private void addCategory() {
         String categoryName = categoryNameField.getValue().trim();
-        Integer weight = categoryWeightField.getValue();
 
-        // Validation
         if (categoryName == null || categoryName.trim().isEmpty()) {
-            Notification notification = Notification.show("Please select or enter a category name.");
+            Notification notification = Notification.show("Please enter a category name.");
             notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
             return;
         }
 
-        if (weight == null || weight < 1) {
-            Notification notification = Notification.show("Weight must be at least 1.");
-            notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
-            return;
-        }
-
-        // Check if category already added
         boolean alreadyExists = selectedCategories.stream()
                 .anyMatch(cat -> cat.getName().equalsIgnoreCase(categoryName));
         if (alreadyExists) {
@@ -380,54 +367,31 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
             return;
         }
 
-        // Calculate total weight with new category
-        int currentTotal = selectedCategories.stream().mapToInt(CategoryDTO::getWeight).sum();
-        int newTotal = currentTotal + weight;
-
-        // Validate that total does not exceed 100
-        if (newTotal > 100) {
-            Notification notification = Notification.show("Total weight cannot exceed 100%. Current: " + currentTotal + "% + " + weight + "% = " + newTotal + "%");
-            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            return;
-        }
-
-        // Create and add category
-        CategoryDTO category = new CategoryDTO(categoryName, weight);
+        CategoryDTO category = new CategoryDTO(categoryName);
         selectedCategories.add(category);
         displayCategory(category);
-        updateCategoryTotalWeight();
+        updateCategoryCount();
 
-        // Reset fields
         categoryNameField.clear();
-        categoryWeightField.setValue(1);
     }
 
-    /**
-     * Update the category total weight indicator.
-     */
-    private void updateCategoryTotalWeight() {
-        int totalWeight = selectedCategories.stream().mapToInt(CategoryDTO::getWeight).sum();
-        String status = totalWeight == 100 ? "✓ Complete" : "Remaining: " + (100 - totalWeight) + "%";
-        String color = totalWeight == 100 ? "#4caf50" : (totalWeight > 100 ? "#ff6b6b" : "#ff6b6b");
-        
-        categoryTotalWeightSpan.setText("Total Weight: " + totalWeight + "% - " + status);
-        categoryTotalWeightSpan.getStyle().set("color", color);
+    private void updateCategoryCount() {
+        int count = selectedCategories.size();
+        categoryCountSpan.setText(count + " categor" + (count == 1 ? "y" : "ies") + " added");
+        categoryCountSpan.getStyle().set("color", count > 0 ? "var(--success)" : "var(--text-muted)");
     }
 
-    /**
-     * Display a category in the categories container.
-     */
     private void displayCategory(CategoryDTO category) {
         HorizontalLayout categoryItem = new HorizontalLayout();
         categoryItem.setAlignItems(Alignment.CENTER);
         categoryItem.setWidth("100%");
         categoryItem.getStyle()
-                .set("background-color", "white")
+                .set("background-color", "var(--surface)")
                 .set("padding", "10px")
-                .set("border-radius", "4px")
-                .set("border", "1px solid #ddd");
+                .set("border-radius", "var(--radius-sm)")
+                .set("border", "1px solid var(--border)");
 
-        Span categoryLabel = new Span(category.getName() + " (Weight: " + category.getWeight() + ")");
+        Span categoryLabel = new Span(category.getName());
         categoryLabel.getStyle().set("flex-grow", "1");
 
         Button removeButton = new Button(new Icon(VaadinIcon.TRASH));
@@ -435,17 +399,14 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         removeButton.addClickListener(e -> {
             selectedCategories.remove(category);
             categoriesContainer.remove(categoryItem);
-            updateCategoryTotalWeight();
+            updateCategoryCount();
         });
 
         categoryItem.add(categoryLabel, removeButton);
         categoriesContainer.add(categoryItem);
     }
 
-    /**
-     * Add a checklist item to the selected list and display it.
-     */
-    private void addChecklistItem() {
+private void addChecklistItem() {
         String itemText = checklistItemField.getValue().trim();
 
         if (itemText.isEmpty()) {
@@ -467,9 +428,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         checklistItemField.clear();
     }
 
-    /**
-     * Display a checklist item in the container.
-     */
     private void displayChecklistItem(String itemText) {
         HorizontalLayout itemLayout = new HorizontalLayout();
         itemLayout.setAlignItems(Alignment.CENTER);
@@ -494,20 +452,15 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         checklistItemsContainer.add(itemLayout);
     }
 
-    /**
-     * Add a judge to the selected judges list and display it.
-     */
     private void addJudge() {
         String judgeUsername = judgeUsernameField.getValue().trim();
 
-        // Validation - empty field
         if (judgeUsername.isEmpty()) {
             Notification notification = Notification.show("Please enter a judge username.");
             notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
             return;
         }
 
-        // Validation - check if user exists
         boolean userExists = userService.searchByUsernameIgnoreCase(judgeUsername).isPresent();
         if (!userExists) {
             Notification notification = Notification.show("Judge user not found: " + judgeUsername);
@@ -515,7 +468,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
             return;
         }
 
-        // Check if judge already added
         boolean alreadyExists = selectedJudges.stream()
                 .anyMatch(judge -> judge.equalsIgnoreCase(judgeUsername));
         if (alreadyExists) {
@@ -524,26 +476,21 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
             return;
         }
 
-        // Add judge
         selectedJudges.add(judgeUsername);
         displayJudge(judgeUsername);
 
-        // Reset field
         judgeUsernameField.clear();
     }
 
-    /**
-     * Display a judge in the judges container.
-     */
     private void displayJudge(String judgeUsername) {
         HorizontalLayout judgeItem = new HorizontalLayout();
         judgeItem.setAlignItems(Alignment.CENTER);
         judgeItem.setWidth("100%");
         judgeItem.getStyle()
-                .set("background-color", "white")
+                .set("background-color", "var(--surface)")
                 .set("padding", "10px")
-                .set("border-radius", "4px")
-                .set("border", "1px solid #ddd");
+                .set("border-radius", "var(--radius-sm)")
+                .set("border", "1px solid var(--border)");
 
         Span judgeLabel = new Span("@" + judgeUsername);
         judgeLabel.getStyle().set("flex-grow", "1");
@@ -558,8 +505,8 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         judgeItem.add(judgeLabel, removeButton);
         judgesContainer.add(judgeItem);
     }
+
     private void createCompetition() {
-        // Get and trim values
         String competitionName = competitionNameField.getValue().trim();
         String description = descriptionArea.getValue().trim();
         String eventType = eventTypeCombo.getValue();
@@ -575,7 +522,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
             voteType = "NORMAL";
         }
 
-        // Validate all required fields using service
         List<String> errors = competitionService.validateCompetitionCreation(
                 competitionName,
                 eventType,
@@ -593,7 +539,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
             return;
         }
 
-        // Get logged-in user
         User loggedUser = VaadinSession.getCurrent().getAttribute(User.class);
         if (loggedUser == null) {
             Notification notification = Notification.show("You must be logged in to create a competition.");
@@ -602,7 +547,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         }
 
         try {
-            // Create DTO
             CompetitionDTO dto = new CompetitionDTO(
                     competitionName,
                     description,
@@ -618,17 +562,15 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
                 dto.setScaleMax(scaleMaxField.getValue() != null ? scaleMaxField.getValue() : 10);
             }
 
-            // Add categories
             for (CategoryDTO category : selectedCategories) {
                 dto.addCategory(category);
             }
 
-            // Add judges
             for (String judgeUsername : selectedJudges) {
                 dto.addJudgeUsername(judgeUsername);
             }
 
-            // Add checklist items
+// Add checklist items
             for (String itemText : selectedChecklistItems) {
                 dto.addChecklistItem(new com.microslop.dto.ChecklistItemDTO(itemText));
             }
@@ -636,11 +578,9 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
             // Save competition
             competitionService.createCompetition(loggedUser.getUsername(), dto);
 
-            // Success notification
             Notification success = Notification.show("Competition created successfully!");
             success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
-            // Navigate back to competitions
             String username = userService.getCurrentUsername();
             getUI().ifPresent(ui -> ui.navigate(username + "/competitions"));
 
@@ -653,9 +593,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         }
     }
 
-    /**
-     * Navigate back to the previous page.
-     */
     private void navigateBack() {
         String username = userService.getCurrentUsername();
         if (username != null) {
@@ -665,9 +602,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         }
     }
 
-    /**
-     * Create an empty spacer component.
-     */
     private VerticalLayout createEmptySpace() {
         VerticalLayout space = new VerticalLayout();
         space.setHeight("0px");

@@ -1,7 +1,6 @@
 package com.microslop.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,10 +22,6 @@ public class Category {
 
     @Column(nullable = false, name = "name")
     private String name;
-
-    @Column(nullable = false, name = "weight")
-    @Min(value = 1, message = "Category weight must be at least 1")
-    private Integer weight;
 
     @ManyToOne
     @JoinColumn(name = "competition_id", nullable = false)
