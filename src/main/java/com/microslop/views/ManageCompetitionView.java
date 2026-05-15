@@ -8,6 +8,7 @@ import com.microslop.service.UserService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
@@ -50,9 +51,11 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         this.competitionService = competitionService;
         this.userService = userService;
         setSizeFull();
-        setPadding(true);
-        setSpacing(true);
-        getStyle().set("background", "var(--background)");
+        setPadding(false);
+        setSpacing(false);
+        getStyle()
+            .set("background", "var(--background)")
+            .set("overflow-y", "auto");
     }
 
     @Override
@@ -90,14 +93,20 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
 
     private void buildUI() {
         removeAll();
-        setAlignItems(Alignment.CENTER);
+        setAlignItems(FlexComponent.Alignment.CENTER);
+
+        Div scrollContainer = new Div();
+        scrollContainer.setWidthFull();
+        scrollContainer.getStyle()
+            .set("overflow-y", "auto")
+            .set("height", "calc(100vh - 64px)");
 
         HorizontalLayout header = new HorizontalLayout();
         header.addClassName("votify-header");
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        Button backButton = new Button("← Back to Dashboard");
+        Button backButton = new Button("Back to Dashboard");
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/competitions")));
@@ -108,10 +117,12 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         mainContent.addClassName("votify-card-static");
         mainContent.addClassName("animate-fade-in");
         mainContent.setMaxWidth("800px");
-        mainContent.setWidth("100%");
+        mainContent.setWidthFull();
         mainContent.setPadding(true);
         mainContent.setSpacing(true);
-        mainContent.getStyle().set("margin-top", "20px");
+        mainContent.getStyle()
+            .set("margin", "20px auto 40px auto")
+            .set("box-sizing", "border-box");
 
         H2 title = new H2(competition.getName());
         title.getStyle()
@@ -210,7 +221,8 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         actionsLayout.add(pauseButton, resumeButton, endNowButton, reopenButton);
 
         mainContent.add(title, description, statusLayout, sectionTitle, datesContainer, actionsLayout);
-        add(header, mainContent);
+        scrollContainer.add(header, mainContent);
+        add(scrollContainer);
     }
 
     private void updateUIState() {

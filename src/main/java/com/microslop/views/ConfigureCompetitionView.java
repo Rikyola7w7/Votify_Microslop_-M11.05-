@@ -14,6 +14,7 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
@@ -90,11 +91,11 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         this.categoriesToAdd = new java.util.ArrayList<>();
 
         setSizeFull();
-        setPadding(true);
-        setSpacing(true);
+        setPadding(false);
+        setSpacing(false);
         getStyle()
             .set("background", "var(--background)")
-            .set("overflow", "auto");
+            .set("overflow-y", "auto");
     }
 
     @Override
@@ -139,6 +140,12 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private void initializeView() {
         removeAll();
 
+        Div scrollContainer = new Div();
+        scrollContainer.setWidthFull();
+        scrollContainer.getStyle()
+            .set("overflow-y", "auto")
+            .set("height", "calc(100vh - 64px)");
+
         HorizontalLayout header = new HorizontalLayout();
         header.addClassName("votify-header");
         header.setWidthFull();
@@ -158,10 +165,12 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         contentCard.addClassName("votify-card-static");
         contentCard.addClassName("animate-fade-in");
         contentCard.setMaxWidth("800px");
-        contentCard.setWidth("100%");
+        contentCard.setWidthFull();
         contentCard.setPadding(true);
         contentCard.setSpacing(true);
-        contentCard.getStyle().set("margin", "20px auto 0 auto");
+        contentCard.getStyle()
+            .set("margin", "20px auto 40px auto")
+            .set("box-sizing", "border-box");
 
         VerticalLayout generalSection = buildGeneralSection();
         VerticalLayout participationSection = buildParticipationSection();
@@ -171,7 +180,8 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         HorizontalLayout buttonsLayout = buildButtonsLayout();
 
         contentCard.add(generalSection, participationSection, judgesSection, votingWeightSection, commentsSection, buttonsLayout);
-        add(header, contentCard);
+        scrollContainer.add(header, contentCard);
+        add(scrollContainer);
     }
 
     private VerticalLayout buildGeneralSection() {
