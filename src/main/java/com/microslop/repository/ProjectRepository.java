@@ -56,4 +56,25 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     @Query("SELECT p FROM Project p LEFT JOIN FETCH p.votes v LEFT JOIN FETCH v.user WHERE p.id = :projectId")
     Optional<Project> findByIdWithVotesAndUsers(@Param("projectId") Long projectId);
+
+    // Projects of a competition ordered by average scale score (descending)
+    @Query("""
+        SELECT p FROM Project p
+        LEFT JOIN p.votes v
+        WHERE p.competition.id = :competitionId
+        GROUP BY p
+        ORDER BY COALESCE(AVG(v.points), 0) DESC
+        """)
+    List<Project> findRankingByScaleCompetition(@Param("competitionId") Long competitionId);
+
+    // Projects with a specific category ordered by average scale score (descending)
+    @Query("""
+        SELECT p FROM Project p
+        LEFT JOIN p.votes v
+        LEFT JOIN p.categories c
+        WHERE c.id = :categoryId
+        GROUP BY p
+        ORDER BY COALESCE(AVG(v.points), 0) DESC
+        """)
+    List<Project> findRankingByScaleCategory(@Param("categoryId") Long categoryId);
 }

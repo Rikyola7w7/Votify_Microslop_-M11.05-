@@ -56,6 +56,9 @@ public class ProjectServiceImpl implements ProjectService {
         if (competition != null && "CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
             return projectRepository.findRankingByChecklistCompetition(competitionId);
         }
+        if (competition != null && "SCALE".equalsIgnoreCase(competition.getVoteType())) {
+            return projectRepository.findRankingByScaleCompetition(competitionId);
+        }
         return projectRepository.findRankingByCompetition(competitionId);
     }
 

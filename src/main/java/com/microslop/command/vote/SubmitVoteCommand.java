@@ -119,6 +119,10 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
             throw new IllegalStateException("This competition uses checklist voting. Please use the checklist voting interface.");
         }
 
+        if ("SCALE".equalsIgnoreCase(competition.getVoteType())) {
+            throw new IllegalStateException("This competition uses scale voting. Please use the scale voting interface.");
+        }
+
         // Validate competition is active
         if (!competition.isActive()) {
             boolean hasEnded = competition.getEndDate() != null

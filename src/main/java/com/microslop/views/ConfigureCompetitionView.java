@@ -96,8 +96,14 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
     // CHECKLIST Section
     private VerticalLayout checklistItemsContainer;
+    private VerticalLayout checklistSection;
     private java.util.List<ChecklistItem> checklistItemsToRemove;
     private java.util.List<ChecklistItem> checklistItemsToAdd;
+
+    // SCALE Section
+    private IntegerField scaleMinConfigField;
+    private IntegerField scaleMaxConfigField;
+    private VerticalLayout scaleConfigSection;
 
     // COMENTARIOS Section
     private ComboBox<String> commentsEnabledCombo;
@@ -175,6 +181,8 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         originalCompetition.setJudgeWeightMultiplier(currentCompetition.getJudgeWeightMultiplier());
         originalCompetition.setStandardUserWeightMultiplier(currentCompetition.getStandardUserWeightMultiplier());
         originalCompetition.setVoteType(currentCompetition.getVoteType());
+        originalCompetition.setScaleMin(currentCompetition.getScaleMin());
+        originalCompetition.setScaleMax(currentCompetition.getScaleMax());
     }
 
     private void initializeView() {
@@ -201,7 +209,8 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
         // ── VOTE TYPE & CHECKLIST Section ───────────────────────────────────────
         VerticalLayout voteTypeSection = buildVoteTypeSection();
-        VerticalLayout checklistSection = buildChecklistSection();
+        checklistSection = buildChecklistSection();
+        scaleConfigSection = buildScaleConfigSection();
 
         // ── VOTE WEIGHTING Section ────────────────────────────────────────
         VerticalLayout votingWeightSection = buildVotingWeightSection();
@@ -212,7 +221,11 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         // ── Buttons ─────────────────────────────────────────────────────────────
         HorizontalLayout buttonsLayout = buildButtonsLayout();
 
-        add(title, generalSection, participationSection, judgesSection, voteTypeSection, checklistSection, votingWeightSection, commentsSection, buttonsLayout);
+        add(title, generalSection, participationSection, judgesSection, voteTypeSection, checklistSection, scaleConfigSection, votingWeightSection, commentsSection, buttonsLayout);
+
+        // Set initial visibility based on current vote type
+        checklistSection.setVisible("CHECKLIST".equalsIgnoreCase(currentCompetition.getVoteType()));
+        scaleConfigSection.setVisible("SCALE".equalsIgnoreCase(currentCompetition.getVoteType()));
     }
 
     private VerticalLayout buildGeneralSection() {
@@ -729,10 +742,23 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             .set("margin-bottom", "15px");
 
         voteTypeCombo = new ComboBox<>("VOTING MODE");
-        voteTypeCombo.setItems("Normal", "Checklist");
-        voteTypeCombo.setValue("CHECKLIST".equalsIgnoreCase(currentCompetition.getVoteType()) ? "Checklist" : "Normal");
+        voteTypeCombo.setItems("Normal", "Checklist", "Scale (0-10)");
+        String currentVoteType = currentCompetition.getVoteType();
+        if ("SCALE".equalsIgnoreCase(currentVoteType)) {
+            voteTypeCombo.setValue("Scale (0-10)");
+        } else if ("CHECKLIST".equalsIgnoreCase(currentVoteType)) {
+            voteTypeCombo.setValue("Checklist");
+        } else {
+            voteTypeCombo.setValue("Normal");
+        }
         voteTypeCombo.setWidth("100%");
-        voteTypeCombo.addValueChangeListener(e -> markAsChanged());
+        voteTypeCombo.addValueChangeListener(e -> {
+            markAsChanged();
+            boolean isChecklist = "Checklist".equals(e.getValue());
+            boolean isScale = e.getValue() != null && e.getValue().startsWith("Scale");
+            checklistSection.setVisible(isChecklist);
+            scaleConfigSection.setVisible(isScale);
+        });
 
         section.add(sectionTitle, voteTypeCombo);
         return section;
@@ -837,6 +863,49 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         dialog.add(content);
         dialog.getFooter().add(cancelButton, saveButton);
         dialog.open();
+    }
+
+    private VerticalLayout buildScaleConfigSection() {
+        VerticalLayout section = new VerticalLayout();
+        section.setPadding(true);
+        section.setSpacing(true);
+        section.setWidth("100%");
+        section.getStyle()
+            .set("background", "white")
+            .set("border-radius", "8px")
+            .set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
+            .set("margin-bottom", "20px");
+
+        Span sectionTitle = new Span("SCALE CONFIGURATION");
+        sectionTitle.getStyle()
+            .set("font-weight", "bold")
+            .set("color", "#1a3a5c")
+            .set("font-size", "16px")
+            .set("margin-bottom", "15px");
+
+        FormLayout formLayout = new FormLayout();
+        formLayout.setResponsiveSteps(
+            new FormLayout.ResponsiveStep("0px", 2)
+        );
+
+        scaleMinConfigField = new IntegerField("Minimum Score");
+        scaleMinConfigField.setValue(currentCompetition.getScaleMin() != null ? currentCompetition.getScaleMin() : 0);
+        scaleMinConfigField.setMin(0);
+        scaleMinConfigField.setMax(100);
+        scaleMinConfigField.setWidth("100%");
+        scaleMinConfigField.addValueChangeListener(e -> markAsChanged());
+
+        scaleMaxConfigField = new IntegerField("Maximum Score");
+        scaleMaxConfigField.setValue(currentCompetition.getScaleMax() != null ? currentCompetition.getScaleMax() : 10);
+        scaleMaxConfigField.setMin(1);
+        scaleMaxConfigField.setMax(100);
+        scaleMaxConfigField.setWidth("100%");
+        scaleMaxConfigField.addValueChangeListener(e -> markAsChanged());
+
+        formLayout.add(scaleMinConfigField, scaleMaxConfigField);
+
+        section.add(sectionTitle, formLayout);
+        return section;
     }
 
     private VerticalLayout buildVotingWeightSection() {
@@ -1126,7 +1195,14 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         currentCompetition.setMaxVotesPerPerson(maxVotesPerPersonField.getValue());
         currentCompetition.setJudgeWeightMultiplier(judgeWeightField.getValue());
         currentCompetition.setStandardUserWeightMultiplier(standardUserWeightField.getValue());
-        currentCompetition.setVoteType("Checklist".equals(voteTypeCombo.getValue()) ? "CHECKLIST" : "NORMAL");
+        currentCompetition.setVoteType("Checklist".equals(voteTypeCombo.getValue()) ? "CHECKLIST" :
+                (voteTypeCombo.getValue() != null && voteTypeCombo.getValue().startsWith("Scale") ? "SCALE" : "NORMAL"));
+
+        // Update scale configuration
+        if ("SCALE".equalsIgnoreCase(currentCompetition.getVoteType())) {
+            currentCompetition.setScaleMin(scaleMinConfigField.getValue() != null ? scaleMinConfigField.getValue() : 0);
+            currentCompetition.setScaleMax(scaleMaxConfigField.getValue() != null ? scaleMaxConfigField.getValue() : 10);
+        }
 
         // Update comments configuration
         currentCompetition.setCommentsEnabled("YES".equals(commentsEnabledCombo.getValue()));

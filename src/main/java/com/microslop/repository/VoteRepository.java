@@ -52,4 +52,36 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
     /** Delete all votes for a specific category. */
     @Modifying
     long deleteByCategory_Id(Long categoryId);
+
+    /** Average score for a project (scale voting). */
+    @Query("""
+        SELECT COALESCE(AVG(v.points), 0) FROM Vote v
+        WHERE v.project.id = :projectId
+        """)
+    double avgScoreByProjectId(@Param("projectId") Long projectId);
+
+    /** Average score for a project in a specific category (scale voting). */
+    @Query("""
+        SELECT COALESCE(AVG(v.points), 0) FROM Vote v
+        WHERE v.project.id = :projectId
+        AND v.category.id = :categoryId
+        """)
+    double avgScoreByProjectIdAndCategoryId(@Param("projectId") Long projectId,
+                                            @Param("categoryId") Long categoryId);
+
+    /** Sum of scores for a project (scale voting). */
+    @Query("""
+        SELECT COALESCE(SUM(v.points), 0) FROM Vote v
+        WHERE v.project.id = :projectId
+        """)
+    long sumScoreByProjectId(@Param("projectId") Long projectId);
+
+    /** Sum of scores for a project in a specific category (scale voting). */
+    @Query("""
+        SELECT COALESCE(SUM(v.points), 0) FROM Vote v
+        WHERE v.project.id = :projectId
+        AND v.category.id = :categoryId
+        """)
+    long sumScoreByProjectIdAndCategoryId(@Param("projectId") Long projectId,
+                                          @Param("categoryId") Long categoryId);
 }

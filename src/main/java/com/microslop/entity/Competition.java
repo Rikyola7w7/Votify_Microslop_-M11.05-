@@ -59,7 +59,13 @@ public class Competition {
     private Double standardUserWeightMultiplier = 1.0;
 
     @Column(name = "vote_type", length = 20)
-    private String voteType = "NORMAL"; // NORMAL, CHECKLIST
+    private String voteType = "NORMAL"; // NORMAL, CHECKLIST, SCALE
+
+    @Column(name = "scale_min")
+    private Integer scaleMin = 0;
+
+    @Column(name = "scale_max")
+    private Integer scaleMax = 10;
 
     public static com.microslop.builder.CompetitionBuilder builder() {
         return com.microslop.builder.CompetitionBuilder.builder();

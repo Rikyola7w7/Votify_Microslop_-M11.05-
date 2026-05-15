@@ -38,14 +38,18 @@ public class PodiumCardComponent extends Div {
     }
 
     public PodiumCardComponent(Project project, Position position, long totalVotes) {
-        this(project, position, totalVotes, false);
+        this(project, position, totalVotes, false, false, 0);
     }
 
     public PodiumCardComponent(Project project, Position position, long totalVotes, boolean isChecklistMode) {
-        buildCard(project, position, totalVotes, isChecklistMode);
+        this(project, position, totalVotes, isChecklistMode, false, 0);
     }
 
-    private void buildCard(Project project, Position position, long totalVotes, boolean isChecklistMode) {
+    public PodiumCardComponent(Project project, Position position, long totalVotes, boolean isChecklistMode, boolean isScaleMode, double avgScore) {
+        buildCard(project, position, totalVotes, isChecklistMode, isScaleMode, avgScore);
+    }
+
+    private void buildCard(Project project, Position position, long totalVotes, boolean isChecklistMode, boolean isScaleMode, double avgScore) {
         getStyle()
             .set("background", position.getBgColor())
             .set("border", "2px solid " + position.getBorderColor())
@@ -74,16 +78,25 @@ public class PodiumCardComponent extends Div {
             .set("margin-bottom", "0.4rem")
             .set("color", "#1a1a2e");
 
-        String votesLabel = isChecklistMode
-                ? (position.isGold() ? "Total Checks:" : "Checks:")
-                : (position.isGold() ? "Total Votes:" : "Votes:");
+        String votesLabel;
+        String displayValue;
+        if (isScaleMode) {
+            votesLabel = position.isGold() ? "Avg. Score:" : "Score:";
+            displayValue = String.format("%.1f", avgScore);
+        } else if (isChecklistMode) {
+            votesLabel = position.isGold() ? "Total Checks:" : "Checks:";
+            displayValue = formatNumber(totalVotes);
+        } else {
+            votesLabel = position.isGold() ? "Total Votes:" : "Votes:";
+            displayValue = formatNumber(totalVotes);
+        }
         var labelVotes = new Span(votesLabel);
         labelVotes.getStyle()
             .set("font-size", "0.8rem")
             .set("color", "#444")
             .set("display", "block");
 
-        var numVotes = new Span(formatNumber(totalVotes));
+        var numVotes = new Span(displayValue);
         numVotes.getStyle()
             .set("font-weight", "700")
             .set("font-size", position.isGold() ? "1.6rem" : "1.2rem")

@@ -56,6 +56,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     private Long selectedCategoryId;  // null means "General" (all projects)
     private VerticalLayout bodyContainer;  // Reference to the body for easy updates
     private boolean isChecklistMode = false;
+    private boolean isScaleMode = false;
 
     // ── UI areas that refresh after voting ─────────────────────────────────
 
@@ -99,6 +100,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         var competition = competitionService.getByIdOrFailWithCategories(competitionId);
         selectedCategoryId = null;  // Reset to "General"
         isChecklistMode = "CHECKLIST".equalsIgnoreCase(competition.getVoteType());
+        isScaleMode = "SCALE".equalsIgnoreCase(competition.getVoteType());
 
         add(buildHeader(competition.getName()));
         if (!isChecklistMode) {
@@ -357,15 +359,21 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
 
             Project p = ranking.get(idx);
             long totalVotes;
+            double avgScore = 0;
             if (isChecklistMode) {
                 totalVotes = checklistVoteService.countChecklistVotesByProject(p.getId());
+            } else if (isScaleMode) {
+                avgScore = (categoryId == null)
+                    ? voteService.getAverageScoreByProject(p.getId())
+                    : voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
+                totalVotes = voteService.countVotesByProject(p.getId());
             } else {
                 totalVotes = (categoryId == null)
                     ? voteService.countVotesByProject(p.getId())
                     : voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
             }
 
-            var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, isChecklistMode);
+            var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, isChecklistMode, isScaleMode, avgScore);
             podiumSection.add(podiumCard);
         }
     }
@@ -389,20 +397,26 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         for (int i = 3; i < ranking.size(); i++) {
             Project p      = ranking.get(i);
             long totalVotes;
+            double avgScore = 0;
             if (isChecklistMode) {
                 totalVotes = checklistVoteService.countChecklistVotesByProject(p.getId());
+            } else if (isScaleMode) {
+                avgScore = (categoryId == null)
+                    ? voteService.getAverageScoreByProject(p.getId())
+                    : voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
+                totalVotes = voteService.countVotesByProject(p.getId());
             } else {
                 totalVotes = (categoryId == null)
                     ? voteService.countVotesByProject(p.getId())
                     : voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
             }
 
-            listSection.add(buildListRow(p, i + 1, totalVotes));
+            listSection.add(buildListRow(p, i + 1, totalVotes, avgScore));
         }
     }
 
     private HorizontalLayout buildListRow(Project p, int position,
-                                             long totalVotes) {
+                                             long totalVotes, double avgScore) {
         var row = new HorizontalLayout();
         row.setWidthFull();
         row.setAlignItems(Alignment.CENTER);
@@ -442,8 +456,17 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             .set("font-size", "0.95rem")
             .set("color", "#1a1a2e");
 
-        String voteLabel = isChecklistMode ? "Total Checks: " : "Total Votes: ";
-        var votes = new Span(voteLabel + formatNumber(totalVotes));
+        String voteLabel;
+        if (isChecklistMode) {
+            voteLabel = "Total Checks: " + formatNumber(totalVotes);
+        } else if (isScaleMode) {
+            var competition = competitionService.getByIdOrFail(competitionId);
+            int scaleMax = competition.getScaleMax() != null ? competition.getScaleMax() : 10;
+            voteLabel = String.format("Avg. Score: %.1f/%d", avgScore, scaleMax);
+        } else {
+            voteLabel = "Total Votes: " + formatNumber(totalVotes);
+        }
+        var votes = new Span(voteLabel);
         votes.getStyle()
             .set("font-size", "0.85rem")
             .set("color", "#555");

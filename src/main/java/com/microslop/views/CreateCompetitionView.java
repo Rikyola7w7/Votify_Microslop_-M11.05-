@@ -67,6 +67,11 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
     private final List<String> selectedChecklistItems;
     private final VerticalLayout checklistSection;
 
+    // Scale configuration
+    private final IntegerField scaleMinField;
+    private final IntegerField scaleMaxField;
+    private final VerticalLayout scaleSection;
+
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         String username = event.getRouteParameters().get("username").orElse(null);
@@ -138,7 +143,7 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
 
         // Vote Type
         voteTypeCombo = new ComboBox<>("Vote Type *");
-        voteTypeCombo.setItems("Normal", "Checklist");
+        voteTypeCombo.setItems("Normal", "Checklist", "Scale (0-10)");
         voteTypeCombo.setValue("Normal");
         voteTypeCombo.setWidth("100%");
 
@@ -273,9 +278,46 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         checklistSection.add(checklistTitle, checklistInputLayout, checklistItemsContainer);
         checklistSection.setVisible(false);
 
+        // ── Scale Configuration Section ──────────────────────────────────────────
+        Span scaleTitle = new Span("Scale Configuration");
+        scaleTitle.getStyle()
+                .set("font-weight", "bold")
+                .set("font-size", "16px")
+                .set("color", "#1a3a5c")
+                .set("margin-top", "1em");
+
+        HorizontalLayout scaleInputLayout = new HorizontalLayout();
+        scaleInputLayout.setSpacing(true);
+        scaleInputLayout.setAlignItems(Alignment.END);
+
+        scaleMinField = new IntegerField("Minimum Score");
+        scaleMinField.setValue(0);
+        scaleMinField.setMin(0);
+        scaleMinField.setMax(100);
+        scaleMinField.setWidth("120px");
+        scaleMinField.setHelperText("Default: 0");
+
+        scaleMaxField = new IntegerField("Maximum Score");
+        scaleMaxField.setValue(10);
+        scaleMaxField.setMin(1);
+        scaleMaxField.setMax(100);
+        scaleMaxField.setWidth("120px");
+        scaleMaxField.setHelperText("Default: 10");
+
+        scaleInputLayout.add(scaleMinField, scaleMaxField);
+
+        scaleSection = new VerticalLayout();
+        scaleSection.setSpacing(true);
+        scaleSection.setPadding(false);
+        scaleSection.setWidth("100%");
+        scaleSection.add(scaleTitle, scaleInputLayout);
+        scaleSection.setVisible(false);
+
         voteTypeCombo.addValueChangeListener(e -> {
             boolean isChecklist = "Checklist".equals(e.getValue());
+            boolean isScale = e.getValue() != null && e.getValue().startsWith("Scale");
             checklistSection.setVisible(isChecklist);
+            scaleSection.setVisible(isScale);
         });
 
         HorizontalLayout buttonsLayout = new HorizontalLayout();
@@ -303,6 +345,7 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
                 judgeInputLayout,
                 judgesContainer,
                 checklistSection,
+                scaleSection,
                 createEmptySpace(),
                 buttonsLayout
         );
@@ -522,7 +565,15 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         String eventType = eventTypeCombo.getValue();
         LocalDate startDate = startDatePicker.getValue();
         LocalDate endDate = endDatePicker.getValue();
-        String voteType = "Normal".equals(voteTypeCombo.getValue()) ? "NORMAL" : "CHECKLIST";
+        String voteType;
+        String voteTypeValue = voteTypeCombo.getValue();
+        if ("Checklist".equals(voteTypeValue)) {
+            voteType = "CHECKLIST";
+        } else if (voteTypeValue != null && voteTypeValue.startsWith("Scale")) {
+            voteType = "SCALE";
+        } else {
+            voteType = "NORMAL";
+        }
 
         // Validate all required fields using service
         List<String> errors = competitionService.validateCompetitionCreation(
@@ -560,6 +611,12 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
                     eventType
             );
             dto.setVoteType(voteType);
+
+            // Add scale configuration
+            if ("SCALE".equals(voteType)) {
+                dto.setScaleMin(scaleMinField.getValue() != null ? scaleMinField.getValue() : 0);
+                dto.setScaleMax(scaleMaxField.getValue() != null ? scaleMaxField.getValue() : 10);
+            }
 
             // Add categories
             for (CategoryDTO category : selectedCategories) {

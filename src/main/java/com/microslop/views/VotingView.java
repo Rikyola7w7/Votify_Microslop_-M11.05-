@@ -148,6 +148,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         add(buildHeader(competition));
         if ("CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
             add(buildChecklistBody(projects, competition.getName()));
+        } else if ("SCALE".equalsIgnoreCase(competition.getVoteType())) {
+            add(buildScaleBody(projects, competition.getName()));
         } else {
             add(buildBody(projects, competition.getName()));
         }
@@ -474,6 +476,262 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         }
 
         return card;
+    }
+
+    // ── Scale Body ─────────────────────────────────────────────────────────
+
+    private VerticalLayout buildScaleBody(List<Project> projects, String competitionName) {
+        var body = new VerticalLayout();
+        body.setWidthFull();
+        body.setAlignItems(Alignment.CENTER);
+        body.getStyle().set("padding", "2rem 1rem");
+
+        var competition = competitionService.getById(competitionId).orElse(null);
+        int scaleMin = competition != null && competition.getScaleMin() != null ? competition.getScaleMin() : 0;
+        int scaleMax = competition != null && competition.getScaleMax() != null ? competition.getScaleMax() : 10;
+
+        var title = new H1("SCALE VOTING (" + scaleMin + "-" + scaleMax + ")");
+        title.getStyle()
+                .set("font-size", "2rem")
+                .set("font-weight", "800")
+                .set("color", "#1a1a2e")
+                .set("margin", "0 0 0.25rem 0")
+                .set("text-align", "center");
+
+        var subtitle = new Span("Competition: " + competitionName);
+        subtitle.getStyle()
+                .set("font-size", "1rem")
+                .set("color", "#555")
+                .set("font-style", "italic")
+                .set("margin-bottom", "1rem")
+                .set("display", "block")
+                .set("text-align", "center");
+
+        var instruction = new Span("Rate each project from " + scaleMin + " to " + scaleMax + " per category.");
+        instruction.getStyle()
+                .set("font-size", "1rem")
+                .set("color", "#1a3a5c")
+                .set("font-weight", "600")
+                .set("margin-bottom", "1.5rem")
+                .set("display", "block")
+                .set("text-align", "center");
+
+        var categoryLayout = new HorizontalLayout();
+        categoryLayout.setAlignItems(Alignment.CENTER);
+        categoryLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        categoryLayout.getStyle().set("margin-bottom", "1.5rem");
+
+        var categoryLabel = new Span("Category:");
+        categoryLabel.getStyle()
+                .set("font-weight", "600")
+                .set("color", "#1a1a2e");
+
+        categoryDropdown = new ComboBox<Category>();
+        categoryDropdown.setItems(categoryService.getCategoriesByCompetition(competitionId));
+        categoryDropdown.setItemLabelGenerator(Category::getName);
+        categoryDropdown.setPlaceholder("Select a category...");
+        categoryDropdown.setClearButtonVisible(false);
+
+        categoryLayout.add(categoryLabel, categoryDropdown);
+
+        projectsContainer = new VerticalLayout();
+        projectsContainer.setWidthFull();
+        projectsContainer.getStyle().set("max-width", "760px");
+        projectsContainer.setPadding(false);
+        projectsContainer.setSpacing(false);
+
+        var currentUserLocal = userService.getCurrentUser();
+        if (currentUserLocal == null) {
+            Notification.show("User not found. Please log in again.");
+            body.add(new Paragraph("Error: User not found. Please log in again."));
+            return body;
+        }
+
+        categoryDropdown.setRequired(true);
+        categoryDropdown.setValue(categoryService.getCategoriesByCompetition(competitionId).stream().findFirst().orElse(null));
+
+        Runnable updateProjectsList = () -> {
+            projectsContainer.removeAll();
+            Category selectedCategory = categoryDropdown.getValue();
+
+            if (selectedCategory == null) {
+                var noCategory = new Span("Please select a category to vote.");
+                noCategory.getStyle()
+                        .set("color", "#999")
+                        .set("font-style", "italic")
+                        .set("text-align", "center")
+                        .set("width", "100%");
+                projectsContainer.add(noCategory);
+                return;
+            }
+
+            for (Project p : projects) {
+                boolean matches = p.getCategories().stream()
+                        .anyMatch(c -> c.getId().equals(selectedCategory.getId()));
+                if (matches) {
+                    boolean alreadyVoted = voteService.countVotesByUserAndProjectAndCategory(
+                            currentUserLocal.getId(), p.getId(), selectedCategory.getId()) > 0;
+                    projectsContainer.add(buildScaleProjectCard(p, selectedCategory, alreadyVoted, scaleMin, scaleMax));
+                }
+            }
+        };
+
+        categoryDropdown.addValueChangeListener(e -> updateProjectsList.run());
+
+        updateProjectsList.run();
+
+        body.add(title, subtitle, instruction, categoryLayout, projectsContainer);
+        return body;
+    }
+
+    private Div buildScaleProjectCard(Project p, Category selectedCategory, boolean alreadyVoted, int scaleMin, int scaleMax) {
+        var card = new Div();
+        card.getStyle()
+                .set("background", "white")
+                .set("border-radius", "12px")
+                .set("padding", "1.25rem 1.5rem")
+                .set("margin-bottom", "1rem")
+                .set("box-shadow", "0 2px 8px rgba(0,0,0,0.08)")
+                .set("width", "100%")
+                .set("box-sizing", "border-box");
+
+        if (alreadyVoted) {
+            card.getStyle().set("opacity", "0.6").set("border", "2px solid #ccc");
+        }
+
+        var info = new VerticalLayout();
+        info.setPadding(false);
+        info.setSpacing(false);
+        info.getStyle().set("flex", "1");
+
+        var name = new Span(p.getName());
+        name.getStyle()
+                .set("font-weight", "700")
+                .set("font-size", "1rem")
+                .set("color", "#1a1a2e");
+
+        var desc = new Span("Project info: " + p.getName());
+        desc.getStyle()
+                .set("font-size", "0.85rem")
+                .set("color", "#666")
+                .set("margin-top", "0.25rem");
+
+        double avgScore = voteService.getAverageScoreByProjectAndCategory(p.getId(), selectedCategory.getId());
+        var scoreLabel = new Span(String.format("Average score: %.1f/%d", avgScore, scaleMax));
+        scoreLabel.getStyle()
+                .set("font-size", "0.85rem")
+                .set("color", "#444")
+                .set("margin-top", "0.75rem");
+
+        info.add(name, desc, scoreLabel);
+
+        if (alreadyVoted) {
+            var votedBadge = new Span("Already voted");
+            votedBadge.getStyle()
+                    .set("background", "#4caf50")
+                    .set("color", "white")
+                    .set("padding", "0.5rem 1rem")
+                    .set("border-radius", "8px")
+                    .set("font-weight", "700")
+                    .set("font-size", "0.9rem");
+            var row = new HorizontalLayout(info, votedBadge);
+            row.setWidthFull();
+            row.setAlignItems(Alignment.CENTER);
+            row.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+            row.setSpacing(true);
+            row.setPadding(false);
+            card.add(row);
+            return card;
+        }
+
+        var scoreInput = new IntegerField();
+        scoreInput.setLabel("Score (" + scaleMin + "-" + scaleMax + ")");
+        scoreInput.setMin(scaleMin);
+        scoreInput.setMax(scaleMax);
+        scoreInput.setValue(scaleMin);
+        scoreInput.setWidth("100px");
+        scoreInput.getStyle()
+                .set("font-weight", "600")
+                .set("text-align", "center");
+
+        Button submitButton = new Button("Vote");
+        submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        submitButton.getStyle()
+                .set("background", "#1a3a5c")
+                .set("color", "white")
+                .set("font-weight", "700")
+                .set("padding", "0.75rem 1.25rem")
+                .set("border-radius", "8px")
+                .set("cursor", "pointer");
+        submitButton.setWidth("auto");
+
+        submitButton.addClickListener(e -> handleScaleVote(p, scoreInput.getValue() != null ? scoreInput.getValue() : scaleMin, selectedCategory, scaleMin, scaleMax));
+
+        var voteLayout = new HorizontalLayout(scoreInput, submitButton);
+        voteLayout.setAlignItems(Alignment.END);
+        voteLayout.setSpacing(true);
+        voteLayout.setPadding(false);
+        voteLayout.setMargin(false);
+
+        Button commentsBtn = new Button("Comments");
+        commentsBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        commentsBtn.getStyle()
+                .set("background", "#2d6a9f")
+                .set("color", "white")
+                .set("font-weight", "600")
+                .set("border-radius", "8px")
+                .set("cursor", "pointer");
+
+        var actions = new VerticalLayout(voteLayout, commentsBtn);
+        actions.setPadding(false);
+        actions.setSpacing(true);
+        actions.setAlignItems(Alignment.END);
+
+        var row = new HorizontalLayout(info, actions);
+        row.setWidthFull();
+        row.setAlignItems(Alignment.CENTER);
+        row.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        row.setSpacing(true);
+        row.setPadding(false);
+
+        card.add(row);
+        return card;
+    }
+
+    private void handleScaleVote(Project project, int score, Category selectedCategory, int scaleMin, int scaleMax) {
+        String username = userService.getCurrentUsername();
+        if (username == null || username.isEmpty()) {
+            showNotification("You must be logged in to vote.", NotificationVariant.LUMO_CONTRAST);
+            return;
+        }
+
+        if (selectedCategory == null) {
+            showNotification("Debes elegir una categoria antes de votar.", NotificationVariant.LUMO_WARNING);
+            return;
+        }
+
+        if (score < scaleMin || score > scaleMax) {
+            showNotification("Score must be between " + scaleMin + " and " + scaleMax + ".", NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
+        try {
+            voteService.submitScaleVote(username, project.getId(), selectedCategory.getId(), score);
+            showNotification("Vote submitted! Score: " + score + "/" + scaleMax, NotificationVariant.LUMO_SUCCESS);
+
+            getUI().ifPresent(ui -> {
+                ui.access(() -> {
+                    try {
+                        Thread.sleep(1500);
+                        ui.navigate("competition/" + competitionId);
+                    } catch (InterruptedException e) {
+                        ui.navigate("competition/" + competitionId);
+                    }
+                });
+            });
+        } catch (IllegalStateException ex) {
+            showNotification(ex.getMessage(), NotificationVariant.LUMO_CONTRAST);
+        }
     }
 
     // ── Project Card ──────────────────────────────────────────────────────

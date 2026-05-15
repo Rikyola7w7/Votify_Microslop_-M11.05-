@@ -53,6 +53,11 @@ public class CompetitionServiceImpl implements CompetitionService {
         competition.setActive(true);
         competition.setVoteType(competitionDTO.getVoteType() != null ? competitionDTO.getVoteType() : "NORMAL");
 
+        if ("SCALE".equalsIgnoreCase(competition.getVoteType())) {
+            competition.setScaleMin(competitionDTO.getScaleMin() != null ? competitionDTO.getScaleMin() : 0);
+            competition.setScaleMax(competitionDTO.getScaleMax() != null ? competitionDTO.getScaleMax() : 10);
+        }
+
         // Save competition to get generated ID
         Competition savedCompetition = competitionRepository.save(competition);
 
@@ -232,6 +237,9 @@ public class CompetitionServiceImpl implements CompetitionService {
                 }
             }
         }
+
+        // Categories are still required for SCALE vote type (uses category-weighted scoring)
+        // No additional validation needed for SCALE beyond what's already validated
 
         return errors;
     }

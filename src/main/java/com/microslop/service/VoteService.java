@@ -20,4 +20,14 @@ public interface VoteService {
     long countVotesByUserAndProjectAndCategory(Long userId, Long projectId, Long categoryId);
 
     long countPointsByUserAndCategory(Long userId, Long categoryId);
+
+    void submitScaleVote(String userUsername, Long projectId, Long categoryId, int score);
+
+    double getAverageScoreByProject(Long projectId);
+
+    double getAverageScoreByProjectAndCategory(Long projectId, Long categoryId);
+
+    long getSumScoreByProject(Long projectId);
+
+    long getSumScoreByProjectAndCategory(Long projectId, Long categoryId);
 }

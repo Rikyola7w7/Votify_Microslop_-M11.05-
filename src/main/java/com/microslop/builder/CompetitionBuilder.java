@@ -17,6 +17,8 @@ public class CompetitionBuilder {
     private Double judgeWeightMultiplier = 1.0;
     private Double standardUserWeightMultiplier = 1.0;
     private String voteType = "NORMAL";
+    private Integer scaleMin = 0;
+    private Integer scaleMax = 10;
 
     public static CompetitionBuilder builder() {
         return new CompetitionBuilder();
@@ -74,6 +76,14 @@ public class CompetitionBuilder {
         this.voteType = voteType;
         return this;
     }
+    public CompetitionBuilder scaleMin(Integer scaleMin) {
+        this.scaleMin = scaleMin;
+        return this;
+    }
+    public CompetitionBuilder scaleMax(Integer scaleMax) {
+        this.scaleMax = scaleMax;
+        return this;
+    }
     public Competition build() {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Competition name cannot be empty.");
@@ -95,6 +105,8 @@ public class CompetitionBuilder {
         competition.setJudgeWeightMultiplier(judgeWeightMultiplier);
         competition.setStandardUserWeightMultiplier(standardUserWeightMultiplier);
         competition.setVoteType(voteType);
+        competition.setScaleMin(scaleMin);
+        competition.setScaleMax(scaleMax);
         return competition;
     }
 }
