@@ -102,7 +102,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     private void buildUi() {
-        add(new ViewHeader("RANKING", userService, "competition/" + competitionId + "/categories"));
+        add(buildHeader());
         add(buildSummaryCard());
         add(buildRankingFilter());
         rankingContainer = new VerticalLayout();

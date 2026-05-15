@@ -58,7 +58,7 @@ public class ViewHeader extends HorizontalLayout {
         avatar.setName(userService.getUserDisplayName());
         avatar.setWidth("36px");
         avatar.setHeight("36px");
-        avatar.getStyle().set("cursor", "pointer");
+        avatar.getStyle().set("cursor", "pointer").set("background", "#f0f0f0").set("color", "#333");
 
         ContextMenu userMenu = new ContextMenu(avatar);
         userMenu.setOpenOnClick(true);

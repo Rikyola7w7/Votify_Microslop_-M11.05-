@@ -11,6 +11,7 @@ import com.microslop.service.UserService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.VoteService;
 import com.microslop.views.components.ViewHeader;
+import com.microslop.views.components.VoteSuccessAnimation;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -465,6 +466,13 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
 
+        var competition = competitionService.getByIdOrFail(competitionId);
+        if (!competition.canVote()) {
+            showNotification("This competition does not accept votes at this time.",
+                    NotificationVariant.LUMO_WARNING);
+            return;
+        }
+
         int availableVotes = getAvailableVotes(selectedCategory);
         if (points > availableVotes) {
             showNotification("Error! You only have " + availableVotes + " votes available. Cannot assign " + points + " points.", 
@@ -476,38 +484,17 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             voteService.submitVote(username, project.getId(), selectedCategory.getId(), points);
             showNotification("Vote submitted! " + points + " points assigned.", NotificationVariant.LUMO_SUCCESS);
 
-            // Ballot-drop animation: show a small ballot icon that drops down
-            Span ballotAnimation = new Span();
-            ballotAnimation.getElement().setText("\uD83D\uDDF3");
-            ballotAnimation.getStyle()
-                .set("position", "fixed")
-                .set("font-size", "2rem")
-                .set("z-index", "9999")
-                .set("pointer-events", "none")
-                .set("animation", "ballot-drop 0.8s ease-in forwards")
-                .set("left", "calc(50% - 16px)")
-                .set("top", "30%");
-            getUI().ifPresent(ui -> ui.add(ballotAnimation));
-            getUI().ifPresent(ui -> ui.getPage().executeJs(
-                "setTimeout(function() { $0.remove(); }, 900)", ballotAnimation.getElement()));
-
-            int remainingVotes = availableVotes - points;
-            
-            updateMaxVotesLabel(selectedCategory);
-            
-            if (remainingVotes == 0) {
-                getUI().ifPresent(ui -> {
-                    try {
-                        Thread.sleep(1500);
-                        ui.navigate("competition/" + competitionId + "/categories");
-                    } catch (InterruptedException e) {
-                        ui.navigate("competition/" + competitionId + "/categories");
-                    }
-                });
-            } else {
-                removeAll();
-                buildUi();
-            }
+            VoteSuccessAnimation overlay = new VoteSuccessAnimation(() -> {
+                int remainingVotes = availableVotes - points;
+                updateMaxVotesLabel(selectedCategory);
+                if (remainingVotes == 0) {
+                    getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories"));
+                } else {
+                    removeAll();
+                    buildUi();
+                }
+            });
+            getUI().ifPresent(ui -> ui.add(overlay));
         } catch (IllegalStateException ex) {
             showNotification(ex.getMessage(), NotificationVariant.LUMO_CONTRAST);
         }
@@ -529,23 +516,18 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         var competition = competitionService.getByIdOrFail(competitionId);
 
         if (!competition.canVote()) {
-            boolean hasEnded = competition.getEndDate() != null
-                    && LocalDateTime.now().isAfter(competition.getEndDate());
-            if (hasEnded) {
-                showNotification("This competition has ended and no longer accepts votes.",
-                        NotificationVariant.LUMO_ERROR);
-            } else {
-                showNotification("This competition does not accept votes at this time.",
-                        NotificationVariant.LUMO_WARNING);
-            }
+            showNotification("This competition does not accept votes at this time.",
+                    NotificationVariant.LUMO_WARNING);
             return;
         }
 
         try {
             voteService.submitVote(username, project.getId(), selectedCategory.getId());
-            
-            showNotification("Vote submitted!", NotificationVariant.LUMO_SUCCESS);
-            getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories"));
+
+            VoteSuccessAnimation overlay = new VoteSuccessAnimation(() ->
+                getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories"))
+            );
+            getUI().ifPresent(ui -> ui.add(overlay));
         } catch (IllegalStateException ex) {
             showNotification(ex.getMessage(), NotificationVariant.LUMO_CONTRAST);
         }

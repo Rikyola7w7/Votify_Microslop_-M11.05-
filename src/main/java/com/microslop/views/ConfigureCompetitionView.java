@@ -69,9 +69,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private List<Category> categoriesToRemove;
     private List<Category> categoriesToAdd;
 
-    private NumberField judgeWeightField;
-    private NumberField standardUserWeightField;
-
     private ComboBox<String> commentsEnabledCombo;
     private ComboBox<String> commentsRequiredCombo;
 
@@ -175,11 +172,10 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         VerticalLayout generalSection = buildGeneralSection();
         VerticalLayout participationSection = buildParticipationSection();
         VerticalLayout judgesSection = buildJudgesSection();
-        VerticalLayout votingWeightSection = buildVotingWeightSection();
         VerticalLayout commentsSection = buildCommentsSection();
         HorizontalLayout buttonsLayout = buildButtonsLayout();
 
-        contentCard.add(generalSection, participationSection, judgesSection, votingWeightSection, commentsSection, buttonsLayout);
+        contentCard.add(generalSection, participationSection, judgesSection, commentsSection, buttonsLayout);
         scrollContainer.add(header, contentCard);
         add(scrollContainer);
     }
@@ -564,61 +560,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         return row;
     }
 
-    private VerticalLayout buildVotingWeightSection() {
-        VerticalLayout section = new VerticalLayout();
-        section.setPadding(true);
-        section.setSpacing(true);
-        section.setWidth("100%");
-        section.getStyle()
-                .set("background", "var(--background)")
-                .set("border-radius", "var(--radius-sm)")
-                .set("padding", "20px")
-                .set("margin-bottom", "16px");
-
-        Span sectionTitle = new Span("VOTE WEIGHTING");
-        sectionTitle.getStyle()
-                .set("font-weight", "700")
-                .set("color", "var(--dark)")
-                .set("font-size", "14px")
-                .set("letter-spacing", "0.5px")
-                .set("margin-bottom", "12px");
-
-        Span rolWeightTitle = new Span("WEIGHT BY ROLE");
-        rolWeightTitle.getStyle()
-                .set("font-weight", "600")
-                .set("color", "var(--text-primary)")
-                .set("margin-top", "8px")
-                .set("margin-bottom", "10px");
-
-        FormLayout formLayout = new FormLayout();
-        formLayout.setResponsiveSteps(
-                new FormLayout.ResponsiveStep("0px", 2)
-        );
-
-        judgeWeightField = new NumberField("Senior Judge: x");
-        judgeWeightField.addClassName("votify-input");
-        judgeWeightField.setValue(currentCompetition.getJudgeWeightMultiplier() != null
-                ? currentCompetition.getJudgeWeightMultiplier()
-                : 2.0);
-        judgeWeightField.setMin(0);
-        judgeWeightField.setWidth("100%");
-        judgeWeightField.addValueChangeListener(e -> markAsChanged());
-
-        standardUserWeightField = new NumberField("Standard User: x");
-        standardUserWeightField.addClassName("votify-input");
-        standardUserWeightField.setValue(currentCompetition.getStandardUserWeightMultiplier() != null
-                ? currentCompetition.getStandardUserWeightMultiplier()
-                : 1.0);
-        standardUserWeightField.setMin(0);
-        standardUserWeightField.setWidth("100%");
-        standardUserWeightField.addValueChangeListener(e -> markAsChanged());
-
-        formLayout.add(judgeWeightField, standardUserWeightField);
-
-        section.add(sectionTitle, rolWeightTitle, formLayout);
-        return section;
-    }
-
     private VerticalLayout buildCommentsSection() {
         VerticalLayout section = new VerticalLayout();
         section.setPadding(true);
@@ -773,8 +714,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         currentCompetition.setVoterType("Everyone".equals(voterTypeCombo.getValue()) ? "ALL" : "JUDGES");
         currentCompetition.setAutoVote("ON".equals(autoVoteCombo.getValue()));
         currentCompetition.setMaxVotesPerPerson(maxVotesPerPersonField.getValue());
-        currentCompetition.setJudgeWeightMultiplier(judgeWeightField.getValue());
-        currentCompetition.setStandardUserWeightMultiplier(standardUserWeightField.getValue());
+
 
         currentCompetition.setCommentsEnabled("YES".equals(commentsEnabledCombo.getValue()));
         currentCompetition.setCommentsRequired("YES".equals(commentsRequiredCombo.getValue()));
