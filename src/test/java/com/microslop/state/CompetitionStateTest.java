@@ -127,9 +127,9 @@ class CompetitionStateTest {
     }
 
     @Test
-    void activeState_cannotVote() {
+    void activeState_canVote() {
         competition.setStatus(CompetitionStatus.ACTIVE);
-        assertFalse(competition.canVote());
+        assertTrue(competition.canVote());
     }
 
     @Test
@@ -315,7 +315,7 @@ class CompetitionStateTest {
 
         competition.pauseVoting();
         assertEquals(CompetitionStatus.ACTIVE, competition.getStatus());
-        assertFalse(competition.canVote());
+        assertTrue(competition.canVote());
 
         competition.openVoting();
         assertEquals(CompetitionStatus.VOTING_OPEN, competition.getStatus());

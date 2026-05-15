@@ -35,6 +35,11 @@ public class ActiveCompetitionState implements CompetitionState {
     }
 
     @Override
+    public boolean canVote() {
+        return true;
+    }
+
+    @Override
     public boolean isActiveLegacy() {
         return true;
     }
