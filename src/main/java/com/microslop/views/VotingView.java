@@ -365,39 +365,71 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
     // ── Checklist Body ────────────────────────────────────────────────────
 
+    private Span checklistProgressLabel;
+    private int checklistTotalProjects;
+
     private VerticalLayout buildChecklistBody(List<Project> projects, String competitionName) {
         var body = new VerticalLayout();
         body.setWidthFull();
         body.setAlignItems(Alignment.CENTER);
         body.getStyle().set("padding", "2rem 1rem");
 
+        var titleWrapper = new Div();
+        titleWrapper.setWidthFull();
+        titleWrapper.getStyle()
+                .set("max-width", "760px")
+                .set("padding", "0 0 1.5rem 0");
+
         var title = new H1("CHECKLIST VOTING");
         title.getStyle()
                 .set("font-size", "2rem")
                 .set("font-weight", "800")
-                .set("color", "#1a1a2e")
+                .set("color", "var(--text-primary)")
                 .set("margin", "0 0 0.25rem 0")
                 .set("text-align", "center");
 
         var subtitle = new Span("Competition: " + competitionName);
         subtitle.getStyle()
                 .set("font-size", "1rem")
-                .set("color", "#555")
+                .set("color", "var(--text-muted)")
                 .set("font-style", "italic")
                 .set("margin-bottom", "1rem")
                 .set("display", "block")
                 .set("text-align", "center");
 
+        titleWrapper.add(title, subtitle);
+
         var instruction = new Span("Evaluate ALL projects by checking the items that apply.");
         instruction.getStyle()
-                .set("font-size", "1rem")
-                .set("color", "#1a3a5c")
-                .set("font-weight", "600")
+                .set("font-size", "0.95rem")
+                .set("color", "var(--text-muted)")
+                .set("font-style", "italic")
                 .set("margin-bottom", "1.5rem")
                 .set("display", "block")
                 .set("text-align", "center");
 
         var checklistItems = checklistItemRepository.findByCompetitionId(competitionId);
+
+        checklistProgressLabel = new Span();
+        checklistTotalProjects = projects.size();
+        updateChecklistProgress();
+
+        checklistProgressLabel.getStyle()
+                .set("font-size", "0.95rem")
+                .set("font-weight", "600")
+                .set("padding", "0.5rem 1.25rem")
+                .set("border-radius", "var(--radius-pill)")
+                .set("display", "inline-block")
+                .set("text-align", "center")
+                .set("margin-bottom", "1.5rem")
+                .set("color", "var(--secondary)")
+                .set("background", "rgba(0, 206, 201, 0.1)");
+
+        var progressWrapper = new Div(checklistProgressLabel);
+        progressWrapper.setWidthFull();
+        progressWrapper.getStyle()
+                .set("text-align", "center")
+                .set("margin-bottom", "0.5rem");
 
         projectsContainer = new VerticalLayout();
         projectsContainer.setWidthFull();
@@ -405,87 +437,205 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         projectsContainer.setPadding(false);
         projectsContainer.setSpacing(false);
 
-        int evaluatedCount = 0;
+        int staggerIndex = 1;
         for (Project p : projects) {
-            long checkedCount = currentUser != null
-                    ? checklistVoteService.countCheckedItemsByUserForProject(currentUser.getId(), p.getId())
-                    : 0;
-            if (checkedCount >= checklistItems.size()) {
-                evaluatedCount++;
-            }
-            projectsContainer.add(buildChecklistProjectCard(p, checklistItems));
+            projectsContainer.add(buildChecklistProjectCard(p, checklistItems, staggerIndex));
+            staggerIndex = Math.min(staggerIndex + 1, 8);
         }
 
-        var progress = new Span("Projects evaluated: " + evaluatedCount + " / " + projects.size());
-        progress.getStyle()
-                .set("font-size", "1rem")
-                .set("font-weight", "600")
-                .set("color", "#1a3a5c")
-                .set("margin-bottom", "1.5rem")
-                .set("display", "block")
-                .set("text-align", "center");
-
-        body.add(title, subtitle, instruction, progress, projectsContainer);
+        body.add(titleWrapper, instruction, progressWrapper, projectsContainer);
         return body;
     }
 
-    private Div buildChecklistProjectCard(Project p, List<ChecklistItem> checklistItems) {
+    private void updateChecklistProgress() {
+        if (checklistProgressLabel == null || currentUser == null) return;
+        var projects = projectService.listByCompetition(competitionId);
+        int evaluatedCount = 0;
+        for (Project p : projects) {
+            long checkedCount = checklistVoteService.countCheckedItemsByUserForProject(currentUser.getId(), p.getId());
+            if (checkedCount > 0) {
+                evaluatedCount++;
+            }
+        }
+        checklistProgressLabel.setText(evaluatedCount + " / " + checklistTotalProjects + " projects evaluated");
+        if (evaluatedCount >= checklistTotalProjects) {
+            checklistProgressLabel.getStyle()
+                    .set("color", "var(--success)")
+                    .set("background", "rgba(0, 184, 148, 0.12)");
+        } else {
+            checklistProgressLabel.getStyle()
+                    .set("color", "var(--secondary)")
+                    .set("background", "rgba(0, 206, 201, 0.1)");
+        }
+    }
+
+    private Div buildChecklistProjectCard(Project p, List<ChecklistItem> checklistItems, int staggerIndex) {
         var card = new Div();
+        card.addClassName("votify-card-static");
+        card.addClassName("animate-fade-in");
+        card.addClassName("stagger-" + staggerIndex);
         card.getStyle()
-                .set("background", "white")
-                .set("border-radius", "12px")
                 .set("padding", "1.25rem 1.5rem")
                 .set("margin-bottom", "1rem")
-                .set("box-shadow", "0 2px 8px rgba(0,0,0,0.08)")
                 .set("width", "100%")
                 .set("box-sizing", "border-box");
+
+        long checkedForProject = currentUser != null
+                ? checklistVoteService.countCheckedItemsByUserForProject(currentUser.getId(), p.getId())
+                : 0;
+        boolean hasVoted = checkedForProject > 0;
+        if (hasVoted) {
+            card.getStyle()
+                    .set("background", "rgba(0, 184, 148, 0.08)")
+                    .set("border-left", "4px solid var(--success)");
+        } else {
+            card.getStyle()
+                    .set("border-left", "4px solid var(--primary)");
+        }
+
+        var nameRow = new HorizontalLayout();
+        nameRow.setAlignItems(Alignment.CENTER);
+        nameRow.setSpacing(true);
+        nameRow.setPadding(false);
+        nameRow.setMargin(false);
+        nameRow.getStyle().set("margin-bottom", "0.75rem");
 
         var name = new Span(p.getName());
         name.getStyle()
                 .set("font-weight", "700")
                 .set("font-size", "1.1rem")
-                .set("color", "#1a1a2e")
-                .set("display", "block")
-                .set("margin-bottom", "0.75rem");
+                .set("color", "var(--text-primary)");
 
-        card.add(name);
+        nameRow.add(name);
 
-        var currentUserLocal = userService.getCurrentUser();
+        var scoreLabel = new Span(checkedForProject + "/" + checklistItems.size());
+        scoreLabel.getStyle()
+                .set("font-size", "0.85rem")
+                .set("font-weight", "600")
+                .set("padding", "2px 10px")
+                .set("border-radius", "var(--radius-pill)")
+                .set("margin-left", "8px");
+        if (checkedForProject >= checklistItems.size()) {
+            scoreLabel.getStyle()
+                    .set("color", "var(--success)")
+                    .set("background", "rgba(0, 184, 148, 0.12)");
+        } else if (hasVoted) {
+            scoreLabel.getStyle()
+                    .set("color", "var(--secondary)")
+                    .set("background", "rgba(0, 206, 201, 0.1)");
+        } else {
+            scoreLabel.getStyle()
+                    .set("color", "var(--text-muted)")
+                    .set("background", "rgba(99, 110, 114, 0.1)");
+        }
+        nameRow.add(scoreLabel);
+
+        card.add(nameRow);
+
+        var itemsLayout = new VerticalLayout();
+        itemsLayout.setPadding(false);
+        itemsLayout.setSpacing(false);
+        itemsLayout.getStyle().set("gap", "6px");
+
         for (ChecklistItem item : checklistItems) {
-            boolean isChecked = currentUserLocal != null &&
-                    checklistVoteService.hasUserCheckedItem(currentUserLocal.getId(), p.getId(), item.getId());
+            boolean isChecked = currentUser != null &&
+                    checklistVoteService.hasUserCheckedItem(currentUser.getId(), p.getId(), item.getId());
 
             var checkbox = new com.vaadin.flow.component.checkbox.Checkbox(item.getText());
             checkbox.setValue(isChecked);
-            checkbox.getStyle().set("margin-bottom", "0.4rem");
+            checkbox.addClassName("votify-input");
+            checkbox.getStyle()
+                    .set("margin-bottom", "0")
+                    .set("font-size", "0.95rem");
+
+            if (isChecked) {
+                checkbox.getStyle().set("color", "var(--success)");
+            }
+
+            final Long itemId = item.getId();
+            final Long projectId = p.getId();
             checkbox.addValueChangeListener(e -> {
                 String username = userService.getCurrentUsername();
                 if (e.getValue()) {
                     try {
-                        checklistVoteService.submitChecklistVote(username, p.getId(), item.getId());
+                        checklistVoteService.submitChecklistVote(username, projectId, itemId);
                         showNotification("Item checked!", NotificationVariant.LUMO_SUCCESS);
+                        checkbox.getStyle().set("color", "var(--success)");
                     } catch (IllegalStateException ex) {
                         showNotification(ex.getMessage(), NotificationVariant.LUMO_ERROR);
                         checkbox.setValue(false);
                     }
                 } else {
                     try {
-                        checklistVoteService.removeChecklistVote(username, p.getId(), item.getId());
+                        checklistVoteService.removeChecklistVote(username, projectId, itemId);
                         showNotification("Item unchecked!", NotificationVariant.LUMO_CONTRAST);
+                        checkbox.getStyle().set("color", "var(--text-primary)");
                     } catch (IllegalStateException ex) {
                         showNotification(ex.getMessage(), NotificationVariant.LUMO_ERROR);
                         checkbox.setValue(true);
                     }
                 }
-                // Refresh progress
-                removeAll();
-                buildUi();
+                updateChecklistProgress();
+                refreshChecklistCardStyle(card, p, checklistItems);
             });
 
-            card.add(checkbox);
+            itemsLayout.add(checkbox);
         }
 
+        card.add(itemsLayout);
         return card;
+    }
+
+    private void refreshChecklistCardStyle(Div card, Project p, List<ChecklistItem> checklistItems) {
+        long checkedForProject = currentUser != null
+                ? checklistVoteService.countCheckedItemsByUserForProject(currentUser.getId(), p.getId())
+                : 0;
+        boolean hasVoted = checkedForProject > 0;
+
+        if (hasVoted) {
+            card.getStyle()
+                    .set("background", "rgba(0, 184, 148, 0.08)")
+                    .set("border-left", "4px solid var(--success)");
+        } else {
+            card.getStyle()
+                    .set("background", "var(--surface)")
+                    .set("border-left", "4px solid var(--primary)");
+        }
+
+        var nameRow = (HorizontalLayout) card.getChildren()
+                .filter(c -> c instanceof HorizontalLayout)
+                .findFirst().orElse(null);
+        if (nameRow != null) {
+            nameRow.removeAll();
+            var name = new Span(p.getName());
+            name.getStyle()
+                    .set("font-weight", "700")
+                    .set("font-size", "1.1rem")
+                    .set("color", "var(--text-primary)");
+            nameRow.add(name);
+
+            var scoreLabel = new Span(checkedForProject + "/" + checklistItems.size());
+            scoreLabel.getStyle()
+                    .set("font-size", "0.85rem")
+                    .set("font-weight", "600")
+                    .set("padding", "2px 10px")
+                    .set("border-radius", "var(--radius-pill)")
+                    .set("margin-left", "8px");
+            if (checkedForProject >= checklistItems.size()) {
+                scoreLabel.getStyle()
+                        .set("color", "var(--success)")
+                        .set("background", "rgba(0, 184, 148, 0.12)");
+            } else if (hasVoted) {
+                scoreLabel.getStyle()
+                        .set("color", "var(--secondary)")
+                        .set("background", "rgba(0, 206, 201, 0.1)");
+            } else {
+                scoreLabel.getStyle()
+                        .set("color", "var(--text-muted)")
+                        .set("background", "rgba(99, 110, 114, 0.1)");
+            }
+            nameRow.add(scoreLabel);
+        }
     }
 
     // ── Scale Body ─────────────────────────────────────────────────────────
