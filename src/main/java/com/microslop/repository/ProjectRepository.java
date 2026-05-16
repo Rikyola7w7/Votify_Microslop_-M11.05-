@@ -55,6 +55,17 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
         """)
     List<Project> findRankingByChecklistCompetition(@Param("competitionId") Long competitionId);
 
+    // Projects in a category ordered by checklist vote count
+    @Query("""
+        SELECT p FROM Project p
+        JOIN p.categories c
+        WHERE c.id = :categoryId
+        ORDER BY (
+            SELECT COUNT(cv) FROM ChecklistVote cv WHERE cv.project.id = p.id
+        ) DESC
+        """)
+    List<Project> findChecklistRankingByCategory(@Param("categoryId") Long categoryId);
+
     // Judge-only ranking: projects ordered by count of votes from judges
     @Query("""
         SELECT p FROM Project p

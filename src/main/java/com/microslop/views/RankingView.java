@@ -4,6 +4,7 @@ import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
 import com.microslop.entity.CompetitionStatus;
 import com.microslop.service.CategoryService;
+import com.microslop.service.ChecklistVoteService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.UserService;
 import com.microslop.service.VoterService;
@@ -44,25 +45,30 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     private final ProjectService projectService;
     private final UserService userService;
     private final VoterService voterService;
+    private final ChecklistVoteService checklistVoteService;
 
     private Long competitionId;
     private Long categoryId;
     private Competition currentCompetition;
     private Category currentCategory;
     private VerticalLayout rankingContainer;
+    private boolean isChecklistMode = false;
+    private boolean isScaleMode = false;
 
     public RankingView(CompetitionService competitionService,
                        CategoryService categoryService,
                        VoteService voteService,
                        ProjectService projectService,
                        UserService userService,
-                       VoterService voterService) {
+                       VoterService voterService,
+                       ChecklistVoteService checklistVoteService) {
         this.competitionService = competitionService;
         this.categoryService = categoryService;
         this.voteService = voteService;
         this.projectService = projectService;
         this.userService = userService;
         this.voterService = voterService;
+        this.checklistVoteService = checklistVoteService;
 
         setSizeFull();
         setPadding(false);
@@ -89,8 +95,11 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         }
 
         try {
-            this.currentCompetition = competitionService.getByIdOrFail(competitionId);
-            this.currentCategory = categoryService.getByIdOrFail(categoryId);
+this.currentCompetition = competitionService.getByIdOrFail(competitionId);
+        this.currentCategory = categoryService.getByIdOrFail(categoryId);
+
+        isChecklistMode = "CHECKLIST".equalsIgnoreCase(currentCompetition.getVoteType());
+        isScaleMode = "SCALE".equalsIgnoreCase(currentCompetition.getVoteType());
         } catch (Exception e) {
             event.forwardTo("");
             return;
@@ -359,8 +368,12 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         // Fetch data
         List<Project> ranking;
-        if (isJudgesRanking) {
+        if (isChecklistMode) {
+            ranking = projectService.getChecklistRankingByCategory(categoryId);
+        } else if (isJudgesRanking) {
             ranking = projectService.getJudgeRankingByCategory(categoryId);
+        } else if (isScaleMode) {
+            ranking = projectService.getRankingByCategory(categoryId);
         } else {
             ranking = projectService.getPopularRankingByCategory(categoryId);
         }
@@ -411,7 +424,17 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 int idx = order[slot];
                 if (idx >= ranking.size()) continue;
                 Project p = ranking.get(idx);
-                var podiumCard = new PodiumCardComponent(p, positions[slot], 0);
+                long totalVotes = 0;
+                double avgScore = 0;
+                if (isChecklistMode) {
+                    totalVotes = checklistVoteService.countChecklistVotesByProject(p.getId());
+                } else if (isScaleMode) {
+                    avgScore = voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
+                    totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+                } else {
+                    totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+                }
+                var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, isChecklistMode, isScaleMode, avgScore);
                 podiumSection.add(podiumCard);
             }
             content.add(podiumSection);
@@ -425,8 +448,18 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
                 for (int i = 3; i < ranking.size(); i++) {
                     Project p = ranking.get(i);
+                    long totalVotes;
+                    double avgScore = 0;
+                    if (isChecklistMode) {
+                        totalVotes = checklistVoteService.countChecklistVotesByProject(p.getId());
+                    } else if (isScaleMode) {
+                        avgScore = voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
+                        totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+                    } else {
+                        totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+                    }
                     int staggerIndex = Math.min(i - 2, 8);
-                    listSection.add(buildListRow(p, i + 1, staggerIndex));
+                    listSection.add(buildListRow(p, i + 1, staggerIndex, totalVotes, avgScore));
                 }
                 content.add(listSection);
             }
@@ -443,7 +476,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             "}, 900)");
     }
 
-    private HorizontalLayout buildListRow(Project p, int position, int staggerIndex) {
+    private HorizontalLayout buildListRow(Project p, int position, int staggerIndex, long totalVotes, double avgScore) {
         var row = new HorizontalLayout();
         row.addClassName("votify-card-static");
         row.addClassName("animate-fade-in");
@@ -480,7 +513,25 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("font-size", "0.95rem")
             .set("color", "var(--text-primary)");
 
-        info.add(name);
+        String voteText;
+        if (isChecklistMode) {
+            voteText = totalVotes + " checks";
+        } else if (isScaleMode) {
+            voteText = String.format("Score: %.1f", avgScore);
+        } else {
+            voteText = totalVotes + " votes";
+        }
+
+        var votesLabel = new Span(voteText);
+        votesLabel.getStyle()
+            .set("font-size", "0.85rem")
+            .set("font-weight", "600")
+            .set("color", "var(--secondary)")
+            .set("background", "rgba(0, 206, 201, 0.1)")
+            .set("padding", "2px 10px")
+            .set("border-radius", "var(--radius-pill)");
+
+        info.add(name, votesLabel);
         row.add(numBadge, info);
 
         return row;

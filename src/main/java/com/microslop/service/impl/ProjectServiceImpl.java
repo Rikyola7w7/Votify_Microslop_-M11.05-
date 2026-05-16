@@ -89,6 +89,12 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Project> getChecklistRankingByCategory(Long categoryId) {
+        return projectRepository.findChecklistRankingByCategory(categoryId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Project> getUserProjects(String username) {
         List<Project> projects = projectRepository.findProjectsByParticipantUsername(username);
         // Access all fields within transaction to prevent lazy loading errors

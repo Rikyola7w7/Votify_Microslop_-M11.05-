@@ -20,6 +20,8 @@ public interface ProjectService {
 
     java.util.List<Project> getPopularRankingByCategory(Long categoryId);
 
+    java.util.List<Project> getChecklistRankingByCategory(Long categoryId);
+
     java.util.List<Project> getUserProjects(String username);
 
     /**

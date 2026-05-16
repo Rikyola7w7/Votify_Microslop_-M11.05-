@@ -483,8 +483,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         long checkedForProject = currentUser != null
                 ? checklistVoteService.countCheckedItemsByUserForProject(currentUser.getId(), p.getId())
                 : 0;
-        boolean hasVoted = checkedForProject > 0;
-        if (hasVoted) {
+        boolean allChecked = checkedForProject >= checklistItems.size();
+        if (allChecked) {
             card.getStyle()
                     .set("background", "rgba(0, 184, 148, 0.08)")
                     .set("border-left", "4px solid var(--success)");
@@ -517,16 +517,16 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("margin-left", "8px");
         if (checkedForProject >= checklistItems.size()) {
             scoreLabel.getStyle()
-                    .set("color", "var(--success)")
-                    .set("background", "rgba(0, 184, 148, 0.12)");
-        } else if (hasVoted) {
+                    .set("color", "#00B894")
+                    .set("background", "rgba(0, 184, 148, 0.15)");
+        } else if (checkedForProject > 0) {
             scoreLabel.getStyle()
-                    .set("color", "var(--secondary)")
-                    .set("background", "rgba(0, 206, 201, 0.1)");
+                    .set("color", "#00CEC9")
+                    .set("background", "rgba(0, 206, 201, 0.15)");
         } else {
             scoreLabel.getStyle()
-                    .set("color", "var(--text-muted)")
-                    .set("background", "rgba(99, 110, 114, 0.1)");
+                    .set("color", "#636E72")
+                    .set("background", "rgba(99, 110, 114, 0.12)");
         }
         nameRow.add(scoreLabel);
 
@@ -590,9 +590,9 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         long checkedForProject = currentUser != null
                 ? checklistVoteService.countCheckedItemsByUserForProject(currentUser.getId(), p.getId())
                 : 0;
-        boolean hasVoted = checkedForProject > 0;
+        boolean allChecked = checkedForProject >= checklistItems.size();
 
-        if (hasVoted) {
+        if (allChecked) {
             card.getStyle()
                     .set("background", "rgba(0, 184, 148, 0.08)")
                     .set("border-left", "4px solid var(--success)");
@@ -623,16 +623,16 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                     .set("margin-left", "8px");
             if (checkedForProject >= checklistItems.size()) {
                 scoreLabel.getStyle()
-                        .set("color", "var(--success)")
-                        .set("background", "rgba(0, 184, 148, 0.12)");
-            } else if (hasVoted) {
+                        .set("color", "#00B894")
+                        .set("background", "rgba(0, 184, 148, 0.15)");
+            } else if (checkedForProject > 0) {
                 scoreLabel.getStyle()
-                        .set("color", "var(--secondary)")
-                        .set("background", "rgba(0, 206, 201, 0.1)");
+                        .set("color", "#00CEC9")
+                        .set("background", "rgba(0, 206, 201, 0.15)");
             } else {
                 scoreLabel.getStyle()
-                        .set("color", "var(--text-muted)")
-                        .set("background", "rgba(99, 110, 114, 0.1)");
+                        .set("color", "#636E72")
+                        .set("background", "rgba(99, 110, 114, 0.12)");
             }
             nameRow.add(scoreLabel);
         }
