@@ -63,4 +63,29 @@ public interface NotificationService {
      * Get a notification by ID
      */
     Optional<Notification> getNotificationById(Long id);
+    
+    /**
+     * Get notifications filtered by type
+     */
+    List<Notification> getNotificationsByTypeForCurrentUser(String type);
+    
+    /**
+     * Mark a notification as unread
+     */
+    void markAsUnread(Long notificationId);
+    
+    /**
+     * Delete multiple notifications at once
+     */
+    void bulkDeleteNotifications(List<Long> notificationIds);
+    
+    /**
+     * Delete all notifications for current user
+     */
+    void deleteAllNotificationsForCurrentUser();
+    
+    /**
+     * Get unread notifications for current user
+     */
+    List<Notification> getUnreadNotificationsForCurrentUser();
 }

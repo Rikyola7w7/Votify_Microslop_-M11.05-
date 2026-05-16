@@ -220,4 +220,67 @@ public class NotificationServiceImpl implements NotificationService, Notificatio
     public Optional<Notification> getNotificationById(Long id) {
         return notificationRepository.findById(id);
     }
+    
+    @Override
+    public List<Notification> getNotificationsByTypeForCurrentUser(String type) {
+        User currentUser = userService.getCurrentUser();
+        List<Notification> allNotifications = notificationRepository.findByUserOrderByCreationDateDesc(currentUser);
+        return allNotifications.stream()
+            .filter(n -> n.getType().equals(type))
+            .toList();
+    }
+    
+    @Override
+    public void markAsUnread(Long notificationId) {
+        Optional<Notification> notification = notificationRepository.findById(notificationId);
+        if (notification.isPresent()) {
+            Notification notif = notification.get();
+            notif.setIsRead(false);
+            notificationRepository.save(notif);
+            log.info("Notification {} marked as unread for user {}", notificationId, notif.getUser().getUsername());
+        }
+    }
+    
+    @Override
+    public void bulkDeleteNotifications(List<Long> notificationIds) {
+        if (notificationIds == null || notificationIds.isEmpty()) {
+            return;
+        }
+        
+        User currentUser = userService.getCurrentUser();
+        List<Notification> notificationsToDelete = notificationIds.stream()
+            .map(id -> notificationRepository.findById(id))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .filter(n -> n.getUser().getId().equals(currentUser.getId()))
+            .toList();
+        
+        for (Notification notification : notificationsToDelete) {
+            notificationRepository.deleteById(notification.getId());
+            NotificationDeletedEvent event = new NotificationDeletedEvent(notification, currentUser.getUsername());
+            notifyNotificationDeleted(event);
+        }
+        
+        log.info("Deleted {} notifications for user {}", notificationsToDelete.size(), currentUser.getUsername());
+    }
+    
+    @Override
+    public void deleteAllNotificationsForCurrentUser() {
+        User currentUser = userService.getCurrentUser();
+        List<Notification> allNotifications = notificationRepository.findByUserOrderByCreationDateDesc(currentUser);
+        
+        for (Notification notification : allNotifications) {
+            notificationRepository.deleteById(notification.getId());
+            NotificationDeletedEvent event = new NotificationDeletedEvent(notification, currentUser.getUsername());
+            notifyNotificationDeleted(event);
+        }
+        
+        log.info("Deleted all notifications for user {}", currentUser.getUsername());
+    }
+    
+    @Override
+    public List<Notification> getUnreadNotificationsForCurrentUser() {
+        User currentUser = userService.getCurrentUser();
+        return notificationRepository.findByUserAndIsReadFalseOrderByCreationDateDesc(currentUser);
+    }
 }
