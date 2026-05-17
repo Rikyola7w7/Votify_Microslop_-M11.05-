@@ -23,6 +23,9 @@ public class Category {
     @Column(nullable = false, name = "name")
     private String name;
 
+    @Column(name = "voter_type", length = 50)
+    private String voterType = "NORMAL";
+
     @ManyToOne
     @JoinColumn(name = "competition_id", nullable = false)
     private Competition competition;

@@ -100,7 +100,7 @@ class JudgesOnlyVotingStrategyTest {
     private Competition createActiveCompetition() {
         Competition competition = new Competition();
         competition.setId(1L);
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
+        competition.setStatus(CompetitionStatus.ACTIVE);
         competition.setJudgeWeightMultiplier(1.0);
         return competition;
     }

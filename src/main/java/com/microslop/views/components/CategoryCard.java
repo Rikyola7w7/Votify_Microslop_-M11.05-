@@ -53,6 +53,34 @@ public class CategoryCard extends Div {
             .set("display", "block")
             .set("margin", "12px 16px 4px");
 
+        String vt = category.getVoterType() != null ? category.getVoterType() : "NORMAL";
+        String label = "NORMAL".equals(vt) ? "Normal" : "SCALE".equals(vt) ? "Scale" : "Checklist";
+        Span voterBadge = new Span(label);
+        voterBadge.getStyle()
+            .set("font-size", "11px")
+            .set("font-weight", "600")
+            .set("padding", "2px 8px")
+            .set("border-radius", "10px")
+            .set("text-transform", "uppercase")
+            .set("letter-spacing", "0.5px")
+            .set("align-self", "center");
+        if ("NORMAL".equals(vt)) {
+            voterBadge.getStyle()
+                .set("background", "rgba(5, 150, 105, 0.15)")
+                .set("color", "#059669")
+                .set("border", "1px solid rgba(5, 150, 105, 0.3)");
+        } else if ("SCALE".equals(vt)) {
+            voterBadge.getStyle()
+                .set("background", "rgba(99, 102, 241, 0.15)")
+                .set("color", "#6366f1")
+                .set("border", "1px solid rgba(99, 102, 241, 0.3)");
+        } else {
+            voterBadge.getStyle()
+                .set("background", "rgba(245, 158, 11, 0.15)")
+                .set("color", "#d97706")
+                .set("border", "1px solid rgba(245, 158, 11, 0.3)");
+        }
+
         Span compName = new Span("Competition: " + competition.getName());
         compName.getStyle()
             .set("color", "var(--text-muted)")
@@ -68,7 +96,7 @@ public class CategoryCard extends Div {
 
         Button viewButton = createViewButton();
 
-        cardContent.add(ribbonStripe, iconBlock, statusBadge, categoryName, compName, spacer, viewButton);
+        cardContent.add(ribbonStripe, iconBlock, statusBadge, categoryName, voterBadge, compName, spacer, viewButton);
         add(cardContent);
     }
 
@@ -116,7 +144,7 @@ public class CategoryCard extends Div {
         boolean hasEnded = competition.getEndDate() != null
                 && LocalDateTime.now().isAfter(competition.getEndDate());
 
-        if (status == CompetitionStatus.VOTING_OPEN || status == CompetitionStatus.ACTIVE) {
+        if (status == CompetitionStatus.ACTIVE) {
             label = "OPEN";
             badgeClass = "votify-badge-active";
         } else if (status == CompetitionStatus.CONCLUDED || hasEnded) {

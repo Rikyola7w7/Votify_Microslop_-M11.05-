@@ -116,17 +116,19 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         leftSection.setSpacing(true);
         leftSection.setPadding(false);
 
-        Span title = new Span("Categories for: " + currentCompetition.getName());
+        Span title = new Span("Categories");
         title.getStyle()
             .set("color", "white")
             .set("font-size", "18px")
             .set("font-weight", "700")
-            .set("letter-spacing", "-0.2px");
+            .set("letter-spacing", "-0.2px")
+            .set("flex", "1")
+            .set("text-align", "center")
+            .set("overflow", "hidden")
+            .set("text-overflow", "ellipsis")
+            .set("white-space", "nowrap");
 
-        Div spacer = new Div();
-        spacer.setWidth(120, Unit.PIXELS);
-
-        header.add(leftSection, title, spacer);
+        header.add(leftSection, title);
         return header;
     }
 
@@ -220,7 +222,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         boolean hasEnded = currentCompetition.getEndDate() != null
                 && java.time.LocalDateTime.now().isAfter(currentCompetition.getEndDate());
 
-        if (status == CompetitionStatus.VOTING_OPEN || status == CompetitionStatus.ACTIVE) {
+        if (status == CompetitionStatus.ACTIVE) {
             label = "ACTIVE";
             badgeClass = "votify-badge-active";
         } else if (status == CompetitionStatus.CONCLUDED || hasEnded) {
