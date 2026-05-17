@@ -78,9 +78,19 @@ public class NotificationView extends VerticalLayout {
 
         Button refreshBtn = new Button(new Icon(VaadinIcon.REFRESH));
         refreshBtn.addThemeVariants(ButtonVariant.LUMO_ICON);
-        refreshBtn.setTitle("Refresh notifications");
+        refreshBtn.getElement().setAttribute("title", "Refresh notifications");
         refreshBtn.addClickListener(e -> refreshNotifications());
         actions.add(refreshBtn);
+
+        // Delete All button
+        Button deleteAllBtn = new Button("Delete All");
+        deleteAllBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        deleteAllBtn.getElement().setAttribute("title", "Delete all notifications");
+        deleteAllBtn.addClickListener(e -> {
+            notificationService.deleteAllNotificationsForCurrentUser();
+            refreshNotifications();
+        });
+        actions.add(deleteAllBtn);
 
         header.add(title, actions);
         return header;
