@@ -2,15 +2,13 @@ package com.microslop.views.components;
 
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
-import com.microslop.entity.Project;
 import com.microslop.service.NotificationService;
-import com.microslop.service.ProjectService;
+import com.microslop.service.PendingProjectSubmissionService;
 import com.microslop.service.UserService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
@@ -22,10 +20,11 @@ import com.vaadin.flow.component.textfield.TextField;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CreateProjectDialog extends Dialog {
 
-    private final ProjectService projectService;
+    private final PendingProjectSubmissionService pendingProjectSubmissionService;
     private final UserService userService;
     private final NotificationService notificationService;
     private final Competition competition;
@@ -36,10 +35,11 @@ public class CreateProjectDialog extends Dialog {
     private TextArea descriptionField;
     private List<Checkbox> categoryCheckboxes;
 
-    public CreateProjectDialog(ProjectService projectService, UserService userService,
-                               NotificationService notificationService, Competition competition,
-                               List<Category> categories, Runnable onSuccess) {
-        this.projectService = projectService;
+    public CreateProjectDialog(PendingProjectSubmissionService pendingProjectSubmissionService,
+                                UserService userService,
+                                NotificationService notificationService, Competition competition,
+                                List<Category> categories, Runnable onSuccess) {
+        this.pendingProjectSubmissionService = pendingProjectSubmissionService;
         this.userService = userService;
         this.notificationService = notificationService;
         this.competition = competition;
@@ -134,15 +134,20 @@ public class CreateProjectDialog extends Dialog {
         }
 
         try {
-            Project project = new Project(name, descriptionField.getValue().trim(), competition);
-            for (Category cat : selectedCategories) {
-                project.addCategory(cat);
-            }
-            project.addParticipant(userService.getCurrentUser());
-            projectService.save(project);
+            String categoryIds = selectedCategories.stream()
+                .map(cat -> String.valueOf(cat.getId()))
+                .collect(Collectors.joining(","));
 
-            if (notificationService != null) {
-                String creatorName = competition.getCreatedBy();
+            pendingProjectSubmissionService.createSubmission(
+                name,
+                descriptionField.getValue().trim(),
+                competition.getId(),
+                userService.getCurrentUsername(),
+                categoryIds
+            );
+
+            String creatorName = competition.getCreatedBy();
+            if (notificationService != null && creatorName != null) {
                 try {
                     var creator = userService.searchByUsernameIgnoreCase(creatorName);
                     creator.ifPresent(user ->

@@ -3,7 +3,6 @@ package com.microslop.views;
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Notification;
 import com.microslop.service.NotificationService;
-import com.microslop.service.UserService;
 import com.microslop.views.components.NotificationCardComponent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -25,12 +24,10 @@ import java.util.List;
 public class NotificationView extends VerticalLayout {
 
     private final NotificationService notificationService;
-    private final UserService userService;
     private Div notificationsContainer;
 
-    public NotificationView(NotificationService notificationService, UserService userService) {
+    public NotificationView(NotificationService notificationService) {
         this.notificationService = notificationService;
-        this.userService = userService;
         initializeView();
         refreshNotifications();
     }
@@ -84,25 +81,6 @@ public class NotificationView extends VerticalLayout {
         refreshBtn.getElement().setAttribute("title", "Refresh notifications");
         refreshBtn.addClickListener(e -> refreshNotifications());
         actions.add(refreshBtn);
-
-        // Test notification button
-        Button testBtn = new Button("Create Test Notification");
-        testBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        testBtn.getElement().setAttribute("title", "Create a test notification");
-        testBtn.addClickListener(e -> {
-            if (!userService.isLoggedIn()) {
-                com.vaadin.flow.component.notification.Notification.show("Sign in to create test notifications", 3000, com.vaadin.flow.component.notification.Notification.Position.MIDDLE);
-                return;
-            }
-            notificationService.createNotification(
-                userService.getCurrentUser(),
-                "Test Notification",
-                "This is a test notification created at " + java.time.LocalDateTime.now().toLocalTime().toString(),
-                "TEST"
-            );
-            refreshNotifications();
-        });
-        actions.add(testBtn);
 
         // Delete All button
         Button deleteAllBtn = new Button("Delete All");

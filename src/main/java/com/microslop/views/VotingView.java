@@ -6,12 +6,10 @@ import com.microslop.entity.Category;
 import com.microslop.entity.Project;
 import com.microslop.service.CategoryService;
 import com.microslop.service.CompetitionService;
-import com.microslop.service.NotificationService;
 import com.microslop.service.ProjectCommentService;
 import com.microslop.service.UserService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.VoteService;
-import com.microslop.views.components.CreateProjectDialog;
 import com.microslop.views.components.ViewHeader;
 import com.microslop.views.components.VoteSuccessAnimation;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -52,8 +50,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private final ProjectCommentService commentService;
     private final UserService userService;
     private final CategoryService categoryService;
-    private final NotificationService notificationService;
-
     private Long competitionId;
     private Span maxVotesLabel;
     private com.microslop.entity.Competition currentCompetition;
@@ -67,15 +63,13 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                       VoteService voteService,
                       ProjectCommentService commentService,
                       UserService userService,
-                      CategoryService categoryService,
-                      NotificationService notificationService) {
+                       CategoryService categoryService) {
         this.competitionService = competitionService;
         this.projectService     = projectService;
         this.voteService        = voteService;
         this.commentService     = commentService;
         this.userService        = userService;
         this.categoryService    = categoryService;
-        this.notificationService = notificationService;
 
         setSizeFull();
         setPadding(false);
@@ -205,26 +199,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("text-align", "center");
 
         titleWrapper.add(title, subtitle);
-
-        // Create Project button
-        Button createProjectBtn = new Button("Submit Project", new Icon(VaadinIcon.PLUS_CIRCLE_O));
-        createProjectBtn.addClassName("votify-btn-secondary");
-        createProjectBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        createProjectBtn.getStyle()
-            .set("margin-bottom", "1rem");
-        createProjectBtn.addClickListener(e -> {
-            if (!userService.isLoggedIn()) {
-                com.vaadin.flow.component.notification.Notification.show("Sign in to submit a project", 3000, com.vaadin.flow.component.notification.Notification.Position.MIDDLE);
-                return;
-            }
-            var comp = competitionService.getByIdOrFail(competitionId);
-            var cats = categoryService.getCategoriesByCompetition(competitionId);
-            CreateProjectDialog dialog = new CreateProjectDialog(
-                projectService, userService, notificationService, comp, cats, () -> {}
-            );
-            dialog.open();
-        });
-        titleWrapper.add(createProjectBtn);
 
         // Vote counter badge
         var competition = competitionService.getById(competitionId).orElse(null);

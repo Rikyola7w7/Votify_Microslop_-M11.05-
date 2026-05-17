@@ -5,8 +5,12 @@ import com.microslop.entity.Competition;
 import com.microslop.entity.CompetitionStatus;
 import com.microslop.service.CategoryService;
 import com.microslop.service.CompetitionService;
-import com.microslop.views.components.CategoryCard;
+import com.microslop.service.NotificationService;
+import com.microslop.service.PendingProjectSubmissionService;
+import com.microslop.service.UserService;
 import com.microslop.views.components.BallotLoadingComponent;
+import com.microslop.views.components.CategoryCard;
+import com.microslop.views.components.CreateProjectDialog;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
@@ -33,6 +37,9 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
 
     private final CompetitionService competitionService;
     private final CategoryService categoryService;
+    private final PendingProjectSubmissionService pendingProjectSubmissionService;
+    private final UserService userService;
+    private final NotificationService notificationService;
 
     private Long competitionId;
     private Competition currentCompetition;
@@ -41,9 +48,15 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
     private List<Category> allCategories;
 
     public CategorySelectionView(CompetitionService competitionService,
-                                 CategoryService categoryService) {
+                                  CategoryService categoryService,
+                                  PendingProjectSubmissionService pendingProjectSubmissionService,
+                                  UserService userService,
+                                  NotificationService notificationService) {
         this.competitionService = competitionService;
         this.categoryService = categoryService;
+        this.pendingProjectSubmissionService = pendingProjectSubmissionService;
+        this.userService = userService;
+        this.notificationService = notificationService;
 
         setSizeFull();
         setPadding(false);
@@ -123,10 +136,29 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             .set("font-weight", "700")
             .set("letter-spacing", "-0.2px");
 
-        Div spacer = new Div();
-        spacer.setWidth(120, Unit.PIXELS);
+        Button submitBtn = new Button("Submit Project", new Icon(VaadinIcon.PLUS_CIRCLE_O));
+        submitBtn.getStyle()
+            .set("background", "white")
+            .set("color", "var(--primary)")
+            .set("border", "none")
+            .set("border-radius", "var(--radius-md)")
+            .set("cursor", "pointer")
+            .set("font-weight", "600")
+            .set("padding", "8px 16px");
+        submitBtn.addClickListener(e -> {
+            if (!userService.isLoggedIn()) {
+                com.vaadin.flow.component.notification.Notification.show("Sign in to submit a project", 3000, com.vaadin.flow.component.notification.Notification.Position.MIDDLE);
+                return;
+            }
+            var cats = categoryService.getCategoriesByCompetition(competitionId);
+            CreateProjectDialog dialog = new CreateProjectDialog(
+                pendingProjectSubmissionService, userService, notificationService,
+                currentCompetition, cats, () -> {}
+            );
+            dialog.open();
+        });
 
-        header.add(leftSection, title, spacer);
+        header.add(leftSection, title, submitBtn);
         return header;
     }
 

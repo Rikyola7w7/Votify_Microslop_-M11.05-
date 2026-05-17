@@ -3,7 +3,10 @@ package com.microslop.views;
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Competition;
 import com.microslop.entity.CompetitionStatus;
+import com.microslop.entity.PendingProjectSubmission;
 import com.microslop.entity.Project;
+import com.microslop.repository.CategoryRepository;
+import com.microslop.repository.PendingProjectSubmissionRepository;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.NotificationService;
 import com.microslop.service.ProjectService;
@@ -38,6 +41,8 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     private final CompetitionService competitionService;
     private final UserService userService;
     private final ProjectService projectService;
+    private final PendingProjectSubmissionRepository pendingSubmissionRepository;
+    private final CategoryRepository categoryRepository;
     private final NotificationService notificationService;
 
     private String currentUsername;
@@ -55,10 +60,15 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     private Button reopenButton;
 
     public ManageCompetitionView(CompetitionService competitionService, UserService userService,
-                                 ProjectService projectService, NotificationService notificationService) {
+                                  ProjectService projectService,
+                                  PendingProjectSubmissionRepository pendingSubmissionRepository,
+                                  CategoryRepository categoryRepository,
+                                  NotificationService notificationService) {
         this.competitionService = competitionService;
         this.userService = userService;
         this.projectService = projectService;
+        this.pendingSubmissionRepository = pendingSubmissionRepository;
+        this.categoryRepository = categoryRepository;
         this.notificationService = notificationService;
         setSizeFull();
         setPadding(false);
@@ -359,9 +369,10 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     }
 
     private VerticalLayout buildPendingProjectsSection() {
-        List<Project> projectList = projectService.listByCompetition(competitionId);
+        List<PendingProjectSubmission> pendingSubmissions =
+            pendingSubmissionRepository.findByCompetitionId(competitionId);
 
-        if (projectList.isEmpty()) {
+        if (pendingSubmissions.isEmpty()) {
             return null;
         }
 
@@ -372,7 +383,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
             .set("padding-top", "30px")
             .set("border-top", "1px solid var(--border)");
 
-        H3 sectionTitle = new H3("Project Submissions");
+        H3 sectionTitle = new H3("Pending Project Submissions");
         sectionTitle.getStyle()
             .set("color", "var(--dark)")
             .set("font-size", "1.2rem")
@@ -381,7 +392,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
 
         section.add(sectionTitle);
 
-        for (Project project : projectList) {
+        for (PendingProjectSubmission submission : pendingSubmissions) {
             HorizontalLayout card = new HorizontalLayout();
             card.setWidthFull();
             card.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -396,50 +407,99 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
             info.setSpacing(false);
             info.getStyle().set("flex", "1");
 
-            Span projectName = new Span(project.getName());
+            Span projectName = new Span(submission.getProjectName());
             projectName.getStyle()
                 .set("font-weight", "600")
                 .set("font-size", "1rem");
 
-            String participantName = project.getParticipants().isEmpty()
-                ? "Unknown" : project.getParticipants().get(0).getUsername();
-            Span meta = new Span("Submitted by: " + participantName);
+            String submitterName = submission.getSubmitter() != null
+                ? submission.getSubmitter().getUsername() : "Unknown";
+            Span meta = new Span("Submitted by: " + submitterName);
             meta.getStyle()
                 .set("font-size", "0.85rem")
                 .set("color", "var(--text-muted)");
 
             info.add(projectName, meta);
 
-            Button removeBtn = new Button("Remove", new Icon(VaadinIcon.TRASH));
-            removeBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
-            removeBtn.getStyle().set("cursor", "pointer");
-            removeBtn.addClickListener(e -> {
-                try {
-                    if (notificationService != null) {
-                        for (var participant : project.getParticipants()) {
-                            notificationService.createNotification(
-                                participant,
-                                "Project Removed",
-                                "Your project \"" + project.getName() + "\" has been removed from \"" + competition.getName() + "\".",
-                                "PROJECT_REMOVED"
-                            );
-                        }
-                    }
-                    projectService.delete(project.getId());
-                    buildUI();
-                    updateUIState();
-                    Notification.show("Project removed.", 3000, Notification.Position.TOP_CENTER)
-                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-                } catch (Exception ex) {
-                    Notification.show("Error removing project: " + ex.getMessage(), 4000, Notification.Position.TOP_CENTER)
-                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
-                }
-            });
+            Button acceptBtn = new Button("Accept", new Icon(VaadinIcon.CHECK));
+            acceptBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+            acceptBtn.getStyle().set("cursor", "pointer");
+            acceptBtn.addClickListener(e -> acceptSubmission(submission));
 
-            card.add(info, removeBtn);
+            Button declineBtn = new Button("Decline", new Icon(VaadinIcon.CLOSE_SMALL));
+            declineBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
+            declineBtn.getStyle().set("cursor", "pointer");
+            declineBtn.addClickListener(e -> declineSubmission(submission));
+
+            HorizontalLayout actions = new HorizontalLayout(acceptBtn, declineBtn);
+            actions.setSpacing(true);
+
+            card.add(info, actions);
             section.add(card);
         }
 
         return section;
+    }
+
+    private void acceptSubmission(PendingProjectSubmission submission) {
+        try {
+            Project project = new Project(submission.getProjectName(), submission.getDescription(), submission.getCompetition());
+            project.addParticipant(submission.getSubmitter());
+
+            if (submission.getCategoryIds() != null && !submission.getCategoryIds().isEmpty()) {
+                for (String idStr : submission.getCategoryIds().split(",")) {
+                    try {
+                        Long catId = Long.parseLong(idStr.trim());
+                        categoryRepository.findById(catId).ifPresent(project::addCategory);
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+
+            projectService.save(project);
+
+            notifyUser(submission.getSubmitter(),
+                "Project Accepted",
+                "Your project \"" + submission.getProjectName() + "\" has been accepted to \"" + competition.getName() + "\"!",
+                "PROJECT_ACCEPTED"
+            );
+
+            pendingSubmissionRepository.delete(submission);
+
+            buildUI();
+            updateUIState();
+            Notification.show("Project accepted.", 3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        } catch (Exception ex) {
+            Notification.show("Error accepting project: " + ex.getMessage(), 4000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
+    }
+
+    private void declineSubmission(PendingProjectSubmission submission) {
+        try {
+            notifyUser(submission.getSubmitter(),
+                "Project Declined",
+                "Your project \"" + submission.getProjectName() + "\" has been declined for \"" + competition.getName() + "\".",
+                "PROJECT_DECLINED"
+            );
+
+            pendingSubmissionRepository.delete(submission);
+
+            buildUI();
+            updateUIState();
+            Notification.show("Project declined and removed.", 3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        } catch (Exception ex) {
+            Notification.show("Error declining project: " + ex.getMessage(), 4000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
+    }
+
+    private void notifyUser(com.microslop.entity.User user, String title, String message, String type) {
+        try {
+            if (notificationService != null && user != null) {
+                notificationService.createNotification(user, title, message, type);
+            }
+        } catch (Exception ignored) {}
     }
 }
