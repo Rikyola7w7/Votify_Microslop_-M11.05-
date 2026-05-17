@@ -10,6 +10,7 @@ import com.microslop.service.VoterService;
 import com.microslop.service.VoteService;
 import com.microslop.views.components.PodiumCardComponent;
 import com.microslop.views.components.BallotLoadingComponent;
+import com.microslop.views.components.ViewHeader;
 import com.microslop.entity.Project;
 import com.microslop.service.ProjectService;
 import com.vaadin.flow.component.button.Button;
@@ -108,7 +109,9 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         rankingContainer.setWidthFull();
         rankingContainer.setAlignItems(FlexComponent.Alignment.CENTER);
         rankingContainer.setPadding(false);
-        rankingContainer.getStyle().set("max-width", "760px");
+        rankingContainer.getStyle()
+            .set("max-width", "760px")
+            .set("margin", "0 auto");
         add(rankingContainer);
         loadRanking(true);
     }
@@ -369,7 +372,10 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         var content = new Div();
         content.getElement().setAttribute("id", "ranking-content");
         content.setWidthFull();
-        content.getStyle().set("display", "none");
+        content.getStyle()
+            .set("display", "none")
+            .set("max-width", "760px")
+            .set("margin", "0 auto");
 
         var title = new H3(isJudgesRanking ? "Judges' Ranking" : "Popular Ranking");
         title.getStyle()
@@ -393,7 +399,6 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             var podiumSection = new Div();
             podiumSection.setWidthFull();
             podiumSection.getStyle()
-                .set("max-width", "760px")
                 .set("display", "flex")
                 .set("justify-content", "center")
                 .set("align-items", "flex-end")
@@ -419,7 +424,6 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             if (ranking.size() > 3) {
                 var listSection = new VerticalLayout();
                 listSection.setWidthFull();
-                listSection.getStyle().set("max-width", "760px");
                 listSection.setPadding(false);
                 listSection.setSpacing(false);
 
