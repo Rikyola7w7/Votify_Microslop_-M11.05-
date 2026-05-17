@@ -2,10 +2,8 @@ package com.microslop.views;
 
 import com.microslop.entity.Competition;
 import com.microslop.service.CompetitionService;
-import com.microslop.service.NotificationService;
 import com.microslop.service.UserService;
 import com.microslop.views.components.CompetitionCardComponent;
-import com.microslop.views.components.NotificationCardComponent;
 import com.microslop.views.components.BallotLoadingComponent;
 import com.microslop.base.ui.MainLayout;
 import com.vaadin.flow.component.button.Button;
@@ -20,10 +18,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import java.util.List;
@@ -34,17 +29,15 @@ public class MainView extends VerticalLayout {
 
     private final CompetitionService competitionService;
     private final UserService userService;
-    private final NotificationService notificationService;
     private Div cardsContainer;
     private List<Competition> currentCompetitions;
     private Button btnAll;
     private Button btnActive;
     private Button btnFinished;
 
-    public MainView(CompetitionService competitionService, UserService userService, NotificationService notificationService) {
+    public MainView(CompetitionService competitionService, UserService userService) {
         this.competitionService = competitionService;
         this.userService = userService;
-        this.notificationService = notificationService;
         initializeView();
         refreshCompetitions("All");
     }
@@ -80,155 +73,7 @@ public class MainView extends VerticalLayout {
 
         header.add(title);
         
-        // Agregar campana de notificaciones a la derecha
-        if (notificationService != null) {
-            Div notificationBellContainer = createNotificationBell();
-            header.add(notificationBellContainer);
-        }
-        
         return header;
-    }
-
-    private Div createNotificationBell() {
-        Div bellContainer = new Div();
-        bellContainer.getStyle()
-            .set("position", "relative")
-            .set("display", "flex")
-            .set("align-items", "center");
-
-        Button bellButton = new Button(new Icon(VaadinIcon.BELL_O));
-        bellButton.addThemeVariants(ButtonVariant.LUMO_ICON);
-        bellButton.getElement().setAttribute("title", "Notifications");
-        bellButton.getStyle().set("font-size", "20px");
-
-        // Unread count badge
-        Span unreadBadge = new Span();
-        unreadBadge.getStyle()
-            .set("position", "absolute")
-            .set("top", "-8px")
-            .set("right", "-8px")
-            .set("background", "var(--error, #d32f2f)")
-            .set("color", "white")
-            .set("border-radius", "50%")
-            .set("width", "20px")
-            .set("height", "20px")
-            .set("display", "flex")
-            .set("align-items", "center")
-            .set("justify-content", "center")
-            .set("font-size", "12px")
-            .set("font-weight", "600")
-            .set("min-width", "20px")
-            .set("visibility", "hidden");
-
-        updateUnreadBadge(unreadBadge);
-
-        // Create notification dialog
-        Dialog notificationDialog = new Dialog();
-        notificationDialog.setWidth("350px");
-        notificationDialog.setMaxWidth("90vw");
-        notificationDialog.getElement().getStyle().set("max-height", "400px");
-        
-        VerticalLayout dialogContent = createNotificationDropdown();
-        dialogContent.add(createNotificationDropdownContent());
-        notificationDialog.add(dialogContent);
-
-        bellButton.addClickListener(e -> {
-            updateUnreadBadge(unreadBadge);
-            dialogContent.removeAll();
-            dialogContent.add(createNotificationDropdownContent());
-            notificationDialog.open();
-        });
-
-        bellContainer.add(bellButton, unreadBadge);
-
-        return bellContainer;
-    }
-
-    private void updateUnreadBadge(Span unreadBadge) {
-        if (notificationService != null) {
-            try {
-                long unreadCount = notificationService.getUnreadCountForCurrentUser();
-                if (unreadCount > 0) {
-                    unreadBadge.setText(unreadCount > 99 ? "99+" : String.valueOf(unreadCount));
-                    unreadBadge.getStyle().set("visibility", "visible");
-                } else {
-                    unreadBadge.getStyle().set("visibility", "hidden");
-                }
-            } catch (Exception e) {
-                unreadBadge.getStyle().set("visibility", "hidden");
-            }
-        }
-    }
-
-    private VerticalLayout createNotificationDropdown() {
-        VerticalLayout dropdown = new VerticalLayout();
-        dropdown.setPadding(false);
-        dropdown.setSpacing(false);
-        dropdown.setWidth("100%");
-        dropdown.getStyle()
-            .set("max-height", "400px")
-            .set("overflow-y", "auto")
-            .set("background", "var(--surface)")
-            .set("border-radius", "8px");
-
-        return dropdown;
-    }
-
-    private Div createNotificationDropdownContent() {
-        Div content = new Div();
-        content.setWidthFull();
-
-        if (notificationService == null) {
-            Span emptyText = new Span("Notifications unavailable");
-            emptyText.getStyle()
-                .set("padding", "16px")
-                .set("color", "var(--text-muted)");
-            content.add(emptyText);
-            return content;
-        }
-
-        try {
-            var recentNotifications = notificationService.getRecentNotificationsForCurrentUser();
-
-            if (recentNotifications.isEmpty()) {
-                Span emptyText = new Span("No recent notifications");
-                emptyText.getStyle()
-                    .set("padding", "16px")
-                    .set("text-align", "center")
-                    .set("color", "var(--text-muted)");
-                content.add(emptyText);
-            } else {
-                for (var notification : recentNotifications) {
-                    NotificationCardComponent card = new NotificationCardComponent(
-                        notification,
-                        notificationService,
-                        () -> {} // Simple refresh in dropdown
-                    );
-                    content.add(card);
-                }
-                
-                // View All button
-                Button viewAllBtn = new Button("View All Notifications");
-                viewAllBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-                viewAllBtn.getStyle()
-                    .set("width", "100%")
-                    .set("margin-top", "8px")
-                    .set("justify-content", "center")
-                    .set("cursor", "pointer");
-                viewAllBtn.addClickListener(e -> 
-                    e.getSource().getUI().ifPresent(ui -> ui.navigate("notifications"))
-                );
-                content.add(viewAllBtn);
-            }
-        } catch (Exception e) {
-            Span errorText = new Span("Error loading notifications");
-            errorText.getStyle()
-                .set("padding", "16px")
-                .set("color", "var(--text-muted)");
-            content.add(errorText);
-        }
-
-        return content;
     }
 
     private Div buildHeroSection() {
