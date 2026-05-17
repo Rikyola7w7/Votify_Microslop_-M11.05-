@@ -5,9 +5,11 @@ import com.microslop.entity.Competition;
 import com.microslop.entity.CompetitionStatus;
 import com.microslop.service.CategoryService;
 import com.microslop.service.CompetitionService;
+import com.microslop.service.NotificationService;
 import com.microslop.service.UserService;
 import com.microslop.service.VoterService;
 import com.microslop.service.VoteService;
+import com.microslop.views.components.CreateProjectDialog;
 import com.microslop.views.components.PodiumCardComponent;
 import com.microslop.views.components.BallotLoadingComponent;
 import com.microslop.views.components.ViewHeader;
@@ -22,6 +24,8 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -45,6 +49,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     private final ProjectService projectService;
     private final UserService userService;
     private final VoterService voterService;
+    private final NotificationService notificationService;
 
     private Long competitionId;
     private Long categoryId;
@@ -57,13 +62,15 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                        VoteService voteService,
                        ProjectService projectService,
                        UserService userService,
-                       VoterService voterService) {
+                       VoterService voterService,
+                       NotificationService notificationService) {
         this.competitionService = competitionService;
         this.categoryService = categoryService;
         this.voteService = voteService;
         this.projectService = projectService;
         this.userService = userService;
         this.voterService = voterService;
+        this.notificationService = notificationService;
 
         setSizeFull();
         setPadding(false);
@@ -149,6 +156,27 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         rightSection.setSpacing(true);
         rightSection.setMargin(false);
         rightSection.setPadding(false);
+
+        Button createProjectBtn = new Button("Submit Project", new Icon(VaadinIcon.PLUS_CIRCLE_O));
+        createProjectBtn.addClassName("votify-btn-secondary");
+        createProjectBtn.getStyle()
+            .set("background", "white")
+            .set("color", "var(--primary)")
+            .set("border", "none")
+            .set("cursor", "pointer")
+            .set("font-weight", "600");
+        createProjectBtn.addClickListener(e -> {
+            if (!userService.isLoggedIn()) {
+                com.vaadin.flow.component.notification.Notification.show("Sign in to submit a project", 3000, com.vaadin.flow.component.notification.Notification.Position.MIDDLE);
+                return;
+            }
+            var cats = categoryService.getCategoriesByCompetition(competitionId);
+            CreateProjectDialog dialog = new CreateProjectDialog(
+                projectService, userService, notificationService, currentCompetition, cats, () -> {}
+            );
+            dialog.open();
+        });
+        rightSection.add(createProjectBtn);
 
         Button voteButton = new Button("Vote");
         voteButton.addClassName("votify-btn-secondary");

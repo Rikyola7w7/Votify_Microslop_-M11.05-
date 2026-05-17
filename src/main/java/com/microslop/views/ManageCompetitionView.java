@@ -3,13 +3,17 @@ package com.microslop.views;
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Competition;
 import com.microslop.entity.CompetitionStatus;
+import com.microslop.entity.Project;
 import com.microslop.service.CompetitionService;
+import com.microslop.service.NotificationService;
+import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -25,6 +29,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Route(value = ":username/competitions/manage/:competitionId", layout = MainLayout.class)
 @PageTitle("Manage Competition | Votify")
@@ -32,6 +37,8 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
 
     private final CompetitionService competitionService;
     private final UserService userService;
+    private final ProjectService projectService;
+    private final NotificationService notificationService;
 
     private String currentUsername;
     private Long competitionId;
@@ -47,9 +54,12 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     private Button endNowButton;
     private Button reopenButton;
 
-    public ManageCompetitionView(CompetitionService competitionService, UserService userService) {
+    public ManageCompetitionView(CompetitionService competitionService, UserService userService,
+                                 ProjectService projectService, NotificationService notificationService) {
         this.competitionService = competitionService;
         this.userService = userService;
+        this.projectService = projectService;
+        this.notificationService = notificationService;
         setSizeFull();
         setPadding(false);
         setSpacing(false);
@@ -221,6 +231,13 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         actionsLayout.add(pauseButton, resumeButton, endNowButton, reopenButton);
 
         mainContent.add(title, description, statusLayout, sectionTitle, datesContainer, actionsLayout);
+
+        // Pending projects section
+        VerticalLayout pendingSection = buildPendingProjectsSection();
+        if (pendingSection != null) {
+            mainContent.add(pendingSection);
+        }
+
         scrollContainer.add(header, mainContent);
         add(scrollContainer);
     }
@@ -339,5 +356,90 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         Notification.show("Voting reopened.", 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         updateUIState();
+    }
+
+    private VerticalLayout buildPendingProjectsSection() {
+        List<Project> projectList = projectService.listByCompetition(competitionId);
+
+        if (projectList.isEmpty()) {
+            return null;
+        }
+
+        VerticalLayout section = new VerticalLayout();
+        section.setWidthFull();
+        section.getStyle()
+            .set("margin-top", "30px")
+            .set("padding-top", "30px")
+            .set("border-top", "1px solid var(--border)");
+
+        H3 sectionTitle = new H3("Project Submissions");
+        sectionTitle.getStyle()
+            .set("color", "var(--dark)")
+            .set("font-size", "1.2rem")
+            .set("font-weight", "700")
+            .set("margin", "0 0 16px 0");
+
+        section.add(sectionTitle);
+
+        for (Project project : projectList) {
+            HorizontalLayout card = new HorizontalLayout();
+            card.setWidthFull();
+            card.setAlignItems(FlexComponent.Alignment.CENTER);
+            card.getStyle()
+                .set("padding", "12px 16px")
+                .set("background", "var(--background)")
+                .set("border-radius", "8px")
+                .set("margin-bottom", "8px");
+
+            VerticalLayout info = new VerticalLayout();
+            info.setPadding(false);
+            info.setSpacing(false);
+            info.getStyle().set("flex", "1");
+
+            Span projectName = new Span(project.getName());
+            projectName.getStyle()
+                .set("font-weight", "600")
+                .set("font-size", "1rem");
+
+            String participantName = project.getParticipants().isEmpty()
+                ? "Unknown" : project.getParticipants().get(0).getUsername();
+            Span meta = new Span("Submitted by: " + participantName);
+            meta.getStyle()
+                .set("font-size", "0.85rem")
+                .set("color", "var(--text-muted)");
+
+            info.add(projectName, meta);
+
+            Button removeBtn = new Button("Remove", new Icon(VaadinIcon.TRASH));
+            removeBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
+            removeBtn.getStyle().set("cursor", "pointer");
+            removeBtn.addClickListener(e -> {
+                try {
+                    if (notificationService != null) {
+                        for (var participant : project.getParticipants()) {
+                            notificationService.createNotification(
+                                participant,
+                                "Project Removed",
+                                "Your project \"" + project.getName() + "\" has been removed from \"" + competition.getName() + "\".",
+                                "PROJECT_REMOVED"
+                            );
+                        }
+                    }
+                    projectService.delete(project.getId());
+                    buildUI();
+                    updateUIState();
+                    Notification.show("Project removed.", 3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                } catch (Exception ex) {
+                    Notification.show("Error removing project: " + ex.getMessage(), 4000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                }
+            });
+
+            card.add(info, removeBtn);
+            section.add(card);
+        }
+
+        return section;
     }
 }
