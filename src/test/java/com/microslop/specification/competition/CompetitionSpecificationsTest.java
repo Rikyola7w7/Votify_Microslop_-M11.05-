@@ -68,10 +68,8 @@ class CompetitionSpecificationsTest {
     void testCompetitionByStatusEnumSpecificationCreation() {
         CompetitionByStatusEnumSpecification draftSpec = new CompetitionByStatusEnumSpecification(CompetitionStatus.DRAFT);
         CompetitionByStatusEnumSpecification activeSpec = new CompetitionByStatusEnumSpecification(CompetitionStatus.ACTIVE);
-        CompetitionByStatusEnumSpecification votingSpec = new CompetitionByStatusEnumSpecification(CompetitionStatus.VOTING_OPEN);
         assertNotNull(draftSpec);
         assertNotNull(activeSpec);
-        assertNotNull(votingSpec);
     }
 
     @Test
@@ -82,8 +80,8 @@ class CompetitionSpecificationsTest {
     @Test
     void testCompetitionByStatusEnumSpecificationComposition() {
         CompetitionByStatusEnumSpecification activeSpec = new CompetitionByStatusEnumSpecification(CompetitionStatus.ACTIVE);
-        CompetitionByStatusEnumSpecification votingSpec = new CompetitionByStatusEnumSpecification(CompetitionStatus.VOTING_OPEN);
-        var orSpec = activeSpec.or(votingSpec);
+        CompetitionByStatusEnumSpecification pausedSpec = new CompetitionByStatusEnumSpecification(CompetitionStatus.PAUSED);
+        var orSpec = activeSpec.or(pausedSpec);
         assertNotNull(orSpec);
     }
 }

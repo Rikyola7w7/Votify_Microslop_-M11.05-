@@ -9,7 +9,7 @@ import com.microslop.state.*;
 public enum CompetitionStatus {
     DRAFT(new DraftCompetitionState()),
     ACTIVE(new ActiveCompetitionState()),
-    VOTING_OPEN(new VotingOpenCompetitionState()),
+    PAUSED(new PausedCompetitionState()),
     CONCLUDED(new ConcludedCompetitionState()),
     ARCHIVED(new ArchivedCompetitionState());
 

@@ -230,7 +230,7 @@ public class Competition {
             }
         } else {
             if (this.status == CompetitionStatus.ACTIVE
-                    || this.status == CompetitionStatus.VOTING_OPEN) {
+                    || this.status == CompetitionStatus.PAUSED) {
                 this.status = CompetitionStatus.DRAFT;
             }
         }

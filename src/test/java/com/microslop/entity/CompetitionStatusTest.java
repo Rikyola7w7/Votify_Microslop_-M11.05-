@@ -18,11 +18,6 @@ class CompetitionStatusTest {
     }
 
     @Test
-    void votingOpen_hasVotingOpenState() {
-        assertInstanceOf(VotingOpenCompetitionState.class, CompetitionStatus.VOTING_OPEN.getState());
-    }
-
-    @Test
     void concluded_hasConcludedState() {
         assertInstanceOf(ConcludedCompetitionState.class, CompetitionStatus.CONCLUDED.getState());
     }
@@ -39,10 +34,15 @@ class CompetitionStatusTest {
     }
 
     @Test
+    void paused_hasPausedState() {
+        assertInstanceOf(PausedCompetitionState.class, CompetitionStatus.PAUSED.getState());
+    }
+
+    @Test
     void enum_valueOf_returnsCorrectEnum() {
         assertEquals(CompetitionStatus.DRAFT, CompetitionStatus.valueOf("DRAFT"));
         assertEquals(CompetitionStatus.ACTIVE, CompetitionStatus.valueOf("ACTIVE"));
-        assertEquals(CompetitionStatus.VOTING_OPEN, CompetitionStatus.valueOf("VOTING_OPEN"));
+        assertEquals(CompetitionStatus.PAUSED, CompetitionStatus.valueOf("PAUSED"));
         assertEquals(CompetitionStatus.CONCLUDED, CompetitionStatus.valueOf("CONCLUDED"));
         assertEquals(CompetitionStatus.ARCHIVED, CompetitionStatus.valueOf("ARCHIVED"));
     }
