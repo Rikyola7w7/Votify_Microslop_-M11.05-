@@ -2,8 +2,6 @@ package com.microslop.views.components;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 
 /**
  * Reusable tooltip component for displaying helpful information on hover.
