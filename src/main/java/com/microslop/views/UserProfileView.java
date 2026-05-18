@@ -67,6 +67,8 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
             .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))")
             .set("flex-shrink", "0");
 
+        // Note: Banners don't require text-shadow as they have no text content
+
         Div contentWrapper = new Div();
         contentWrapper.setWidthFull();
         contentWrapper.setMaxWidth("600px");

@@ -72,7 +72,9 @@ public class RegisterView extends com.vaadin.flow.component.orderedlayout.Horizo
 
         Icon icon = new Icon(VaadinIcon.CHECK_SQUARE_O);
         icon.setSize("64px");
-        icon.getStyle().set("color", "white");
+        icon.getStyle()
+                .set("color", "white")
+                .set("text-shadow", "0 2px 8px rgba(0,0,0,0.3)");
 
         H1 brand = new H1("Join Votify");
         brand.getStyle()
@@ -80,14 +82,16 @@ public class RegisterView extends com.vaadin.flow.component.orderedlayout.Horizo
                 .set("margin", "0")
                 .set("font-size", "2.5rem")
                 .set("font-weight", "700")
-                .set("letter-spacing", "-0.5px");
+                .set("letter-spacing", "-0.5px")
+                .set("text-shadow", "0 2px 8px rgba(0,0,0,0.4)");
 
         Paragraph tagline = new Paragraph("Create your account");
         tagline.getStyle()
-                .set("color", "rgba(255, 255, 255, 0.85)")
+                .set("color", "rgba(255, 255, 255, 0.95)")
                 .set("font-size", "1.1rem")
                 .set("margin", "0")
-                .set("font-style", "italic");
+                .set("font-style", "italic")
+                .set("text-shadow", "0 1px 4px rgba(0,0,0,0.3)");
 
         leftPanel.add(icon, brand, tagline);
         return leftPanel;

@@ -50,7 +50,9 @@ public class ProjectCardComponent extends Div {
 
         Icon projectIcon = VaadinIcon.CHART_3D.create();
         projectIcon.setSize("40px");
-        projectIcon.getStyle().set("color", "#ffffff");
+        projectIcon.getStyle()
+                .set("color", "white")
+                .set("text-shadow", "0 1px 4px rgba(0,0,0,0.2)");
         iconBlock.add(projectIcon);
 
         Div contentArea = new Div();
@@ -126,7 +128,7 @@ public class ProjectCardComponent extends Div {
         int position = getProjectPosition();
         Span positionBadge = new Span(" #" + position);
         positionBadge.getStyle()
-            .set("color", "#ffffff")
+            .set("color", "white")
             .set("font-size", "12px")
             .set("font-weight", "700")
             .set("padding", "3px 8px")

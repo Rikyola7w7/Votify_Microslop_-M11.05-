@@ -62,7 +62,7 @@ public class PodiumCardComponent extends Div {
             .set("font-weight", "800")
             .set("font-size", position == Position.FIRST ? "16px" : "14px")
             .set("display", "block")
-            .set("color", "#1a1a2e");
+            .set("color", "var(--text-primary)");
 
         add(medalSpan, nameSpan);
     }

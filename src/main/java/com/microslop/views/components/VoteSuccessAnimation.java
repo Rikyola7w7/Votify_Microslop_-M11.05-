@@ -7,7 +7,7 @@ import com.vaadin.flow.component.html.Span;
 public class VoteSuccessAnimation extends Div {
 
     private static final String[] CONFETTI_COLORS = {
-        "#fbbf24", "#f59e0b", "#d97706", "#059669",
+        "#f59e0b", "#d97706", "#059669",
         "#10b981", "#3b82f6", "#6366f1", "#8b5cf6",
         "#ec4899", "#f43f5e"
     };
@@ -61,7 +61,7 @@ public class VoteSuccessAnimation extends Div {
             .set("transform", "translateX(-50%)")
             .set("width", "100px")
             .set("height", "80px")
-            .set("background", "linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)")
+            .set("background", "linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 50%, #a16207 100%)")
             .set("border-radius", "8px 8px 12px 12px")
             .set("box-shadow", "0 20px 60px rgba(245, 158, 11, 0.4), inset 0 -10px 30px rgba(0,0,0,0.2), inset 0 10px 30px rgba(255,255,255,0.1)")
             .set("border", "4px solid #fbbf24")
@@ -75,7 +75,7 @@ public class VoteSuccessAnimation extends Div {
             .set("transform", "translateX(-50%)")
             .set("width", "60px")
             .set("height", "8px")
-            .set("background", "#1e293b")
+            .set("background", "var(--dark)")
             .set("border-radius", "4px")
             .set("box-shadow", "inset 0 2px 4px rgba(0,0,0,0.5)");
 
@@ -101,7 +101,7 @@ public class VoteSuccessAnimation extends Div {
             .set("transform", "translate(-50%, -70%) rotate(45deg)")
             .set("width", "24px")
             .set("height", "24px")
-            .set("border", "3px solid #059669")
+            .set("border", "3px solid var(--success)")
             .set("border-radius", "50%")
             .set("border-right-color", "transparent")
             .set("border-bottom-color", "transparent");
@@ -115,11 +115,11 @@ public class VoteSuccessAnimation extends Div {
     private Span buildSuccessText() {
         Span successText = new Span("VOTE RECORDED");
         successText.getStyle()
-            .set("color", "#fbbf24")
+            .set("color", "var(--accent)")
             .set("font-size", "2.5rem")
             .set("font-weight", "800")
             .set("letter-spacing", "0.15em")
-            .set("text-shadow", "0 0 40px rgba(251, 191, 36, 0.6)")
+            .set("text-shadow", "0 0 40px rgba(245, 158, 11, 0.6)")
             .set("animation", "textGlow 1.5s ease-in-out infinite alternate");
         return successText;
     }
@@ -127,7 +127,7 @@ public class VoteSuccessAnimation extends Div {
     private Span buildSubText() {
         Span subText = new Span("Your voice has been counted");
         subText.getStyle()
-            .set("color", "#94a3b8")
+            .set("color", "var(--text-muted)")
             .set("font-size", "1.1rem")
             .set("letter-spacing", "0.05em");
         return subText;

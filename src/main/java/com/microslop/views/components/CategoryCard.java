@@ -66,18 +66,18 @@ public class CategoryCard extends Div {
             .set("align-self", "center");
         if ("NORMAL".equals(vt)) {
             voterBadge.getStyle()
-                .set("background", "rgba(5, 150, 105, 0.15)")
-                .set("color", "#059669")
-                .set("border", "1px solid rgba(5, 150, 105, 0.3)");
+                .set("background", "rgba(16, 185, 129, 0.15)")
+                .set("color", "var(--success)")
+                .set("border", "1px solid rgba(16, 185, 129, 0.3)");
         } else if ("SCALE".equals(vt)) {
             voterBadge.getStyle()
-                .set("background", "rgba(99, 102, 241, 0.15)")
-                .set("color", "#6366f1")
-                .set("border", "1px solid rgba(99, 102, 241, 0.3)");
+                .set("background", "rgba(59, 130, 246, 0.15)")
+                .set("color", "var(--primary)")
+                .set("border", "1px solid rgba(59, 130, 246, 0.3)");
         } else {
             voterBadge.getStyle()
                 .set("background", "rgba(245, 158, 11, 0.15)")
-                .set("color", "#d97706")
+                .set("color", "var(--warning)")
                 .set("border", "1px solid rgba(245, 158, 11, 0.3)");
         }
 
@@ -123,7 +123,9 @@ public class CategoryCard extends Div {
 
         Icon chartIcon = VaadinIcon.CHART_3D.create();
         chartIcon.setSize("40px");
-        chartIcon.getElement().getStyle().set("color", "#ffffff");
+        chartIcon.getElement().getStyle()
+                .set("color", "white")
+                .set("text-shadow", "0 1px 4px rgba(0,0,0,0.2)");
 
         iconContainer.add(chartIcon);
         return iconContainer;
