@@ -26,8 +26,6 @@ public class CompetitionDTO {
     private String voterType;
     private Boolean autoVote;
     private Integer maxVotesPerPerson;
-    private Double judgeWeightMultiplier;
-    private Double standardUserWeightMultiplier;
     private Boolean commentsEnabled;
     private Boolean commentsRequired;
     private int maxVotes;

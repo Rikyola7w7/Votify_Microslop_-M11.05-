@@ -127,8 +127,6 @@ public class CreateCompetitionCommand extends AbstractCommand<Competition> {
         redoneCompetition.setVoterType(createdCompetition.getVoterType());
         redoneCompetition.setAutoVote(createdCompetition.getAutoVote());
         redoneCompetition.setMaxVotesPerPerson(createdCompetition.getMaxVotesPerPerson());
-        redoneCompetition.setJudgeWeightMultiplier(createdCompetition.getJudgeWeightMultiplier());
-        redoneCompetition.setStandardUserWeightMultiplier(createdCompetition.getStandardUserWeightMultiplier());
         redoneCompetition.setCommentsEnabled(createdCompetition.getCommentsEnabled());
         redoneCompetition.setCommentsRequired(createdCompetition.getCommentsRequired());
         redoneCompetition.setMaxVotes(createdCompetition.getMaxVotes());

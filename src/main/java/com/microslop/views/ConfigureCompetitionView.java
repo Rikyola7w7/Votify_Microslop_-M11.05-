@@ -130,8 +130,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         originalCompetition.setVoterType(currentCompetition.getVoterType());
         originalCompetition.setAutoVote(currentCompetition.isAutoVote());
         originalCompetition.setMaxVotesPerPerson(currentCompetition.getMaxVotesPerPerson());
-        originalCompetition.setJudgeWeightMultiplier(currentCompetition.getJudgeWeightMultiplier());
-        originalCompetition.setStandardUserWeightMultiplier(currentCompetition.getStandardUserWeightMultiplier());
     }
 
     private void initializeView() {

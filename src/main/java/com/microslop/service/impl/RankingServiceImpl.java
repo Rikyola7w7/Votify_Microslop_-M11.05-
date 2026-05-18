@@ -3,7 +3,6 @@ package com.microslop.service.impl;
 import com.microslop.service.RankingService;
 import com.microslop.repository.VoteRepository;
 import com.microslop.repository.ProjectRepository;
-import com.microslop.repository.JudgeRepository;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.strategy.StrategyRegistry;
 import com.microslop.strategy.ranking.RankingStrategy;
@@ -24,18 +23,15 @@ public class RankingServiceImpl implements RankingService {
 
     private final VoteRepository voteRepository;
     private final ProjectRepository projectRepository;
-    private final JudgeRepository judgeRepository;
     private final CompetitionRepository competitionRepository;
     private final StrategyRegistry strategyRegistry;
 
     public RankingServiceImpl(VoteRepository voteRepository,
                             ProjectRepository projectRepository,
-                            JudgeRepository judgeRepository,
                             CompetitionRepository competitionRepository,
                             StrategyRegistry strategyRegistry) {
         this.voteRepository = voteRepository;
         this.projectRepository = projectRepository;
-        this.judgeRepository = judgeRepository;
         this.competitionRepository = competitionRepository;
         this.strategyRegistry = strategyRegistry;
     }

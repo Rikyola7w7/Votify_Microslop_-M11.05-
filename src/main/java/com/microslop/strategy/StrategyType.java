@@ -3,7 +3,6 @@ package com.microslop.strategy;
 public enum StrategyType {
     VOTING_ALL("ALL", "AllVotingStrategy"),
     VOTING_JUDGES("JUDGES", "JudgesOnlyVotingStrategy"),
-    RANKING_WEIGHTED("WEIGHTED", "WeightedScoreRankingStrategy"),
     RANKING_AVERAGE("AVERAGE", "AverageScoreRankingStrategy"),
     RANKING_NORMALIZED("NORMALIZED", "NormalizedScoreRankingStrategy");
 
@@ -37,13 +36,13 @@ public enum StrategyType {
 
     public static StrategyType fromRankingType(String rankingType) {
         if (rankingType == null) {
-            return RANKING_WEIGHTED;
+            return RANKING_AVERAGE;
         }
         for (StrategyType st : values()) {
             if (st.type.equals(rankingType) && st.name().startsWith("RANKING_")) {
                 return st;
             }
         }
-        return RANKING_WEIGHTED;
+        return RANKING_AVERAGE;
     }
 }
