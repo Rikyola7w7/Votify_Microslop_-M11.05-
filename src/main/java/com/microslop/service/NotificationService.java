@@ -1,5 +1,6 @@
 package com.microslop.service;
 
+import com.microslop.entity.Competition;
 import com.microslop.entity.Notification;
 import com.microslop.entity.User;
 
@@ -88,4 +89,14 @@ public interface NotificationService {
      * Get unread notifications for current user
      */
     List<Notification> getUnreadNotificationsForCurrentUser();
+
+    /**
+     * Create a new notification with competition association
+     */
+    Notification createNotification(User user, String title, String message, String type, Competition competition);
+
+    /**
+     * Create a new notification with expiration date and competition association
+     */
+    Notification createNotification(User user, String title, String message, String type, LocalDateTime expirationDate, Competition competition);
 }

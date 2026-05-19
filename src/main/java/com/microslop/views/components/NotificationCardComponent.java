@@ -1,5 +1,6 @@
 package com.microslop.views.components;
 
+import com.microslop.entity.Competition;
 import com.microslop.entity.Notification;
 import com.microslop.service.NotificationService;
 import com.vaadin.flow.component.Unit;
@@ -21,11 +22,17 @@ public class NotificationCardComponent extends Div {
     private final Notification notification;
     private final NotificationService notificationService;
     private final Runnable refreshCallback;
+    private final Competition competition;
 
     public NotificationCardComponent(Notification notification, NotificationService notificationService, Runnable refreshCallback) {
+        this(notification, notificationService, refreshCallback, null);
+    }
+
+    public NotificationCardComponent(Notification notification, NotificationService notificationService, Runnable refreshCallback, Competition competition) {
         this.notification = notification;
         this.notificationService = notificationService;
         this.refreshCallback = refreshCallback;
+        this.competition = competition != null ? competition : notification.getCompetition();
         buildCard();
     }
 
@@ -141,6 +148,21 @@ public class NotificationCardComponent extends Div {
         HorizontalLayout actions = new HorizontalLayout();
         actions.setSpacing(true);
         actions.setPadding(false);
+
+        // Add type-specific action buttons
+        if ("PROJECT_SUBMISSION".equals(notification.getType()) && competition != null) {
+            Button viewProjectBtn = new Button("View Project");
+            viewProjectBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
+            viewProjectBtn.getStyle().set("cursor", "pointer");
+            viewProjectBtn.addClickListener(e -> {
+                e.getSource().getUI().ifPresent(ui -> {
+                    String username = notification.getUser().getUsername();
+                    String route = username + "/competitions/manage/" + competition.getId();
+                    ui.navigate(route);
+                });
+            });
+            actions.add(viewProjectBtn);
+        }
 
         if (!notification.getIsRead()) {
             Button markReadBtn = new Button(new Icon(VaadinIcon.CHECK));

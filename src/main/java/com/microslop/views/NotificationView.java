@@ -160,7 +160,8 @@ public class NotificationView extends VerticalLayout {
                 NotificationCardComponent card = new NotificationCardComponent(
                     notification,
                     notificationService,
-                    this::refreshNotifications
+                    this::refreshNotifications,
+                    notification.getCompetition()
                 );
                 notificationsContainer.add(card);
             }
