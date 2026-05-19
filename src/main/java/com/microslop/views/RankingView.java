@@ -210,16 +210,36 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         yesButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         yesButton.addClickListener(e -> {
             try {
+                System.out.println("DEBUG: Registering voter - userId: " + userId + ", competitionId: " + competitionId + ", categoryId: " + categoryId);
+                
                 voterService.registerVoter(userId, competitionId, categoryId);
+                
+                System.out.println("DEBUG: Voter registered successfully");
+                
                 Notification.show("Successfully registered as a voter!", 3000,
-                    Notification.Position.BOTTOM_CENTER);
+                    Notification.Position.BOTTOM_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                
                 dialog.close();
+                
                 // Use hard redirect to ensure fresh page load and avoid soft navigation issues
+                String votingUrl = "/competition/" + competitionId + "/vote";
+                System.out.println("DEBUG: Redirecting to " + votingUrl);
                 getUI().ifPresent(ui -> ui.getPage().executeJs(
-                    "window.location.href = '/competition/" + competitionId + "/vote'"));
+                    "window.location.href = '" + votingUrl + "'"));
             } catch (IllegalStateException ex) {
-                Notification.show(ex.getMessage(), 3000,
+                System.out.println("DEBUG: Error registering voter: " + ex.getMessage());
+                ex.printStackTrace();
+                Notification error = Notification.show("Error: " + ex.getMessage(), 3000,
                     Notification.Position.BOTTOM_CENTER);
+                error.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                dialog.close();
+            } catch (Exception ex) {
+                System.out.println("DEBUG: Unexpected error: " + ex.getMessage());
+                ex.printStackTrace();
+                Notification error = Notification.show("Unexpected error: " + ex.getMessage(), 3000,
+                    Notification.Position.BOTTOM_CENTER);
+                error.addThemeVariants(NotificationVariant.LUMO_ERROR);
                 dialog.close();
             }
         });
