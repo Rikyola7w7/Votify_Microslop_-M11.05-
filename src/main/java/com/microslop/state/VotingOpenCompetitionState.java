@@ -11,7 +11,7 @@ public class VotingOpenCompetitionState implements CompetitionState {
 
     @Override
     public void pauseVoting(Competition competition) {
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStatus.PAUSED);
     }
 
     @Override
