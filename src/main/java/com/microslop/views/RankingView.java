@@ -214,7 +214,9 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 Notification.show("Successfully registered as a voter!", 3000,
                     Notification.Position.BOTTOM_CENTER);
                 dialog.close();
-                navigateToVoting();
+                // Use hard redirect to ensure fresh page load and avoid soft navigation issues
+                getUI().ifPresent(ui -> ui.getPage().executeJs(
+                    "window.location.href = '/competition/" + competitionId + "/vote'"));
             } catch (IllegalStateException ex) {
                 Notification.show(ex.getMessage(), 3000,
                     Notification.Position.BOTTOM_CENTER);
