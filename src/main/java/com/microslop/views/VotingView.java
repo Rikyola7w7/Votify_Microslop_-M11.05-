@@ -4,12 +4,15 @@ import com.microslop.entity.Competition;
 import java.time.LocalDateTime;
 import com.microslop.entity.Category;
 import com.microslop.entity.Project;
+import com.microslop.repository.ChecklistItemRepository;
 import com.microslop.service.CategoryService;
+import com.microslop.service.ChecklistVoteService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.ProjectCommentService;
 import com.microslop.service.UserService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.VoteService;
+import com.microslop.views.components.ChecklistVotingDialog;
 import com.microslop.views.components.ViewHeader;
 import com.microslop.views.components.VoteSuccessAnimation;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -50,6 +53,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private final ProjectCommentService commentService;
     private final UserService userService;
     private final CategoryService categoryService;
+    private final ChecklistVoteService checklistVoteService;
+    private final ChecklistItemRepository checklistItemRepository;
 
     private Long competitionId;
     private Span maxVotesLabel;
@@ -64,13 +69,17 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                       VoteService voteService,
                       ProjectCommentService commentService,
                       UserService userService,
-                      CategoryService categoryService) {
+                      CategoryService categoryService,
+                      ChecklistVoteService checklistVoteService,
+                      ChecklistItemRepository checklistItemRepository) {
         this.competitionService = competitionService;
         this.projectService     = projectService;
         this.voteService        = voteService;
         this.commentService     = commentService;
         this.userService        = userService;
         this.categoryService    = categoryService;
+        this.checklistVoteService = checklistVoteService;
+        this.checklistItemRepository = checklistItemRepository;
 
         setSizeFull();
         setPadding(false);
@@ -362,7 +371,13 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             card.addClassName("animate-card-flash");
         }
         
-        submitButton.addClickListener(e -> handleVoteWithPoints(p, pointsInput.getValue() != null ? pointsInput.getValue() : 1, selectedCategory));
+        submitButton.addClickListener(e -> {
+            if (selectedCategory != null && selectedCategory.isChecklistVoting()) {
+                handleChecklistVoting(p, selectedCategory);
+            } else {
+                handleVoteWithPoints(p, pointsInput.getValue() != null ? pointsInput.getValue() : 1, selectedCategory);
+            }
+        });
 
         // Points layout
         var pointsLayout = new HorizontalLayout(pointsInput, submitButton);
@@ -536,5 +551,44 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private void showNotification(String msg, NotificationVariant variant) {
         Notification n = Notification.show(msg, 4000, Notification.Position.BOTTOM_CENTER);
         n.addThemeVariants(variant);
+    }
+
+    private void handleChecklistVoting(Project project, Category category) {
+        String username = userService.getCurrentUsername();
+        if (username == null || username.isEmpty()) {
+            showNotification("You must be logged in to vote.", NotificationVariant.LUMO_CONTRAST);
+            return;
+        }
+
+        if (category == null) {
+            showNotification("Please select a category before voting.", NotificationVariant.LUMO_WARNING);
+            return;
+        }
+
+        try {
+            // Fetch checklist items for this competition
+            var checklistItems = checklistItemRepository.findByCompetitionId(competitionId);
+            
+            if (checklistItems.isEmpty()) {
+                showNotification("No checklist items available for this category.", NotificationVariant.LUMO_WARNING);
+                return;
+            }
+
+            // Show checklist voting dialog
+            ChecklistVotingDialog dialog = new ChecklistVotingDialog(
+                project,
+                checklistItems,
+                checklistVoteService,
+                username,
+                () -> {
+                    removeAll();
+                    buildUi();
+                }
+            );
+            dialog.open();
+
+        } catch (Exception ex) {
+            showNotification("Error opening checklist voting: " + ex.getMessage(), NotificationVariant.LUMO_ERROR);
+        }
     }
 }

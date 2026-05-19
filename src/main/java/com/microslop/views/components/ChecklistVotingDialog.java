@@ -1,0 +1,131 @@
+package com.microslop.views.components;
+
+import com.microslop.entity.ChecklistItem;
+import com.microslop.entity.Project;
+import com.microslop.service.ChecklistVoteService;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Dialog for submitting checklist-based votes on a project.
+ * Users check the items they approve/like about the project.
+ */
+public class ChecklistVotingDialog extends Dialog {
+
+    private final Project project;
+    private final List<ChecklistItem> checklistItems;
+    private final ChecklistVoteService checklistVoteService;
+    private final String username;
+    private final Runnable onVoteSuccess;
+    private final Map<ChecklistItem, Checkbox> checkboxes = new HashMap<>();
+
+    public ChecklistVotingDialog(Project project,
+                                 List<ChecklistItem> checklistItems,
+                                 ChecklistVoteService checklistVoteService,
+                                 String username,
+                                 Runnable onVoteSuccess) {
+        this.project = project;
+        this.checklistItems = checklistItems;
+        this.checklistVoteService = checklistVoteService;
+        this.username = username;
+        this.onVoteSuccess = onVoteSuccess;
+
+        setHeaderTitle("Checklist Voting: " + project.getName());
+        setModal(true);
+        setCloseOnEsc(true);
+        setCloseOnOutsideClick(false);
+
+        setupContent();
+    }
+
+    private void setupContent() {
+        var content = new VerticalLayout();
+        content.setPadding(false);
+        content.setSpacing(true);
+
+        // Instructions
+        var instructions = new Paragraph("Select the criteria that apply to this project:");
+        instructions.getStyle().set("font-size", "0.9rem").set("color", "var(--text-muted)");
+        content.add(instructions);
+
+        // Checklist items
+        var itemsLayout = new VerticalLayout();
+        itemsLayout.setPadding(false);
+        itemsLayout.setSpacing(false);
+        itemsLayout.addClassName("votify-checklist-container");
+
+        for (ChecklistItem item : checklistItems) {
+            Checkbox checkbox = new Checkbox(item.getText());
+            checkbox.getStyle()
+                    .set("margin-bottom", "0.75rem")
+                    .set("display", "flex")
+                    .set("align-items", "center");
+            checkboxes.put(item, checkbox);
+            itemsLayout.add(checkbox);
+        }
+
+        content.add(itemsLayout);
+
+        // Buttons
+        var submitBtn = new Button("Submit Votes", e -> handleSubmitVotes());
+        submitBtn.addClassName("votify-btn-primary");
+        submitBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        submitBtn.setWidth("auto");
+
+        var cancelBtn = new Button("Cancel", e -> this.close());
+        cancelBtn.addClassName("votify-btn-secondary");
+        cancelBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+
+        var footer = new HorizontalLayout(submitBtn, cancelBtn);
+        footer.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        footer.setSpacing(true);
+
+        content.add(footer);
+
+        add(content);
+    }
+
+    private void handleSubmitVotes() {
+        if (checkboxes.values().stream().noneMatch(Checkbox::getValue)) {
+            Notification.show("Please select at least one item", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_WARNING);
+            return;
+        }
+
+        try {
+            for (Map.Entry<ChecklistItem, Checkbox> entry : checkboxes.entrySet()) {
+                if (entry.getValue().getValue()) {
+                    checklistVoteService.submitChecklistVote(username, project.getId(), entry.getKey().getId());
+                }
+            }
+
+            Notification success = Notification.show("Votes submitted successfully!", 3000, Notification.Position.TOP_CENTER);
+            success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+            this.close();
+            if (onVoteSuccess != null) {
+                onVoteSuccess.run();
+            }
+        } catch (IllegalStateException ex) {
+            Notification error = Notification.show(ex.getMessage(), 3000, Notification.Position.TOP_CENTER);
+            error.addThemeVariants(NotificationVariant.LUMO_ERROR);
+        } catch (Exception ex) {
+            Notification error = Notification.show("Error submitting votes: " + ex.getMessage(), 3000, Notification.Position.TOP_CENTER);
+            error.addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
+    }
+}

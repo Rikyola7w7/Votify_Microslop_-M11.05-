@@ -1,11 +1,13 @@
 package com.microslop.command.vote;
 
 import com.microslop.command.AbstractCommand;
+import com.microslop.entity.Category;
 import com.microslop.entity.ChecklistItem;
 import com.microslop.entity.ChecklistVote;
 import com.microslop.entity.Project;
 import com.microslop.entity.User;
 import com.microslop.factory.ChecklistVoteCreator;
+import com.microslop.repository.CategoryRepository;
 import com.microslop.repository.ChecklistItemRepository;
 import com.microslop.repository.ChecklistVoteRepository;
 import com.microslop.service.ProjectService;
@@ -23,27 +25,32 @@ public class SubmitChecklistVoteCommand extends AbstractCommand<Void> {
 
     private final String userUsername;
     private final Long projectId;
+    private final Long categoryId;
     private final Long checklistItemId;
 
     private final ChecklistVoteRepository checklistVoteRepository;
     private final ChecklistItemRepository checklistItemRepository;
+    private final CategoryRepository categoryRepository;
     private final ProjectService projectService;
     private final UserService userService;
     private final ChecklistVoteCreator checklistVoteCreator;
 
     private ChecklistVote createdVote;
 
-    public SubmitChecklistVoteCommand(String userUsername, Long projectId, Long checklistItemId,
+    public SubmitChecklistVoteCommand(String userUsername, Long projectId, Long categoryId, Long checklistItemId,
                                       ChecklistVoteRepository checklistVoteRepository,
                                       ChecklistItemRepository checklistItemRepository,
+                                      CategoryRepository categoryRepository,
                                       ProjectService projectService,
                                       UserService userService,
                                       ChecklistVoteCreator checklistVoteCreator) {
         this.userUsername = userUsername;
         this.projectId = projectId;
+        this.categoryId = categoryId;
         this.checklistItemId = checklistItemId;
         this.checklistVoteRepository = checklistVoteRepository;
         this.checklistItemRepository = checklistItemRepository;
+        this.categoryRepository = categoryRepository;
         this.projectService = projectService;
         this.userService = userService;
         this.checklistVoteCreator = checklistVoteCreator;
@@ -51,8 +58,8 @@ public class SubmitChecklistVoteCommand extends AbstractCommand<Void> {
 
     @Override
     protected Void executeCommand() throws Exception {
-        log.debug("Submitting checklist vote for user: {}, project: {}, item: {}",
-                  userUsername, projectId, checklistItemId);
+        log.debug("Submitting checklist vote for user: {}, project: {}, category: {}, item: {}",
+                  userUsername, projectId, categoryId, checklistItemId);
 
         User user = userService.searchByUsernameIgnoreCase(userUsername)
                 .orElseThrow(() -> new IllegalStateException("User not found: " + userUsername));
@@ -62,13 +69,17 @@ public class SubmitChecklistVoteCommand extends AbstractCommand<Void> {
             throw new IllegalStateException("Project not found: " + projectId);
         }
 
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new IllegalStateException("Category not found: " + categoryId));
+
+        // Check if category is configured for checklist voting
+        if (!category.isChecklistVoting()) {
+            throw new IllegalStateException("This category does not use checklist voting.");
+        }
+
         var competition = project.getCompetition();
         if (competition == null) {
             throw new IllegalStateException("Competition not found for project: " + projectId);
-        }
-
-        if (!"CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
-            throw new IllegalStateException("This competition does not use checklist voting.");
         }
 
         if (!competition.isActive()) {
