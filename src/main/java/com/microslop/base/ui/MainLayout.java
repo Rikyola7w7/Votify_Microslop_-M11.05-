@@ -93,6 +93,11 @@ public final class MainLayout extends AppLayout {
         }
 
         rebuildUserMenu();
+
+        // Enable real-time badge polling (every 10 seconds)
+        getUI().ifPresent(ui -> {
+            ui.setPollInterval(10000);
+        });
     }
 
     private void rebuildUserMenu() {
@@ -171,17 +176,23 @@ public final class MainLayout extends AppLayout {
         Dialog notificationDialog = new Dialog();
         notificationDialog.setWidth("350px");
         notificationDialog.setMaxWidth("90vw");
-        notificationDialog.getElement().getStyle().set("max-height", "400px");
 
         VerticalLayout dialogContent = createNotificationDropdown();
-        dialogContent.add(createNotificationDropdownContent());
+        dialogContent.add(createNotificationDropdownContent(notificationDialog));
         notificationDialog.add(dialogContent);
 
         bellButton.addClickListener(e -> {
             updateUnreadBadge(unreadBadge);
             dialogContent.removeAll();
-            dialogContent.add(createNotificationDropdownContent());
+            dialogContent.add(createNotificationDropdownContent(notificationDialog));
             notificationDialog.open();
+        });
+
+        // Add polling update for badge
+        bellContainer.addAttachListener(event -> {
+            getUI().ifPresent(ui -> {
+                ui.access(() -> updateUnreadBadge(unreadBadge));
+            });
         });
 
         bellContainer.add(bellButton, unreadBadge);
@@ -211,67 +222,87 @@ public final class MainLayout extends AppLayout {
         dropdown.setSpacing(false);
         dropdown.setWidth("100%");
         dropdown.getStyle()
+            .set("display", "flex")
+            .set("flex-direction", "column")
+            .set("height", "auto")
             .set("max-height", "400px")
-            .set("overflow-y", "auto")
             .set("background", "var(--surface)")
             .set("border-radius", "8px");
 
         return dropdown;
     }
 
-    private Div createNotificationDropdownContent() {
-        Div content = new Div();
-        content.setWidthFull();
+    private Div createNotificationDropdownContent(Dialog dialog) {
+        Div mainContainer = new Div();
+        mainContainer.setWidthFull();
+        mainContainer.getStyle()
+            .set("display", "flex")
+            .set("flex-direction", "column")
+            .set("height", "100%");
+
+        // Scrollable notifications container
+        Div notificationsContainer = new Div();
+        notificationsContainer.setWidthFull();
+        notificationsContainer.getStyle()
+            .set("flex", "1")
+            .set("overflow-y", "auto")
+            .set("padding", "0");
 
         if (notificationService == null) {
             Span emptyText = new Span("Notifications unavailable");
             emptyText.getStyle()
                 .set("padding", "16px")
                 .set("color", "var(--text-muted)");
-            content.add(emptyText);
-            return content;
-        }
+            notificationsContainer.add(emptyText);
+        } else {
+            try {
+                var recentNotifications = notificationService.getRecentNotificationsForCurrentUser();
 
-        try {
-            var recentNotifications = notificationService.getRecentNotificationsForCurrentUser();
-
-            if (recentNotifications.isEmpty()) {
-                Span emptyText = new Span("No recent notifications");
-                emptyText.getStyle()
-                    .set("padding", "16px")
-                    .set("text-align", "center")
-                    .set("color", "var(--text-muted)");
-                content.add(emptyText);
-            } else {
-                for (var notification : recentNotifications) {
-                    NotificationCardComponent card = new NotificationCardComponent(
-                        notification,
-                        notificationService,
-                        () -> {}
-                    );
-                    content.add(card);
+                if (recentNotifications.isEmpty()) {
+                    Span emptyText = new Span("No recent notifications");
+                    emptyText.getStyle()
+                        .set("padding", "16px")
+                        .set("text-align", "center")
+                        .set("color", "var(--text-muted)");
+                    notificationsContainer.add(emptyText);
+                } else {
+                    for (var notification : recentNotifications) {
+                        NotificationCardComponent card = new NotificationCardComponent(
+                            notification,
+                            notificationService,
+                            () -> {},
+                            notification.getCompetition()
+                        );
+                        notificationsContainer.add(card);
+                    }
                 }
-
-                Button viewAllBtn = new Button("View All Notifications");
-                viewAllBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-                viewAllBtn.getStyle()
-                    .set("width", "100%")
-                    .set("margin-top", "8px")
-                    .set("justify-content", "center")
-                    .set("cursor", "pointer");
-                viewAllBtn.addClickListener(e ->
-                    e.getSource().getUI().ifPresent(ui -> ui.navigate("notifications"))
-                );
-                content.add(viewAllBtn);
+            } catch (Exception e) {
+                Span errorText = new Span("Error loading notifications");
+                errorText.getStyle()
+                    .set("padding", "16px")
+                    .set("color", "var(--text-muted)");
+                notificationsContainer.add(errorText);
             }
-        } catch (Exception e) {
-            Span errorText = new Span("Error loading notifications");
-            errorText.getStyle()
-                .set("padding", "16px")
-                .set("color", "var(--text-muted)");
-            content.add(errorText);
         }
 
-        return content;
+        mainContainer.add(notificationsContainer);
+
+        // Sticky footer button - ALWAYS visible
+        Button viewAllBtn = new Button("View All Notifications");
+        viewAllBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        viewAllBtn.getStyle()
+            .set("width", "100%")
+            .set("margin", "0")
+            .set("padding", "8px")
+            .set("justify-content", "center")
+            .set("cursor", "pointer")
+            .set("border-top", "1px solid var(--border)");
+        viewAllBtn.addClickListener(e -> {
+            dialog.close();
+            e.getSource().getUI().ifPresent(ui -> ui.navigate("notifications"));
+        });
+        mainContainer.add(viewAllBtn);
+
+        return mainContainer;
     }
 }

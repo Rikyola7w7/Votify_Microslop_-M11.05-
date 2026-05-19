@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "notifications")
 @Data
-@ToString(exclude = {"user"})
+@ToString(exclude = {"user", "competition"})
 public class Notification {
 
     @Id
@@ -37,6 +37,10 @@ public class Notification {
     @Column(nullable = false)
     private String type;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "competition_id", nullable = true)
+    private Competition competition;
+
     public Notification() {
         this.creationDate = LocalDateTime.now();
     }
@@ -52,5 +56,19 @@ public class Notification {
     public Notification(User user, String title, String message, String type, LocalDateTime expirationDate) {
         this(user, title, message, type);
         this.expirationDate = expirationDate;
+    }
+
+    public Notification(User user, String title, String message, String type, Competition competition) {
+        this();
+        this.user = user;
+        this.title = title;
+        this.message = message;
+        this.type = type;
+        this.competition = competition;
+    }
+
+    public Notification(User user, String title, String message, String type, LocalDateTime expirationDate, Competition competition) {
+        this(user, title, message, type, expirationDate);
+        this.competition = competition;
     }
 }

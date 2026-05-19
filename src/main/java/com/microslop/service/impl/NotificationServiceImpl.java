@@ -1,5 +1,6 @@
 package com.microslop.service.impl;
 
+import com.microslop.entity.Competition;
 import com.microslop.entity.Notification;
 import com.microslop.entity.User;
 import com.microslop.event.NotificationCreatedEvent;
@@ -282,5 +283,33 @@ public class NotificationServiceImpl implements NotificationService, Notificatio
     public List<Notification> getUnreadNotificationsForCurrentUser() {
         User currentUser = userService.getCurrentUser();
         return notificationRepository.findByUserAndIsReadFalseOrderByCreationDateDesc(currentUser);
+    }
+
+    @Override
+    public Notification createNotification(User user, String title, String message, String type, Competition competition) {
+        Notification notification = new Notification(user, title, message, type, competition);
+        Notification savedNotification = notificationRepository.save(notification);
+        
+        // Publish notification created event
+        NotificationCreatedEvent event = new NotificationCreatedEvent(savedNotification, user.getUsername());
+        notifyNotificationCreated(event);
+        
+        log.info("Notification created for user {}: {} (competition: {})", 
+            user.getUsername(), title, competition != null ? competition.getId() : "none");
+        return savedNotification;
+    }
+
+    @Override
+    public Notification createNotification(User user, String title, String message, String type, LocalDateTime expirationDate, Competition competition) {
+        Notification notification = new Notification(user, title, message, type, expirationDate, competition);
+        Notification savedNotification = notificationRepository.save(notification);
+        
+        // Publish notification created event
+        NotificationCreatedEvent event = new NotificationCreatedEvent(savedNotification, user.getUsername());
+        notifyNotificationCreated(event);
+        
+        log.info("Notification created for user {}: {} (expires: {}, competition: {})", 
+            user.getUsername(), title, expirationDate, competition != null ? competition.getId() : "none");
+        return savedNotification;
     }
 }

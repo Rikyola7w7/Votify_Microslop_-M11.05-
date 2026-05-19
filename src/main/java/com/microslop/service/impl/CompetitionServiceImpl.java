@@ -19,6 +19,7 @@ import com.microslop.observer.observer.CompetitionObserver;
 import com.microslop.observer.subject.CompetitionEventSubject;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.UserRepository;
+import com.microslop.service.CompetitionNotificationService;
 import com.microslop.service.CompetitionService;
 import com.microslop.specification.competition.CompetitionByCreatorSpecification;
 import com.microslop.specification.competition.CompetitionByNameSpecification;
@@ -55,6 +56,7 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
     private final CompetitionRepository competitionRepository;
     private final UserRepository userRepository;
     private final CommandExecutor commandExecutor;
+    private final CompetitionNotificationService competitionNotificationService;
     private final List<CompetitionObserver> competitionObservers;
 
     /**
@@ -64,15 +66,18 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
      * @param competitionRepository competition repository
      * @param userRepository user repository
      * @param commandExecutor command executor
+     * @param competitionNotificationService service for sending voter notifications
      * @param observers optional list of competition observers
      */
     public CompetitionServiceImpl(CompetitionRepository competitionRepository,
                                  UserRepository userRepository,
                                  CommandExecutor commandExecutor,
+                                 @Autowired(required = false) CompetitionNotificationService competitionNotificationService,
                                  @Autowired(required = false) List<CompetitionObserver> observers) {
         this.competitionRepository = competitionRepository;
         this.userRepository = userRepository;
         this.commandExecutor = commandExecutor;
+        this.competitionNotificationService = competitionNotificationService;
         this.competitionObservers = new CopyOnWriteArrayList<>(
             observers != null ? observers : new ArrayList<>()
         );
@@ -230,6 +235,16 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
         competition.openVoting();
         competitionRepository.save(competition);
         notifyCompetitionObservers(new CompetitionVotingOpenedEvent(competition));
+        
+        // Notify all registered voters that competition has opened
+        if (competitionNotificationService != null) {
+            try {
+                competitionNotificationService.notifyCompetitionOpened(competition);
+            } catch (Exception e) {
+                log.error("Error notifying voters of competition opening for competition {}: {}", id, e.getMessage());
+            }
+        }
+        
         return competition;
     }
 
@@ -250,6 +265,16 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
         competition.conclude();
         competitionRepository.save(competition);
         notifyCompetitionObservers(new CompetitionConcludedEvent(competition));
+        
+        // Notify all registered voters that competition has concluded
+        if (competitionNotificationService != null) {
+            try {
+                competitionNotificationService.notifyCompetitionClosed(competition);
+            } catch (Exception e) {
+                log.error("Error notifying voters of competition closing for competition {}: {}", id, e.getMessage());
+            }
+        }
+        
         return competition;
     }
 
