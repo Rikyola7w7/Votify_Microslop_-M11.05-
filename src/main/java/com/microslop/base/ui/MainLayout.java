@@ -33,6 +33,7 @@ public final class MainLayout extends AppLayout implements InitializingBean {
     private NotificationService notificationService;
 
     private HorizontalLayout rightActions;
+    private MenuBar userMenu;
 
     public MainLayout() {
         this(null);
@@ -89,34 +90,44 @@ public final class MainLayout extends AppLayout implements InitializingBean {
             rightActions.add(createNotificationBell());
         }
         if (userService != null) {
-            Button userMenuButton = new Button(new Avatar(userService.getUserDisplayName()));
-            userMenuButton.addThemeVariants(ButtonVariant.LUMO_ICON);
-            userMenuButton.getStyle().set("cursor", "pointer")
-                .set("width", "40px")
-                .set("height", "40px")
-                .set("padding", "0");
-
-            MenuBar userMenu = new MenuBar();
+            userMenu = new MenuBar();
             userMenu.addThemeVariants(com.vaadin.flow.component.menubar.MenuBarVariant.LUMO_ICON);
-
-            boolean isLoggedIn = userService.isLoggedIn();
-
-            if (isLoggedIn) {
-                String username = userService.getCurrentUsername();
-                var item = userMenu.addItem(userMenuButton);
-                var subMenu = item.getSubMenu();
-                subMenu.addItem("My Projects", event -> getUI().ifPresent(ui -> ui.navigate(username + "/projects")));
-                subMenu.addItem("My Competitions", event -> getUI().ifPresent(ui -> ui.navigate(username + "/competitions")));
-                subMenu.addItem("Edit Profile", event -> getUI().ifPresent(ui -> ui.navigate("profile")));
-                subMenu.addItem("Sign Out", event -> handleLogout());
-            } else {
-                var item = userMenu.addItem(userMenuButton);
-                var subMenu = item.getSubMenu();
-                subMenu.addItem("Sign In", event -> getUI().ifPresent(ui -> ui.navigate("login")));
-                subMenu.addItem("Register", event -> getUI().ifPresent(ui -> ui.navigate("register")));
-            }
-
             rightActions.add(userMenu);
+            
+            // Populate user menu immediately based on current session state
+            refreshUserMenu();
+        }
+    }
+
+    private void refreshUserMenu() {
+        if (userMenu == null || userService == null) {
+            return;
+        }
+        
+        userMenu.removeAll();
+        
+        Button userMenuButton = new Button(new Avatar(userService.getUserDisplayName()));
+        userMenuButton.addThemeVariants(ButtonVariant.LUMO_ICON);
+        userMenuButton.getStyle().set("cursor", "pointer")
+            .set("width", "40px")
+            .set("height", "40px")
+            .set("padding", "0");
+
+        boolean isLoggedIn = userService.isLoggedIn();
+
+        if (isLoggedIn) {
+            String username = userService.getCurrentUsername();
+            var item = userMenu.addItem(userMenuButton);
+            var subMenu = item.getSubMenu();
+            subMenu.addItem("My Projects", event -> getUI().ifPresent(ui -> ui.navigate(username + "/projects")));
+            subMenu.addItem("My Competitions", event -> getUI().ifPresent(ui -> ui.navigate(username + "/competitions")));
+            subMenu.addItem("Edit Profile", event -> getUI().ifPresent(ui -> ui.navigate("profile")));
+            subMenu.addItem("Sign Out", event -> handleLogout());
+        } else {
+            var item = userMenu.addItem(userMenuButton);
+            var subMenu = item.getSubMenu();
+            subMenu.addItem("Sign In", event -> getUI().ifPresent(ui -> ui.navigate("login")));
+            subMenu.addItem("Register", event -> getUI().ifPresent(ui -> ui.navigate("register")));
         }
     }
 

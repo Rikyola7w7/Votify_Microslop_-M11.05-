@@ -154,6 +154,7 @@ public class LoginView extends HorizontalLayout {
                 if (session != null) {
                     session.setAttribute(User.class, loggedUser);
                     session.setAttribute("username", loggedUser.getUsername());
+                    session.setAttribute("userId", loggedUser.getId());
                 }
 
                 Notification success = Notification.show("Login successful!");
@@ -185,8 +186,11 @@ public class LoginView extends HorizontalLayout {
                     destination = session.getAttribute("postLoginRoute").toString();
                     session.setAttribute("postLoginRoute", null);
                 }
-                String finalDestination = destination.isBlank() ? "" : destination;
-                getUI().ifPresent(ui -> ui.navigate(finalDestination));
+                
+                // Navigate using hard redirect so MainLayout is rebuilt with fresh session state
+                String finalDestination = destination.isBlank() ? "/" : "/" + destination;
+                String finalDest = finalDestination;
+                getUI().ifPresent(ui -> ui.getPage().executeJs("window.location.href = $0", finalDest));
 
             } catch (IllegalArgumentException ex) {
                 Notification error = Notification.show(ex.getMessage());

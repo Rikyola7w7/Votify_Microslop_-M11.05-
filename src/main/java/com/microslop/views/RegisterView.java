@@ -205,9 +205,18 @@ public class RegisterView extends HorizontalLayout {
                             .build();
 
                     this.userService.registerUser(newUser);
+                    
+                    // Fetch the registered user from database to get the ID
+                    User registeredUser = this.userService.searchByUsernameIgnoreCase(newUser.getUsername())
+                            .orElse(null);
+                    
+                    if (registeredUser == null) {
+                        throw new IllegalArgumentException("Failed to retrieve registered user from database");
+                    }
 
-                    VaadinSession.getCurrent().setAttribute(User.class, newUser);
-                    VaadinSession.getCurrent().setAttribute("username", newUser.getUsername());
+                    VaadinSession.getCurrent().setAttribute(User.class, registeredUser);
+                    VaadinSession.getCurrent().setAttribute("username", registeredUser.getUsername());
+                    VaadinSession.getCurrent().setAttribute("userId", registeredUser.getId());
 
                     Notification success = Notification.show("Account created successfully!");
                     success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
@@ -234,7 +243,9 @@ public class RegisterView extends HorizontalLayout {
                     }
 
                     confirmDialog.close();
-                    getUI().ifPresent(ui -> ui.navigate(""));
+                    
+                    // Hard redirect so MainLayout is rebuilt with fresh session state
+                    getUI().ifPresent(ui -> ui.getPage().executeJs("window.location.href = '/'"));
 
                 } catch (IllegalArgumentException ex) {
                     Notification error = Notification.show(ex.getMessage());
