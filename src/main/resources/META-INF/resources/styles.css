@@ -125,12 +125,14 @@ body {
   letter-spacing: 0.3px;
   transition: all var(--transition-base) !important;
   box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3) !important;
+  cursor: pointer !important;
 }
 
 .votify-btn-primary:hover {
   background: linear-gradient(135deg, var(--primary-dark), #4A3CC1) !important;
   box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4) !important;
   transform: translateY(-1px) !important;
+  cursor: pointer !important;
 }
 
 .votify-btn-primary:active {
@@ -152,11 +154,13 @@ body {
   border-radius: var(--radius-md) !important;
   font-weight: 600 !important;
   transition: all var(--transition-base) !important;
+  cursor: pointer !important;
 }
 
 .votify-btn-secondary:hover {
   background: rgba(108, 92, 231, 0.05) !important;
   border-color: var(--primary) !important;
+  cursor: pointer !important;
 }
 
 .votify-btn-danger {
@@ -166,11 +170,13 @@ body {
   border-radius: var(--radius-md) !important;
   font-weight: 600 !important;
   transition: all var(--transition-base) !important;
+  cursor: pointer !important;
 }
 
 .votify-btn-danger:hover {
   background: linear-gradient(135deg, #C0392B, #A93226) !important;
   transform: translateY(-1px) !important;
+  cursor: pointer !important;
 }
 
 .votify-btn-danger:active {
@@ -200,6 +206,7 @@ body {
   transition: all var(--transition-base) !important;
   flex: 1;
   padding: 8px 16px !important;
+  cursor: pointer !important;
 }
 
 .votify-button-group button.active {
@@ -207,6 +214,7 @@ body {
   color: white !important;
   border-color: var(--primary) !important;
   box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3) !important;
+  cursor: pointer !important;
 }
 
 .votify-button-group button:not(.active) {
@@ -219,9 +227,18 @@ body {
   background: var(--surface) !important;
   color: var(--primary) !important;
   border-color: var(--primary-light) !important;
+  cursor: pointer !important;
 }
 
 /* ── Focus States (Keyboard Navigation - WCAG) ────────────────── */
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
