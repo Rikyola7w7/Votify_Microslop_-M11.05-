@@ -47,6 +47,7 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
     private final DatePicker startDatePicker;
     private final DatePicker endDatePicker;
     private final TextField categoryNameField;
+    private final ComboBox<String> categoryVoterTypeCombo;
     private final VerticalLayout categoriesContainer;
     private final Span categoryCountSpan;
     private final List<CategoryDTO> selectedCategories;
@@ -175,12 +176,18 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         categoryNameField.setPlaceholder("e.g., Gaming, Design, etc.");
         categoryNameField.setWidth("200px");
 
+        categoryVoterTypeCombo = new ComboBox<>("Voting Type");
+        categoryVoterTypeCombo.setItems("Normal", "Scale", "Checklist");
+        categoryVoterTypeCombo.setValue("Normal");
+        categoryVoterTypeCombo.addClassName("votify-input");
+        categoryVoterTypeCombo.setWidth("180px");
+
         Button addCategoryButton = new Button("Add Category");
         addCategoryButton.addClassName("votify-btn-primary");
         addCategoryButton.setIcon(new Icon(VaadinIcon.PLUS));
         addCategoryButton.addClickListener(e -> addCategory());
 
-        categoryInputLayout.add(categoryNameField, addCategoryButton);
+        categoryInputLayout.add(categoryNameField, categoryVoterTypeCombo, addCategoryButton);
 
         categoryCountSpan = new Span("0 categories added");
         categoryCountSpan.getStyle().set("font-weight", "bold").set("color", "var(--text-muted)");
@@ -275,12 +282,15 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
             return;
         }
 
-        CategoryDTO category = new CategoryDTO(categoryName);
+        String vtValue = categoryVoterTypeCombo.getValue();
+        String voteType = "Scale".equals(vtValue) ? "SCALE" : "Checklist".equals(vtValue) ? "CHECKLIST" : "NORMAL";
+        CategoryDTO category = new CategoryDTO(categoryName, "NORMAL", voteType);
         selectedCategories.add(category);
         displayCategory(category);
         updateCategoryCount();
 
         categoryNameField.clear();
+        categoryVoterTypeCombo.setValue("Normal");
     }
 
     private void updateCategoryCount() {
@@ -302,6 +312,34 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         Span categoryLabel = new Span(category.getName());
         categoryLabel.getStyle().set("flex-grow", "1");
 
+        String vt = category.getVoteType() != null ? category.getVoteType() : "NORMAL";
+        String label = "NORMAL".equals(vt) ? "Normal" : "SCALE".equals(vt) ? "Scale" : "Checklist";
+        Span typeBadge = new Span(label);
+        typeBadge.getStyle()
+                .set("font-size", "11px")
+                .set("font-weight", "600")
+                .set("padding", "2px 8px")
+                .set("border-radius", "10px")
+                .set("margin-right", "8px")
+                .set("text-transform", "uppercase")
+                .set("letter-spacing", "0.5px");
+        if ("NORMAL".equals(vt)) {
+            typeBadge.getStyle()
+                    .set("background", "rgba(5, 150, 105, 0.15)")
+                    .set("color", "#059669")
+                    .set("border", "1px solid rgba(5, 150, 105, 0.3)");
+        } else if ("SCALE".equals(vt)) {
+            typeBadge.getStyle()
+                    .set("background", "rgba(99, 102, 241, 0.15)")
+                    .set("color", "#6366f1")
+                    .set("border", "1px solid rgba(99, 102, 241, 0.3)");
+        } else {
+            typeBadge.getStyle()
+                    .set("background", "rgba(245, 158, 11, 0.15)")
+                    .set("color", "#d97706")
+                    .set("border", "1px solid rgba(245, 158, 11, 0.3)");
+        }
+
         Button removeButton = new Button(new Icon(VaadinIcon.TRASH));
         removeButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
         removeButton.addClickListener(e -> {
@@ -310,7 +348,7 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
             updateCategoryCount();
         });
 
-        categoryItem.add(categoryLabel, removeButton);
+        categoryItem.add(categoryLabel, typeBadge, removeButton);
         categoriesContainer.add(categoryItem);
     }
 

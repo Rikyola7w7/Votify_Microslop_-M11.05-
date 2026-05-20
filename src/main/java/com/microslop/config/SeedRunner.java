@@ -25,6 +25,9 @@ public class SeedRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
+        // First, reset all PostgreSQL sequences to prevent duplicate key errors
+        resetPostgresSequences();
+        
         ClassPathResource resource = new ClassPathResource("neon.session.sql");
         if (!resource.exists()) {
             log.warn("neon.session.sql not found on classpath — skipping seed population");
@@ -47,5 +50,62 @@ public class SeedRunner implements ApplicationRunner {
         ResourceDatabasePopulator populator = new ResourceDatabasePopulator(resource);
         DatabasePopulatorUtils.execute(populator, dataSource);
         log.info("Executed neon.session.sql database populator");
+    }
+
+    /**
+     * Reset PostgreSQL sequences to be higher than any existing primary key values.
+     * This prevents "duplicate key" errors when inserting new records with auto-increment IDs.
+     * The sequence is set to MAX(id) + 1 to ensure the next insert gets a unique ID.
+     */
+    private void resetPostgresSequences() {
+        String[] sequences = {
+            "voter_id_seq",
+            "users_id_seq",
+            "competition_id_seq",
+            "project_id_seq",
+            "category_id_seq",
+            "vote_id_seq",
+            "judge_id_seq",
+            "project_comment_id_seq",
+            "checklist_item_id_seq",
+            "checklist_vote_id_seq"
+        };
+
+        String[] tables = {
+            "voter",
+            "users",
+            "competition",
+            "project",
+            "category",
+            "vote",
+            "judge",
+            "project_comment",
+            "checklist_item",
+            "checklist_vote"
+        };
+
+        try (java.sql.Connection connection = dataSource.getConnection()) {
+            for (int i = 0; i < sequences.length; i++) {
+                String sequence = sequences[i];
+                String table = tables[i];
+                
+                try {
+                    String sql = String.format(
+                        "SELECT setval('%s', (SELECT COALESCE(MAX(id), 0) + 1 FROM %s), false)",
+                        sequence, table
+                    );
+                    
+                    try (java.sql.Statement stmt = connection.createStatement()) {
+                        stmt.execute(sql);
+                        log.debug("Reset sequence: {} for table: {}", sequence, table);
+                    }
+                } catch (Exception e) {
+                    log.warn("Could not reset sequence {} — table {} may not exist yet", sequence, table);
+                }
+            }
+            log.info("PostgreSQL sequences reset successfully");
+        } catch (Exception e) {
+            log.error("Error resetting PostgreSQL sequences", e);
+        }
     }
 }

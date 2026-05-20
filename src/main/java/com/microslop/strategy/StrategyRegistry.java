@@ -40,7 +40,7 @@ public class StrategyRegistry {
         if (strategy == null && !rankingStrategies.isEmpty()) {
             strategy = rankingStrategies.values().iterator().next();
         }
-        return strategy != null ? strategy : new com.microslop.strategy.ranking.WeightedScoreRankingStrategy(null);
+        return strategy != null ? strategy : new com.microslop.strategy.ranking.AverageScoreRankingStrategy();
     }
 
     public VotingStrategy getVotingStrategyByName(String name) {

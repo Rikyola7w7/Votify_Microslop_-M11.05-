@@ -88,7 +88,8 @@ public class MainView extends VerticalLayout {
             .set("display", "block")
             .set("margin-left", "auto")
             .set("margin-right", "auto")
-            .set("animation", "float 3s ease-in-out infinite");
+            .set("animation", "float 3s ease-in-out infinite")
+            .set("text-shadow", "0 1px 4px rgba(0,0,0,0.3)");
 
         H2 heading = new H2("Discover Competitions");
         heading.getStyle()
@@ -96,13 +97,15 @@ public class MainView extends VerticalLayout {
             .set("margin", "0 0 8px")
             .set("font-size", "2.5rem")
             .set("font-weight", "700")
-            .set("letter-spacing", "-0.5px");
+            .set("letter-spacing", "-0.5px")
+            .set("text-shadow", "0 2px 8px rgba(0,0,0,0.4)");
 
         Span subtitle = new Span("Find and vote for the best projects");
         subtitle.getStyle()
-            .set("color", "rgba(255, 255, 255, 0.9)")
+            .set("color", "rgba(255, 255, 255, 0.95)")
             .set("font-size", "1.1rem")
-            .set("font-weight", "400");
+            .set("font-weight", "400")
+            .set("text-shadow", "0 1px 4px rgba(0,0,0,0.3)");
 
         hero.add(ballotIcon, heading, subtitle);
         return hero;

@@ -21,10 +21,11 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Layout;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Layout
-public final class MainLayout extends AppLayout {
+public final class MainLayout extends AppLayout implements InitializingBean {
 
     @Autowired(required = false)
     private UserService userService;

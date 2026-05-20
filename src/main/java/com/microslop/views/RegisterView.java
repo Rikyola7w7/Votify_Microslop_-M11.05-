@@ -2,9 +2,11 @@ package com.microslop.views;
 
 import com.microslop.entity.User;
 import com.microslop.service.UserService;
+import com.microslop.views.components.CelebrationAnimation;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
@@ -17,6 +19,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.PasswordField;
@@ -35,7 +38,7 @@ import java.time.LocalDateTime;
 
 @Route("register")
 @PageTitle("Register | Votify")
-public class RegisterView extends com.vaadin.flow.component.orderedlayout.HorizontalLayout {
+public class RegisterView extends HorizontalLayout {
 
     private final UserService userService;
     private byte[] profilePictureBytes = null;
@@ -60,7 +63,7 @@ public class RegisterView extends com.vaadin.flow.component.orderedlayout.Horizo
         Div leftPanel = new Div();
         leftPanel.addClassNames("register-left-panel");
         leftPanel.setWidth("40%");
-        leftPanel.setHeight("100vh");
+        leftPanel.setHeight("100%");
         leftPanel.getStyle()
                 .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))")
                 .set("display", "flex")
@@ -68,11 +71,14 @@ public class RegisterView extends com.vaadin.flow.component.orderedlayout.Horizo
                 .set("align-items", "center")
                 .set("justify-content", "center")
                 .set("gap", "16px")
-                .set("padding", "40px");
+                .set("padding", "40px")
+                .set("flex-shrink", "0");
 
         Icon icon = new Icon(VaadinIcon.CHECK_SQUARE_O);
         icon.setSize("64px");
-        icon.getStyle().set("color", "white");
+        icon.getStyle()
+                .set("color", "white")
+                .set("text-shadow", "0 2px 8px rgba(0,0,0,0.3)");
 
         H1 brand = new H1("Join Votify");
         brand.getStyle()
@@ -80,14 +86,16 @@ public class RegisterView extends com.vaadin.flow.component.orderedlayout.Horizo
                 .set("margin", "0")
                 .set("font-size", "2.5rem")
                 .set("font-weight", "700")
-                .set("letter-spacing", "-0.5px");
+                .set("letter-spacing", "-0.5px")
+                .set("text-shadow", "0 2px 8px rgba(0,0,0,0.4)");
 
         Paragraph tagline = new Paragraph("Create your account");
         tagline.getStyle()
-                .set("color", "rgba(255, 255, 255, 0.85)")
+                .set("color", "rgba(255, 255, 255, 0.95)")
                 .set("font-size", "1.1rem")
                 .set("margin", "0")
-                .set("font-style", "italic");
+                .set("font-style", "italic")
+                .set("text-shadow", "0 1px 4px rgba(0,0,0,0.3)");
 
         leftPanel.add(icon, brand, tagline);
         return leftPanel;
@@ -103,7 +111,8 @@ public class RegisterView extends com.vaadin.flow.component.orderedlayout.Horizo
                 .set("display", "flex")
                 .set("align-items", "center")
                 .set("justify-content", "center")
-                .set("overflow-y", "auto");
+                .set("overflow-y", "auto")
+                .set("padding", "20px");
 
         VerticalLayout card = new VerticalLayout();
         card.setMaxWidth("600px");
@@ -114,7 +123,8 @@ public class RegisterView extends com.vaadin.flow.component.orderedlayout.Horizo
                 .set("background", "var(--surface)")
                 .set("border-radius", "var(--radius-xl)")
                 .set("box-shadow", "var(--shadow-modal)")
-                .set("padding", "48px 40px");
+                .set("padding", "32px 24px")
+                .set("margin", "auto");
 
         H2 title = new H2("Create your account");
         title.getStyle()
@@ -175,53 +185,87 @@ public class RegisterView extends com.vaadin.flow.component.orderedlayout.Horizo
                 return;
             }
 
-            try {
-                LocalDateTime birthDateLDT = birthDateField.getValue().atStartOfDay();
+            // Show confirmation dialog
+            Dialog confirmDialog = new Dialog();
+            confirmDialog.setHeaderTitle("Confirm Registration");
+            
+            Paragraph message = new Paragraph("Do you want to create your account with the username \"" + 
+                    usernameField.getValue().trim() + "\"?");
+            
+            Button confirmButton = new Button("Yes", event -> {
+                try {
+                    LocalDateTime birthDateLDT = birthDateField.getValue().atStartOfDay();
 
-                User newUser = User.builder()
-                        .name(nameField.getValue().trim())
-                        .email(emailField.getValue().trim())
-                        .username(usernameField.getValue().trim())
-                        .password(passwordField.getValue().trim())
-                        .birthDate(birthDateLDT)
-                        .profilePicture(profilePictureBytes)
-                        .build();
+                    User newUser = User.builder()
+                            .name(nameField.getValue().trim())
+                            .email(emailField.getValue().trim())
+                            .username(usernameField.getValue().trim())
+                            .password(passwordField.getValue().trim())
+                            .birthDate(birthDateLDT)
+                            .profilePicture(profilePictureBytes)
+                            .build();
 
-                this.userService.registerUser(newUser);
+                    this.userService.registerUser(newUser);
+                    
+                    // Fetch the registered user from database to get the ID
+                    User registeredUser = this.userService.searchByUsernameIgnoreCase(newUser.getUsername())
+                            .orElse(null);
+                    
+                    if (registeredUser == null) {
+                        throw new IllegalArgumentException("Failed to retrieve registered user from database");
+                    }
 
-                VaadinSession.getCurrent().setAttribute(User.class, newUser);
-                VaadinSession.getCurrent().setAttribute("username", newUser.getUsername());
+                    VaadinSession.getCurrent().setAttribute(User.class, registeredUser);
+                    VaadinSession.getCurrent().setAttribute("username", registeredUser.getUsername());
+                    VaadinSession.getCurrent().setAttribute("userId", registeredUser.getId());
 
-                Notification success = Notification.show("Account created successfully!");
-                success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                    Notification success = Notification.show("Account created successfully!");
+                    success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
-                // Mini confetti burst on register button
-                String[] colors = {"#6C5CE7", "#00CEC9", "#FD79A8", "#00B894", "#F39C12"};
-                for (int i = 0; i < 6; i++) {
-                    Span dot = new Span();
-                    dot.getStyle()
-                        .set("position", "fixed")
-                        .set("width", "8px")
-                        .set("height", "8px")
-                        .set("border-radius", "50%")
-                        .set("background", colors[i % colors.length])
-                        .set("z-index", "9999")
-                        .set("pointer-events", "none")
-                        .set("left", "calc(50% + " + ((i - 3) * 15) + "px)")
-                        .set("top", "60%")
-                        .set("animation", "confetti-burst 0.6s ease-out " + (i * 50) + "ms forwards")
-                        .set("opacity", "0");
-                    getUI().ifPresent(ui -> ui.add(dot));
-                    getUI().ifPresent(ui -> ui.getPage().executeJs(
-                        "setTimeout(function() { $0.remove(); }, 1200)", dot.getElement()));
+                    // Mini confetti burst on register button
+                    String[] colors = {"#6C5CE7", "#00CEC9", "#FD79A8", "#00B894", "#F39C12"};
+                    for (int i = 0; i < 6; i++) {
+                        Span dot = new Span();
+                        dot.getStyle()
+                            .set("position", "fixed")
+                            .set("width", "8px")
+                            .set("height", "8px")
+                            .set("border-radius", "50%")
+                            .set("background", colors[i % colors.length])
+                            .set("z-index", "9999")
+                            .set("pointer-events", "none")
+                            .set("left", "calc(50% + " + ((i - 3) * 15) + "px)")
+                            .set("top", "60%")
+                            .set("animation", "confetti-burst 0.6s ease-out " + (i * 50) + "ms forwards")
+                            .set("opacity", "0");
+                        getUI().ifPresent(ui -> ui.add(dot));
+                        getUI().ifPresent(ui -> ui.getPage().executeJs(
+                            "setTimeout(function() { $0.remove(); }, 1200)", dot.getElement()));
+                    }
+
+                    confirmDialog.close();
+
+                    // Show celebration then redirect
+                    CelebrationAnimation celebration = new CelebrationAnimation(
+                        "WELCOME ABOARD",
+                        "Your account is ready — let the voting begin",
+                        () -> getUI().ifPresent(ui -> ui.getPage().executeJs("window.location.href = '/'"))
+                    );
+                    getUI().ifPresent(ui -> ui.add(celebration));
+
+                } catch (IllegalArgumentException ex) {
+                    Notification error = Notification.show(ex.getMessage());
+                    error.addThemeVariants(NotificationVariant.LUMO_ERROR);
                 }
-
-                getUI().ifPresent(ui -> ui.navigate(""));
-
-            } catch (IllegalArgumentException ex) {
-                Notification error = Notification.show(ex.getMessage());
-                error.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            }
+            });
+            confirmButton.addClassNames("votify-btn-primary");
+            
+            Button cancelButton = new Button("No", event -> confirmDialog.close());
+            cancelButton.addClassNames("votify-btn-secondary");
+            
+            confirmDialog.add(message);
+            confirmDialog.getFooter().add(cancelButton, confirmButton);
+            confirmDialog.open();
         });
         registerButton.setWidthFull();
         registerButton.addClassNames("votify-btn-primary");

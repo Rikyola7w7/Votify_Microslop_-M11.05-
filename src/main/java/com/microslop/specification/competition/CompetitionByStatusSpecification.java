@@ -20,10 +20,8 @@ public class CompetitionByStatusSpecification extends AbstractSpecification<Comp
     @Override
     protected Predicate getPredicates(Root<Competition> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
         if (active) {
-            // active = true -> status IN (ACTIVE, VOTING_OPEN)
-            return root.get("status").in(List.of(CompetitionStatus.ACTIVE, CompetitionStatus.VOTING_OPEN));
+            return root.get("status").in(List.of(CompetitionStatus.ACTIVE, CompetitionStatus.PAUSED));
         } else {
-            // active = false -> status IN (DRAFT, CONCLUDED, ARCHIVED)
             return root.get("status").in(List.of(CompetitionStatus.DRAFT, CompetitionStatus.CONCLUDED, CompetitionStatus.ARCHIVED));
         }
     }

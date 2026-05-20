@@ -19,4 +19,9 @@ public class PausedCompetitionState implements CompetitionState {
     public void conclude(Competition competition) {
         competition.setStatus(CompetitionStatus.CONCLUDED);
     }
+
+    @Override
+    public boolean isActiveLegacy() {
+        return true;
+    }
 }

@@ -57,17 +57,11 @@ public class Competition {
     @Min(value = 1, message = "Max votes per person must be at least 1")
     private Integer maxVotesPerPerson = 1;
 
-    @Column(name = "judge_weight_multiplier", columnDefinition = "double default 1.0")
-    private Double judgeWeightMultiplier = 1.0;
-
-    @Column(name = "standard_user_weight_multiplier", columnDefinition = "double default 1.0")
-    private Double standardUserWeightMultiplier = 1.0;
-
     @Column(name = "voting_strategy_type", length = 50)
     private String votingStrategyType = "ALL";
 
     @Column(name = "ranking_strategy_type", length = 50)
-    private String rankingStrategyType = "WEIGHTED";
+    private String rankingStrategyType = "AVERAGE";
 
     public static com.microslop.builder.CompetitionBuilder builder() {
         return com.microslop.builder.CompetitionBuilder.builder();
@@ -230,7 +224,7 @@ public class Competition {
             }
         } else {
             if (this.status == CompetitionStatus.ACTIVE
-                    || this.status == CompetitionStatus.VOTING_OPEN) {
+                    || this.status == CompetitionStatus.PAUSED) {
                 this.status = CompetitionStatus.DRAFT;
             }
         }
@@ -259,22 +253,6 @@ public class Competition {
 
     public void setMaxVotesPerPerson(Integer maxVotesPerPerson) {
         this.maxVotesPerPerson = maxVotesPerPerson;
-    }
-
-    public Double getJudgeWeightMultiplier() {
-        return judgeWeightMultiplier;
-    }
-
-    public void setJudgeWeightMultiplier(Double judgeWeightMultiplier) {
-        this.judgeWeightMultiplier = judgeWeightMultiplier;
-    }
-
-    public Double getStandardUserWeightMultiplier() {
-        return standardUserWeightMultiplier;
-    }
-
-    public void setStandardUserWeightMultiplier(Double standardUserWeightMultiplier) {
-        this.standardUserWeightMultiplier = standardUserWeightMultiplier;
     }
 
     public String getVotingStrategyType() {

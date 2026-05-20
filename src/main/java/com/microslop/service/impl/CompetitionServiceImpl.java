@@ -166,6 +166,12 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
                 Category category = new Category();
                 category.setName(categoryDTO.getName());
                 category.setCompetition(savedCompetition);
+                if (categoryDTO.getVoterType() != null && !categoryDTO.getVoterType().isEmpty()) {
+                    category.setVoterType(categoryDTO.getVoterType());
+                }
+                if (categoryDTO.getVoteType() != null && !categoryDTO.getVoteType().isEmpty()) {
+                    category.setVoteType(categoryDTO.getVoteType());
+                }
                 savedCompetition.addCategory(category);
             }
 

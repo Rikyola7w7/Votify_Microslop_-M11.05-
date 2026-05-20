@@ -65,7 +65,9 @@ public class LoginView extends HorizontalLayout {
 
         Icon icon = new Icon(VaadinIcon.CHECK_SQUARE_O);
         icon.setSize("64px");
-        icon.getStyle().set("color", "white");
+        icon.getStyle()
+                .set("color", "white")
+                .set("text-shadow", "0 2px 8px rgba(0,0,0,0.3)");
 
         H1 brand = new H1("Votify");
         brand.getStyle()
@@ -73,14 +75,16 @@ public class LoginView extends HorizontalLayout {
                 .set("margin", "0")
                 .set("font-size", "2.5rem")
                 .set("font-weight", "700")
-                .set("letter-spacing", "-0.5px");
+                .set("letter-spacing", "-0.5px")
+                .set("text-shadow", "0 2px 8px rgba(0,0,0,0.4)");
 
         Paragraph tagline = new Paragraph("Your vote matters.");
         tagline.getStyle()
-                .set("color", "rgba(255, 255, 255, 0.85)")
+                .set("color", "rgba(255, 255, 255, 0.95)")
                 .set("font-size", "1.1rem")
                 .set("margin", "0")
-                .set("font-style", "italic");
+                .set("font-style", "italic")
+                .set("text-shadow", "0 1px 4px rgba(0,0,0,0.3)");
 
         leftPanel.add(icon, brand, tagline);
         return leftPanel;
@@ -150,6 +154,7 @@ public class LoginView extends HorizontalLayout {
                 if (session != null) {
                     session.setAttribute(User.class, loggedUser);
                     session.setAttribute("username", loggedUser.getUsername());
+                    session.setAttribute("userId", loggedUser.getId());
                 }
 
                 Notification success = Notification.show("Login successful!");
@@ -181,8 +186,11 @@ public class LoginView extends HorizontalLayout {
                     destination = session.getAttribute("postLoginRoute").toString();
                     session.setAttribute("postLoginRoute", null);
                 }
-                String finalDestination = destination.isBlank() ? "" : destination;
-                getUI().ifPresent(ui -> ui.navigate(finalDestination));
+                
+                // Navigate using hard redirect so MainLayout is rebuilt with fresh session state
+                String finalDestination = destination.isBlank() ? "/" : "/" + destination;
+                String finalDest = finalDestination;
+                getUI().ifPresent(ui -> ui.getPage().executeJs("window.location.href = $0", finalDest));
 
             } catch (IllegalArgumentException ex) {
                 Notification error = Notification.show(ex.getMessage());

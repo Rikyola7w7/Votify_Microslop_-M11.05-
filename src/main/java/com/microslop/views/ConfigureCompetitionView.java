@@ -130,8 +130,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         originalCompetition.setVoterType(currentCompetition.getVoterType());
         originalCompetition.setAutoVote(currentCompetition.isAutoVote());
         originalCompetition.setMaxVotesPerPerson(currentCompetition.getMaxVotesPerPerson());
-        originalCompetition.setJudgeWeightMultiplier(currentCompetition.getJudgeWeightMultiplier());
-        originalCompetition.setStandardUserWeightMultiplier(currentCompetition.getStandardUserWeightMultiplier());
     }
 
     private void initializeView() {
@@ -273,6 +271,34 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         Span categoryName = new Span(category.getName());
         categoryName.getStyle().set("flex", "1").set("font-weight", "500").set("color", "var(--text-primary)");
 
+        String voterType = category.getVoterType() != null ? category.getVoterType() : "NORMAL";
+        String label = "NORMAL".equals(voterType) ? "Normal" : "SCALE".equals(voterType) ? "Scale" : "Checklist";
+        Span typeBadge = new Span(label);
+        typeBadge.getStyle()
+                .set("font-size", "11px")
+                .set("font-weight", "600")
+                .set("padding", "2px 8px")
+                .set("border-radius", "10px")
+                .set("margin-right", "8px")
+                .set("text-transform", "uppercase")
+                .set("letter-spacing", "0.5px");
+        if ("NORMAL".equals(voterType)) {
+            typeBadge.getStyle()
+                    .set("background", "rgba(5, 150, 105, 0.15)")
+                    .set("color", "#059669")
+                    .set("border", "1px solid rgba(5, 150, 105, 0.3)");
+        } else if ("SCALE".equals(voterType)) {
+            typeBadge.getStyle()
+                    .set("background", "rgba(99, 102, 241, 0.15)")
+                    .set("color", "#6366f1")
+                    .set("border", "1px solid rgba(99, 102, 241, 0.3)");
+        } else {
+            typeBadge.getStyle()
+                    .set("background", "rgba(245, 158, 11, 0.15)")
+                    .set("color", "#d97706")
+                    .set("border", "1px solid rgba(245, 158, 11, 0.3)");
+        }
+
         Button deleteButton = new Button();
         deleteButton.setIcon(new Icon(VaadinIcon.TRASH));
         deleteButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
@@ -287,7 +313,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             Notification.show("Category removed", 2000, Notification.Position.BOTTOM_CENTER);
         });
 
-        row.add(categoryName, deleteButton);
+        row.add(categoryName, typeBadge, deleteButton);
         return row;
     }
 
@@ -302,6 +328,12 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         nameField.addClassName("votify-input");
         nameField.setWidth("100%");
 
+        ComboBox<String> voterTypeCombo = new ComboBox<>("Voting Type");
+        voterTypeCombo.setItems("Normal", "Scale", "Checklist");
+        voterTypeCombo.setValue("Normal");
+        voterTypeCombo.addClassName("votify-input");
+        voterTypeCombo.setWidth("100%");
+
         Button saveBtn = new Button("Save", e -> {
             if (nameField.getValue().isEmpty()) {
                 Notification.show("Category name is required");
@@ -311,6 +343,14 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             Category newCategory = new Category();
             newCategory.setName(nameField.getValue());
             newCategory.setCompetition(currentCompetition);
+            String vtValue = voterTypeCombo.getValue();
+            if ("Scale".equals(vtValue)) {
+                newCategory.setVoterType("SCALE");
+            } else if ("Checklist".equals(vtValue)) {
+                newCategory.setVoterType("CHECKLIST");
+            } else {
+                newCategory.setVoterType("NORMAL");
+            }
 
             categoriesToAdd.add(newCategory);
             categoriesContainer.add(buildCategoryRow(newCategory));
@@ -323,7 +363,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         Button cancelBtn = new Button("Cancel", e -> dialog.close());
         cancelBtn.addClassName("votify-btn-secondary");
 
-        content.add(nameField);
+        content.add(nameField, voterTypeCombo);
         dialog.add(content);
         dialog.getFooter().add(cancelBtn, saveBtn);
         dialog.open();

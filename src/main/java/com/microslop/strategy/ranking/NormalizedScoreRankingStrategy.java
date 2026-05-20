@@ -3,20 +3,12 @@ package com.microslop.strategy.ranking;
 import com.microslop.entity.Project;
 import com.microslop.entity.Vote;
 import com.microslop.entity.Competition;
-import com.microslop.entity.User;
-import com.microslop.repository.JudgeRepository;
 import org.springframework.stereotype.Component;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
 public class NormalizedScoreRankingStrategy implements RankingStrategy {
-
-    private final JudgeRepository judgeRepository;
-
-    public NormalizedScoreRankingStrategy(JudgeRepository judgeRepository) {
-        this.judgeRepository = judgeRepository;
-    }
 
     @Override
     public double calculateScore(Project project, List<Vote> votes, Competition competition) {
@@ -32,19 +24,11 @@ public class NormalizedScoreRankingStrategy implements RankingStrategy {
         }
 
         double totalScore = 0.0;
-        double judgeMultiplier = competition.getJudgeWeightMultiplier() != null
-            ? competition.getJudgeWeightMultiplier() : 1.0;
-        double standardMultiplier = competition.getStandardUserWeightMultiplier() != null
-            ? competition.getStandardUserWeightMultiplier() : 1.0;
-        double maxMultiplier = Math.max(judgeMultiplier, standardMultiplier);
-
         for (Vote vote : projectVotes) {
-            double multiplier = isJudge(vote.getUser(), competition)
-                ? judgeMultiplier : standardMultiplier;
-            totalScore += vote.getPoints() * multiplier;
+            totalScore += vote.getPoints();
         }
 
-        int maxPossibleScore = projectVotes.size() * 5 * (int) maxMultiplier;
+        int maxPossibleScore = projectVotes.size() * 5;
         return maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0.0;
     }
 
@@ -68,9 +52,5 @@ public class NormalizedScoreRankingStrategy implements RankingStrategy {
     @Override
     public String getStrategyName() {
         return "NormalizedScoreRankingStrategy";
-    }
-
-    private boolean isJudge(User user, Competition competition) {
-        return judgeRepository.existsByUserIdAndCompetitionId(user.getId(), competition.getId());
     }
 }

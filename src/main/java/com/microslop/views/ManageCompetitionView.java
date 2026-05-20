@@ -18,6 +18,7 @@ import com.microslop.service.UserService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
@@ -283,19 +284,20 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 statusBadge.removeClassName("votify-badge-paused");
                 statusBadge.removeClassName("votify-badge-finished");
                 statusBadge.addClassName("votify-badge-active");
-                pauseButton.setVisible(false);
-                resumeButton.setVisible(false);
+                pauseButton.setVisible(true);
                 endNowButton.setVisible(true);
                 reopenButton.setVisible(false);
             }
-            case VOTING_OPEN -> {
-                statusBadge.setText("VOTING OPEN");
+            case PAUSED -> {
+                statusBadge.setText("PAUSED");
                 statusBadge.removeClassName("votify-badge-draft");
                 statusBadge.removeClassName("votify-badge-active");
                 statusBadge.removeClassName("votify-badge-finished");
-                statusBadge.addClassName("votify-badge-active");
-                pauseButton.setVisible(true);
-                resumeButton.setVisible(false);
+                statusBadge.addClassName("votify-badge-paused");
+                pauseButton.setVisible(false);
+                resumeButton.setVisible(true);
+                resumeButton.setText("Resume Voting");
+                resumeButton.setIcon(new Icon(VaadinIcon.PLAY));
                 endNowButton.setVisible(true);
                 reopenButton.setVisible(false);
             }
@@ -346,13 +348,21 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     private void togglePause(boolean pause) {
         if (pause) {
             competitionService.pauseVoting(competitionId);
+            competition = competitionService.getByIdOrFail(competitionId);
+            Notification.show("Voting paused.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         } else {
-            competitionService.openVoting(competitionId);
+            if (competition.getStatus() == CompetitionStatus.CONCLUDED) {
+                reopenVoting();
+                return;
+            }
+            if (competition.getStatus() == CompetitionStatus.PAUSED) {
+                competitionService.openVoting(competitionId);
+                competition = competitionService.getByIdOrFail(competitionId);
+                Notification.show("Voting resumed.", 3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            }
         }
-        competition = competitionService.getByIdOrFail(competitionId);
-        String msg = pause ? "Voting paused." : "Voting resumed.";
-        Notification.show(msg, 3000, Notification.Position.TOP_CENTER)
-                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         updateUIState();
     }
 
@@ -366,16 +376,47 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     }
 
     private void reopenVoting() {
-        competitionService.reopen(competitionId);
-        competition = competitionService.getByIdOrFail(competitionId);
-        if (competition.getEndDate() != null && LocalDateTime.now().isAfter(competition.getEndDate())) {
-            competition.setEndDate(LocalDateTime.now().plusDays(1));
-            endDatePicker.setValue(competition.getEndDate());
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Reopen Voting");
+
+        VerticalLayout content = new VerticalLayout();
+        content.setSpacing(true);
+        content.setPadding(false);
+
+        Span message = new Span("Set a new end date for the voting period:");
+        message.getStyle().set("color", "var(--text-muted)").set("font-size", "0.9rem");
+
+        DateTimePicker newEndDatePicker = new DateTimePicker("New End Date & Time");
+        newEndDatePicker.addClassName("votify-input");
+        newEndDatePicker.setValue(LocalDateTime.now().plusDays(7));
+        newEndDatePicker.setWidthFull();
+
+        Button confirmBtn = new Button("Reopen", e -> {
+            LocalDateTime newEndDate = newEndDatePicker.getValue();
+            if (newEndDate == null || newEndDate.isBefore(LocalDateTime.now())) {
+                Notification.show("Please select a valid future date", 3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_WARNING);
+                return;
+            }
+            competition.setEndDate(newEndDate);
             competitionService.save(competition);
-        }
-        Notification.show("Voting reopened.", 3000, Notification.Position.TOP_CENTER)
-                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-        updateUIState();
+            competitionService.reopen(competitionId);
+            competition = competitionService.getByIdOrFail(competitionId);
+            endDatePicker.setValue(competition.getEndDate());
+            dialog.close();
+            Notification.show("Voting reopened until " + newEndDate.toLocalDate(), 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            updateUIState();
+        });
+        confirmBtn.addClassName("votify-btn-primary");
+
+        Button cancelBtn = new Button("Cancel", e -> dialog.close());
+        cancelBtn.addClassName("votify-btn-secondary");
+
+        dialog.getFooter().add(cancelBtn, confirmBtn);
+        content.add(message, newEndDatePicker);
+        dialog.add(content);
+        dialog.open();
     }
 
     private VerticalLayout buildPendingProjectsSection() {

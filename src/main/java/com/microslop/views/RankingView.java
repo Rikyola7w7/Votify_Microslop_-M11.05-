@@ -239,13 +239,29 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         yesButton.addClickListener(e -> {
             try {
                 voterService.registerVoter(userId, competitionId, categoryId);
-                Notification.show("Successfully registered as a voter!", 3000,
-                    Notification.Position.BOTTOM_CENTER);
+                
                 dialog.close();
-                navigateToVoting();
+                
+                // Show epic celebration, then redirect to voting
+                CelebrationAnimation celebration = new CelebrationAnimation(
+                    "VOTER REGISTERED",
+                    "Welcome aboard — time to make your voice heard",
+                    () -> {
+                        String votingUrl = "/competition/" + competitionId + "/category/" + categoryId + "/vote";
+                        getUI().ifPresent(ui -> ui.getPage().executeJs(
+                            "window.location.href = '" + votingUrl + "'"));
+                    }
+                );
+                getUI().ifPresent(ui -> ui.add(celebration));
             } catch (IllegalStateException ex) {
-                Notification.show(ex.getMessage(), 3000,
+                Notification error = Notification.show("Error: " + ex.getMessage(), 3000,
                     Notification.Position.BOTTOM_CENTER);
+                error.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                dialog.close();
+            } catch (Exception ex) {
+                Notification error = Notification.show("Unexpected error: " + ex.getMessage(), 3000,
+                    Notification.Position.BOTTOM_CENTER);
+                error.addThemeVariants(NotificationVariant.LUMO_ERROR);
                 dialog.close();
             }
         });
@@ -268,7 +284,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
     private void navigateToVoting() {
         getUI().ifPresent(ui ->
-            ui.navigate("competition/" + competitionId + "/vote"));
+            ui.navigate("competition/" + competitionId + "/category/" + categoryId + "/vote"));
     }
 
     private Div buildSummaryCard() {

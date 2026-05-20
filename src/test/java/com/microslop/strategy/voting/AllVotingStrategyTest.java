@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.microslop.repository.JudgeRepository;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -53,13 +52,12 @@ class AllVotingStrategyTest {
     }
 
     @Test
-    void calculateVotePoints_returnsCorrectPointsWithStandardMultiplier() {
+    void calculateVotePoints_returnsCorrectPoints() {
         Competition competition = createActiveCompetition();
-        competition.setStandardUserWeightMultiplier(2.0);
 
         int result = strategy.calculateVotePoints(user, competition, 5);
 
-        assertEquals(10, result);
+        assertEquals(5, result);
     }
 
     @Test
@@ -71,16 +69,6 @@ class AllVotingStrategyTest {
     }
 
     @Test
-    void calculateVotePoints_usesDefaultMultiplierWhenNull() {
-        Competition competition = createActiveCompetition();
-        competition.setStandardUserWeightMultiplier(null);
-
-        int result = strategy.calculateVotePoints(user, competition, 5);
-
-        assertEquals(5, result);
-    }
-
-    @Test
     void getStrategyName_returnsCorrectName() {
         assertEquals("AllVotingStrategy", strategy.getStrategyName());
     }
@@ -88,8 +76,7 @@ class AllVotingStrategyTest {
     private Competition createActiveCompetition() {
         Competition competition = new Competition();
         competition.setId(1L);
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
-        competition.setStandardUserWeightMultiplier(1.0);
+        competition.setStatus(CompetitionStatus.ACTIVE);
         return competition;
     }
 

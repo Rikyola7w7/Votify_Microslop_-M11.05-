@@ -11,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class JudgesOnlyVotingStrategyTest {
@@ -69,27 +68,16 @@ class JudgesOnlyVotingStrategyTest {
     }
 
     @Test
-    void calculateVotePoints_returnsCorrectPointsWithJudgeMultiplier() {
-        competition.setJudgeWeightMultiplier(2.5);
-
+    void calculateVotePoints_returnsCorrectPoints() {
         int result = strategy.calculateVotePoints(user, competition, 4);
 
-        assertEquals(10, result);
+        assertEquals(4, result);
     }
 
     @Test
     void calculateVotePoints_returnsZeroWhenPointsAreZeroOrNegative() {
         assertEquals(0, strategy.calculateVotePoints(user, competition, 0));
         assertEquals(0, strategy.calculateVotePoints(user, competition, -1));
-    }
-
-    @Test
-    void calculateVotePoints_usesDefaultMultiplierWhenNull() {
-        competition.setJudgeWeightMultiplier(null);
-
-        int result = strategy.calculateVotePoints(user, competition, 5);
-
-        assertEquals(5, result);
     }
 
     @Test
@@ -100,8 +88,7 @@ class JudgesOnlyVotingStrategyTest {
     private Competition createActiveCompetition() {
         Competition competition = new Competition();
         competition.setId(1L);
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
-        competition.setJudgeWeightMultiplier(1.0);
+        competition.setStatus(CompetitionStatus.ACTIVE);
         return competition;
     }
 }
