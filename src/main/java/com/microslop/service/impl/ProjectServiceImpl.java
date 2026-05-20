@@ -9,7 +9,7 @@ import com.microslop.command.CommandExecutor;
 import com.microslop.command.project.CreateProjectCommand;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
+import java.util.*;
 
 @Service
 @Transactional
@@ -41,7 +41,6 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public Project getById(Long id) {
-        // Use custom query to fetch project with votes and users to avoid lazy loading issues
         return projectRepository.findByIdWithVotesAndUsers(id)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found: " + id));
     }
@@ -78,11 +77,69 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Project> getRankingForCategory(Long categoryId, boolean isJudgesRanking) {
+        List<Project> baseRanking = isJudgesRanking
+                ? projectRepository.findJudgeRankingByCategory(categoryId)
+                : projectRepository.findPopularRankingByCategory(categoryId);
+
+        boolean anyCustomPosition = baseRanking.stream().anyMatch(p -> p.getCustomPosition() != null);
+        if (!anyCustomPosition) {
+            return baseRanking;
+        }
+
+        Map<Long, Integer> baseOrder = new HashMap<>();
+        for (int i = 0; i < baseRanking.size(); i++) {
+            baseOrder.put(baseRanking.get(i).getId(), i);
+        }
+
+        List<Project> sorted = new ArrayList<>(baseRanking);
+        sorted.sort((a, b) -> {
+            Integer posA = a.getCustomPosition();
+            Integer posB = b.getCustomPosition();
+            if (posA != null && posB != null) return Integer.compare(posA, posB);
+            if (posA != null) return -1;
+            if (posB != null) return 1;
+            return Integer.compare(
+                    baseOrder.getOrDefault(a.getId(), Integer.MAX_VALUE),
+                    baseOrder.getOrDefault(b.getId(), Integer.MAX_VALUE)
+            );
+        });
+
+        return sorted;
+    }
+
+    @Override
+    public void reclassifyProject(Long projectId, int newPosition) {
+        if (newPosition < 1) {
+            throw new IllegalArgumentException("Position must be at least 1");
+        }
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
+        project.setCustomPosition(newPosition);
+        projectRepository.save(project);
+    }
+
+    @Override
+    public void declassifyProject(Long projectId) {
+        projectRepository.deleteById(projectId);
+    }
+
+    @Override
+    public void editProjectVotes(Long projectId, int newVoteCount) {
+        if (newVoteCount < 0) {
+            throw new IllegalArgumentException("Vote count cannot be negative");
+        }
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
+        project.setManualVoteCount(newVoteCount);
+        projectRepository.save(project);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Project> getUserProjects(String username) {
         List<Project> projects = projectRepository.findProjectsByParticipantUsername(username);
-        // Access all fields within transaction to prevent lazy loading errors
         projects.forEach(p -> {
-            // Access competition and votes
             if (p.getCompetition() != null) {
                 p.getCompetition().getName();
             }

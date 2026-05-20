@@ -71,4 +71,12 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
 
     @Query("SELECT p FROM Project p LEFT JOIN FETCH p.votes v LEFT JOIN FETCH v.user WHERE p.id = :projectId")
     Optional<Project> findByIdWithVotesAndUsers(@Param("projectId") Long projectId);
+
+    @Query("""
+        SELECT p FROM Project p
+        LEFT JOIN FETCH p.votes
+        LEFT JOIN p.categories c
+        WHERE c.id = :categoryId
+        """)
+    List<Project> findAllByCategoryId(@Param("categoryId") Long categoryId);
 }

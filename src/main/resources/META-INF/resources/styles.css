@@ -582,3 +582,76 @@ body {
   color: var(--text-muted);
   font-size: 0.95rem;
 }
+
+/* ── Modify Mode Action Buttons ────────────────────────── */
+.votify-modify-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  margin-top: -2px;
+}
+
+.votify-modify-actions .votify-btn-action {
+  font-size: 0.7rem !important;
+  padding: 4px 10px !important;
+  border-radius: var(--radius-sm) !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.votify-modify-actions .votify-btn-action:hover {
+  transform: translateY(-1px);
+}
+
+.votify-modify-actions .votify-btn-action:active {
+  transform: scale(0.97);
+}
+
+.votify-modify-actions .votify-btn-reclassify {
+  background: var(--primary-light) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.votify-modify-actions .votify-btn-reclassify:hover {
+  background: var(--primary) !important;
+}
+
+.votify-modify-actions .votify-btn-declassify {
+  background: var(--error) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.votify-modify-actions .votify-btn-declassify:hover {
+  background: #C0392B !important;
+}
+
+.votify-modify-actions .votify-btn-editvotes {
+  background: var(--secondary) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.votify-modify-actions .votify-btn-editvotes:hover {
+  background: #00B3B0 !important;
+}
+
+/* ── Podium wrapper for modify mode ────────────────────── */
+.votify-podium-modify-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.votify-podium-modify-wrapper .votify-modify-actions {
+  width: 100%;
+  min-width: 160px;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
