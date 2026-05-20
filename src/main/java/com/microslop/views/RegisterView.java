@@ -2,6 +2,7 @@ package com.microslop.views;
 
 import com.microslop.entity.User;
 import com.microslop.service.UserService;
+import com.microslop.views.components.CelebrationAnimation;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -243,9 +244,14 @@ public class RegisterView extends HorizontalLayout {
                     }
 
                     confirmDialog.close();
-                    
-                    // Hard redirect so MainLayout is rebuilt with fresh session state
-                    getUI().ifPresent(ui -> ui.getPage().executeJs("window.location.href = '/'"));
+
+                    // Show celebration then redirect
+                    CelebrationAnimation celebration = new CelebrationAnimation(
+                        "WELCOME ABOARD",
+                        "Your account is ready — let the voting begin",
+                        () -> getUI().ifPresent(ui -> ui.getPage().executeJs("window.location.href = '/'"))
+                    );
+                    getUI().ifPresent(ui -> ui.add(celebration));
 
                 } catch (IllegalArgumentException ex) {
                     Notification error = Notification.show(ex.getMessage());

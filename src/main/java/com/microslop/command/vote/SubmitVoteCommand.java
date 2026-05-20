@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 public class SubmitVoteCommand extends AbstractCommand<Void> {
 
     private static final Logger log = LoggerFactory.getLogger(SubmitVoteCommand.class);
-    private static final int MAX_VOTES_PER_CATEGORY = 1;
 
     private final String userUsername;
     private final Long projectId;
@@ -99,9 +98,11 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
 
         long alreadyCastInCategory = voteRepository.countByUserIdAndCategoryId(
             user.getId(), category.getId());
-        if (alreadyCastInCategory >= MAX_VOTES_PER_CATEGORY) {
+        int maxVotesPerPerson = competition.getMaxVotesPerPerson() != null
+                ? competition.getMaxVotesPerPerson() : 1;
+        if (alreadyCastInCategory >= maxVotesPerPerson) {
             throw new IllegalStateException(
-                "You already voted for a project in this category.");
+                "You have reached the maximum number of votes for this category (" + maxVotesPerPerson + ").");
         }
 
         int effectivePoints = votingStrategy.calculateVotePoints(user, competition, this.points);

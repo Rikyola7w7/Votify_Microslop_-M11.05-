@@ -120,11 +120,11 @@ public class ChecklistVotingDialog extends Dialog {
 
             this.close();
 
-            // Show cinematic vote animation, then refresh
+            // Show quick vote animation, then refresh
             UI ui = UI.getCurrent();
             if (ui != null) {
                 ui.access(() -> {
-                    VoteSuccessAnimation overlay = new VoteSuccessAnimation(() -> {
+                    VoteQuickAnimation overlay = new VoteQuickAnimation(() -> {
                         if (onVoteSuccess != null) {
                             onVoteSuccess.run();
                         }
