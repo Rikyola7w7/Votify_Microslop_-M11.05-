@@ -556,10 +556,10 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 VoteQuickAnimation quick = new VoteQuickAnimation(remainingVotes, afterAnimation);
                 getUI().ifPresent(ui -> ui.add(quick));
             }
-        } catch (IllegalStateException ex) {
-            showNotification(ex.getMessage(), NotificationVariant.LUMO_CONTRAST);
-        }
-    }
+         } catch (IllegalStateException ex) {
+             showNotification(ex.getMessage(), NotificationVariant.LUMO_CONTRAST);
+         }
+     }
 
     private void handleVote(Project project) {
         String username = userService.getCurrentUsername();
