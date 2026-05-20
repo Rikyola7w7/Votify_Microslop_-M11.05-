@@ -34,7 +34,7 @@ public class Voter {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @Column(name = "votes_left", nullable = false)
+    @Column(name = "votes_left")
     private int votesLeft = 1;
 
     public Voter(User user, Competition competition, Category category, int votesLeft) {
