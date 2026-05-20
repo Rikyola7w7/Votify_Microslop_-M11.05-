@@ -23,13 +23,23 @@ public class CelebrationAnimation extends Div {
 
     private final String message;
     private final String subtitle;
+    private Runnable pendingCallback;
 
     public CelebrationAnimation(String message, String subtitle, Runnable onComplete) {
         this.message = message;
         this.subtitle = subtitle;
+        this.pendingCallback = onComplete;
         injectStyles();
         buildDOM();
-        scheduleSequence(onComplete);
+    }
+
+    @Override
+    protected void onAttach(com.vaadin.flow.component.AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        if (pendingCallback != null) {
+            scheduleSequence(pendingCallback);
+            pendingCallback = null;
+        }
     }
 
     private void injectStyles() {
@@ -210,6 +220,14 @@ public class CelebrationAnimation extends Div {
                 try { Thread.sleep(4000); } catch (InterruptedException ignored) {}
                 onComplete.run();
             }, () -> {});
+        } else {
+            // Fallback: schedule via JS setTimeout if UI context not available
+            getElement().executeJs(
+                "setTimeout(function(){" +
+                "  var ov=document.getElementById('cel-overlay');" +
+                "  if(ov) ov.remove();" +
+                "},4500);"
+            );
         }
     }
 
