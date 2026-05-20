@@ -230,7 +230,7 @@ body {
   cursor: pointer !important;
 }
 
-/* ── Focus States (Keyboard Navigation - WCAG) ────────────────── */
+/* ── Focus States ──────────────────────────────────────────── */
 button {
   cursor: pointer;
 }
@@ -239,37 +239,8 @@ button:disabled {
   cursor: not-allowed;
 }
 
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 4px;
-}
-
-.votify-btn-primary:focus-visible {
-  outline: 2px solid white;
-  outline-offset: 4px;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.4);
-}
-
-.votify-btn-secondary:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 4px;
-  box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.15);
-}
-
-.votify-btn-danger:focus-visible {
-  outline: 2px solid white;
-  outline-offset: 4px;
-  box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.4);
-}
-
-.votify-input:focus-visible {
-  border-color: var(--primary) !important;
-  outline: 2px solid transparent;
-  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2) !important;
+*:focus {
+  outline: none !important;
 }
 
 /* ── Links & Navigation ─────────────────────────────────── */

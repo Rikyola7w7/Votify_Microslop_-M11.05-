@@ -5,6 +5,7 @@ import com.microslop.service.UserService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
@@ -208,6 +209,9 @@ public class LoginView extends HorizontalLayout {
                 .set("height", "48px")
                 .set("font-size", "1rem")
                 .set("border-radius", "var(--radius-md)");
+
+        usernameField.addKeyPressListener(Key.ENTER, e -> loginButton.click());
+        passwordField.addKeyPressListener(Key.ENTER, e -> loginButton.click());
 
         RouterLink linkRegister = new RouterLink("Don't have an account? Register", RegisterView.class);
         linkRegister.getStyle()

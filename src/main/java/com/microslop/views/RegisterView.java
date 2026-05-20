@@ -5,6 +5,7 @@ import com.microslop.service.UserService;
 import com.microslop.views.components.CelebrationAnimation;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -275,6 +276,12 @@ public class RegisterView extends HorizontalLayout {
                 .set("height", "48px")
                 .set("font-size", "1rem")
                 .set("border-radius", "var(--radius-md)");
+
+        usernameField.addKeyPressListener(Key.ENTER, e -> registerButton.click());
+        nameField.addKeyPressListener(Key.ENTER, e -> registerButton.click());
+        emailField.addKeyPressListener(Key.ENTER, e -> registerButton.click());
+        passwordField.addKeyPressListener(Key.ENTER, e -> registerButton.click());
+        confirmPasswordField.addKeyPressListener(Key.ENTER, e -> registerButton.click());
 
         RouterLink linkLogin = new RouterLink("Already have an account? Sign in", LoginView.class);
         linkLogin.getStyle()

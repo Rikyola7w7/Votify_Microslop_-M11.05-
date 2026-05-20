@@ -304,6 +304,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                     : java.util.List.<com.microslop.entity.ChecklistItem>of();
 
             int staggerIndex = 1;
+            boolean isFirst = true;
             for (Project p : projects) {
                 // Filter projects that belong to this category
                 boolean belongsToCategory = p.getCategories().stream()
@@ -311,8 +312,9 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                         
                 if (belongsToCategory) {
                     long alreadyVoted = voteService.countVotesByUserAndProjectAndCategory(currentUserLocal.getId(), p.getId(), selectedCategory.getId());
-                    projectsContainer.add(buildProjectCard(p, alreadyVoted > 0, hasVotedInCategory, staggerIndex, cachedChecklistItems));
+                    projectsContainer.add(buildProjectCard(p, alreadyVoted > 0, hasVotedInCategory, staggerIndex, cachedChecklistItems, isFirst));
                     staggerIndex = Math.min(staggerIndex + 1, 8);
+                    isFirst = false;
                 }
             }
         };
@@ -325,7 +327,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
     // ── Project Card ──────────────────────────────────────────────────────
 
-    private Div buildProjectCard(Project p, boolean alreadySelected, boolean hasVotedInCategory, int staggerIndex, java.util.List<com.microslop.entity.ChecklistItem> cachedChecklistItems) {
+    private Div buildProjectCard(Project p, boolean alreadySelected, boolean hasVotedInCategory, int staggerIndex, java.util.List<com.microslop.entity.ChecklistItem> cachedChecklistItems, boolean isFirst) {
         long totalVotes = voteService.countVotesByProject(p.getId());
         boolean otherProjectVoted = hasVotedInCategory && !alreadySelected;
 
@@ -338,7 +340,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("margin-bottom", "1rem")
                 .set("width", "100%")
                 .set("box-sizing", "border-box")
-                .set("border-left", "4px solid var(--primary)");
+                .set("border-left", isFirst ? "4px solid var(--secondary)" : "4px solid var(--primary)")
+                .set("text-align", isFirst ? "center" : "left");
 
         var info = new VerticalLayout();
         info.setPadding(false);
@@ -348,7 +351,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         var name = new Span(p.getName());
         name.getStyle()
                 .set("font-weight", "700")
-                .set("font-size", "16px")
+                .set("font-size", isFirst ? "20px" : "16px")
                 .set("color", "var(--text-primary)");
 
         var desc = new Span(p.getDescription() != null ? p.getDescription() : p.getName());
@@ -430,12 +433,12 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         var actions = new VerticalLayout(voteInterface, commentsBtn);
         actions.setPadding(false);
         actions.setSpacing(true);
-        actions.setAlignItems(Alignment.END);
+        actions.setAlignItems(isFirst ? Alignment.CENTER : Alignment.END);
 
         var row = new HorizontalLayout(info, actions);
         row.setWidthFull();
         row.setAlignItems(Alignment.CENTER);
-        row.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        row.setJustifyContentMode(isFirst ? FlexComponent.JustifyContentMode.CENTER : FlexComponent.JustifyContentMode.BETWEEN);
         row.setSpacing(true);
         row.setPadding(false);
 
@@ -538,7 +541,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             Runnable afterAnimation = () -> {
                 updateMaxVotesLabel(selectedCategory);
                 if (isLastVote) {
-                    getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories"));
+                    getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories/" + selectedCategory.getId() + "/ranking"));
                 } else {
                     removeAll();
                     buildUi();
@@ -586,7 +589,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
             Runnable afterAnimation = () -> {
                 if (isLastVote) {
-                    getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories"));
+                    getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories/" + selectedCategory.getId() + "/ranking"));
                 } else {
                     removeAll();
                     buildUi();
