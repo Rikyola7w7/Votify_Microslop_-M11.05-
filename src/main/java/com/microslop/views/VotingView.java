@@ -173,6 +173,15 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private void updateMaxVotesLabel(Category selectedCategory) {
         if (maxVotesLabel == null || currentCompetition == null) return;
         
+        // Checklist voting ignores max votes
+        if (selectedCategory != null && selectedCategory.isChecklistVoting()) {
+            maxVotesLabel.setText("Checklist voting - no vote limit");
+            maxVotesLabel.getStyle()
+                .set("color", "var(--primary)")
+                .set("background", "rgba(108, 92, 231, 0.1)");
+            return;
+        }
+        
         int available = getAvailableVotes(selectedCategory);
         maxVotesLabel.setText("You have " + available + " votes to distribute");
 
@@ -339,24 +348,12 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         // Check category voting type and show appropriate voting interface
         if (selectedCategory != null && selectedCategory.isChecklistVoting()) {
-            // Show checklist voting button
+            // Show checklist voting button - max votes is ignored for checklist
             Button checklistButton = new Button("Vote (Checklist)");
             checklistButton.addClassName("votify-btn-primary");
             checklistButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
             checklistButton.setWidth("auto");
             checklistButton.getStyle().set("padding", "0.75rem 1.25rem");
-            
-            int availableVotes = getAvailableVotes(selectedCategory);
-            if (availableVotes <= 0) {
-                checklistButton.setEnabled(false);
-                checklistButton.removeClassName("votify-btn-primary");
-                checklistButton.getStyle()
-                        .set("background", "rgba(108, 92, 231, 0.3)")
-                        .set("color", "rgba(255, 255, 255, 0.5)")
-                        .set("box-shadow", "none")
-                        .set("cursor", "not-allowed");
-                card.addClassName("animate-card-flash");
-            }
             
             checklistButton.addClickListener(e -> handleChecklistVoting(p, selectedCategory));
             voteInterface.add(checklistButton);

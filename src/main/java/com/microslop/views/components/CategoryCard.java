@@ -53,7 +53,7 @@ public class CategoryCard extends Div {
             .set("display", "block")
             .set("margin", "12px 16px 4px");
 
-        String vt = category.getVoterType() != null ? category.getVoterType() : "NORMAL";
+        String vt = category.getVoteType() != null ? category.getVoteType() : "NORMAL";
         String label = "NORMAL".equals(vt) ? "Normal" : "SCALE".equals(vt) ? "Scale" : "Checklist";
         Span voterBadge = new Span(label);
         voterBadge.getStyle()
