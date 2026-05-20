@@ -7,6 +7,7 @@ import com.microslop.factory.VoteCreator;
 import com.microslop.observer.observer.VoteObserver;
 import com.microslop.observer.subject.VoteEventSubject;
 import com.microslop.repository.VoteRepository;
+import com.microslop.repository.VoterRepository;
 import com.microslop.repository.CategoryRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
@@ -33,13 +34,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class VoteServiceImpl implements VoteService, VoteEventSubject {
 
     private static final Logger log = LoggerFactory.getLogger(VoteServiceImpl.class);
-    private static final int MAX_VOTES_PER_CATEGORY = 1;
 
     private final VoteRepository voteRepository;
     private final ProjectService projectService;
     private final UserService userService;
     private final VoteCreator voteCreator;
     private final CategoryRepository categoryRepository;
+    private final VoterRepository voterRepository;
     private final CommandExecutor commandExecutor;
     private final StrategyRegistry strategyRegistry;
     private final List<VoteObserver> voteObservers;
@@ -49,6 +50,7 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
                           UserService userService,
                           VoteCreator voteCreator,
                           CategoryRepository categoryRepository,
+                          VoterRepository voterRepository,
                           CommandExecutor commandExecutor,
                           StrategyRegistry strategyRegistry,
                           @Autowired(required = false) List<VoteObserver> observers) {
@@ -57,6 +59,7 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
         this.userService = userService;
         this.voteCreator = voteCreator;
         this.categoryRepository = categoryRepository;
+        this.voterRepository = voterRepository;
         this.commandExecutor = commandExecutor;
         this.strategyRegistry = strategyRegistry;
         this.voteObservers = new CopyOnWriteArrayList<>(
@@ -118,7 +121,7 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
         SubmitVoteCommand command = new SubmitVoteCommand(
             userUsername, projectId, categoryId,
             voteRepository, projectService, userService, voteCreator, categoryRepository,
-            strategyRegistry
+            voterRepository, strategyRegistry
         );
         try {
             commandExecutor.execute(command);
@@ -138,7 +141,7 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
         SubmitVoteCommand command = new SubmitVoteCommand(
             userUsername, projectId, categoryId, points,
             voteRepository, projectService, userService, voteCreator, categoryRepository,
-            strategyRegistry
+            voterRepository, strategyRegistry
         );
         try {
             commandExecutor.execute(command);

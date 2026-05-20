@@ -3,7 +3,9 @@ package com.microslop.command.vote;
 import com.microslop.command.AbstractCommand;
 import com.microslop.entity.Vote;
 import com.microslop.entity.Competition;
+import com.microslop.entity.Voter;
 import com.microslop.repository.VoteRepository;
+import com.microslop.repository.VoterRepository;
 import com.microslop.repository.CategoryRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
@@ -27,6 +29,7 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
     private final UserService userService;
     private final VoteCreator voteCreator;
     private final CategoryRepository categoryRepository;
+    private final VoterRepository voterRepository;
     private final StrategyRegistry strategyRegistry;
 
     private Vote createdVote;
@@ -34,16 +37,16 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
     public SubmitVoteCommand(String userUsername, Long projectId, Long categoryId,
                             VoteRepository voteRepository, ProjectService projectService,
                             UserService userService, VoteCreator voteCreator,
-                            CategoryRepository categoryRepository,
+                            CategoryRepository categoryRepository, VoterRepository voterRepository,
                             StrategyRegistry strategyRegistry) {
         this(userUsername, projectId, categoryId, 1, voteRepository, projectService,
-             userService, voteCreator, categoryRepository, strategyRegistry);
+             userService, voteCreator, categoryRepository, voterRepository, strategyRegistry);
     }
 
     public SubmitVoteCommand(String userUsername, Long projectId, Long categoryId, Integer points,
                             VoteRepository voteRepository, ProjectService projectService,
                             UserService userService, VoteCreator voteCreator,
-                            CategoryRepository categoryRepository,
+                            CategoryRepository categoryRepository, VoterRepository voterRepository,
                             StrategyRegistry strategyRegistry) {
         this.userUsername = userUsername;
         this.projectId = projectId;
@@ -54,6 +57,7 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
         this.userService = userService;
         this.voteCreator = voteCreator;
         this.categoryRepository = categoryRepository;
+        this.voterRepository = voterRepository;
         this.strategyRegistry = strategyRegistry;
     }
 
@@ -96,13 +100,15 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
         var category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new IllegalStateException("Category not found: " + categoryId));
 
-        long alreadyCastInCategory = voteRepository.countByUserIdAndCategoryId(
-            user.getId(), category.getId());
-        int maxVotesPerPerson = competition.getMaxVotesPerPerson() != null
-                ? competition.getMaxVotesPerPerson() : 1;
-        if (alreadyCastInCategory >= maxVotesPerPerson) {
+        // Check votes_left from Voter record
+        var voter = voterRepository.findByUserIdAndCompetitionIdAndCategoryId(
+                user.getId(), competition.getId(), categoryId)
+                .orElseThrow(() -> new IllegalStateException(
+                    "You are not registered as a voter for this category."));
+
+        if (voter.getVotesLeft() < points) {
             throw new IllegalStateException(
-                "You have reached the maximum number of votes for this category (" + maxVotesPerPerson + ").");
+                "You don't have enough votes left. You have " + voter.getVotesLeft() + " vote(s) remaining.");
         }
 
         int effectivePoints = votingStrategy.calculateVotePoints(user, competition, this.points);
