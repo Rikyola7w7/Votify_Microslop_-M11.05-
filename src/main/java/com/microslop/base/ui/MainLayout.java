@@ -146,6 +146,9 @@ public final class MainLayout extends AppLayout {
         }
     }
 
+    private Span unreadBadge;
+    private Dialog notificationDialog;
+
     private Div createNotificationBell() {
         Div bellContainer = new Div();
         bellContainer.getStyle()
@@ -158,7 +161,7 @@ public final class MainLayout extends AppLayout {
         bellButton.getElement().setAttribute("title", "Notifications");
         bellButton.getStyle().set("font-size", "20px");
 
-        Span unreadBadge = new Span();
+        unreadBadge = new Span();
         unreadBadge.getStyle()
             .set("position", "absolute")
             .set("top", "-8px")
@@ -176,27 +179,23 @@ public final class MainLayout extends AppLayout {
             .set("min-width", "20px")
             .set("visibility", "hidden");
 
-        updateUnreadBadge(unreadBadge);
+        updateUnreadBadge();
 
-        Dialog notificationDialog = new Dialog();
+        notificationDialog = new Dialog();
         notificationDialog.setWidth("350px");
         notificationDialog.setMaxWidth("90vw");
 
-        VerticalLayout dialogContent = createNotificationDropdown();
-        dialogContent.add(createNotificationDropdownContent(notificationDialog));
-        notificationDialog.add(dialogContent);
+        rebuildNotificationDialog();
 
         bellButton.addClickListener(e -> {
-            updateUnreadBadge(unreadBadge);
-            dialogContent.removeAll();
-            dialogContent.add(createNotificationDropdownContent(notificationDialog));
+            rebuildNotificationDialog();
             notificationDialog.open();
         });
 
-        // Add polling update for badge
+        // Poll the badge on every server roundtrip (every 10s via setPollInterval)
         bellContainer.addAttachListener(event -> {
             getUI().ifPresent(ui -> {
-                ui.access(() -> updateUnreadBadge(unreadBadge));
+                ui.addPollListener(e -> updateUnreadBadge());
             });
         });
 
@@ -205,45 +204,28 @@ public final class MainLayout extends AppLayout {
         return bellContainer;
     }
 
-    private void updateUnreadBadge(Span unreadBadge) {
-        if (notificationService != null) {
-            try {
-                long unreadCount = notificationService.getUnreadCountForCurrentUser();
-                if (unreadCount > 0) {
-                    unreadBadge.setText(unreadCount > 99 ? "99+" : String.valueOf(unreadCount));
-                    unreadBadge.getStyle().set("visibility", "visible");
-                } else {
-                    unreadBadge.getStyle().set("visibility", "hidden");
-                }
-            } catch (Exception e) {
+    private void updateUnreadBadge() {
+        if (notificationService == null) return;
+        try {
+            long unreadCount = notificationService.getUnreadCountForCurrentUser();
+            if (unreadCount > 0) {
+                unreadBadge.setText(unreadCount > 99 ? "99+" : String.valueOf(unreadCount));
+                unreadBadge.getStyle().set("visibility", "visible");
+            } else {
                 unreadBadge.getStyle().set("visibility", "hidden");
             }
+        } catch (Exception e) {
+            unreadBadge.getStyle().set("visibility", "hidden");
         }
     }
 
-    private VerticalLayout createNotificationDropdown() {
-        VerticalLayout dropdown = new VerticalLayout();
-        dropdown.setPadding(false);
-        dropdown.setSpacing(false);
-        dropdown.setWidth("100%");
-        dropdown.getStyle()
+    private void rebuildNotificationDialog() {
+        Div content = new Div();
+        content.setWidthFull();
+        content.getStyle()
             .set("display", "flex")
             .set("flex-direction", "column")
-            .set("height", "auto")
-            .set("max-height", "400px")
-            .set("background", "var(--surface)")
-            .set("border-radius", "8px");
-
-        return dropdown;
-    }
-
-    private Div createNotificationDropdownContent(Dialog dialog) {
-        Div mainContainer = new Div();
-        mainContainer.setWidthFull();
-        mainContainer.getStyle()
-            .set("display", "flex")
-            .set("flex-direction", "column")
-            .set("height", "100%");
+            .set("height", "400px");
 
         // Scrollable notifications container
         Div notificationsContainer = new Div();
@@ -251,15 +233,9 @@ public final class MainLayout extends AppLayout {
         notificationsContainer.getStyle()
             .set("flex", "1")
             .set("overflow-y", "auto")
-            .set("padding", "0");
+            .set("min-height", "0");
 
-        if (notificationService == null) {
-            Span emptyText = new Span("Notifications unavailable");
-            emptyText.getStyle()
-                .set("padding", "16px")
-                .set("color", "var(--text-muted)");
-            notificationsContainer.add(emptyText);
-        } else {
+        if (notificationService != null) {
             try {
                 var recentNotifications = notificationService.getRecentNotificationsForCurrentUser();
 
@@ -276,7 +252,7 @@ public final class MainLayout extends AppLayout {
                             notification,
                             notificationService,
                             invitationService,
-                            () -> {},
+                            this::rebuildNotificationDialog,
                             notification.getCompetition()
                         );
                         notificationsContainer.add(card);
@@ -291,9 +267,9 @@ public final class MainLayout extends AppLayout {
             }
         }
 
-        mainContainer.add(notificationsContainer);
+        content.add(notificationsContainer);
 
-        // Sticky footer button - ALWAYS visible
+        // Sticky footer - always visible at bottom
         Button viewAllBtn = new Button("View All Notifications");
         viewAllBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         viewAllBtn.getStyle()
@@ -302,13 +278,15 @@ public final class MainLayout extends AppLayout {
             .set("padding", "8px")
             .set("justify-content", "center")
             .set("cursor", "pointer")
-            .set("border-top", "1px solid var(--border)");
+            .set("border-top", "1px solid var(--border)")
+            .set("flex-shrink", "0");
         viewAllBtn.addClickListener(e -> {
-            dialog.close();
+            notificationDialog.close();
             e.getSource().getUI().ifPresent(ui -> ui.navigate("notifications"));
         });
-        mainContainer.add(viewAllBtn);
+        content.add(viewAllBtn);
 
-        return mainContainer;
+        notificationDialog.removeAll();
+        notificationDialog.add(content);
     }
 }
