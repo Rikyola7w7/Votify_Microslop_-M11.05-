@@ -86,10 +86,10 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
                     && java.time.LocalDateTime.now().isAfter(competition.getEndDate());
             if (hasEnded) {
                 throw new IllegalStateException(
-                    "Esta competición ha finalizado y ya no acepta votos.");
+                    "This competition has ended and no longer accepts votes.");
             } else {
                 throw new IllegalStateException(
-                    "Esta competición está pausada temporalmente. Inténtalo más tarde.");
+                    "This competition is currently paused. Try again later.");
             }
         }
 

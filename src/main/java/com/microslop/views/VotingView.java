@@ -184,7 +184,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         }
         
         int available = getAvailableVotes(selectedCategory);
-        maxVotesLabel.setText("You have " + available + " votes to distribute");
+        maxVotesLabel.setText("You have " + available + " vote" + (available != 1 ? "s" : "") + " left");
 
         // Pulse animation when vote counter changes
         maxVotesLabel.getStyle().set("animation", "vote-success-pulse 0.4s ease");
@@ -238,17 +238,28 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         titleWrapper.add(title, subtitle);
 
         // Vote counter badge
-        var competition = competitionService.getById(competitionId).orElse(null);
         maxVotesLabel = new Span();
         if (selectedCategory.isChecklistVoting()) {
             maxVotesLabel.setText("Mark checklist items for each project");
             maxVotesLabel.getStyle()
                 .set("color", "var(--primary)")
                 .set("background", "rgba(108, 92, 231, 0.1)");
-        } else if (competition != null && competition.getMaxVotesPerPerson() != null) {
-            maxVotesLabel.setText("You have " + competition.getMaxVotesPerPerson() + " votes to distribute");
         } else {
-            maxVotesLabel.setText("Votes available");
+            int initialAvailable = getAvailableVotes(selectedCategory);
+            maxVotesLabel.setText("You have " + initialAvailable + " vote" + (initialAvailable != 1 ? "s" : "") + " left");
+            if (initialAvailable == 0) {
+                maxVotesLabel.getStyle()
+                    .set("color", "var(--error)")
+                    .set("background", "rgba(231, 76, 60, 0.1)");
+            } else if (initialAvailable <= 3) {
+                maxVotesLabel.getStyle()
+                    .set("color", "var(--warning)")
+                    .set("background", "rgba(243, 156, 18, 0.1)");
+            } else {
+                maxVotesLabel.getStyle()
+                    .set("color", "var(--secondary)")
+                    .set("background", "rgba(0, 206, 201, 0.1)");
+            }
         }
         maxVotesLabel.getStyle()
                 .set("font-size", "0.95rem")
