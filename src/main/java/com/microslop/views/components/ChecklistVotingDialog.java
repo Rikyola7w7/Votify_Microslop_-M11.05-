@@ -2,6 +2,7 @@ package com.microslop.views.components;
 
 import com.microslop.entity.ChecklistItem;
 import com.microslop.service.ChecklistVoteService;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -117,11 +118,20 @@ public class ChecklistVotingDialog extends Dialog {
                 }
             }
 
-            Notification success = Notification.show("Votes submitted successfully!", 3000, Notification.Position.TOP_CENTER);
-            success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-
             this.close();
-            if (onVoteSuccess != null) {
+
+            // Show cinematic vote animation, then refresh
+            UI ui = UI.getCurrent();
+            if (ui != null) {
+                ui.access(() -> {
+                    VoteSuccessAnimation overlay = new VoteSuccessAnimation(() -> {
+                        if (onVoteSuccess != null) {
+                            onVoteSuccess.run();
+                        }
+                    });
+                    ui.add(overlay);
+                });
+            } else if (onVoteSuccess != null) {
                 onVoteSuccess.run();
             }
         } catch (IllegalStateException ex) {
