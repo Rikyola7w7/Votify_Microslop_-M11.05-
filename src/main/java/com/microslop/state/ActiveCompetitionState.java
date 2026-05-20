@@ -12,6 +12,7 @@ public class ActiveCompetitionState implements CompetitionState {
 
     @Override
     public void openVoting(Competition competition) {
+        competition.setStatus(CompetitionStatus.VOTING_OPEN);
     }
 
     @Override

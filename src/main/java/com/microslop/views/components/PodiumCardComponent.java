@@ -37,7 +37,7 @@ public class PodiumCardComponent extends Div {
         for (String cls : position.getCssClass().split(" ")) {
             addClassName(cls);
         }
-        int height = position == Position.FIRST ? 180 : 150;
+        int height = position == Position.FIRST ? 220 : 180;
         getStyle()
             .set("border-radius", "16px")
             .set("padding", position == Position.FIRST ? "2rem 1.5rem" : "1.5rem 1.2rem")
@@ -60,7 +60,7 @@ public class PodiumCardComponent extends Div {
         medalSpan.getStyle()
             .set("font-size", position == Position.FIRST ? "3rem" : "2.2rem")
             .set("display", "block")
-            .set("margin-bottom", "0.5rem");
+            .set("margin-bottom", "0.25rem");
 
         Span nameSpan = new Span(project.getName().toUpperCase());
         nameSpan.getStyle()
@@ -69,6 +69,14 @@ public class PodiumCardComponent extends Div {
             .set("display", "block")
             .set("color", "var(--text-primary)");
 
-        add(medalSpan, nameSpan);
+        Span votesSpan = new Span(totalVotes + " vote" + (totalVotes != 1 ? "s" : ""));
+        votesSpan.getStyle()
+            .set("font-size", position == Position.FIRST ? "13px" : "12px")
+            .set("font-weight", "600")
+            .set("color", "var(--text-muted)")
+            .set("display", "block")
+            .set("margin-top", "0.35rem");
+
+        add(medalSpan, nameSpan, votesSpan);
     }
 }

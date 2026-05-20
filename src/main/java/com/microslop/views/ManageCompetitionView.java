@@ -61,8 +61,9 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     private DateTimePicker startDatePicker;
     private DateTimePicker endDatePicker;
 
-    private Button pauseButton;
-    private Button resumeButton;
+    private Button activateButton;
+    private Button votingToggle;
+    private Button pauseToggle;
     private Button endNowButton;
     private Button reopenButton;
 
@@ -229,15 +230,20 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         actionsLayout.setWidthFull();
         actionsLayout.setJustifyContentMode(JustifyContentMode.START);
 
-        pauseButton = new Button("Pause Voting", new Icon(VaadinIcon.PAUSE));
-        pauseButton.addClassName("votify-btn-danger");
-        pauseButton.getStyle().set("flex", "1 1 auto");
-        pauseButton.addClickListener(e -> togglePause(true));
+        activateButton = new Button("Activate Competition", new Icon(VaadinIcon.ROCKET));
+        activateButton.addClassName("votify-btn-primary");
+        activateButton.getStyle().set("flex", "1 1 auto");
+        activateButton.addClickListener(e -> activateCompetition());
 
-        resumeButton = new Button("Resume Voting", new Icon(VaadinIcon.PLAY));
-        resumeButton.addClassName("votify-btn-primary");
-        resumeButton.getStyle().set("flex", "1 1 auto");
-        resumeButton.addClickListener(e -> togglePause(false));
+        votingToggle = new Button("Voting: OFF", new Icon(VaadinIcon.BAN));
+        votingToggle.addClassName("votify-btn-secondary");
+        votingToggle.getStyle().set("flex", "1 1 auto");
+        votingToggle.addClickListener(e -> toggleVoting());
+
+        pauseToggle = new Button("Pause Competition", new Icon(VaadinIcon.PAUSE));
+        pauseToggle.addClassName("votify-btn-danger");
+        pauseToggle.getStyle().set("flex", "1 1 auto");
+        pauseToggle.addClickListener(e -> togglePause());
 
         endNowButton = new Button("End Voting Now", new Icon(VaadinIcon.STOP));
         endNowButton.addClassName("votify-btn-danger");
@@ -249,7 +255,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         reopenButton.getStyle().set("flex", "1 1 auto");
         reopenButton.addClickListener(e -> reopenVoting());
 
-        actionsLayout.add(pauseButton, resumeButton, endNowButton, reopenButton);
+        actionsLayout.add(activateButton, votingToggle, pauseToggle, endNowButton, reopenButton);
 
         mainContent.add(title, description, statusLayout, sectionTitle, datesContainer, actionsLayout);
 
@@ -273,9 +279,30 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 statusBadge.removeClassName("votify-badge-paused");
                 statusBadge.removeClassName("votify-badge-finished");
                 statusBadge.addClassName("votify-badge-draft");
-                pauseButton.setVisible(false);
-                resumeButton.setVisible(false);
+                activateButton.setVisible(true);
+                votingToggle.setVisible(false);
+                pauseToggle.setVisible(false);
                 endNowButton.setVisible(false);
+                reopenButton.setVisible(false);
+            }
+            case VOTING_OPEN -> {
+                statusBadge.setText("VOTING OPEN");
+                statusBadge.removeClassName("votify-badge-draft");
+                statusBadge.removeClassName("votify-badge-paused");
+                statusBadge.removeClassName("votify-badge-finished");
+                statusBadge.addClassName("votify-badge-active");
+                activateButton.setVisible(false);
+                votingToggle.setText("Voting: ON");
+                votingToggle.setIcon(new Icon(VaadinIcon.CHECK_CIRCLE));
+                votingToggle.removeClassName("votify-btn-secondary");
+                votingToggle.addClassName("votify-btn-primary");
+                votingToggle.setVisible(true);
+                pauseToggle.setText("Pause Competition");
+                pauseToggle.setIcon(new Icon(VaadinIcon.PAUSE));
+                pauseToggle.removeClassName("votify-btn-primary");
+                pauseToggle.addClassName("votify-btn-danger");
+                pauseToggle.setVisible(true);
+                endNowButton.setVisible(true);
                 reopenButton.setVisible(false);
             }
             case ACTIVE -> {
@@ -284,7 +311,15 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 statusBadge.removeClassName("votify-badge-paused");
                 statusBadge.removeClassName("votify-badge-finished");
                 statusBadge.addClassName("votify-badge-active");
-                pauseButton.setVisible(true);
+                activateButton.setVisible(false);
+                votingToggle.setText("Voting: OFF");
+                votingToggle.setIcon(new Icon(VaadinIcon.BAN));
+                votingToggle.setVisible(true);
+                pauseToggle.setText("Pause Competition");
+                pauseToggle.setIcon(new Icon(VaadinIcon.PAUSE));
+                pauseToggle.removeClassName("votify-btn-primary");
+                pauseToggle.addClassName("votify-btn-danger");
+                pauseToggle.setVisible(true);
                 endNowButton.setVisible(true);
                 reopenButton.setVisible(false);
             }
@@ -294,10 +329,15 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 statusBadge.removeClassName("votify-badge-active");
                 statusBadge.removeClassName("votify-badge-finished");
                 statusBadge.addClassName("votify-badge-paused");
-                pauseButton.setVisible(false);
-                resumeButton.setVisible(true);
-                resumeButton.setText("Resume Voting");
-                resumeButton.setIcon(new Icon(VaadinIcon.PLAY));
+                activateButton.setVisible(false);
+                votingToggle.setText("Voting: OFF");
+                votingToggle.setIcon(new Icon(VaadinIcon.BAN));
+                votingToggle.setVisible(true);
+                pauseToggle.setText("Resume Competition");
+                pauseToggle.setIcon(new Icon(VaadinIcon.PLAY));
+                pauseToggle.removeClassName("votify-btn-danger");
+                pauseToggle.addClassName("votify-btn-primary");
+                pauseToggle.setVisible(true);
                 endNowButton.setVisible(true);
                 reopenButton.setVisible(false);
             }
@@ -307,8 +347,9 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 statusBadge.removeClassName("votify-badge-active");
                 statusBadge.removeClassName("votify-badge-paused");
                 statusBadge.addClassName("votify-badge-finished");
-                pauseButton.setVisible(false);
-                resumeButton.setVisible(false);
+                activateButton.setVisible(false);
+                votingToggle.setVisible(false);
+                pauseToggle.setVisible(false);
                 endNowButton.setVisible(false);
                 reopenButton.setVisible(true);
             }
@@ -318,8 +359,9 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 statusBadge.removeClassName("votify-badge-paused");
                 statusBadge.removeClassName("votify-badge-finished");
                 statusBadge.addClassName("votify-badge-draft");
-                pauseButton.setVisible(false);
-                resumeButton.setVisible(false);
+                activateButton.setVisible(false);
+                votingToggle.setVisible(false);
+                pauseToggle.setVisible(false);
                 endNowButton.setVisible(false);
                 reopenButton.setVisible(false);
             }
@@ -345,23 +387,42 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         updateUIState();
     }
 
-    private void togglePause(boolean pause) {
-        if (pause) {
+    private void activateCompetition() {
+        competitionService.activate(competitionId);
+        competition = competitionService.getByIdOrFail(competitionId);
+        Notification.show("Competition activated.", 3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        updateUIState();
+    }
+
+    private void toggleVoting() {
+        CompetitionStatus status = competition.getStatus();
+        if (status == CompetitionStatus.VOTING_OPEN) {
             competitionService.pauseVoting(competitionId);
             competition = competitionService.getByIdOrFail(competitionId);
-            Notification.show("Voting paused.", 3000, Notification.Position.TOP_CENTER)
+            Notification.show("Voting closed.", 3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         } else {
-            if (competition.getStatus() == CompetitionStatus.CONCLUDED) {
-                reopenVoting();
-                return;
-            }
-            if (competition.getStatus() == CompetitionStatus.PAUSED) {
-                competitionService.openVoting(competitionId);
-                competition = competitionService.getByIdOrFail(competitionId);
-                Notification.show("Voting resumed.", 3000, Notification.Position.TOP_CENTER)
-                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-            }
+            competitionService.openVoting(competitionId);
+            competition = competitionService.getByIdOrFail(competitionId);
+            Notification.show("Voting opened.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        }
+        updateUIState();
+    }
+
+    private void togglePause() {
+        CompetitionStatus status = competition.getStatus();
+        if (status == CompetitionStatus.PAUSED) {
+            competitionService.openVoting(competitionId);
+            competition = competitionService.getByIdOrFail(competitionId);
+            Notification.show("Competition resumed.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        } else {
+            competitionService.pauseVoting(competitionId);
+            competition = competitionService.getByIdOrFail(competitionId);
+            Notification.show("Competition paused.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         }
         updateUIState();
     }

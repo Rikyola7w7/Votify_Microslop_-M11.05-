@@ -11,6 +11,7 @@ import com.microslop.service.UserService;
 import com.microslop.service.VoterService;
 import com.microslop.service.VoteService;
 import com.microslop.views.components.BallotLoadingComponent;
+import com.microslop.views.components.CelebrationAnimation;
 import com.microslop.views.components.PodiumCardComponent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -22,6 +23,7 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -452,10 +454,13 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 int idx = order[slot];
                 if (idx >= ranking.size()) continue;
                 Project p = ranking.get(idx);
+                long votes = p.getManualVoteCount() != null
+                    ? p.getManualVoteCount()
+                    : p.getVotes().size();
                 if (modifyMode) {
-                    podiumSection.add(buildModifiablePodiumWrapper(p, positions[slot]));
+                    podiumSection.add(buildModifiablePodiumWrapper(p, positions[slot], votes));
                 } else {
-                    var podiumCard = new PodiumCardComponent(p, positions[slot], 0);
+                    var podiumCard = new PodiumCardComponent(p, positions[slot], votes);
                     podiumSection.add(podiumCard);
                 }
             }
@@ -486,7 +491,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             "}, 900)");
     }
 
-    private Div buildModifiablePodiumWrapper(Project project, PodiumCardComponent.Position position) {
+    private Div buildModifiablePodiumWrapper(Project project, PodiumCardComponent.Position position, long votes) {
         var wrapper = new Div();
         wrapper.getStyle()
             .set("display", "flex")
@@ -494,7 +499,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("align-items", "center")
             .set("position", "relative");
 
-        var podiumCard = new PodiumCardComponent(project, position, 0);
+        var podiumCard = new PodiumCardComponent(project, position, votes);
         wrapper.add(podiumCard);
         wrapper.add(buildActionButtons(project));
 
@@ -579,7 +584,17 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("font-size", "0.95rem")
             .set("color", "var(--text-primary)");
 
-        info.add(name);
+        long votes = p.getManualVoteCount() != null
+            ? p.getManualVoteCount()
+            : p.getVotes().size();
+
+        var votesSpan = new Span(votes + " vote" + (votes != 1 ? "s" : ""));
+        votesSpan.getStyle()
+            .set("font-size", "0.8rem")
+            .set("color", "var(--text-muted)")
+            .set("margin-top", "0.15rem");
+
+        info.add(name, votesSpan);
         row.add(numBadge, info);
         wrapper.add(row);
 

@@ -83,7 +83,9 @@ public class ProjectServiceImpl implements ProjectService {
                 : projectRepository.findPopularRankingByCategory(categoryId);
 
         boolean anyCustomPosition = baseRanking.stream().anyMatch(p -> p.getCustomPosition() != null);
-        if (!anyCustomPosition) {
+        boolean anyManualVoteCount = baseRanking.stream().anyMatch(p -> p.getManualVoteCount() != null);
+
+        if (!anyCustomPosition && !anyManualVoteCount) {
             return baseRanking;
         }
 
@@ -92,13 +94,33 @@ public class ProjectServiceImpl implements ProjectService {
             baseOrder.put(baseRanking.get(i).getId(), i);
         }
 
+        Map<Long, Integer> effectiveVoteCounts = new HashMap<>();
+        for (Project p : baseRanking) {
+            int count = p.getManualVoteCount() != null
+                    ? p.getManualVoteCount()
+                    : p.getVotes().size();
+            effectiveVoteCounts.put(p.getId(), count);
+        }
+
         List<Project> sorted = new ArrayList<>(baseRanking);
         sorted.sort((a, b) -> {
+            // First, sort by custom position
             Integer posA = a.getCustomPosition();
             Integer posB = b.getCustomPosition();
-            if (posA != null && posB != null) return Integer.compare(posA, posB);
-            if (posA != null) return -1;
-            if (posB != null) return 1;
+            if (posA != null && posB != null) {
+                if (!posA.equals(posB)) return Integer.compare(posA, posB);
+            } else if (posA != null) {
+                return -1;
+            } else if (posB != null) {
+                return 1;
+            }
+
+            // Then, sort by effective vote count (manual override or actual count), descending
+            int votesA = effectiveVoteCounts.getOrDefault(a.getId(), 0);
+            int votesB = effectiveVoteCounts.getOrDefault(b.getId(), 0);
+            if (votesA != votesB) return Integer.compare(votesB, votesA);
+
+            // Finally, tiebreak by base query order
             return Integer.compare(
                     baseOrder.getOrDefault(a.getId(), Integer.MAX_VALUE),
                     baseOrder.getOrDefault(b.getId(), Integer.MAX_VALUE)
