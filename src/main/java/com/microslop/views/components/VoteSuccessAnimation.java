@@ -87,16 +87,16 @@ public class VoteSuccessAnimation extends Div {
             "txtWrap.className = 'vc-text-wrap';\n" +
             "var txtMain = document.createElement('div');\n" +
             "txtMain.className = 'vc-text vc-text-main';\n" +
-            "txtMain.textContent = 'VOTE CAST';\n" +
+            "txtMain.textContent = 'ALL VOTES CAST';\n" +
             "var txtR = document.createElement('div');\n" +
             "txtR.className = 'vc-text vc-text-r';\n" +
-            "txtR.textContent = 'VOTE CAST';\n" +
+            "txtR.textContent = 'ALL VOTES CAST';\n" +
             "var txtG = document.createElement('div');\n" +
             "txtG.className = 'vc-text vc-text-g';\n" +
-            "txtG.textContent = 'VOTE CAST';\n" +
+            "txtG.textContent = 'ALL VOTES CAST';\n" +
             "var txtB = document.createElement('div');\n" +
             "txtB.className = 'vc-text vc-text-b';\n" +
-            "txtB.textContent = 'VOTE CAST';\n" +
+            "txtB.textContent = 'ALL VOTES CAST';\n" +
             "txtWrap.appendChild(txtR);\n" +
             "txtWrap.appendChild(txtG);\n" +
             "txtWrap.appendChild(txtB);\n" +

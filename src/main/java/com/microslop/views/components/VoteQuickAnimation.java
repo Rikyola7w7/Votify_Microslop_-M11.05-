@@ -14,7 +14,10 @@ public class VoteQuickAnimation extends Div {
         "#f59e0b", "#fbbf24", "#10b981", "#34d399", "#6366f1", "#818cf8", "#ec4899"
     };
 
-    public VoteQuickAnimation(Runnable onComplete) {
+    private final int remainingVotes;
+
+    public VoteQuickAnimation(int remainingVotes, Runnable onComplete) {
+        this.remainingVotes = remainingVotes;
         injectStyles();
         buildDOM();
         scheduleSequence(onComplete);
@@ -36,6 +39,15 @@ public class VoteQuickAnimation extends Div {
     }
 
     private void buildDOM() {
+        String voteText;
+        if (remainingVotes < 0) {
+            voteText = "CHECKLIST VOTE RECORDED";
+        } else if (remainingVotes > 0) {
+            voteText = remainingVotes + " VOTE" + (remainingVotes != 1 ? "S" : "") + " LEFT";
+        } else {
+            voteText = "NO VOTES LEFT";
+        }
+
         getElement().executeJs(
             "var ov=document.createElement('div');ov.id='qk-overlay';" +
             "ov.style.cssText='position:fixed;inset:0;z-index:99999;pointer-events:none;overflow:hidden;';" +
@@ -72,8 +84,8 @@ public class VoteQuickAnimation extends Div {
             "\n" +
             // Text
             "var tw=document.createElement('div');" +
-            "tw.style.cssText='position:absolute;left:50%;top:60%;transform:translate(-50%,0);text-align:center;opacity:0;animation:qkTextIn .4s ease forwards .6s;';" +
-            "var txt=document.createElement('div');txt.textContent='VOTE RECORDED';" +
+            "tw.style.cssText='position:absolute;left:0;top:60%;width:100%;text-align:center;opacity:0;animation:qkTextIn .4s ease forwards .6s;';" +
+            "var txt=document.createElement('div');txt.textContent='" + voteText + "';" +
             "txt.style.cssText='font-family:Courier New,monospace;font-size:clamp(1.2rem,4vw,2rem);font-weight:800;letter-spacing:.15em;color:#fef3c7;text-shadow:0 0 30px rgba(251,191,36,.7),0 0 60px rgba(251,191,36,.3);white-space:nowrap;';" +
             "tw.appendChild(txt);ov.appendChild(tw);" +
             "\n" +

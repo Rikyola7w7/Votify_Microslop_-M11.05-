@@ -535,6 +535,19 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             };
 
             if (isLastVote) {
+                VoteSuccessAnimation overlay = new VoteSuccessAnimation(afterAnimation);
+                getUI().ifPresent(ui -> ui.add(overlay));
+            } else {
+                updateMaxVotesLabel(selectedCategory);
+                VoteQuickAnimation quick = new VoteQuickAnimation(remainingVotes, afterAnimation);
+                getUI().ifPresent(ui -> ui.add(quick));
+            }
+        } catch (IllegalStateException ex) {
+            showNotification(ex.getMessage(), NotificationVariant.LUMO_CONTRAST);
+        }
+            };
+
+            if (isLastVote) {
                 // Epic full animation for the final vote
                 VoteSuccessAnimation overlay = new VoteSuccessAnimation(afterAnimation);
                 getUI().ifPresent(ui -> ui.add(overlay));
@@ -587,7 +600,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 VoteSuccessAnimation overlay = new VoteSuccessAnimation(afterAnimation);
                 getUI().ifPresent(ui -> ui.add(overlay));
             } else {
-                VoteQuickAnimation quick = new VoteQuickAnimation(afterAnimation);
+                updateMaxVotesLabel(selectedCategory);
+                VoteQuickAnimation quick = new VoteQuickAnimation(remainingVotes, afterAnimation);
                 getUI().ifPresent(ui -> ui.add(quick));
             }
         } catch (IllegalStateException ex) {

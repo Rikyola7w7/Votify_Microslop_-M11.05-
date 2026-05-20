@@ -124,7 +124,7 @@ public class ChecklistVotingDialog extends Dialog {
             UI ui = UI.getCurrent();
             if (ui != null) {
                 ui.access(() -> {
-                    VoteQuickAnimation overlay = new VoteQuickAnimation(() -> {
+                    VoteQuickAnimation overlay = new VoteQuickAnimation(-1, () -> {
                         if (onVoteSuccess != null) {
                             onVoteSuccess.run();
                         }
