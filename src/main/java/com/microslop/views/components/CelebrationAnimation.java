@@ -103,7 +103,7 @@ public class CelebrationAnimation extends Div {
             "\n" +
             // Text container
             "var tw=document.createElement('div');" +
-            "tw.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;opacity:0;animation:celTextIn .01s forwards 1.3s;';" +
+            "tw.style.cssText='position:absolute;left:0;top:50%;width:100%;transform:translateY(-50%);text-align:center;opacity:0;animation:celTextIn .01s forwards 1.3s;';" +
             "\n" +
             // Chromatic layers
             "var msg='" + escapedMsg + "';" +

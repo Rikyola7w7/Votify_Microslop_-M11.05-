@@ -12,6 +12,7 @@ import com.microslop.service.ProjectCommentService;
 import com.microslop.service.UserService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.VoteService;
+import com.microslop.service.VoterService;
 import com.microslop.views.components.ChecklistVotingDialog;
 import com.microslop.views.components.CelebrationAnimation;
 import com.microslop.views.components.ViewHeader;
@@ -56,6 +57,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private final CategoryService categoryService;
     private final ChecklistVoteService checklistVoteService;
     private final ChecklistItemRepository checklistItemRepository;
+    private final VoterService voterService;
 
     private Long competitionId;
     private Long categoryId;
@@ -73,7 +75,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                       UserService userService,
                       CategoryService categoryService,
                       ChecklistVoteService checklistVoteService,
-                      ChecklistItemRepository checklistItemRepository) {
+                      ChecklistItemRepository checklistItemRepository,
+                      VoterService voterService) {
         this.competitionService = competitionService;
         this.projectService     = projectService;
         this.voteService        = voteService;
@@ -82,6 +85,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         this.categoryService    = categoryService;
         this.checklistVoteService = checklistVoteService;
         this.checklistItemRepository = checklistItemRepository;
+        this.voterService = voterService;
 
         setSizeFull();
         setPadding(false);
@@ -160,15 +164,12 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     // ── Utility Methods ────────────────────────────────────────────────────
 
     private int getAvailableVotes(Category selectedCategory) {
-        if (currentCompetition == null || currentCompetition.getMaxVotesPerPerson() == null || currentUser == null) {
-            return 0;
-        }
-        
-        long votesUsed = selectedCategory != null
-                ? voteService.countPointsByUserAndCategory(currentUser.getId(), selectedCategory.getId())
-                : 0;
-        
-        return Math.max(0, currentCompetition.getMaxVotesPerPerson() - (int) votesUsed);
+        if (currentUser == null || selectedCategory == null) return 0;
+
+        // Checklist voting ignores vote limits
+        if (selectedCategory.isChecklistVoting()) return Integer.MAX_VALUE;
+
+        return voterService.getVotesLeft(currentUser.getId(), competitionId, selectedCategory.getId());
     }
 
     private void updateMaxVotesLabel(Category selectedCategory) {
@@ -184,7 +185,11 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         }
         
         int available = getAvailableVotes(selectedCategory);
-        maxVotesLabel.setText("You have " + available + " vote" + (available != 1 ? "s" : "") + " left");
+        if (available <= 0) {
+            maxVotesLabel.setText("No votes remaining");
+        } else {
+            maxVotesLabel.setText("You have " + available + " vote" + (available != 1 ? "s" : "") + " left");
+        }
 
         // Pulse animation when vote counter changes
         maxVotesLabel.getStyle().set("animation", "vote-success-pulse 0.4s ease");
@@ -246,7 +251,11 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("background", "rgba(108, 92, 231, 0.1)");
         } else {
             int initialAvailable = getAvailableVotes(selectedCategory);
-            maxVotesLabel.setText("You have " + initialAvailable + " vote" + (initialAvailable != 1 ? "s" : "") + " left");
+            if (initialAvailable <= 0) {
+                maxVotesLabel.setText("No votes remaining");
+            } else {
+                maxVotesLabel.setText("You have " + initialAvailable + " vote" + (initialAvailable != 1 ? "s" : "") + " left");
+            }
             if (initialAvailable == 0) {
                 maxVotesLabel.getStyle()
                     .set("color", "var(--error)")
@@ -535,7 +544,10 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         try {
             voteService.submitVote(username, project.getId(), selectedCategory.getId(), points);
 
-            int remainingVotes = availableVotes - points;
+            // Decrement votes left in the Voter record
+            voterService.decrementVotesLeft(currentUser.getId(), competitionId, selectedCategory.getId(), points);
+
+            int remainingVotes = getAvailableVotes(selectedCategory);
             boolean isLastVote = remainingVotes <= 0;
 
             Runnable afterAnimation = () -> {
@@ -583,6 +595,9 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         try {
             voteService.submitVote(username, project.getId(), selectedCategory.getId());
+
+            // Decrement votes left in the Voter record
+            voterService.decrementVotesLeft(currentUser.getId(), competitionId, selectedCategory.getId(), 1);
 
             int remainingVotes = getAvailableVotes(selectedCategory);
             boolean isLastVote = remainingVotes <= 0;

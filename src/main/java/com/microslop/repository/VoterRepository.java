@@ -46,4 +46,9 @@ public interface VoterRepository extends JpaRepository<Voter, Long>, JpaSpecific
      */
     @Query("SELECT DISTINCT v FROM Voter v WHERE v.competition = :competition")
     List<Voter> findByCompetition(@Param("competition") Competition competition);
+
+    java.util.Optional<Voter> findByUserIdAndCompetitionIdAndCategoryId(
+            @Param("userId") Long userId,
+            @Param("competitionId") Long competitionId,
+            @Param("categoryId") Long categoryId);
 }
