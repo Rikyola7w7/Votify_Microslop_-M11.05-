@@ -65,6 +65,11 @@ public class CategoryServiceImpl implements CategoryService {
         } else {
             category.setVoterType("NORMAL");
         }
+        if (categoryDTO.getVoteType() != null && !categoryDTO.getVoteType().isEmpty()) {
+            category.setVoteType(categoryDTO.getVoteType());
+        } else {
+            category.setVoteType("NORMAL");
+        }
 
         // Save to database
         return categoryRepository.save(category);

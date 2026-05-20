@@ -44,7 +44,7 @@ import com.vaadin.flow.server.VaadinSession;
 import java.util.List;
 
 @PageTitle("Vote")
-@Route("competition/:competitionId/vote")
+@Route("competition/:competitionId/category/:categoryId/vote")
 public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
     private final CompetitionService competitionService;
@@ -57,12 +57,13 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private final ChecklistItemRepository checklistItemRepository;
 
     private Long competitionId;
+    private Long categoryId;
+    private Category selectedCategory;
     private Span maxVotesLabel;
     private com.microslop.entity.Competition currentCompetition;
     private com.microslop.entity.User currentUser;
 
     private VerticalLayout projectsContainer;
-    private ComboBox<Category> categoryDropdown;
 
     public VotingView(CompetitionService competitionService,
                       ProjectService projectService,
@@ -89,14 +90,17 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        String idParam = event.getRouteParameters().get("competitionId").orElse(null);
-        if (idParam == null) {
+        String competitionIdParam = event.getRouteParameters().get("competitionId").orElse(null);
+        String categoryIdParam = event.getRouteParameters().get("categoryId").orElse(null);
+        
+        if (competitionIdParam == null || categoryIdParam == null) {
             event.forwardTo("");
             return;
         }
 
         try {
-            this.competitionId = Long.parseLong(idParam);
+            this.competitionId = Long.parseLong(competitionIdParam);
+            this.categoryId = Long.parseLong(categoryIdParam);
         } catch (NumberFormatException e) {
             event.forwardTo("");
             return;
@@ -116,9 +120,22 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         if (!userService.isLoggedIn()) {
             VaadinSession session = VaadinSession.getCurrent();
             if (session != null) {
-                session.setAttribute("postLoginRoute", "competition/" + competitionId + "/vote");
+                session.setAttribute("postLoginRoute", "competition/" + competitionId + "/category/" + categoryId + "/vote");
             }
             event.forwardTo("login");
+            return;
+        }
+
+        // Load the selected category
+        this.selectedCategory = categoryService.getByIdOrFail(categoryId);
+        
+        // Verify category belongs to this competition
+        if (!selectedCategory.getCompetition().getId().equals(competitionId)) {
+            Notification n = Notification.show(
+                    "Category does not belong to this competition.",
+                    4000, Notification.Position.BOTTOM_CENTER);
+            n.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            event.forwardTo("competition/" + competitionId);
             return;
         }
 
@@ -199,7 +216,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("margin", "0 0 0.25rem 0")
                 .set("text-align", "center");
 
-        var subtitle = new Span("Competition: " + competitionName);
+        var subtitle = new Span("Category: " + selectedCategory.getName() + " • " + competitionName);
         subtitle.getStyle()
                 .set("font-size", "1rem")
                 .set("color", "var(--text-muted)")
@@ -233,24 +250,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             .set("text-align", "center")
             .set("margin-bottom", "1.5rem");
 
-        var categoryDropdownWrapper = new Div();
-        categoryDropdownWrapper.setWidthFull();
-        categoryDropdownWrapper.getStyle()
-            .set("max-width", "760px")
-            .set("margin-bottom", "1.5rem")
-            .set("display", "flex")
-            .set("justify-content", "center");
-
-        categoryDropdown = new ComboBox<Category>();
-        categoryDropdown.setItems(categoryService.getCategoriesByCompetition(competitionId));
-        categoryDropdown.setItemLabelGenerator(Category::getName);
-        categoryDropdown.setPlaceholder("Filter by category...");
-        categoryDropdown.setClearButtonVisible(true);
-        categoryDropdown.addClassName("votify-input");
-        categoryDropdown.setWidth("350px");
-
-        categoryDropdownWrapper.add(categoryDropdown);
-
         projectsContainer = new VerticalLayout();
         projectsContainer.setWidthFull();
         projectsContainer.getStyle().set("max-width", "760px");
@@ -266,40 +265,33 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         Runnable updateProjectsList = () -> {
             projectsContainer.removeAll();
-            Category selectedCategory = categoryDropdown.getValue();
             updateMaxVotesLabel(selectedCategory);
             
-            boolean hasVotedInCategory = selectedCategory != null && 
-                    voteService.countVotesByUserAndCategory(currentUserLocal.getId(), selectedCategory.getId()) > 0;
+            boolean hasVotedInCategory = voteService.countVotesByUserAndCategory(currentUserLocal.getId(), selectedCategory.getId()) > 0;
 
             int staggerIndex = 1;
             for (Project p : projects) {
-                boolean matches = true;
-                if (selectedCategory != null) {
-                    matches = p.getCategories().stream()
-                            .anyMatch(c -> c.getId().equals(selectedCategory.getId()));
-                }
-                if (matches) {
-                    long alreadyVoted = selectedCategory != null
-                            ? voteService.countVotesByUserAndProjectAndCategory(currentUserLocal.getId(), p.getId(), selectedCategory.getId())
-                            : voteService.countVotesByUserAndProject(currentUserLocal.getId(), p.getId());
-                    projectsContainer.add(buildProjectCard(p, alreadyVoted > 0, hasVotedInCategory, selectedCategory, staggerIndex));
+                // Filter projects that belong to this category
+                boolean belongsToCategory = p.getCategories().stream()
+                        .anyMatch(c -> c.getId().equals(selectedCategory.getId()));
+                        
+                if (belongsToCategory) {
+                    long alreadyVoted = voteService.countVotesByUserAndProjectAndCategory(currentUserLocal.getId(), p.getId(), selectedCategory.getId());
+                    projectsContainer.add(buildProjectCard(p, alreadyVoted > 0, hasVotedInCategory, staggerIndex));
                     staggerIndex = Math.min(staggerIndex + 1, 8);
                 }
             }
         };
 
-        categoryDropdown.addValueChangeListener(e -> updateProjectsList.run());
-
         updateProjectsList.run();
 
-        body.add(titleWrapper, counterWrapper, categoryDropdownWrapper, projectsContainer);
+        body.add(titleWrapper, counterWrapper, projectsContainer);
         return body;
     }
 
     // ── Project Card ──────────────────────────────────────────────────────
 
-    private Div buildProjectCard(Project p, boolean alreadySelected, boolean hasVotedInCategory, Category selectedCategory, int staggerIndex) {
+    private Div buildProjectCard(Project p, boolean alreadySelected, boolean hasVotedInCategory, int staggerIndex) {
         long totalVotes = voteService.countVotesByProject(p.getId());
         boolean otherProjectVoted = hasVotedInCategory && !alreadySelected;
 
@@ -339,52 +331,71 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         info.add(name, desc, votesLabel);
 
-        // Points input field
-        var pointsInput = new IntegerField();
-        pointsInput.setLabel("Points");
-        pointsInput.setMin(1);
-        pointsInput.setValue(1);
-        pointsInput.setWidth("90px");
-        pointsInput.addClassName("votify-input");
-        pointsInput.getStyle()
-                .set("font-weight", "600")
-                .set("text-align", "center");
+        var voteInterface = new HorizontalLayout();
+        voteInterface.setAlignItems(Alignment.END);
+        voteInterface.setSpacing(true);
+        voteInterface.setPadding(false);
+        voteInterface.setMargin(false);
 
-        // Vote button
-        Button submitButton = new Button("Vote");
-        submitButton.addClassName("votify-btn-primary");
-        submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        submitButton.setWidth("auto");
-        submitButton.getStyle()
-                .set("padding", "0.75rem 1.25rem");
-        
-        // Disable button if no votes available
-        int availableVotes = getAvailableVotes(selectedCategory);
-        if (availableVotes <= 0) {
-            submitButton.setEnabled(false);
-            submitButton.removeClassName("votify-btn-primary");
-            submitButton.getStyle()
-                    .set("background", "rgba(108, 92, 231, 0.3)")
-                    .set("color", "rgba(255, 255, 255, 0.5)")
-                    .set("box-shadow", "none")
-                    .set("cursor", "not-allowed");
-            card.addClassName("animate-card-flash");
-        }
-        
-        submitButton.addClickListener(e -> {
-            if (selectedCategory != null && selectedCategory.isChecklistVoting()) {
-                handleChecklistVoting(p, selectedCategory);
-            } else {
-                handleVoteWithPoints(p, pointsInput.getValue() != null ? pointsInput.getValue() : 1, selectedCategory);
+        // Check category voting type and show appropriate voting interface
+        if (selectedCategory != null && selectedCategory.isChecklistVoting()) {
+            // Show checklist voting button
+            Button checklistButton = new Button("Vote (Checklist)");
+            checklistButton.addClassName("votify-btn-primary");
+            checklistButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            checklistButton.setWidth("auto");
+            checklistButton.getStyle().set("padding", "0.75rem 1.25rem");
+            
+            int availableVotes = getAvailableVotes(selectedCategory);
+            if (availableVotes <= 0) {
+                checklistButton.setEnabled(false);
+                checklistButton.removeClassName("votify-btn-primary");
+                checklistButton.getStyle()
+                        .set("background", "rgba(108, 92, 231, 0.3)")
+                        .set("color", "rgba(255, 255, 255, 0.5)")
+                        .set("box-shadow", "none")
+                        .set("cursor", "not-allowed");
+                card.addClassName("animate-card-flash");
             }
-        });
+            
+            checklistButton.addClickListener(e -> handleChecklistVoting(p, selectedCategory));
+            voteInterface.add(checklistButton);
+        } else {
+            // Show points-based voting interface
+            var pointsInput = new IntegerField();
+            pointsInput.setLabel("Points");
+            pointsInput.setMin(1);
+            pointsInput.setValue(1);
+            pointsInput.setWidth("90px");
+            pointsInput.addClassName("votify-input");
+            pointsInput.getStyle()
+                    .set("font-weight", "600")
+                    .set("text-align", "center");
 
-        // Points layout
-        var pointsLayout = new HorizontalLayout(pointsInput, submitButton);
-        pointsLayout.setAlignItems(Alignment.END);
-        pointsLayout.setSpacing(true);
-        pointsLayout.setPadding(false);
-        pointsLayout.setMargin(false);
+            Button submitButton = new Button("Vote");
+            submitButton.addClassName("votify-btn-primary");
+            submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            submitButton.setWidth("auto");
+            submitButton.getStyle().set("padding", "0.75rem 1.25rem");
+            
+            int availableVotes = getAvailableVotes(selectedCategory);
+            if (availableVotes <= 0) {
+                submitButton.setEnabled(false);
+                submitButton.removeClassName("votify-btn-primary");
+                submitButton.getStyle()
+                        .set("background", "rgba(108, 92, 231, 0.3)")
+                        .set("color", "rgba(255, 255, 255, 0.5)")
+                        .set("box-shadow", "none")
+                        .set("cursor", "not-allowed");
+                card.addClassName("animate-card-flash");
+            }
+            
+            submitButton.addClickListener(e -> {
+                handleVoteWithPoints(p, pointsInput.getValue() != null ? pointsInput.getValue() : 1, selectedCategory);
+            });
+
+            voteInterface.add(pointsInput, submitButton);
+        }
 
         Button commentsBtn = new Button("Comments");
         commentsBtn.addClassName("votify-btn-secondary");
@@ -394,7 +405,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("min-width", "120px");
         commentsBtn.addClickListener(e -> openCommentsDialog(p.getName(), p.getId()));
 
-        var actions = new VerticalLayout(pointsLayout, commentsBtn);
+        var actions = new VerticalLayout(voteInterface, commentsBtn);
         actions.setPadding(false);
         actions.setSpacing(true);
         actions.setAlignItems(Alignment.END);
@@ -413,12 +424,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     // ── Comments dialog ───────────────────────────────────────────────────
 
     private void openCommentsDialog(String projectName, Long projectId) {
-        Category selectedCategory = categoryDropdown.getValue();
-        if (selectedCategory == null) {
-            showNotification("Please select a category before commenting.", NotificationVariant.LUMO_WARNING);
-            return;
-        }
-
         var dialog = new Dialog();
         dialog.setHeaderTitle("Comments for: " + projectName);
 
@@ -522,7 +527,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
 
-        Category selectedCategory = categoryDropdown.getValue();
         if (selectedCategory == null) {
             showNotification("Please select a category before voting.", NotificationVariant.LUMO_WARNING);
             return;

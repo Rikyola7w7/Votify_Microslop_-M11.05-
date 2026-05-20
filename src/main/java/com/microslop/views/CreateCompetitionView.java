@@ -283,7 +283,8 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         }
 
         String vtValue = categoryVoterTypeCombo.getValue();
-        CategoryDTO category = new CategoryDTO(categoryName, "Scale".equals(vtValue) ? "SCALE" : "Checklist".equals(vtValue) ? "CHECKLIST" : "NORMAL");
+        String voteType = "Scale".equals(vtValue) ? "SCALE" : "Checklist".equals(vtValue) ? "CHECKLIST" : "NORMAL";
+        CategoryDTO category = new CategoryDTO(categoryName, "NORMAL", voteType);
         selectedCategories.add(category);
         displayCategory(category);
         updateCategoryCount();
@@ -311,7 +312,7 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         Span categoryLabel = new Span(category.getName());
         categoryLabel.getStyle().set("flex-grow", "1");
 
-        String vt = category.getVoterType() != null ? category.getVoterType() : "NORMAL";
+        String vt = category.getVoteType() != null ? category.getVoteType() : "NORMAL";
         String label = "NORMAL".equals(vt) ? "Normal" : "SCALE".equals(vt) ? "Scale" : "Checklist";
         Span typeBadge = new Span(label);
         typeBadge.getStyle()

@@ -13,6 +13,7 @@ public class CategoryDTO {
     private Long competitionId;
     private String name;
     private String voterType = "NORMAL";
+    private String voteType = "NORMAL";
 
     public CategoryDTO(String name) {
         this.name = name;
@@ -21,5 +22,11 @@ public class CategoryDTO {
     public CategoryDTO(String name, String voterType) {
         this.name = name;
         this.voterType = voterType;
+    }
+
+    public CategoryDTO(String name, String voterType, String voteType) {
+        this.name = name;
+        this.voterType = voterType;
+        this.voteType = voteType;
     }
 }

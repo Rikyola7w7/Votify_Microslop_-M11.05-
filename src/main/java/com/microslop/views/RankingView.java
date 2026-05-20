@@ -223,7 +223,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 dialog.close();
                 
                 // Use hard redirect to ensure fresh page load and avoid soft navigation issues
-                String votingUrl = "/competition/" + competitionId + "/vote";
+                String votingUrl = "/competition/" + competitionId + "/category/" + categoryId + "/vote";
                 System.out.println("DEBUG: Redirecting to " + votingUrl);
                 getUI().ifPresent(ui -> ui.getPage().executeJs(
                     "window.location.href = '" + votingUrl + "'"));
