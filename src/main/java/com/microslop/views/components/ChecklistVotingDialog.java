@@ -26,11 +26,10 @@ import java.util.Map;
 public class ChecklistVotingDialog extends Dialog {
 
     private final Long projectId;
-    private final List<ChecklistItem> checklistItems;
     private final ChecklistVoteService checklistVoteService;
     private final String username;
     private final Runnable onVoteSuccess;
-    private final Map<ChecklistItem, Checkbox> checkboxes = new HashMap<>();
+    private final Map<Long, Checkbox> checkboxes = new HashMap<>();
 
     public ChecklistVotingDialog(Long projectId, String projectName,
                                  List<ChecklistItem> checklistItems,
@@ -38,7 +37,6 @@ public class ChecklistVotingDialog extends Dialog {
                                  String username,
                                  Runnable onVoteSuccess) {
         this.projectId = projectId;
-        this.checklistItems = checklistItems;
         this.checklistVoteService = checklistVoteService;
         this.username = username;
         this.onVoteSuccess = onVoteSuccess;
@@ -48,10 +46,10 @@ public class ChecklistVotingDialog extends Dialog {
         setCloseOnEsc(true);
         setCloseOnOutsideClick(false);
 
-        setupContent();
+        setupContent(checklistItems);
     }
 
-    private void setupContent() {
+    private void setupContent(List<ChecklistItem> checklistItems) {
         var content = new VerticalLayout();
         content.setPadding(false);
         content.setSpacing(true);
@@ -61,19 +59,26 @@ public class ChecklistVotingDialog extends Dialog {
         instructions.getStyle().set("font-size", "0.9rem").set("color", "var(--text-muted)");
         content.add(instructions);
 
+        // Extract IDs and text before the session closes, then clear the list
+        var itemData = new java.util.ArrayList<java.util.Map.Entry<Long, String>>();
+        for (ChecklistItem item : checklistItems) {
+            itemData.add(new java.util.AbstractMap.SimpleEntry<>(item.getId(), item.getText()));
+        }
+        checklistItems.clear();
+
         // Checklist items
         var itemsLayout = new VerticalLayout();
         itemsLayout.setPadding(false);
         itemsLayout.setSpacing(false);
         itemsLayout.addClassName("votify-checklist-container");
 
-        for (ChecklistItem item : checklistItems) {
-            Checkbox checkbox = new Checkbox(item.getText());
+        for (var entry : itemData) {
+            Checkbox checkbox = new Checkbox(entry.getValue());
             checkbox.getStyle()
                     .set("margin-bottom", "0.75rem")
                     .set("display", "flex")
                     .set("align-items", "center");
-            checkboxes.put(item, checkbox);
+            checkboxes.put(entry.getKey(), checkbox);
             itemsLayout.add(checkbox);
         }
 
@@ -106,9 +111,9 @@ public class ChecklistVotingDialog extends Dialog {
         }
 
         try {
-            for (Map.Entry<ChecklistItem, Checkbox> entry : checkboxes.entrySet()) {
+            for (Map.Entry<Long, Checkbox> entry : checkboxes.entrySet()) {
                 if (entry.getValue().getValue()) {
-                    checklistVoteService.submitChecklistVote(username, projectId, entry.getKey().getId());
+                    checklistVoteService.submitChecklistVote(username, projectId, entry.getKey());
                 }
             }
 
