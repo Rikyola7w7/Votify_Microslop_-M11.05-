@@ -41,6 +41,9 @@ public class Notification {
     @JoinColumn(name = "competition_id", nullable = true)
     private Competition competition;
 
+    @Column(name = "invitation_id", nullable = true)
+    private Long invitationId;
+
     public Notification() {
         this.creationDate = LocalDateTime.now();
     }

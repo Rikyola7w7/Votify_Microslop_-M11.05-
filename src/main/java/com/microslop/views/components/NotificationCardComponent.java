@@ -2,6 +2,7 @@ package com.microslop.views.components;
 
 import com.microslop.entity.Competition;
 import com.microslop.entity.Notification;
+import com.microslop.service.InvitationService;
 import com.microslop.service.NotificationService;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
@@ -21,16 +22,18 @@ public class NotificationCardComponent extends Div {
 
     private final Notification notification;
     private final NotificationService notificationService;
+    private final InvitationService invitationService;
     private final Runnable refreshCallback;
     private final Competition competition;
 
-    public NotificationCardComponent(Notification notification, NotificationService notificationService, Runnable refreshCallback) {
-        this(notification, notificationService, refreshCallback, null);
+    public NotificationCardComponent(Notification notification, NotificationService notificationService, InvitationService invitationService, Runnable refreshCallback) {
+        this(notification, notificationService, invitationService, refreshCallback, null);
     }
 
-    public NotificationCardComponent(Notification notification, NotificationService notificationService, Runnable refreshCallback, Competition competition) {
+    public NotificationCardComponent(Notification notification, NotificationService notificationService, InvitationService invitationService, Runnable refreshCallback, Competition competition) {
         this.notification = notification;
         this.notificationService = notificationService;
+        this.invitationService = invitationService;
         this.refreshCallback = refreshCallback;
         this.competition = competition != null ? competition : notification.getCompetition();
         buildCard();
@@ -162,6 +165,17 @@ public class NotificationCardComponent extends Div {
                 });
             });
             actions.add(viewProjectBtn);
+        }
+
+        if ("PROJECT_INVITATION".equals(notification.getType()) && notification.getInvitationId() != null) {
+            Button viewBtn = new Button("View Invitation");
+            viewBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
+            viewBtn.getStyle().set("cursor", "pointer");
+            viewBtn.addClickListener(e -> {
+                InvitationDialog dialog = new InvitationDialog(invitationService, notification.getInvitationId(), refreshCallback);
+                dialog.open();
+            });
+            actions.add(viewBtn);
         }
 
         if (!notification.getIsRead()) {

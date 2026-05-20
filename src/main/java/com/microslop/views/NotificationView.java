@@ -2,6 +2,7 @@ package com.microslop.views;
 
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Notification;
+import com.microslop.service.InvitationService;
 import com.microslop.service.NotificationService;
 import com.microslop.views.components.NotificationCardComponent;
 import com.vaadin.flow.component.button.Button;
@@ -24,10 +25,12 @@ import java.util.List;
 public class NotificationView extends VerticalLayout {
 
     private final NotificationService notificationService;
+    private final InvitationService invitationService;
     private Div notificationsContainer;
 
-    public NotificationView(NotificationService notificationService) {
+    public NotificationView(NotificationService notificationService, InvitationService invitationService) {
         this.notificationService = notificationService;
+        this.invitationService = invitationService;
         initializeView();
         refreshNotifications();
     }
@@ -160,6 +163,7 @@ public class NotificationView extends VerticalLayout {
                 NotificationCardComponent card = new NotificationCardComponent(
                     notification,
                     notificationService,
+                    invitationService,
                     this::refreshNotifications,
                     notification.getCompetition()
                 );

@@ -2,6 +2,7 @@ package com.microslop.views.components;
 
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
+import com.microslop.entity.User;
 import com.microslop.service.NotificationService;
 import com.microslop.service.PendingProjectSubmissionService;
 import com.microslop.service.UserService;
@@ -19,7 +20,9 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class CreateProjectDialog extends Dialog {
@@ -34,6 +37,9 @@ public class CreateProjectDialog extends Dialog {
     private TextField nameField;
     private TextArea descriptionField;
     private List<Checkbox> categoryCheckboxes;
+    private TextField inviteField;
+    private VerticalLayout invitedParticipantsContainer;
+    private Map<Long, User> invitedParticipants; // userId -> User mapping
 
     public CreateProjectDialog(PendingProjectSubmissionService pendingProjectSubmissionService,
                                 UserService userService,
@@ -45,6 +51,7 @@ public class CreateProjectDialog extends Dialog {
         this.competition = competition;
         this.categories = categories;
         this.onSuccess = onSuccess;
+        this.invitedParticipants = new HashMap<>();
 
         setHeaderTitle("Submit Project");
         setWidth("450px");
@@ -85,8 +92,111 @@ public class CreateProjectDialog extends Dialog {
             checkboxGroup.add(cb);
         }
 
-        content.add(nameField, descriptionField, categoriesLabel, checkboxGroup);
+        VerticalLayout userInvite = new VerticalLayout();
+        userInvite.setPadding(false);
+        userInvite.setSpacing(true);
+        Span inviteLabel = new Span("Invite Collaborators");
+        inviteLabel.getStyle()
+            .set("font-weight", "600")
+            .set("font-size", "0.9rem")
+            .set("color", "var(--text-primary)");
+        
+        inviteField = new TextField();
+        inviteField.setWidthFull();
+        inviteField.setPlaceholder("Enter username to invite");
+        
+        Button inviteBtn = new Button("Invite", e -> handleAddParticipant());
+        inviteBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        
+        HorizontalLayout inviteLayout = new HorizontalLayout(inviteField, inviteBtn);
+        inviteLayout.setWidthFull();
+        inviteLayout.setSpacing(true);
+        inviteLayout.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.END);
+        
+        invitedParticipantsContainer = new VerticalLayout();
+        invitedParticipantsContainer.setPadding(false);
+        invitedParticipantsContainer.setSpacing(false);
+        
+        userInvite.add(inviteLabel, inviteLayout, invitedParticipantsContainer);
+
+        content.add(nameField, descriptionField, categoriesLabel, checkboxGroup, userInvite);
         return content;
+    }
+
+    private void handleAddParticipant() {
+        String username = inviteField.getValue().trim();
+        
+        if (username.isEmpty()) {
+            Notification.show("Please enter a username", 3000, Notification.Position.MIDDLE)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
+        var userOpt = userService.searchByUsernameIgnoreCase(username);
+        
+        if (userOpt.isEmpty()) {
+            Notification.show("User '" + username + "' does not exist", 3000, Notification.Position.MIDDLE)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
+        User user = userOpt.get();
+        
+        // Check if already invited
+        if (invitedParticipants.containsKey(user.getId())) {
+            Notification.show("This user is already invited", 3000, Notification.Position.MIDDLE)
+                .addThemeVariants(NotificationVariant.LUMO_WARNING);
+            return;
+        }
+
+        // Add to invited participants
+        invitedParticipants.put(user.getId(), user);
+        inviteField.clear();
+        updateInvitedParticipantsDisplay();
+        
+        Notification.show("User '" + username + "' invited successfully", 3000, Notification.Position.MIDDLE)
+            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+    }
+
+    private void updateInvitedParticipantsDisplay() {
+        invitedParticipantsContainer.removeAll();
+        
+        if (invitedParticipants.isEmpty()) {
+            return;
+        }
+
+        Span participantsLabel = new Span("Added Participants (" + invitedParticipants.size() + ")");
+        participantsLabel.getStyle()
+            .set("font-size", "0.85rem")
+            .set("color", "var(--text-secondary)");
+        invitedParticipantsContainer.add(participantsLabel);
+
+        for (User participant : invitedParticipants.values()) {
+            HorizontalLayout participantRow = new HorizontalLayout();
+            participantRow.setWidthFull();
+            participantRow.setSpacing(true);
+            participantRow.setAlignItems(FlexComponent.Alignment.CENTER);
+            participantRow.getStyle().set("padding", "8px 0");
+            
+            Span participantName = new Span(participant.getUsername());
+            participantName.getStyle().set("flex-grow", "1");
+            
+            Button removeBtn = new Button("Remove", e -> removeParticipant(participant.getId()));
+            removeBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
+            removeBtn.getStyle().set("cursor", "pointer");
+            
+            participantRow.add(participantName, removeBtn);
+            invitedParticipantsContainer.add(participantRow);
+        }
+    }
+
+    private void removeParticipant(Long userId) {
+        User removedUser = invitedParticipants.remove(userId);
+        if (removedUser != null) {
+            updateInvitedParticipantsDisplay();
+            Notification.show("Removed " + removedUser.getUsername(), 3000, Notification.Position.MIDDLE)
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        }
     }
 
     private HorizontalLayout buildFooter() {
@@ -110,6 +220,11 @@ public class CreateProjectDialog extends Dialog {
         String name = nameField.getValue().trim();
         if (name.isEmpty()) {
             Notification.show("Project name is required", 3000, Notification.Position.MIDDLE)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+        if(name.length() > 20 || name.length() < 6) {
+            Notification.show("Project name must be between 6 and 20 characters", 3000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
@@ -138,12 +253,18 @@ public class CreateProjectDialog extends Dialog {
                 .map(cat -> String.valueOf(cat.getId()))
                 .collect(Collectors.joining(","));
 
+            // Convert invited participants to ID string
+            String invitedParticipantIds = invitedParticipants.keySet().stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+
             pendingProjectSubmissionService.createSubmission(
                 name,
                 descriptionField.getValue().trim(),
                 competition.getId(),
                 userService.getCurrentUsername(),
-                categoryIds
+                categoryIds,
+                invitedParticipantIds
             );
 
             String creatorName = competition.getCreatedBy();

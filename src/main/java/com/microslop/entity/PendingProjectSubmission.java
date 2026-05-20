@@ -31,11 +31,24 @@ public class PendingProjectSubmission {
     @Column(name = "category_ids")
     private String categoryIds;
 
+    @Column(name = "invited_participant_ids")
+    private String invitedParticipantIds;
+
     public PendingProjectSubmission(String projectName, String description, Competition competition, User submitter, String categoryIds) {
         this.projectName = projectName;
         this.description = description;
         this.competition = competition;
         this.submitter = submitter;
         this.categoryIds = categoryIds;
+        this.invitedParticipantIds = "";
+    }
+
+    public PendingProjectSubmission(String projectName, String description, Competition competition, User submitter, String categoryIds, String invitedParticipantIds) {
+        this.projectName = projectName;
+        this.description = description;
+        this.competition = competition;
+        this.submitter = submitter;
+        this.categoryIds = categoryIds;
+        this.invitedParticipantIds = invitedParticipantIds;
     }
 }

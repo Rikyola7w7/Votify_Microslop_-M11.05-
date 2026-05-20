@@ -3,11 +3,15 @@ package com.microslop.views;
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Competition;
 import com.microslop.entity.CompetitionStatus;
+import com.microslop.entity.Invitation;
 import com.microslop.entity.PendingProjectSubmission;
 import com.microslop.entity.Project;
+import com.microslop.entity.User;
 import com.microslop.repository.CategoryRepository;
 import com.microslop.repository.PendingProjectSubmissionRepository;
+import com.microslop.repository.UserRepository;
 import com.microslop.service.CompetitionService;
+import com.microslop.service.InvitationService;
 import com.microslop.service.NotificationService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
@@ -44,6 +48,8 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     private final PendingProjectSubmissionRepository pendingSubmissionRepository;
     private final CategoryRepository categoryRepository;
     private final NotificationService notificationService;
+    private final InvitationService invitationService;
+    private final UserRepository userRepository;
 
     private String currentUsername;
     private Long competitionId;
@@ -63,13 +69,17 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                                   ProjectService projectService,
                                   PendingProjectSubmissionRepository pendingSubmissionRepository,
                                   CategoryRepository categoryRepository,
-                                  NotificationService notificationService) {
+                                  NotificationService notificationService,
+                                  InvitationService invitationService,
+                                  UserRepository userRepository) {
         this.competitionService = competitionService;
         this.userService = userService;
         this.projectService = projectService;
         this.pendingSubmissionRepository = pendingSubmissionRepository;
         this.categoryRepository = categoryRepository;
         this.notificationService = notificationService;
+        this.invitationService = invitationService;
+        this.userRepository = userRepository;
         setSizeFull();
         setPadding(false);
         setSpacing(false);
@@ -456,6 +466,36 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
             }
 
             projectService.save(project);
+
+            // Create invitations for invited participants
+            if (submission.getInvitedParticipantIds() != null && !submission.getInvitedParticipantIds().isEmpty()) {
+                for (String idStr : submission.getInvitedParticipantIds().split(",")) {
+                    try {
+                        Long userId = Long.parseLong(idStr.trim());
+                        userRepository.findById(userId).ifPresent(invitedUser -> {
+                            try {
+                                Invitation invitation = invitationService.createInvitation(
+                                    invitedUser,
+                                    project.getId(),
+                                    project.getName(),
+                                    submission.getCompetition().getId(),
+                                    submission.getSubmitter()
+                                );
+
+                                notificationService.createNotification(
+                                    invitedUser,
+                                    "Project Invitation",
+                                    submission.getSubmitter().getUsername() + " invited you to join \"" + submission.getProjectName() + "\" in \"" + competition.getName() + "\".",
+                                    "PROJECT_INVITATION",
+                                    invitation.getId()
+                                );
+                            } catch (Exception ex) {
+                                System.err.println("Error creating invitation for user " + userId + ": " + ex.getMessage());
+                            }
+                        });
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
 
             notifyUser(submission.getSubmitter(),
                 "Project Accepted",

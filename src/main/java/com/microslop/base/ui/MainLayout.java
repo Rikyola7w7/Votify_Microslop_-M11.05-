@@ -1,5 +1,6 @@
 package com.microslop.base.ui;
 
+import com.microslop.service.InvitationService;
 import com.microslop.service.NotificationService;
 import com.microslop.service.UserService;
 import com.microslop.views.components.NotificationCardComponent;
@@ -30,6 +31,9 @@ public final class MainLayout extends AppLayout {
 
     @Autowired(required = false)
     private NotificationService notificationService;
+
+    @Autowired(required = false)
+    private InvitationService invitationService;
 
     private HorizontalLayout rightActions;
     private Div userMenuContainer;
@@ -123,6 +127,7 @@ public final class MainLayout extends AppLayout {
             String username = userService.getCurrentUsername();
             subMenu.addItem("My Projects", event -> getUI().ifPresent(ui -> ui.navigate(username + "/projects")));
             subMenu.addItem("My Competitions", event -> getUI().ifPresent(ui -> ui.navigate(username + "/competitions")));
+            subMenu.addItem("Invitations", event -> getUI().ifPresent(ui -> ui.navigate("invitations")));
             subMenu.addItem("Edit Profile", event -> getUI().ifPresent(ui -> ui.navigate("profile")));
             subMenu.addItem("Sign Out", event -> handleLogout());
         } else {
@@ -270,6 +275,7 @@ public final class MainLayout extends AppLayout {
                         NotificationCardComponent card = new NotificationCardComponent(
                             notification,
                             notificationService,
+                            invitationService,
                             () -> {},
                             notification.getCompetition()
                         );

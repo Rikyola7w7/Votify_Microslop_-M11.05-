@@ -19,6 +19,11 @@ public interface NotificationService {
      * Create a new notification with expiration date
      */
     Notification createNotification(User user, String title, String message, String type, LocalDateTime expirationDate);
+
+    /**
+     * Create a new notification with invitation reference
+     */
+    Notification createNotification(User user, String title, String message, String type, Long invitationId);
     
     /**
      * Get all notifications for the current user

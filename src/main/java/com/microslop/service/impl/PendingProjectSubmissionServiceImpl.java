@@ -5,11 +5,15 @@ import com.microslop.repository.*;
 import com.microslop.service.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 @Service
 public class PendingProjectSubmissionServiceImpl implements PendingProjectSubmissionService {
+
+    private static final Logger logger = LoggerFactory.getLogger(PendingProjectSubmissionServiceImpl.class);
 
     private final PendingProjectSubmissionRepository repository;
     private final CompetitionRepository competitionRepository;
@@ -17,19 +21,22 @@ public class PendingProjectSubmissionServiceImpl implements PendingProjectSubmis
     private final CategoryRepository categoryRepository;
     private final ProjectService projectService;
     private final NotificationService notificationService;
+    private final InvitationService invitationService;
 
     public PendingProjectSubmissionServiceImpl(PendingProjectSubmissionRepository repository,
                                                 CompetitionRepository competitionRepository,
                                                 UserRepository userRepository,
                                                 CategoryRepository categoryRepository,
                                                 ProjectService projectService,
-                                                NotificationService notificationService) {
+                                                NotificationService notificationService,
+                                                InvitationService invitationService) {
         this.repository = repository;
         this.competitionRepository = competitionRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.projectService = projectService;
         this.notificationService = notificationService;
+        this.invitationService = invitationService;
     }
 
     @Override
@@ -37,13 +44,21 @@ public class PendingProjectSubmissionServiceImpl implements PendingProjectSubmis
     public PendingProjectSubmission createSubmission(String projectName, String description,
                                                       Long competitionId, String submitterUsername,
                                                       String categoryIds) {
+        return createSubmission(projectName, description, competitionId, submitterUsername, categoryIds, "");
+    }
+
+    @Override
+    @Transactional
+    public PendingProjectSubmission createSubmission(String projectName, String description,
+                                                      Long competitionId, String submitterUsername,
+                                                      String categoryIds, String invitedParticipantIds) {
         Competition competition = competitionRepository.findById(competitionId)
             .orElseThrow(() -> new RuntimeException("Competition not found"));
         User submitter = userRepository.findByUsernameIgnoreCase(submitterUsername)
             .orElseThrow(() -> new RuntimeException("User not found"));
 
         PendingProjectSubmission submission = new PendingProjectSubmission(
-            projectName, description, competition, submitter, categoryIds
+            projectName, description, competition, submitter, categoryIds, invitedParticipantIds
         );
         return repository.save(submission);
     }
@@ -72,6 +87,49 @@ public class PendingProjectSubmissionServiceImpl implements PendingProjectSubmis
         }
 
         projectService.save(project);
+
+        // Create invitations for invited participants
+        if (submission.getInvitedParticipantIds() != null && !submission.getInvitedParticipantIds().isEmpty()) {
+            logger.info("Processing invitations for project: {}", project.getId());
+            for (String idStr : submission.getInvitedParticipantIds().split(",")) {
+                try {
+                    Long userId = Long.parseLong(idStr.trim());
+                    logger.debug("Processing invitation for user ID: {}", userId);
+                    
+                    userRepository.findById(userId).ifPresentOrElse(
+                        invitedUser -> {
+                            logger.info("Found invited user: {}", invitedUser.getUsername());
+                            try {
+                                // Create invitation first
+                                Invitation invitation = invitationService.createInvitation(
+                                    invitedUser,
+                                    project.getId(),
+                                    project.getName(),
+                                    submission.getCompetition().getId(),
+                                    submission.getSubmitter()
+                                );
+                                logger.info("Created invitation {} for user {}", invitation.getId(), invitedUser.getUsername());
+                                
+                                // Send notification with invitation reference
+                                Notification notification = notificationService.createNotification(
+                                    invitedUser,
+                                    "Project Invitation",
+                                    submission.getSubmitter().getUsername() + " invited you to join \"" + submission.getProjectName() + "\" in \"" + submission.getCompetition().getName() + "\".",
+                                    "PROJECT_INVITATION",
+                                    invitation.getId()
+                                );
+                                logger.info("Sent notification {} to user {} for invitation {}", notification.getId(), invitedUser.getUsername(), invitation.getId());
+                            } catch (Exception e) {
+                                logger.error("Error sending invitation to user {}: {}", invitedUser.getUsername(), e.getMessage(), e);
+                            }
+                        },
+                        () -> logger.warn("User with ID {} not found", userId)
+                    );
+                } catch (NumberFormatException e) {
+                    logger.warn("Invalid user ID format: {}", idStr, e);
+                }
+            }
+        }
 
         notifyUser(submission.getSubmitter(),
             "Project Accepted",

@@ -253,7 +253,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
                 && java.time.LocalDateTime.now().isAfter(currentCompetition.getEndDate());
 
         if (status == CompetitionStatus.VOTING_OPEN || status == CompetitionStatus.ACTIVE) {
-            label = "ACTIVE";
+                label = "ACTIVE";
             badgeClass = "votify-badge-active";
         } else if (status == CompetitionStatus.CONCLUDED || hasEnded) {
             label = "FINISHED";
