@@ -246,15 +246,15 @@ public class RegisterView extends HorizontalLayout {
 
                     confirmDialog.close();
 
-                    // Capture UI before creating animation
+                    // Show celebration then redirect via JS after animation
                     var uiRef = getUI().orElse(null);
                     if (uiRef != null) {
-                        CelebrationAnimation celebration = new CelebrationAnimation(
+                        uiRef.add(new CelebrationAnimation(
                             "WELCOME ABOARD",
                             "Your account is ready — let the voting begin",
-                            () -> uiRef.getPage().executeJs("window.location.href = '/'")
-                        );
-                        uiRef.add(celebration);
+                            () -> {}
+                        ));
+                        uiRef.getPage().executeJs("setTimeout(function(){ window.location.href = '/'; }, 4200);");
                     } else {
                         getUI().ifPresent(ui -> ui.getPage().executeJs("window.location.href = '/'"));
                     }

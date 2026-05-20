@@ -23,23 +23,19 @@ public class CelebrationAnimation extends Div {
 
     private final String message;
     private final String subtitle;
-    private Runnable pendingCallback;
 
     public CelebrationAnimation(String message, String subtitle, Runnable onComplete) {
         this.message = message;
         this.subtitle = subtitle;
-        this.pendingCallback = onComplete;
         injectStyles();
         buildDOM();
-    }
-
-    @Override
-    protected void onAttach(com.vaadin.flow.component.AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        if (pendingCallback != null) {
-            scheduleSequence(pendingCallback);
-            pendingCallback = null;
-        }
+        // Dissolve overlay after sequence
+        getElement().executeJs(
+            "setTimeout(function(){" +
+            "  var ov=document.getElementById('cel-overlay');" +
+            "  if(ov){ov.style.animation='celDissolve 1s ease forwards';setTimeout(function(){ov.remove();},1200);}" +
+            "},3200);"
+        );
     }
 
     private void injectStyles() {
@@ -159,16 +155,8 @@ public class CelebrationAnimation extends Div {
             "canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;';" +
             "ov.appendChild(canvas);" +
             "\n" +
-            // Init particles
-            "celInitParticles();"
-        );
-    }
-
-    private void scheduleSequence(Runnable onComplete) {
-        // Particle system
-        getElement().executeJs(
-            "function celInitParticles(){" +
-            "var c=document.getElementById('cel-canvas');if(!c)return;" +
+            // Particle system
+            "var c=document.getElementById('cel-canvas');if(c){" +
             "var ctx=c.getContext('2d');var W=c.width=innerWidth;var H=c.height=innerHeight;" +
             "var cx=W/2,cy=H/2;var pts=[];" +
             "var cols=" + arrayToJs(GOLD_PALETTE) + ";" +
@@ -182,11 +170,8 @@ public class CelebrationAnimation extends Div {
             "      grav:o.g||0,fric:o.f||.97});" +
             "  }" +
             "}" +
-            // Burst at flash
             "setTimeout(function(){spawn(90,{sp:5,sv:6,sz:2.5,l:65,t:true,f:.96});spawn(30,{sp:1.5,sv:2,sz:5,l:45});},850);" +
-            // Ring sparks
             "setTimeout(function(){for(var i=0;i<20;i++){var a=Math.PI*2*i/20;spawn(2,{x:cx+Math.cos(a)*40,y:cy+Math.sin(a)*40,a:a,sp:2.5,sv:1.5,sz:1.5,l:40});}},1100);" +
-            // Rising embers
             "setTimeout(function(){spawn(40,{sp:.8,sv:1.5,sz:1.5,l:70,g:-.025,f:.99});},1600);" +
             "var run=true;function frame(){" +
             "  if(!run)return;ctx.clearRect(0,0,W,H);" +
@@ -202,33 +187,8 @@ public class CelebrationAnimation extends Div {
             "  ctx.globalAlpha=1;ctx.shadowBlur=0;" +
             "  if(pts.length>0)requestAnimationFrame(frame);else setTimeout(function(){run=false;},400);" +
             "}" +
-            "setTimeout(frame,40);" +
-            "}"
+            "setTimeout(frame,40);}"
         );
-
-        // Dissolve after sequence
-        getElement().executeJs(
-            "setTimeout(function(){" +
-            "  var ov=document.getElementById('cel-overlay');" +
-            "  if(ov){ov.style.animation='celDissolve 1s ease forwards';setTimeout(function(){ov.remove();},1200);}" +
-            "},3200);"
-        );
-
-        UI ui = UI.getCurrent();
-        if (ui != null) {
-            ui.accessLater(v -> {
-                try { Thread.sleep(4000); } catch (InterruptedException ignored) {}
-                onComplete.run();
-            }, () -> {});
-        } else {
-            // Fallback: schedule via JS setTimeout if UI context not available
-            getElement().executeJs(
-                "setTimeout(function(){" +
-                "  var ov=document.getElementById('cel-overlay');" +
-                "  if(ov) ov.remove();" +
-                "},4500);"
-            );
-        }
     }
 
     private static String arrayToJs(String[] arr) {
