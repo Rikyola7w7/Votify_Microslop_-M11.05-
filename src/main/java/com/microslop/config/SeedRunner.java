@@ -107,4 +107,5 @@ public class SeedRunner implements ApplicationRunner {
         } catch (Exception e) {
             log.error("Error resetting PostgreSQL sequences", e);
         }
+    }
 }
