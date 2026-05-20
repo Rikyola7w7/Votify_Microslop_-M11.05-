@@ -262,7 +262,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
     private void navigateToVoting() {
         getUI().ifPresent(ui ->
-            ui.navigate("competition/" + competitionId + "/vote"));
+            ui.navigate("competition/" + competitionId + "/category/" + categoryId + "/vote"));
     }
 
     private Div buildSummaryCard() {
