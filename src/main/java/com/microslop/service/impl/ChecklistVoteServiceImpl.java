@@ -52,20 +52,8 @@ public class ChecklistVoteServiceImpl implements ChecklistVoteService {
         ChecklistItem item = checklistItemRepository.findById(checklistItemId)
                 .orElseThrow(() -> new IllegalStateException("Checklist item not found."));
 
-        var competition = project.getCompetition();
-        if (!competition.isActive()) {
+        if (!project.getCompetition().isActive()) {
             throw new IllegalStateException("Competition is not active.");
-        }
-
-        // Find the category this checklist item belongs to
-        Category category = item.getCompetition().getCategories().stream()
-                .filter(c -> c.isChecklistVoting())
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No checklist voting category found."));
-
-        // Check if category is configured for checklist voting
-        if (!category.isChecklistVoting()) {
-            throw new IllegalStateException("This category does not use checklist voting.");
         }
 
         if (checklistVoteRepository.existsByUserIdAndProjectIdAndChecklistItemId(

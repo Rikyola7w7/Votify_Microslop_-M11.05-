@@ -1,7 +1,6 @@
 package com.microslop.views.components;
 
 import com.microslop.entity.ChecklistItem;
-import com.microslop.entity.Project;
 import com.microslop.service.ChecklistVoteService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -26,25 +25,25 @@ import java.util.Map;
  */
 public class ChecklistVotingDialog extends Dialog {
 
-    private final Project project;
+    private final Long projectId;
     private final List<ChecklistItem> checklistItems;
     private final ChecklistVoteService checklistVoteService;
     private final String username;
     private final Runnable onVoteSuccess;
     private final Map<ChecklistItem, Checkbox> checkboxes = new HashMap<>();
 
-    public ChecklistVotingDialog(Project project,
+    public ChecklistVotingDialog(Long projectId, String projectName,
                                  List<ChecklistItem> checklistItems,
                                  ChecklistVoteService checklistVoteService,
                                  String username,
                                  Runnable onVoteSuccess) {
-        this.project = project;
+        this.projectId = projectId;
         this.checklistItems = checklistItems;
         this.checklistVoteService = checklistVoteService;
         this.username = username;
         this.onVoteSuccess = onVoteSuccess;
 
-        setHeaderTitle("Checklist Voting: " + project.getName());
+        setHeaderTitle("Checklist Voting: " + projectName);
         setModal(true);
         setCloseOnEsc(true);
         setCloseOnOutsideClick(false);
@@ -109,7 +108,7 @@ public class ChecklistVotingDialog extends Dialog {
         try {
             for (Map.Entry<ChecklistItem, Checkbox> entry : checkboxes.entrySet()) {
                 if (entry.getValue().getValue()) {
-                    checklistVoteService.submitChecklistVote(username, project.getId(), entry.getKey().getId());
+                    checklistVoteService.submitChecklistVote(username, projectId, entry.getKey().getId());
                 }
             }
 

@@ -175,7 +175,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         
         // Checklist voting ignores max votes
         if (selectedCategory != null && selectedCategory.isChecklistVoting()) {
-            maxVotesLabel.setText("Checklist voting - no vote limit");
+            maxVotesLabel.setText("Mark checklist items for each project");
             maxVotesLabel.getStyle()
                 .set("color", "var(--primary)")
                 .set("background", "rgba(108, 92, 231, 0.1)");
@@ -239,7 +239,12 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         // Vote counter badge
         var competition = competitionService.getById(competitionId).orElse(null);
         maxVotesLabel = new Span();
-        if (competition != null && competition.getMaxVotesPerPerson() != null) {
+        if (selectedCategory.isChecklistVoting()) {
+            maxVotesLabel.setText("Mark checklist items for each project");
+            maxVotesLabel.getStyle()
+                .set("color", "var(--primary)")
+                .set("background", "rgba(108, 92, 231, 0.1)");
+        } else if (competition != null && competition.getMaxVotesPerPerson() != null) {
             maxVotesLabel.setText("You have " + competition.getMaxVotesPerPerson() + " votes to distribute");
         } else {
             maxVotesLabel.setText("Votes available");
@@ -258,6 +263,9 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         counterWrapper.getStyle()
             .set("text-align", "center")
             .set("margin-bottom", "1.5rem");
+        if (selectedCategory.isChecklistVoting()) {
+            counterWrapper.getStyle().set("display", "none");
+        }
 
         projectsContainer = new VerticalLayout();
         projectsContainer.setWidthFull();
@@ -575,9 +583,10 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 return;
             }
 
-            // Show checklist voting dialog
+            // Show checklist voting dialog — pass only IDs and name, not the detached entity
             ChecklistVotingDialog dialog = new ChecklistVotingDialog(
-                project,
+                project.getId(),
+                project.getName(),
                 checklistItems,
                 checklistVoteService,
                 username,
