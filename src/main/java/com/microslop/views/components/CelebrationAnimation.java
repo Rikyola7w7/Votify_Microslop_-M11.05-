@@ -108,6 +108,11 @@ public class CelebrationAnimation extends Div {
             // Chromatic layers
             "var msg='" + escapedMsg + "';" +
             "var sub='" + escapedSub + "';" +
+            "\n" +
+            // Text stack: relative container for chromatic layers, subtitle outside
+            "var textStack=document.createElement('div');" +
+            "textStack.style.cssText='position:relative;display:inline-block;';" +
+            "\n" +
             "function mkText(cls,anim){" +
             "  var d=document.createElement('div');d.textContent=msg;" +
             "  d.style.cssText='font-family:Courier New,monospace;font-size:clamp(1.8rem,7vw,4rem);font-weight:900;letter-spacing:.2em;white-space:nowrap;position:absolute;left:0;top:0;width:100%;'+anim;" +
@@ -121,15 +126,20 @@ public class CelebrationAnimation extends Div {
             "  }" +
             "  return d;" +
             "}" +
-            "tw.appendChild(mkText('r','animation:celCR 1.2s ease forwards 1.3s;z-index:1;'));" +
-            "tw.appendChild(mkText('g','animation:celCG 1.2s ease forwards 1.3s;z-index:2;'));" +
-            "tw.appendChild(mkText('b','animation:celCB 1.2s ease forwards 1.3s;z-index:3;'));" +
-            "tw.appendChild(mkText(null,''));" +
+            // Invisible spacer so the relative container has the right height
+            "var spacer=document.createElement('div');spacer.textContent=msg;" +
+            "spacer.style.cssText='font-family:Courier New,monospace;font-size:clamp(1.8rem,7vw,4rem);font-weight:900;letter-spacing:.2em;white-space:nowrap;visibility:hidden;';" +
+            "textStack.appendChild(spacer);" +
+            "textStack.appendChild(mkText('r','animation:celCR 1.2s ease forwards 1.3s;z-index:1;'));" +
+            "textStack.appendChild(mkText('g','animation:celCG 1.2s ease forwards 1.3s;z-index:2;'));" +
+            "textStack.appendChild(mkText('b','animation:celCB 1.2s ease forwards 1.3s;z-index:3;'));" +
+            "textStack.appendChild(mkText(null,''));" +
+            "tw.appendChild(textStack);" +
             "\n" +
             // Subtitle
             "var subEl=document.createElement('div');" +
             "subEl.textContent=sub;" +
-            "subEl.style.cssText='font-family:Courier New,monospace;font-size:clamp(.7rem,2vw,1rem);color:rgba(148,163,184,.9);letter-spacing:.1em;margin-top:1.2rem;opacity:0;animation:celSubIn .7s ease forwards 1.8s;';" +
+            "subEl.style.cssText='font-family:Courier New,monospace;font-size:clamp(.7rem,2vw,1rem);color:rgba(148,163,184,.9);letter-spacing:.1em;margin-top:1.2rem;opacity:0;animation:celSubIn .7s ease forwards 1.8s;position:relative;clear:both;';" +
             "tw.appendChild(subEl);" +
             "ov.appendChild(tw);" +
             "\n" +
