@@ -3,7 +3,9 @@ package com.microslop.command.vote;
 import com.microslop.command.AbstractCommand;
 import com.microslop.entity.Vote;
 import com.microslop.entity.Competition;
+import com.microslop.entity.Voter;
 import com.microslop.repository.VoteRepository;
+import com.microslop.repository.VoterRepository;
 import com.microslop.repository.CategoryRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
@@ -16,7 +18,6 @@ import org.slf4j.LoggerFactory;
 public class SubmitVoteCommand extends AbstractCommand<Void> {
 
     private static final Logger log = LoggerFactory.getLogger(SubmitVoteCommand.class);
-    private static final int MAX_VOTES_PER_CATEGORY = 1;
 
     private final String userUsername;
     private final Long projectId;
@@ -28,6 +29,7 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
     private final UserService userService;
     private final VoteCreator voteCreator;
     private final CategoryRepository categoryRepository;
+    private final VoterRepository voterRepository;
     private final StrategyRegistry strategyRegistry;
 
     private Vote createdVote;
@@ -35,16 +37,16 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
     public SubmitVoteCommand(String userUsername, Long projectId, Long categoryId,
                             VoteRepository voteRepository, ProjectService projectService,
                             UserService userService, VoteCreator voteCreator,
-                            CategoryRepository categoryRepository,
+                            CategoryRepository categoryRepository, VoterRepository voterRepository,
                             StrategyRegistry strategyRegistry) {
         this(userUsername, projectId, categoryId, 1, voteRepository, projectService,
-             userService, voteCreator, categoryRepository, strategyRegistry);
+             userService, voteCreator, categoryRepository, voterRepository, strategyRegistry);
     }
 
     public SubmitVoteCommand(String userUsername, Long projectId, Long categoryId, Integer points,
                             VoteRepository voteRepository, ProjectService projectService,
                             UserService userService, VoteCreator voteCreator,
-                            CategoryRepository categoryRepository,
+                            CategoryRepository categoryRepository, VoterRepository voterRepository,
                             StrategyRegistry strategyRegistry) {
         this.userUsername = userUsername;
         this.projectId = projectId;
@@ -55,6 +57,7 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
         this.userService = userService;
         this.voteCreator = voteCreator;
         this.categoryRepository = categoryRepository;
+        this.voterRepository = voterRepository;
         this.strategyRegistry = strategyRegistry;
     }
 
@@ -90,21 +93,25 @@ if ("CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
                     && java.time.LocalDateTime.now().isAfter(competition.getEndDate());
             if (hasEnded) {
                 throw new IllegalStateException(
-                    "Esta competición ha finalizado y ya no acepta votos.");
+                    "This competition has ended and no longer accepts votes.");
             } else {
                 throw new IllegalStateException(
-                    "Esta competición está pausada temporalmente. Inténtalo más tarde.");
+                    "This competition is currently paused. Try again later.");
             }
         }
 
         var category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new IllegalStateException("Category not found: " + categoryId));
 
-        long alreadyCastInCategory = voteRepository.countByUserIdAndCategoryId(
-            user.getId(), category.getId());
-        if (alreadyCastInCategory >= MAX_VOTES_PER_CATEGORY) {
+        // Check votes_left from Voter record
+        var voter = voterRepository.findByUserIdAndCompetitionIdAndCategoryId(
+                user.getId(), competition.getId(), categoryId)
+                .orElseThrow(() -> new IllegalStateException(
+                    "You are not registered as a voter for this category."));
+
+        if (voter.getVotesLeft() < points) {
             throw new IllegalStateException(
-                "You already voted for a project in this category.");
+                "You don't have enough votes left. You have " + voter.getVotesLeft() + " vote(s) remaining.");
         }
 
         int effectivePoints = votingStrategy.calculateVotePoints(user, competition, this.points);

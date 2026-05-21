@@ -60,6 +60,19 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = new Category();
         category.setName(categoryDTO.getName());
         category.setCompetition(competition);
+        if (categoryDTO.getVoterType() != null && !categoryDTO.getVoterType().isEmpty()) {
+            category.setVoterType(categoryDTO.getVoterType());
+        } else {
+            category.setVoterType("NORMAL");
+        }
+        if (categoryDTO.getVoteType() != null && !categoryDTO.getVoteType().isEmpty()) {
+            category.setVoteType(categoryDTO.getVoteType());
+        } else {
+            category.setVoteType("NORMAL");
+        }
+        if (categoryDTO.getImage() != null) {
+            category.setImage(categoryDTO.getImage());
+        }
 
         // Save to database
         return categoryRepository.save(category);

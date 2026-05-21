@@ -10,7 +10,7 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 @Data
-@ToString(exclude = {"votes", "comments", "password"})
+@ToString(exclude = {"votes", "comments", "password", "notifications"})
 public class User {
 
     @Id
@@ -43,6 +43,9 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = false)
     private List<ProjectComment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    private List<Notification> notifications = new ArrayList<>();
 
     public User() {
         this.creationDate = LocalDateTime.now();

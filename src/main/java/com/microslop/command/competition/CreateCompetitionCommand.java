@@ -24,6 +24,7 @@ public class CreateCompetitionCommand extends AbstractCommand<Competition> {
     private final LocalDateTime endDate;
     private final String eventType;
     private final String createdBy;
+    private final byte[] coverImage;
 
     private final CompetitionRepository competitionRepository;
 
@@ -43,6 +44,7 @@ public class CreateCompetitionCommand extends AbstractCommand<Competition> {
      */
     public CreateCompetitionCommand(String name, String description, LocalDateTime startDate,
                                    LocalDateTime endDate, String eventType, String createdBy,
+                                   byte[] coverImage,
                                    CompetitionRepository competitionRepository) {
         this.name = name;
         this.description = description;
@@ -50,6 +52,7 @@ public class CreateCompetitionCommand extends AbstractCommand<Competition> {
         this.endDate = endDate;
         this.eventType = eventType;
         this.createdBy = createdBy;
+        this.coverImage = coverImage;
         this.competitionRepository = competitionRepository;
     }
 
@@ -76,6 +79,9 @@ public class CreateCompetitionCommand extends AbstractCommand<Competition> {
         createdCompetition.setEventType(eventType);
         createdCompetition.setCreatedBy(createdBy);
         createdCompetition.setStatus(CompetitionStatus.DRAFT);
+        if (coverImage != null) {
+            createdCompetition.setCoverImage(coverImage);
+        }
 
         // Save to repository
         createdCompetition = competitionRepository.save(createdCompetition);
@@ -127,8 +133,6 @@ public class CreateCompetitionCommand extends AbstractCommand<Competition> {
         redoneCompetition.setVoterType(createdCompetition.getVoterType());
         redoneCompetition.setAutoVote(createdCompetition.getAutoVote());
         redoneCompetition.setMaxVotesPerPerson(createdCompetition.getMaxVotesPerPerson());
-        redoneCompetition.setJudgeWeightMultiplier(createdCompetition.getJudgeWeightMultiplier());
-        redoneCompetition.setStandardUserWeightMultiplier(createdCompetition.getStandardUserWeightMultiplier());
         redoneCompetition.setCommentsEnabled(createdCompetition.getCommentsEnabled());
         redoneCompetition.setCommentsRequired(createdCompetition.getCommentsRequired());
         redoneCompetition.setMaxVotes(createdCompetition.getMaxVotes());

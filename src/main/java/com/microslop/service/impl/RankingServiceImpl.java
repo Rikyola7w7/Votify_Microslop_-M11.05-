@@ -3,11 +3,11 @@ package com.microslop.service.impl;
 import com.microslop.service.RankingService;
 import com.microslop.repository.VoteRepository;
 import com.microslop.repository.ProjectRepository;
-import com.microslop.repository.JudgeRepository;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.strategy.StrategyRegistry;
 import com.microslop.strategy.ranking.RankingStrategy;
 import com.microslop.specification.project.ProjectsByCompetitionSpecification;
+import com.microslop.specification.vote.VotesByCompetitionSpecification;
 import com.microslop.specification.vote.VotesByProjectSpecification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,18 +24,15 @@ public class RankingServiceImpl implements RankingService {
 
     private final VoteRepository voteRepository;
     private final ProjectRepository projectRepository;
-    private final JudgeRepository judgeRepository;
     private final CompetitionRepository competitionRepository;
     private final StrategyRegistry strategyRegistry;
 
     public RankingServiceImpl(VoteRepository voteRepository,
                             ProjectRepository projectRepository,
-                            JudgeRepository judgeRepository,
                             CompetitionRepository competitionRepository,
                             StrategyRegistry strategyRegistry) {
         this.voteRepository = voteRepository;
         this.projectRepository = projectRepository;
-        this.judgeRepository = judgeRepository;
         this.competitionRepository = competitionRepository;
         this.strategyRegistry = strategyRegistry;
     }
@@ -58,10 +55,9 @@ public class RankingServiceImpl implements RankingService {
         RankingStrategy strategy = strategyRegistry.resolveRankingStrategy(competition.getRankingStrategyType());
 
         var projects = projectRepository.findAll(new ProjectsByCompetitionSpecification(competitionId));
-        var allVotes = voteRepository.findAll();
+        var allVotes = voteRepository.findAll(new VotesByCompetitionSpecification(competitionId));
 
         Map<Long, List<com.microslop.entity.Vote>> votesByProject = allVotes.stream()
-            .filter(v -> v.getProject().getCompetition().getId().equals(competitionId))
             .collect(java.util.stream.Collectors.groupingBy(v -> v.getProject().getId()));
 
         for (var project : projects) {

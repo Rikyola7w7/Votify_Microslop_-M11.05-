@@ -24,6 +24,12 @@ public class Project {
     @Column(length = 2000, name = "description")
     private String description;
 
+    @Column(name = "custom_position")
+    private Integer customPosition;
+
+    @Column(name = "manual_vote_count")
+    private Integer manualVoteCount;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "competition_id", nullable = false)
     private Competition competition;
