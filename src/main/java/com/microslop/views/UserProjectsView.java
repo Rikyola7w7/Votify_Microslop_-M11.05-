@@ -129,12 +129,28 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
     }
 
     private Div createProjectCard(Project project) {
-        return new ProjectCardComponent(
+        VerticalLayout wrapper = new VerticalLayout();
+        wrapper.setSpacing(true);
+        wrapper.setPadding(false);
+        wrapper.setWidthFull();
+
+        Div card = new ProjectCardComponent(
             project,
             currentUsername,
             projectService,
             () -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/projects/" + project.getId()))
         );
+        card.setWidthFull();
+
+        Button aiFeedbackBtn = new Button("Feedback IA", new Icon(VaadinIcon.CHART));
+        aiFeedbackBtn.addClassName("votify-btn-secondary");
+        aiFeedbackBtn.setHeight("36px");
+        aiFeedbackBtn.getStyle().set("font-size", "0.8rem").set("padding", "0 14px");
+        aiFeedbackBtn.addClickListener(e ->
+            getUI().ifPresent(ui -> ui.navigate("ai-feedback")));
+
+        wrapper.add(card, aiFeedbackBtn);
+        return new Div(wrapper);
     }
 
     private void showNoProjectsMessage() {

@@ -16,14 +16,8 @@ public class CategoryDTO {
     private Long id;
     private Long competitionId;
     private String name;
-    private int weight = 1;
 
     public CategoryDTO(String name) {
         this.name = name;
-    }
-
-    public CategoryDTO(String name, int weight) {
-        this.name = name;
-        this.weight = weight;
     }
 }
