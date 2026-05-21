@@ -494,6 +494,8 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
     }
 
     private void renderFeedback(AiFeedbackResult result) {
+        System.out.println("DEBUG - renderFeedback: summary = " + result.getSummary());
+        System.out.println("DEBUG - renderFeedback: frequentWords = " + result.getFrequentWords());
         dashboardPanel.removeAll();
 
         H3 title = new H3("Resumen general");

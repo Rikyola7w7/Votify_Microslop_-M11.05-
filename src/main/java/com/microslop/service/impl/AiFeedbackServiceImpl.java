@@ -117,18 +117,13 @@ public class AiFeedbackServiceImpl implements AiFeedbackService {
 
     private AiFeedbackResult parseGeminiResponse(String rawJson) {
         try {
-            // Gemini sometimes returns markdown code blocks, clean them
+            // Robust JSON extraction: locate the first '{' and last '}'
             String cleaned = rawJson.trim();
-            if (cleaned.startsWith("```json")) {
-                cleaned = cleaned.substring(7);
+            int firstBrace = cleaned.indexOf('{');
+            int lastBrace = cleaned.lastIndexOf('}');
+            if (firstBrace != -1 && lastBrace != -1 && lastBrace > firstBrace) {
+                cleaned = cleaned.substring(firstBrace, lastBrace + 1);
             }
-            if (cleaned.startsWith("```")) {
-                cleaned = cleaned.substring(3);
-            }
-            if (cleaned.endsWith("```")) {
-                cleaned = cleaned.substring(0, cleaned.length() - 3);
-            }
-            cleaned = cleaned.trim();
 
             JsonResponse response = objectMapper.readValue(cleaned, JsonResponse.class);
 

@@ -108,30 +108,31 @@ public class GeminiApiClient {
 
     private String buildPrompt(String commentsText) {
         return """
-            You are an expert sentiment analyst. Analyze the following user comments about a project/competition entry.
+            Eres un analista de sentimientos experto. Analiza los siguientes comentarios de los usuarios sobre la entrega de un proyecto/competencia.
 
-            Comments:
+            Comentarios:
             %s
 
-            Provide a structured JSON response with EXACTLY these fields:
+            Debes responder ÚNICAMENTE con un objeto JSON válido que siga EXACTAMENTE esta estructura, respetando los nombres de las claves en inglés tal como están:
             {
-              "summary": "A very brief 2-3 sentence overall summary of the feedback",
-              "positivePoints": ["point 1", "point 2", ...],
-              "negativePoints": ["point 1", "point 2", ...],
+              "summary": "Un resumen muy breve (de 2 a 3 frases) en español del análisis de los comentarios",
+              "positivePoints": ["punto positivo 1", "punto positivo 2", ...],
+              "negativePoints": ["punto negativo 1", "punto negativo 2", ...],
               "sentimentScore": 3.5,
               "positiveCount": 5,
               "neutralCount": 3,
               "negativeCount": 2,
-              "frequentWords": ["word1", "word2", "word3", "word4", "word5"]
+              "frequentWords": ["palabra1", "palabra2", "palabra3", "palabra4", "palabra5"]
             }
 
-            Rules:
-            - summary: max 300 characters, concise.
-            - positivePoints and negativePoints: arrays of short phrases (max 10 each).
-            - sentimentScore: a decimal number from 0.0 to 5.0 (0 = very negative, 5 = very positive).
-            - positiveCount, neutralCount, negativeCount: estimated distribution of comment sentiments (must sum to total comments count).
-            - frequentWords: up to 10 most repeated meaningful words from the comments (exclude common stop words like "the", "and", etc.).
-            - Respond ONLY with the JSON object, no markdown, no explanations.
+            Reglas estrictas:
+            1. El idioma de todo el contenido del JSON (los valores de: summary, positivePoints, negativePoints, frequentWords) debe ser estrictamente ESPAÑOL.
+            2. "summary": Debe ser un resumen conciso en español del análisis de los comentarios (máximo 300 caracteres).
+            3. "positivePoints" y "negativePoints": Listas de frases cortas en español (máximo 10 de cada una) que sinteticen lo bueno y lo malo.
+            4. "sentimentScore": Un número decimal del 0.0 al 5.0 (0.0 = extremadamente negativo, 5.0 = extremadamente positivo).
+            5. "positiveCount", "neutralCount", "negativeCount": Distribución estimada del sentimiento de los comentarios (la suma de estos tres campos DEBE ser exactamente igual al número total de comentarios analizados).
+            6. "frequentWords": Lista de hasta 10 palabras más frecuentes y significativas de los comentarios (excluye preposiciones, artículos y conectores comunes como "el", "y", "de", "que", etc.).
+            7. Responde ÚNICAMENTE con el objeto JSON. No incluyas bloques de código markdown (como ```json o ```), ni texto explicativo adicional antes o después del JSON.
             """.formatted(commentsText);
     }
 
