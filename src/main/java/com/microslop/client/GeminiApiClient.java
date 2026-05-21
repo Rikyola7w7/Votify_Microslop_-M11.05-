@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -71,10 +72,18 @@ public class GeminiApiClient {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 return extractTextFromResponse(response.getBody());
             }
-            throw new RuntimeException("Gemini API returned non-2xx status: " + response.getStatusCode());
+            throw new GeminiApiException("Gemini API returned non-2xx status: " + response.getStatusCode(), response.getStatusCode().value());
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 429) {
+                log.warn("Gemini API rate limit exceeded (429)");
+                throw new GeminiApiException(
+                    "The AI service is temporarily unavailable due to high demand. Please wait a minute and try again.", 429);
+            }
+            log.error("Gemini API client error: {}", e.getStatusCode());
+            throw new GeminiApiException("Gemini API error: " + e.getStatusText(), e);
         } catch (Exception e) {
             log.error("Error calling Gemini API", e);
-            throw new RuntimeException("Failed to generate AI feedback: " + e.getMessage(), e);
+            throw new GeminiApiException("Failed to generate AI feedback: " + e.getMessage(), e);
         }
     }
 

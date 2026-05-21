@@ -49,6 +49,7 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
     private final CompetitionRepository competitionRepository;
     private final CommandExecutor commandExecutor;
     private final StrategyRegistry strategyRegistry;
+    private final com.microslop.repository.VoterRepository voterRepository;
     private final List<VoteObserver> voteObservers;
 
     public VoteServiceImpl(VoteRepository voteRepository,
@@ -60,6 +61,7 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
                            CompetitionRepository competitionRepository,
                            CommandExecutor commandExecutor,
                            StrategyRegistry strategyRegistry,
+                           com.microslop.repository.VoterRepository voterRepository,
                            @Autowired(required = false) List<VoteObserver> observers) {
         this.voteRepository = voteRepository;
         this.projectService = projectService;
@@ -70,6 +72,7 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
         this.competitionRepository = competitionRepository;
         this.commandExecutor = commandExecutor;
         this.strategyRegistry = strategyRegistry;
+        this.voterRepository = voterRepository;
         this.voteObservers = new CopyOnWriteArrayList<>(
             observers != null ? observers : new ArrayList<>()
         );
@@ -129,7 +132,7 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
         SubmitVoteCommand command = new SubmitVoteCommand(
             userUsername, projectId, categoryId,
             voteRepository, projectService, userService, voteCreator, categoryRepository,
-            strategyRegistry
+            voterRepository, strategyRegistry
         );
         try {
             commandExecutor.execute(command);
@@ -149,7 +152,7 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
         SubmitVoteCommand command = new SubmitVoteCommand(
             userUsername, projectId, categoryId, points,
             voteRepository, projectService, userService, voteCreator, categoryRepository,
-            strategyRegistry
+            voterRepository, strategyRegistry
         );
         try {
             commandExecutor.execute(command);

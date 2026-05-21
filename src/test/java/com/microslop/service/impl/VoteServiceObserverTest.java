@@ -9,7 +9,7 @@ import com.microslop.event.VoteEvent;
 import com.microslop.observer.observer.VoteObserver;
 import com.microslop.strategy.StrategyRegistry;
 import com.microslop.strategy.voting.AllVotingStrategy;
-import com.microslop.strategy.ranking.WeightedScoreRankingStrategy;
+import com.microslop.strategy.ranking.AverageScoreRankingStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,11 +38,11 @@ class VoteServiceObserverTest {
     void setUp() {
         List<VoteObserver> observers = new ArrayList<>();
         List<com.microslop.strategy.voting.VotingStrategy> votingStrategies = List.of(new AllVotingStrategy());
-        List<com.microslop.strategy.ranking.RankingStrategy> rankingStrategies = List.of(new WeightedScoreRankingStrategy(null));
+        List<com.microslop.strategy.ranking.RankingStrategy> rankingStrategies = List.of(new AverageScoreRankingStrategy());
         StrategyRegistry strategyRegistry = new StrategyRegistry(votingStrategies, rankingStrategies);
         voteService = new VoteServiceImpl(
             null, null, null, null, null, null, null, null, strategyRegistry,
-            observers
+            null, observers
         );
     }
 

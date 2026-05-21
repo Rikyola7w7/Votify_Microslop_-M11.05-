@@ -34,6 +34,7 @@ public class CompetitionDTO {
     private String voteType = "NORMAL";
     private Integer scaleMin = 0;
     private Integer scaleMax = 10;
+    private byte[] coverImage;
     private List<CategoryDTO> categories = new ArrayList<>();
     private List<String> judgeUsernames = new ArrayList<>();
     private List<ChecklistItemDTO> checklistItems = new ArrayList<>();

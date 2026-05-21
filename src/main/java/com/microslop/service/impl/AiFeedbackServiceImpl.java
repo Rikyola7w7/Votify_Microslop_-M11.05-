@@ -3,6 +3,7 @@ package com.microslop.service.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microslop.client.GeminiApiClient;
+import com.microslop.client.GeminiApiException;
 import com.microslop.dto.AiFeedbackResult;
 import com.microslop.entity.AiFeedback;
 import com.microslop.entity.Project;
@@ -61,7 +62,13 @@ public class AiFeedbackServiceImpl implements AiFeedbackService {
             .reduce((a, b) -> a + "\n---\n" + b)
             .orElse("");
 
-        String rawJson = geminiApiClient.generateFeedback(commentsText);
+        String rawJson;
+        try {
+            rawJson = geminiApiClient.generateFeedback(commentsText);
+        } catch (GeminiApiException e) {
+            log.warn("Gemini API error for project {}: {}", projectId, e.getMessage());
+            throw new IllegalStateException(e.getMessage(), e);
+        }
         AiFeedbackResult result = parseGeminiResponse(rawJson);
 
         // Persist

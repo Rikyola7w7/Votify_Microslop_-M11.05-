@@ -30,10 +30,14 @@ public class PodiumCardComponent extends Div {
     }
 
     public PodiumCardComponent(Project project, Position position, long totalVotes) {
-        buildCard(project, position, totalVotes);
+        this(project, position, totalVotes, false, false, 0.0);
     }
 
-    private void buildCard(Project project, Position position, long totalVotes) {
+    public PodiumCardComponent(Project project, Position position, long totalVotes, boolean isChecklistMode, boolean isScaleMode, double avgScore) {
+        buildCard(project, position, totalVotes, isChecklistMode, isScaleMode, avgScore);
+    }
+
+    private void buildCard(Project project, Position position, long totalVotes, boolean isChecklistMode, boolean isScaleMode, double avgScore) {
         for (String cls : position.getCssClass().split(" ")) {
             addClassName(cls);
         }
@@ -69,7 +73,12 @@ public class PodiumCardComponent extends Div {
             .set("display", "block")
             .set("color", "var(--text-primary)");
 
-        Span votesSpan = new Span(totalVotes + " vote" + (totalVotes != 1 ? "s" : ""));
+        Span votesSpan;
+        if (isScaleMode && avgScore > 0) {
+            votesSpan = new Span(String.format("%.1f pts (%d vote%s)", avgScore, totalVotes, totalVotes != 1 ? "s" : ""));
+        } else {
+            votesSpan = new Span(totalVotes + " vote" + (totalVotes != 1 ? "s" : ""));
+        }
         votesSpan.getStyle()
             .set("font-size", position == Position.FIRST ? "13px" : "12px")
             .set("font-weight", "600")

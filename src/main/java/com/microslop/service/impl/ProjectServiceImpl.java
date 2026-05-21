@@ -115,4 +115,29 @@ public class ProjectServiceImpl implements ProjectService {
     public List<Project> getUserProjectsByUserId(Long userId) {
         return projectRepository.findAll(new ProjectsByCreatorSpecification(userId));
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Project> getRankingForCategory(Long categoryId, boolean isJudgesRanking) {
+        return isJudgesRanking ? getJudgeRankingByCategory(categoryId) : getPopularRankingByCategory(categoryId);
+    }
+
+    @Override
+    public void reclassifyProject(Long projectId, int newPosition) {
+        Project project = getById(projectId);
+        project.setCustomPosition(newPosition);
+        projectRepository.save(project);
+    }
+
+    @Override
+    public void declassifyProject(Long projectId) {
+        delete(projectId);
+    }
+
+    @Override
+    public void editProjectVotes(Long projectId, int newVoteCount) {
+        Project project = getById(projectId);
+        project.setManualVoteCount(newVoteCount);
+        projectRepository.save(project);
+    }
 }

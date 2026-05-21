@@ -93,13 +93,36 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
 
         mainContainer = new VerticalLayout();
         mainContainer.setPadding(false);
-        mainContainer.setSpacing(true);
+        mainContainer.setSpacing(false);
         mainContainer.setWidth("100%");
         mainContainer.setMaxWidth("1200px");
         mainContainer.getStyle().set("margin", "0 auto").set("padding", "24px 40px 40px");
 
-        mainContainer.add(buildFilterPanel());
-        mainContainer.add(buildMainContent());
+        // Title above the filter panel
+        H2 pageTitle = new H2("Generaci\u00f3n autom\u00e1tica de feedback por IA");
+        pageTitle.getStyle()
+            .set("margin", "0 0 16px 0")
+            .set("color", "var(--dark)")
+            .set("font-weight", "800")
+            .set("font-size", "1.5rem");
+        mainContainer.add(pageTitle);
+
+        // Filter panel container with spacing
+        VerticalLayout filterWrapper = new VerticalLayout();
+        filterWrapper.setPadding(false);
+        filterWrapper.setSpacing(false);
+        filterWrapper.setWidthFull();
+        filterWrapper.add(buildFilterPanel());
+        mainContainer.add(filterWrapper);
+
+        // Main content with spacing from filter
+        VerticalLayout contentWrapper = new VerticalLayout();
+        contentWrapper.setPadding(false);
+        contentWrapper.setSpacing(false);
+        contentWrapper.setWidthFull();
+        contentWrapper.getStyle().set("margin-top", "20px");
+        contentWrapper.add(buildMainContent());
+        mainContainer.add(contentWrapper);
 
         add(mainContainer);
     }
@@ -116,14 +139,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(loggedInUsername + "/projects")));
 
-        H2 title = new H2("Generación automática de feedback por IA");
-        title.getStyle()
-            .set("margin", "0")
-            .set("color", "var(--dark)")
-            .set("font-weight", "800")
-            .set("font-size", "1.3rem");
-
-        header.add(backButton, title);
+        header.add(backButton);
         return header;
     }
 
@@ -158,6 +174,13 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             }
         });
 
+        // Left group: competition + project with small gap
+        HorizontalLayout leftGroup = new HorizontalLayout();
+        leftGroup.setSpacing(false);
+        leftGroup.getStyle().set("gap", "8px");
+        leftGroup.setAlignItems(FlexComponent.Alignment.CENTER);
+        leftGroup.add(competitionCombo, projectCombo);
+
         generateButton = new Button("Generar Feedback");
         generateButton.setIcon(new Icon(VaadinIcon.MAGIC));
         generateButton.addClassName("votify-btn-primary");
@@ -167,13 +190,20 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         lastGenerationLabel = new Span("\u00daltima generaci\u00f3n: --/--/----");
         lastGenerationLabel.getStyle()
             .set("font-size", "0.85rem")
-            .set("color", "var(--text-muted)")
-            .set("margin-left", "auto");
+            .set("color", "var(--text-muted)");
 
-        panel.add(competitionCombo, projectCombo, generateButton, lastGenerationLabel);
-        panel.setFlexGrow(0, competitionCombo, projectCombo, generateButton);
-        panel.setFlexGrow(1, lastGenerationLabel);
-        panel.setAlignSelf(FlexComponent.Alignment.CENTER, lastGenerationLabel);
+        // Right-aligned group: last generation label + generate button
+        HorizontalLayout rightGroup = new HorizontalLayout();
+        rightGroup.setSpacing(false);
+        rightGroup.getStyle().set("gap", "8px");
+        rightGroup.setAlignItems(FlexComponent.Alignment.CENTER);
+        rightGroup.add(lastGenerationLabel, generateButton);
+
+        panel.setSpacing(false);
+        panel.getStyle().set("gap", "12px");
+        panel.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        panel.add(leftGroup, rightGroup);
+        panel.setFlexGrow(0, leftGroup, rightGroup);
         return panel;
     }
 

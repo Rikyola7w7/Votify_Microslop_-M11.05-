@@ -101,6 +101,9 @@ public class Competition {
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChecklistItem> checklistItems = new ArrayList<>();
 
+    @Column(name = "cover_image")
+    private byte[] coverImage;
+
     @Column(nullable = false, name = "max_votes")
     private int maxVotes = 1;
 

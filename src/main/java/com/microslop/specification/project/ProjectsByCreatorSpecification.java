@@ -2,8 +2,10 @@ package com.microslop.specification.project;
 
 import com.microslop.entity.Project;
 import com.microslop.specification.AbstractSpecification;
+import com.microslop.entity.User;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 
@@ -20,6 +22,7 @@ public class ProjectsByCreatorSpecification extends AbstractSpecification<Projec
 
     @Override
     protected Predicate getPredicates(Root<Project> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
-        return cb.isMember(userId, root.get("participants"));
+        Join<Project, User> participants = root.join("participants");
+        return cb.equal(participants.get("id"), userId);
     }
 }
