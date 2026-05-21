@@ -14,6 +14,7 @@ public class CategoryDTO {
     private String name;
     private String voterType = "NORMAL";
     private String voteType = "NORMAL";
+    private byte[] image;
 
     public CategoryDTO(String name) {
         this.name = name;

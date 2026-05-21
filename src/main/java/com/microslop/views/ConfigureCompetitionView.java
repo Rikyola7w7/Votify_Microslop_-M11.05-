@@ -29,6 +29,8 @@ import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
+import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -236,6 +238,54 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
         dateTimeLayout.add(startDatePicker, startTimePicker, endDatePicker, endTimePicker);
 
+        // Cover image upload
+        H4 coverImageTitle = new H4("COVER IMAGE");
+        coverImageTitle.getStyle().set("margin", "16px 0 10px 0").set("color", "var(--dark)").set("font-weight", "700");
+
+        var compImageBuffer = new MemoryBuffer();
+        var compImageUpload = new Upload(compImageBuffer);
+        compImageUpload.setMaxFiles(1);
+        compImageUpload.setAcceptedFileTypes("image/png", "image/jpeg", "image/webp");
+        compImageUpload.setWidth("100%");
+        compImageUpload.getElement().getStyle()
+                .set("border", "2px dashed var(--border)")
+                .set("border-radius", "var(--radius-md)")
+                .set("padding", "1rem")
+                .set("text-align", "center");
+
+        var compImagePreview = new Div();
+        compImagePreview.setWidth("100%");
+        compImagePreview.getStyle().set("text-align", "center").set("margin-top", "8px");
+
+        // Show current cover image if exists
+        if (currentCompetition.getCoverImage() != null && currentCompetition.getCoverImage().length > 0) {
+            String base64 = java.util.Base64.getEncoder().encodeToString(currentCompetition.getCoverImage());
+            var preview = new com.vaadin.flow.component.html.Image("data:image/png;base64," + base64, "Current cover");
+            preview.setWidth("200px");
+            preview.setHeight("120px");
+            preview.getStyle().set("object-fit", "cover").set("border-radius", "var(--radius-md)");
+            compImagePreview.add(preview);
+        }
+
+        compImageUpload.addSucceededListener(event -> {
+            try {
+                var stream = compImageBuffer.getInputStream();
+                currentCompetition.setCoverImage(stream.readAllBytes());
+                stream.close();
+                markAsChanged();
+                compImagePreview.removeAll();
+                String base64 = java.util.Base64.getEncoder().encodeToString(currentCompetition.getCoverImage());
+                var preview = new com.vaadin.flow.component.html.Image("data:image/png;base64," + base64, "Cover preview");
+                preview.setWidth("200px");
+                preview.setHeight("120px");
+                preview.getStyle().set("object-fit", "cover").set("border-radius", "var(--radius-md)");
+                compImagePreview.add(preview);
+            } catch (Exception ex) {
+                Notification.show("Error reading image", 3000, Notification.Position.BOTTOM_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
         H4 categoriesTitle = new H4("CATEGORIES");
         categoriesTitle.getStyle().set("margin", "16px 0 10px 0").set("color", "var(--dark)").set("font-weight", "700");
 
@@ -254,7 +304,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         addCategoryButton.setIcon(new Icon(VaadinIcon.PLUS));
         addCategoryButton.addClickListener(e -> showAddCategoryDialog());
 
-        section.add(sectionTitle, dateTimeLayout, categoriesTitle, categoriesContainer, addCategoryButton);
+        section.add(sectionTitle, dateTimeLayout, coverImageTitle, compImageUpload, compImagePreview, categoriesTitle, categoriesContainer, addCategoryButton);
         return section;
     }
 

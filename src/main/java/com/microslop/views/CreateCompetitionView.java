@@ -23,6 +23,8 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -55,6 +57,9 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
     private final TextField judgeUsernameField;
     private final VerticalLayout judgesContainer;
     private final List<String> selectedJudges;
+
+    private byte[] competitionCoverImage;
+    private byte[] categoryImage;
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
@@ -161,6 +166,48 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
                 endDatePicker
         );
 
+        // Competition cover image upload
+        H4 coverImageTitle = new H4("Cover Image (Optional)");
+        coverImageTitle.getStyle()
+                .set("font-weight", "700")
+                .set("color", "var(--dark)")
+                .set("margin", "16px 0 8px 0");
+
+        var compImageBuffer = new MemoryBuffer();
+        var compImageUpload = new Upload(compImageBuffer);
+        compImageUpload.setMaxFiles(1);
+        compImageUpload.setAcceptedFileTypes("image/png", "image/jpeg", "image/webp");
+        compImageUpload.setWidth("100%");
+        compImageUpload.getElement().getStyle()
+                .set("border", "2px dashed var(--border)")
+                .set("border-radius", "var(--radius-md)")
+                .set("padding", "1rem")
+                .set("text-align", "center");
+
+        var compImagePreview = new Div();
+        compImagePreview.setWidth("100%");
+        compImagePreview.getStyle()
+                .set("text-align", "center")
+                .set("margin-top", "8px");
+
+        compImageUpload.addSucceededListener(event -> {
+            try {
+                var stream = compImageBuffer.getInputStream();
+                competitionCoverImage = stream.readAllBytes();
+                stream.close();
+                String base64 = java.util.Base64.getEncoder().encodeToString(competitionCoverImage);
+                compImagePreview.removeAll();
+                var preview = new com.vaadin.flow.component.html.Image(
+                    "data:image/png;base64," + base64, "Cover preview");
+                preview.setWidth("200px");
+                preview.setHeight("120px");
+                preview.getStyle().set("object-fit", "cover").set("border-radius", "var(--radius-md)");
+                compImagePreview.add(preview);
+            } catch (Exception ex) {
+                showNotification("Error reading image", NotificationVariant.LUMO_ERROR);
+            }
+        });
+
         H4 categoriesTitle = new H4("Categories");
         categoriesTitle.getStyle()
                 .set("font-weight", "700")
@@ -182,12 +229,35 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         categoryVoterTypeCombo.addClassName("votify-input");
         categoryVoterTypeCombo.setWidth("180px");
 
+        // Category image upload
+        var catImageBuffer = new MemoryBuffer();
+        var catImageUpload = new Upload(catImageBuffer);
+        catImageUpload.setMaxFiles(1);
+        catImageUpload.setAcceptedFileTypes("image/png", "image/jpeg", "image/webp");
+        catImageUpload.setWidth("180px");
+        catImageUpload.getElement().getStyle()
+                .set("border", "2px dashed var(--border)")
+                .set("border-radius", "var(--radius-md)")
+                .set("padding", "0.5rem")
+                .set("text-align", "center")
+                .set("font-size", "0.8rem");
+
+        catImageUpload.addSucceededListener(event -> {
+            try {
+                var stream = catImageBuffer.getInputStream();
+                categoryImage = stream.readAllBytes();
+                stream.close();
+            } catch (Exception ex) {
+                showNotification("Error reading category image", NotificationVariant.LUMO_ERROR);
+            }
+        });
+
         Button addCategoryButton = new Button("Add Category");
         addCategoryButton.addClassName("votify-btn-primary");
         addCategoryButton.setIcon(new Icon(VaadinIcon.PLUS));
         addCategoryButton.addClickListener(e -> addCategory());
 
-        categoryInputLayout.add(categoryNameField, categoryVoterTypeCombo, addCategoryButton);
+        categoryInputLayout.add(categoryNameField, categoryVoterTypeCombo, catImageUpload, addCategoryButton);
 
         categoryCountSpan = new Span("0 categories added");
         categoryCountSpan.getStyle().set("font-weight", "bold").set("color", "var(--text-muted)");
@@ -250,6 +320,9 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
 
         contentCard.add(
                 formLayout,
+                coverImageTitle,
+                compImageUpload,
+                compImagePreview,
                 categoriesTitle,
                 categoryInputLayout,
                 categoryCountSpan,
@@ -285,12 +358,14 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         String vtValue = categoryVoterTypeCombo.getValue();
         String voteType = "Scale".equals(vtValue) ? "SCALE" : "Checklist".equals(vtValue) ? "CHECKLIST" : "NORMAL";
         CategoryDTO category = new CategoryDTO(categoryName, "NORMAL", voteType);
+        category.setImage(categoryImage);
         selectedCategories.add(category);
         displayCategory(category);
         updateCategoryCount();
 
         categoryNameField.clear();
         categoryVoterTypeCombo.setValue("Normal");
+        categoryImage = null;
     }
 
     private void updateCategoryCount() {
@@ -443,6 +518,7 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
                     endDate.atTime(LocalTime.MAX),
                     eventType
             );
+            dto.setCoverImage(competitionCoverImage);
 
             for (CategoryDTO category : selectedCategories) {
                 dto.addCategory(category);

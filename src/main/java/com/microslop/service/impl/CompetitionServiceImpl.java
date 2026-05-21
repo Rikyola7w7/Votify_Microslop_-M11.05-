@@ -154,6 +154,7 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
             competitionDTO.getEndDate(),
             competitionDTO.getEventType(),
             creatorUsername,
+            competitionDTO.getCoverImage(),
             competitionRepository
         );
         
@@ -171,6 +172,9 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
                 }
                 if (categoryDTO.getVoteType() != null && !categoryDTO.getVoteType().isEmpty()) {
                     category.setVoteType(categoryDTO.getVoteType());
+                }
+                if (categoryDTO.getImage() != null) {
+                    category.setImage(categoryDTO.getImage());
                 }
                 savedCompetition.addCategory(category);
             }

@@ -5,11 +5,13 @@ import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 
 public class CompetitionCardComponent extends Div {
 
@@ -96,21 +98,32 @@ public class CompetitionCardComponent extends Div {
     private Div createIconBlock() {
         Div iconContainer = new Div();
         iconContainer.setWidthFull();
-        iconContainer.setHeight(70, Unit.PIXELS);
+        iconContainer.setHeight(140, Unit.PIXELS);
         iconContainer.getStyle()
-            .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))")
             .set("display", "flex")
             .set("align-items", "center")
             .set("justify-content", "center")
-            .set("flex-shrink", "0");
+            .set("flex-shrink", "0")
+            .set("overflow", "hidden");
 
-        Icon chartIcon = VaadinIcon.CHART_3D.create();
-        chartIcon.setSize("40px");
-        chartIcon.getElement().getStyle()
+        byte[] coverImage = competition.getCoverImage();
+        if (coverImage != null && coverImage.length > 0) {
+            String base64 = Base64.getEncoder().encodeToString(coverImage);
+            Image img = new Image("data:image/png;base64," + base64, competition.getName());
+            img.setWidth("100%");
+            img.setHeight("100%");
+            img.getStyle().set("object-fit", "cover");
+            iconContainer.add(img);
+        } else {
+            iconContainer.getStyle()
+                .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))");
+            Icon chartIcon = VaadinIcon.CHART_3D.create();
+            chartIcon.setSize("40px");
+            chartIcon.getElement().getStyle()
                 .set("color", "white")
                 .set("text-shadow", "0 1px 4px rgba(0,0,0,0.2)");
-
-        iconContainer.add(chartIcon);
+            iconContainer.add(chartIcon);
+        }
         return iconContainer;
     }
 

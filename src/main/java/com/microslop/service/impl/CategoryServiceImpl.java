@@ -70,6 +70,9 @@ public class CategoryServiceImpl implements CategoryService {
         } else {
             category.setVoteType("NORMAL");
         }
+        if (categoryDTO.getImage() != null) {
+            category.setImage(categoryDTO.getImage());
+        }
 
         // Save to database
         return categoryRepository.save(category);

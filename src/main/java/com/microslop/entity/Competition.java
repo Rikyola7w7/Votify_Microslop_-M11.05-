@@ -43,6 +43,10 @@ public class Competition {
     @Column(name = "event_type", length = 100)
     private String eventType;
 
+    @Lob
+    @Column(name = "cover_image")
+    private byte[] coverImage;
+
     @Column(name = "created_by", length = 255)
     private String createdBy;
 

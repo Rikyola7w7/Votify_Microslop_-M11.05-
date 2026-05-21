@@ -29,6 +29,7 @@ public class CompetitionDTO {
     private Boolean commentsEnabled;
     private Boolean commentsRequired;
     private int maxVotes;
+    private byte[] coverImage;
     private List<CategoryDTO> categories = new ArrayList<>();
     private List<String> judgeUsernames = new ArrayList<>();
 

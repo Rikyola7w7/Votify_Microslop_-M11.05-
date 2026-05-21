@@ -42,6 +42,7 @@ class VoteServiceObserverTest {
         StrategyRegistry strategyRegistry = new StrategyRegistry(votingStrategies, rankingStrategies);
         voteService = new VoteServiceImpl(
             null, null, null, null, null, null, null,
+            strategyRegistry,
             observers
         );
     }
