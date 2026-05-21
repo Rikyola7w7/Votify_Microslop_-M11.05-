@@ -547,8 +547,17 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             int remainingVotes = getAvailableVotes(selectedCategory);
             boolean isLastVote = remainingVotes <= 0;
 
+            // Update label immediately with correct remaining count
+            if (!isLastVote) {
+                if (remainingVotes <= 0) {
+                    maxVotesLabel.setText("No votes remaining");
+                } else {
+                    maxVotesLabel.setText("You have " + remainingVotes + " vote" + (remainingVotes != 1 ? "s" : "") + " left");
+                }
+                maxVotesLabel.getStyle().set("animation", "vote-success-pulse 0.4s ease");
+            }
+
             Runnable afterAnimation = () -> {
-                updateMaxVotesLabel(selectedCategory);
                 if (isLastVote) {
                     getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories/" + selectedCategory.getId() + "/ranking"));
                 } else {
@@ -598,6 +607,16 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
             int remainingVotes = getAvailableVotes(selectedCategory);
             boolean isLastVote = remainingVotes <= 0;
+
+            // Update label immediately
+            if (!isLastVote) {
+                if (remainingVotes <= 0) {
+                    maxVotesLabel.setText("No votes remaining");
+                } else {
+                    maxVotesLabel.setText("You have " + remainingVotes + " vote" + (remainingVotes != 1 ? "s" : "") + " left");
+                }
+                maxVotesLabel.getStyle().set("animation", "vote-success-pulse 0.4s ease");
+            }
 
             Runnable afterAnimation = () -> {
                 if (isLastVote) {

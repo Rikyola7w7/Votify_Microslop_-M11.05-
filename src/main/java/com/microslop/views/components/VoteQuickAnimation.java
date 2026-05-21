@@ -47,24 +47,28 @@ public class VoteQuickAnimation extends Div {
         "document.body.appendChild(ov);" +
         "requestAnimationFrame(function(){ov.style.opacity='1';});" +
         "\n" +
-        // Ballot box
+        // Ballot box — bigger
         "var box=document.createElement('div');" +
-        "box.style.cssText='position:relative;width:100px;height:80px;margin-bottom:24px;';" +
+        "box.style.cssText='position:relative;width:140px;height:100px;margin-bottom:28px;';" +
         // Box body
         "var body=document.createElement('div');" +
-        "body.style.cssText='position:absolute;bottom:0;left:10px;width:80px;height:50px;background:linear-gradient(135deg,#6C5CE7,#5A4BD1);border-radius:0 0 8px 8px;box-shadow:0 8px 24px rgba(108,92,231,.3);';" +
-        // Box slot
+        "body.style.cssText='position:absolute;bottom:0;left:15px;width:110px;height:65px;background:linear-gradient(135deg,#6C5CE7,#5A4BD1);border-radius:4px 4px 12px 12px;box-shadow:0 10px 30px rgba(108,92,231,.35);';" +
+        // Box slot — wider
         "var slot=document.createElement('div');" +
-        "slot.style.cssText='position:absolute;top:0;left:20px;width:60px;height:6px;background:#1E1E2F;border-radius:3px;box-shadow:inset 0 2px 4px rgba(0,0,0,.4);z-index:2;';" +
-        // Ballot paper
+        "slot.style.cssText='position:absolute;top:-1px;left:25px;width:90px;height:8px;background:#1E1E2F;border-radius:4px;box-shadow:inset 0 2px 6px rgba(0,0,0,.5);z-index:2;';" +
+        // Ballot paper — bigger with more detail
         "var ballot=document.createElement('div');" +
-        "ballot.style.cssText='position:absolute;top:-40px;left:30px;width:40px;height:30px;background:#F8F9FC;border:2px solid #A29BFE;border-radius:3px;z-index:3;opacity:0;transform:rotate(-5deg);transition:all .5s cubic-bezier(.34,1.56,.64,1);';" +
-        // Checkmark on ballot
+        "ballot.style.cssText='position:absolute;top:-60px;left:35px;width:70px;height:50px;background:#F8F9FC;border:2px solid #A29BFE;border-radius:4px;z-index:3;opacity:0;transform:rotate(-5deg);transition:all .5s cubic-bezier(.34,1.56,.64,1);box-shadow:0 4px 12px rgba(0,0,0,.15);';" +
+        // Checkmark circle on ballot — bigger
         "var check=document.createElement('div');" +
-        "check.style.cssText='position:absolute;top:8px;left:12px;width:14px;height:14px;border:2px solid #6C5CE7;border-radius:50%;';" +
+        "check.style.cssText='position:absolute;top:12px;left:18px;width:22px;height:22px;border:2.5px solid #6C5CE7;border-radius:50%;';" +
+        // Checkmark tick — bigger
         "var tick=document.createElement('div');" +
-        "tick.style.cssText='position:absolute;top:4px;left:3px;width:6px;height:8px;border-right:2px solid #6C5CE7;border-bottom:2px solid #6C5CE7;transform:rotate(45deg);';" +
-        "check.appendChild(tick);ballot.appendChild(check);" +
+        "tick.style.cssText='position:absolute;top:5px;left:5px;width:8px;height:12px;border-right:2.5px solid #6C5CE7;border-bottom:2.5px solid #6C5CE7;transform:rotate(45deg);';" +
+        // Text lines on ballot — more detail
+        "var l1=document.createElement('div');l1.style.cssText='position:absolute;top:12px;right:10px;width:20px;height:3px;background:#A29BFE;border-radius:2px;';" +
+        "var l2=document.createElement('div');l2.style.cssText='position:absolute;top:20px;right:10px;width:14px;height:3px;background:#A29BFE;border-radius:2px;';" +
+        "check.appendChild(tick);ballot.appendChild(check);ballot.appendChild(l1);ballot.appendChild(l2);" +
         "body.appendChild(slot);box.appendChild(body);box.appendChild(ballot);ov.appendChild(box);" +
         "\n" +
         // Text
@@ -73,7 +77,7 @@ public class VoteQuickAnimation extends Div {
         "txt.style.cssText='font-family:Courier New,monospace;font-size:clamp(.9rem,3vw,1.3rem);font-weight:700;letter-spacing:.1em;color:#A29BFE;text-shadow:0 0 15px rgba(108,92,231,.4);opacity:0;transition:opacity .3s ease .6s;white-space:nowrap;';" +
         "ov.appendChild(txt);" +
         "\n" +
-        "setTimeout(function(){ballot.style.opacity='1';ballot.style.top='8px';ballot.style.transform='rotate(0deg)';},200);" +
+        "setTimeout(function(){ballot.style.opacity='1';ballot.style.top='10px';ballot.style.transform='rotate(0deg)';},200);" +
         "setTimeout(function(){txt.style.opacity='1';},600);";
     }
 

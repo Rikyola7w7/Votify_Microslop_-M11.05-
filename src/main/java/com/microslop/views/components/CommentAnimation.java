@@ -25,12 +25,12 @@ public class CommentAnimation extends Div {
         "\n" +
         // Speech bubble
         "var bubble=document.createElement('div');" +
-        "bubble.style.cssText='position:relative;background:#F8F9FC;border-radius:16px 16px 16px 4px;padding:16px 24px;box-shadow:0 8px 32px rgba(108,92,231,.2);transform:scale(0);opacity:0;transition:all .35s cubic-bezier(.34,1.56,.64,1);max-width:280px;';" +
+        "bubble.style.cssText='position:relative;background:#F8F9FC;border-radius:16px 16px 16px 4px;padding:20px 28px;box-shadow:0 8px 32px rgba(108,92,231,.2);transform:scale(0);opacity:0;transition:all .35s cubic-bezier(.34,1.56,.64,1);min-width:180px;';" +
         // Lines inside bubble (writing effect)
         "for(var i=0;i<3;i++){" +
         "  var line=document.createElement('div');" +
         "  var widths=['80%','60%','40%'];" +
-        "  line.style.cssText='height:6px;background:linear-gradient(90deg,#E8EAED 0%,#E8EAED '+widths[i]+',transparent '+widths[i]+');border-radius:3px;margin:4px 0;opacity:0;transition:opacity .2s ease '+(.3+i*.15)+'s;';" +
+        "  line.style.cssText='height:10px;background:#E8EAED;border-radius:5px;margin:7px 0;opacity:0;transition:opacity .2s ease '+(.3+i*.15)+'s;width:'+widths[i]+';';" +
         "  bubble.appendChild(line);" +
         "}" +
         "ov.appendChild(bubble);" +
