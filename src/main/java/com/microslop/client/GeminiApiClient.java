@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -14,75 +15,93 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Client for the Google Gemini API (Generative Language API).
- * Uses RestTemplate to make HTTP calls to the free tier endpoint.
+ * Client for the Gemini API via OpenRouter.
+ * Uses RestTemplate to make HTTP calls.
  */
 @Component
 public class GeminiApiClient {
 
     private static final Logger log = LoggerFactory.getLogger(GeminiApiClient.class);
-    private static final String GEMINI_ENDPOINT =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+    private static final String OPENROUTER_ENDPOINT =
+        "https://openrouter.ai/api/v1/chat/completions";
 
     private final String apiKey;
+    private final String model;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    public GeminiApiClient(@Value("${GEMINI_API_KEY:}") String apiKey) {
-        this.apiKey = apiKey;
+    public GeminiApiClient(String apiKey) {
+        this(apiKey, "", "google/gemini-2.0-flash-001");
+    }
+
+    @Autowired
+    public GeminiApiClient(
+            @Value("${OPENROUTER_API_KEY:}") String openRouterApiKey,
+            @Value("${GEMINI_API_KEY:}") String geminiApiKey,
+            @Value("${OPENROUTER_MODEL:google/gemini-2.0-flash-001}") String model) {
+        if (openRouterApiKey != null && !openRouterApiKey.isBlank() &&
+            !"TU_API_KEY_DE_OPENROUTER".equals(openRouterApiKey) && !"TU_API_KEY_DE_GEMINI".equals(openRouterApiKey)) {
+            this.apiKey = openRouterApiKey;
+        } else if (geminiApiKey != null && !geminiApiKey.isBlank() &&
+                   !"TU_API_KEY_DE_GEMINI".equals(geminiApiKey) && !"TU_API_KEY_DE_OPENROUTER".equals(geminiApiKey)) {
+            this.apiKey = geminiApiKey;
+        } else {
+            this.apiKey = "";
+        }
+        this.model = model != null && !model.isBlank() ? model : "google/gemini-2.0-flash-001";
         this.restTemplate = new RestTemplate();
         this.objectMapper = new ObjectMapper();
     }
 
     /**
-     * Generates AI feedback by sending all project comments to Gemini.
+     * Generates AI feedback by sending all project comments to OpenRouter.
      *
      * @param commentsText concatenated comments text
-     * @return raw JSON response string from Gemini
+     * @return raw JSON response string from OpenRouter/Gemini
      */
     public String generateFeedback(String commentsText) {
-        if (apiKey == null || apiKey.isBlank() || "TU_API_KEY_DE_GEMINI".equals(apiKey)) {
-            throw new IllegalStateException("Gemini API key is not configured. Please set GEMINI_API_KEY in .env");
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException("OpenRouter/Gemini API key is not configured. Please set OPENROUTER_API_KEY in .env");
         }
 
         String prompt = buildPrompt(commentsText);
 
         Map<String, Object> requestBody = Map.of(
-            "contents", List.of(
-                Map.of("parts", List.of(Map.of("text", prompt)))
+            "model", model,
+            "messages", List.of(
+                Map.of("role", "user", "content", prompt)
             ),
-            "generationConfig", Map.of(
-                "temperature", 0.3,
-                "maxOutputTokens", 2048,
-                "responseMimeType", "application/json"
-            )
+            "temperature", 0.3,
+            "max_tokens", 2048,
+            "response_format", Map.of("type", "json_object")
         );
-
-        String url = GEMINI_ENDPOINT + "?key=" + apiKey;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(apiKey);
+        headers.set("HTTP-Referer", "http://localhost:8080");
+        headers.set("X-Title", "Votify");
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
         try {
-            log.info("Sending request to Gemini API for feedback generation");
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+            log.info("Sending request to OpenRouter API ({}) for feedback generation", model);
+            ResponseEntity<String> response = restTemplate.exchange(OPENROUTER_ENDPOINT, HttpMethod.POST, entity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 return extractTextFromResponse(response.getBody());
             }
-            throw new GeminiApiException("Gemini API returned non-2xx status: " + response.getStatusCode(), response.getStatusCode().value());
+            throw new GeminiApiException("OpenRouter API returned non-2xx status: " + response.getStatusCode(), response.getStatusCode().value());
         } catch (HttpClientErrorException e) {
+            log.error("OpenRouter API client error: {}, response body: {}", e.getStatusCode(), e.getResponseBodyAsString());
             if (e.getStatusCode().value() == 429) {
-                log.warn("Gemini API rate limit exceeded (429)");
+                log.warn("OpenRouter API rate limit exceeded (429)");
                 throw new GeminiApiException(
                     "The AI service is temporarily unavailable due to high demand. Please wait a minute and try again.", 429);
             }
-            log.error("Gemini API client error: {}", e.getStatusCode());
-            throw new GeminiApiException("Gemini API error: " + e.getStatusText(), e);
+            throw new GeminiApiException("OpenRouter API error: " + e.getStatusText() + " - " + e.getResponseBodyAsString(), e);
         } catch (Exception e) {
-            log.error("Error calling Gemini API", e);
+            log.error("Error calling OpenRouter API", e);
             throw new GeminiApiException("Failed to generate AI feedback: " + e.getMessage(), e);
         }
     }
@@ -119,18 +138,18 @@ public class GeminiApiClient {
     private String extractTextFromResponse(String responseBody) {
         try {
             JsonNode root = objectMapper.readTree(responseBody);
-            JsonNode candidates = root.path("candidates");
-            if (candidates.isArray() && !candidates.isEmpty()) {
-                JsonNode content = candidates.get(0).path("content");
-                JsonNode parts = content.path("parts");
-                if (parts.isArray() && !parts.isEmpty()) {
-                    return parts.get(0).path("text").asText();
+            JsonNode choices = root.path("choices");
+            if (choices.isArray() && !choices.isEmpty()) {
+                JsonNode message = choices.get(0).path("message");
+                JsonNode content = message.path("content");
+                if (content.isTextual() || !content.isMissingNode()) {
+                    return content.asText();
                 }
             }
-            throw new RuntimeException("Unexpected Gemini response structure");
+            throw new RuntimeException("Unexpected OpenRouter response structure");
         } catch (Exception e) {
-            log.error("Failed to parse Gemini response", e);
-            throw new RuntimeException("Failed to parse Gemini response: " + e.getMessage(), e);
+            log.error("Failed to parse OpenRouter response", e);
+            throw new RuntimeException("Failed to parse OpenRouter response: " + e.getMessage(), e);
         }
     }
 }

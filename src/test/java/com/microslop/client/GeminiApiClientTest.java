@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
@@ -56,16 +55,12 @@ class GeminiApiClientTest {
     @Test
     @DisplayName("should return extracted text from successful response")
     void should_return_text_from_successful_response() {
-        String geminiResponse = """
+        String openRouterResponse = """
             {
-              "candidates": [
+              "choices": [
                 {
-                  "content": {
-                    "parts": [
-                      {
-                        "text": "{\\"summary\\": \\"Great project\\", \\"sentimentScore\\": 4.5}"
-                      }
-                    ]
+                  "message": {
+                    "content": "{\\"summary\\": \\"Great project\\", \\"sentimentScore\\": 4.5}"
                   }
                 }
               ]
@@ -73,7 +68,7 @@ class GeminiApiClientTest {
             """;
 
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
-            .thenReturn(new ResponseEntity<>(geminiResponse, HttpStatus.OK));
+            .thenReturn(new ResponseEntity<>(openRouterResponse, HttpStatus.OK));
 
         String result = client.generateFeedback("Comment 1\nComment 2");
 
@@ -81,9 +76,12 @@ class GeminiApiClientTest {
         assertThat(result).contains("4.5");
 
         verify(restTemplate, times(1)).exchange(
-            argThat((String url) -> url.contains("test-api-key-123")),
+            eq("https://openrouter.ai/api/v1/chat/completions"),
             eq(HttpMethod.POST),
-            any(HttpEntity.class),
+            argThat((HttpEntity<?> entity) -> {
+                var auth = entity.getHeaders().getFirst("Authorization");
+                return auth != null && auth.equals("Bearer test-api-key-123");
+            }),
             eq(String.class)
         );
     }
@@ -120,6 +118,6 @@ class GeminiApiClientTest {
 
         assertThatThrownBy(() -> client.generateFeedback("comments"))
             .isInstanceOf(RuntimeException.class)
-            .hasMessageContaining("Unexpected Gemini response");
+            .hasMessageContaining("Unexpected OpenRouter response");
     }
 }
