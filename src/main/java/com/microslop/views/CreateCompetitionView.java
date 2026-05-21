@@ -554,6 +554,11 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         }
     }
 
+    private void showNotification(String msg, NotificationVariant variant) {
+        Notification notification = Notification.show(msg, 4000, Notification.Position.BOTTOM_CENTER);
+        notification.addThemeVariants(variant);
+    }
+
     private VerticalLayout createEmptySpace() {
         VerticalLayout space = new VerticalLayout();
         space.setHeight("0px");

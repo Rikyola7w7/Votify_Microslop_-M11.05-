@@ -15,6 +15,7 @@ import com.microslop.service.VoteService;
 import com.microslop.service.VoterService;
 import com.microslop.views.components.ChecklistVotingDialog;
 import com.microslop.views.components.CelebrationAnimation;
+import com.microslop.views.components.CommentAnimation;
 import com.microslop.views.components.ViewHeader;
 import com.microslop.views.components.VoteSuccessAnimation;
 import com.microslop.views.components.VoteQuickAnimation;
@@ -478,13 +479,9 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 commentService.saveComment(projectId, username, commentText, selectedCategory.getId());
                 dialog.close();
 
-                // Small celebration for comment
-                CelebrationAnimation celebration = new CelebrationAnimation(
-                    "COMMENT POSTED",
-                    "Your feedback has been recorded",
-                    () -> {}
-                );
-                getUI().ifPresent(ui -> ui.add(celebration));
+                // Show comment animation
+                CommentAnimation commentAnim = new CommentAnimation(() -> {});
+                getUI().ifPresent(ui -> ui.add(commentAnim));
             } catch (Exception ex) {
                 showNotification("Error saving comment: " + ex.getMessage(), NotificationVariant.LUMO_ERROR);
             }
