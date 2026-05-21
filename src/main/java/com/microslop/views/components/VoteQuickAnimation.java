@@ -4,15 +4,20 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
 
 /**
- * Quick vote animation — a ballot paper drops into a box slot.
- * Subtle, fast, thematic. No flashbang, no particle storms.
- * Just a clean "ballot cast" metaphor that feels satisfying.
+ * Quick vote animation — two variants:
+ * - Ballot drop (normal votes): ballot paper slides into box slot
+ * - Checkbox check (checklist votes): checkbox appears and gets ticked
+ * Subtle, fast, thematic. No flashbang, no particles.
  */
 public class VoteQuickAnimation extends Div {
 
+    private final boolean isChecklist;
+
     public VoteQuickAnimation(int remainingVotes, Runnable onComplete) {
+        this.isChecklist = remainingVotes < 0;
+
         String voteText;
-        if (remainingVotes < 0) {
+        if (isChecklist) {
             voteText = "CHECKLIST VOTE RECORDED";
         } else if (remainingVotes > 0) {
             voteText = remainingVotes + " VOTE" + (remainingVotes != 1 ? "S" : "") + " LEFT";
@@ -26,6 +31,15 @@ public class VoteQuickAnimation extends Div {
 
     private String buildAnimationJS(String voteText) {
         String escaped = voteText.replace("'", "\\'");
+
+        if (isChecklist) {
+            return buildCheckboxJS(escaped);
+        } else {
+            return buildBallotJS(escaped);
+        }
+    }
+
+    private String buildBallotJS(String escaped) {
         return
         // Overlay
         "var ov=document.createElement('div');ov.id='qk-ov';" +
@@ -42,7 +56,7 @@ public class VoteQuickAnimation extends Div {
         // Box slot
         "var slot=document.createElement('div');" +
         "slot.style.cssText='position:absolute;top:0;left:20px;width:60px;height:6px;background:#1E1E2F;border-radius:3px;box-shadow:inset 0 2px 4px rgba(0,0,0,.4);z-index:2;';" +
-        // Ballot paper — drops in
+        // Ballot paper
         "var ballot=document.createElement('div');" +
         "ballot.style.cssText='position:absolute;top:-40px;left:30px;width:40px;height:30px;background:#F8F9FC;border:2px solid #A29BFE;border-radius:3px;z-index:3;opacity:0;transform:rotate(-5deg);transition:all .5s cubic-bezier(.34,1.56,.64,1);';" +
         // Checkmark on ballot
@@ -59,14 +73,44 @@ public class VoteQuickAnimation extends Div {
         "txt.style.cssText='font-family:Courier New,monospace;font-size:clamp(.9rem,3vw,1.3rem);font-weight:700;letter-spacing:.1em;color:#A29BFE;text-shadow:0 0 15px rgba(108,92,231,.4);opacity:0;transition:opacity .3s ease .6s;white-space:nowrap;';" +
         "ov.appendChild(txt);" +
         "\n" +
-        // Animate ballot drop after a short delay
-        "setTimeout(function(){" +
-        "  ballot.style.opacity='1';" +
-        "  ballot.style.top='8px';" +
-        "  ballot.style.transform='rotate(0deg)';" +
-        "},200);" +
+        "setTimeout(function(){ballot.style.opacity='1';ballot.style.top='8px';ballot.style.transform='rotate(0deg)';},200);" +
+        "setTimeout(function(){txt.style.opacity='1';},600);";
+    }
+
+    private String buildCheckboxJS(String escaped) {
+        return
+        // Overlay
+        "var ov=document.createElement('div');ov.id='qk-ov';" +
+        "ov.style.cssText='position:fixed;inset:0;z-index:99999;pointer-events:none;display:flex;align-items:center;justify-content:center;flex-direction:column;background:rgba(30,30,47,.85);opacity:0;transition:opacity .3s ease;';" +
+        "document.body.appendChild(ov);" +
+        "requestAnimationFrame(function(){ov.style.opacity='1';});" +
         "\n" +
-        // Show text after ballot drops
+        // Checkbox container
+        "var cb=document.createElement('div');" +
+        "cb.style.cssText='position:relative;width:60px;height:60px;margin-bottom:24px;';" +
+        // Checkbox box
+        "var box=document.createElement('div');" +
+        "box.style.cssText='width:60px;height:60px;border:3px solid #A29BFE;border-radius:12px;background:transparent;transition:all .3s ease;box-sizing:border-box;';" +
+        // Checkmark SVG — draws in
+        "var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');" +
+        "svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','36');svg.setAttribute('height','36');" +
+        "svg.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0;transition:opacity .2s ease .25s;';" +
+        "var path=document.createElementNS('http://www.w3.org/2000/svg','path');" +
+        "path.setAttribute('d','M5 13l4 4L19 7');" +
+        "path.setAttribute('stroke','#6C5CE7');path.setAttribute('stroke-width','3');path.setAttribute('fill','none');" +
+        "path.setAttribute('stroke-linecap','round');path.setAttribute('stroke-linejoin','round');" +
+        "path.style.cssText='stroke-dasharray:30;stroke-dashoffset:30;transition:stroke-dashoffset .35s ease .3s;';" +
+        "svg.appendChild(path);cb.appendChild(box);cb.appendChild(svg);ov.appendChild(cb);" +
+        "\n" +
+        // Text
+        "var txt=document.createElement('div');" +
+        "txt.textContent='" + escaped + "';" +
+        "txt.style.cssText='font-family:Courier New,monospace;font-size:clamp(.9rem,3vw,1.3rem);font-weight:700;letter-spacing:.1em;color:#A29BFE;text-shadow:0 0 15px rgba(108,92,231,.4);opacity:0;transition:opacity .3s ease .6s;white-space:nowrap;';" +
+        "ov.appendChild(txt);" +
+        "\n" +
+        // Animate
+        "setTimeout(function(){box.style.background='rgba(108,92,231,.15)';box.style.borderColor='#6C5CE7';},200);" +
+        "setTimeout(function(){svg.style.opacity='1';path.style.strokeDashoffset='0';},300);" +
         "setTimeout(function(){txt.style.opacity='1';},600);";
     }
 
