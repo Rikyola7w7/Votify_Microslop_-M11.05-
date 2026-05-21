@@ -1,6 +1,7 @@
 package com.microslop.views;
 
 import com.microslop.entity.User;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.UserService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -26,13 +27,15 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 public class UserProfileView extends VerticalLayout implements BeforeEnterObserver {
 
     private final UserService userService;
+    private final LocalizationService localizationService;
 
     private Span usernameText;
     private Span emailText;
     private Avatar avatar;
 
-    public UserProfileView(UserService userService) {
+    public UserProfileView(UserService userService, LocalizationService localizationService) {
         this.userService = userService;
+        this.localizationService = localizationService;
 
         setSizeFull();
         setPadding(false);
@@ -48,7 +51,7 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         User loggedInUser = userService.getCurrentUser();
 
         if (loggedInUser == null) {
-            Notification.show("You must sign in");
+            Notification.show(localizationService.t("profile.mustsignin"));
             event.forwardTo("login");
             return;
         }
@@ -66,8 +69,6 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         banner.getStyle()
             .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))")
             .set("flex-shrink", "0");
-
-        // Note: Banners don't require text-shadow as they have no text content
 
         Div contentWrapper = new Div();
         contentWrapper.setWidthFull();
@@ -119,7 +120,7 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
             .set("display", "block")
             .set("margin-bottom", "24px");
 
-        Button editButton = new Button("Edit Profile", VaadinIcon.EDIT.create(), e -> openEditDialog());
+        Button editButton = new Button(localizationService.t("profile.edityprofile"), VaadinIcon.EDIT.create(), e -> openEditDialog());
         editButton.addClassName("votify-btn-primary");
         editButton.setWidth("100%");
         editButton.setHeight("48px");
@@ -129,16 +130,16 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         secondaryButtons.setSpacing(true);
         secondaryButtons.getStyle().set("margin-top", "12px");
 
-        Button logoutButton = new Button("Sign Out", VaadinIcon.SIGN_OUT.create(), e -> {
+        Button logoutButton = new Button(localizationService.t("profile.signout"), VaadinIcon.SIGN_OUT.create(), e -> {
             userService.logout();
-            Notification.show("Session closed");
+            Notification.show(localizationService.t("profile.sessionclosed"));
             UI.getCurrent().navigate("login");
         });
         logoutButton.addClassName("votify-btn-secondary");
         logoutButton.setHeight("44px");
         logoutButton.getStyle().set("flex", "1");
 
-        Button deleteButton = new Button("Delete Account", VaadinIcon.TRASH.create(), e -> openDeleteDialog());
+        Button deleteButton = new Button(localizationService.t("profile.deleteaccount"), VaadinIcon.TRASH.create(), e -> openDeleteDialog());
         deleteButton.addClassName("votify-btn-danger");
         deleteButton.setHeight("44px");
         deleteButton.getStyle().set("flex", "1");
@@ -160,7 +161,7 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         User user = userService.getCurrentUser();
 
         if (user == null) {
-            Notification.show("You must sign in");
+            Notification.show(localizationService.t("profile.mustsignin"));
             return;
         }
 
@@ -168,24 +169,24 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         dialog.setWidth("420px");
         dialog.addClassNames("votify-card-static");
 
-        H2 title = new H2("Edit Profile");
+        H2 title = new H2(localizationService.t("profile.edityprofile"));
         title.getStyle()
             .set("margin", "0 0 20px 0")
             .set("font-size", "1.3rem")
             .set("font-weight", "700")
             .set("color", "var(--text-primary)");
 
-        TextField usernameField = new TextField("Username");
+        TextField usernameField = new TextField(localizationService.t("login.username"));
         usernameField.setValue(user.getUsername());
         usernameField.setWidthFull();
         usernameField.addClassName("votify-input");
 
-        EmailField emailField = new EmailField("Email");
+        EmailField emailField = new EmailField(localizationService.t("register.email"));
         emailField.setValue(user.getEmail());
         emailField.setWidthFull();
         emailField.addClassName("votify-input");
 
-        Button saveButton = new Button("Save", e -> {
+        Button saveButton = new Button(localizationService.t("voting.save"), e -> {
             try {
                 User currentUser = userService.getCurrentUser();
 
@@ -197,17 +198,17 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
 
                 updateData(updatedUser);
 
-                Notification.show("Profile updated");
+                Notification.show(localizationService.t("profile.profileupdated"));
                 dialog.close();
             } catch (Exception ex) {
-                Notification.show("Error updating profile");
+                Notification.show(localizationService.t("profile.errorupdatingprofile"));
             }
         });
         saveButton.addClassName("votify-btn-primary");
         saveButton.setHeight("44px");
         saveButton.getStyle().set("flex", "1");
 
-        Button cancelButton = new Button("Cancel", e -> dialog.close());
+        Button cancelButton = new Button(localizationService.t("profile.cancel"), e -> dialog.close());
         cancelButton.addClassName("votify-btn-secondary");
         cancelButton.setHeight("44px");
         cancelButton.getStyle().set("flex", "1");
@@ -230,40 +231,40 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         User user = userService.getCurrentUser();
 
         if (user == null) {
-            Notification.show("You must sign in");
+            Notification.show(localizationService.t("profile.mustsignin"));
             return;
         }
 
         Dialog dialog = new Dialog();
         dialog.setWidth("420px");
 
-        H3 title = new H3("Delete Account");
+        H3 title = new H3(localizationService.t("profile.deleteaccount"));
         title.getStyle()
             .set("margin", "0 0 12px 0")
             .set("font-weight", "700")
             .set("color", "var(--error)");
 
-        Paragraph message = new Paragraph("Are you sure you want to delete your account? This action cannot be undone.");
+        Paragraph message = new Paragraph(localizationService.t("profile.deleteconfirmation"));
         message.getStyle()
             .set("color", "var(--text-muted)")
             .set("font-size", "0.95rem")
             .set("display", "block")
             .set("margin-bottom", "20px");
 
-        Button cancelButton = new Button("Cancel", e -> dialog.close());
+        Button cancelButton = new Button(localizationService.t("profile.cancel"), e -> dialog.close());
         cancelButton.addClassName("votify-btn-secondary");
         cancelButton.setHeight("44px");
         cancelButton.getStyle().set("flex", "1");
 
-        Button confirmButton = new Button("Delete", VaadinIcon.TRASH.create(), e -> {
+        Button confirmButton = new Button(localizationService.t("profile.delete"), VaadinIcon.TRASH.create(), e -> {
             try {
                 userService.deleteUser(user.getUsername());
-                Notification.show("Account deleted successfully");
+                Notification.show(localizationService.t("profile.accountdeletedsuccess"));
                 userService.logout();
                 dialog.close();
                 UI.getCurrent().navigate("login");
             } catch (Exception ex) {
-                Notification.show("Error deleting account");
+                Notification.show(localizationService.t("profile.errordeletingaccount"));
             }
         });
         confirmButton.addClassName("votify-btn-danger");

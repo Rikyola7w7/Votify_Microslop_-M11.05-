@@ -2,6 +2,7 @@ package com.microslop.views;
 
 import com.microslop.entity.Project;
 import com.microslop.entity.User;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.ProjectService;
 import com.microslop.views.components.ProjectCardComponent;
 import com.microslop.base.ui.MainLayout;
@@ -28,11 +29,13 @@ import java.util.List;
 public class UserProjectsView extends VerticalLayout implements BeforeEnterObserver {
 
     private final ProjectService projectService;
+    private final LocalizationService localizationService;
     private String currentUsername;
     private Div projectsContainer;
 
-    public UserProjectsView(ProjectService projectService) {
+    public UserProjectsView(ProjectService projectService, LocalizationService localizationService) {
         this.projectService = projectService;
+        this.localizationService = localizationService;
         initializeView();
     }
 
@@ -96,7 +99,7 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
         backButton.setHeight("40px");
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
 
-        H2 title = new H2("My Projects");
+        H2 title = new H2(localizationService.t("projects.myprojects"));
         title.getStyle()
             .set("margin", "0")
             .set("color", "var(--text-primary)")
@@ -124,7 +127,7 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
                 });
             }
         } catch (Exception e) {
-            showErrorNotification("Error loading projects: " + e.getMessage());
+            showErrorNotification(localizationService.t("projects.errorloading") + e.getMessage());
         }
     }
 
@@ -146,10 +149,10 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
         icon.addClassName("animate-float");
         icon.setText("\uD83D\uDCCB");
 
-        Span title = new Span("You have no projects yet");
+        Span title = new Span(localizationService.t("projects.noprojectsyet"));
         title.addClassName("empty-state-title");
 
-        Span message = new Span("Projects you submit will appear here.");
+        Span message = new Span(localizationService.t("projects.submitappear"));
         message.addClassName("empty-state-message");
 
         emptyState.add(icon, title, message);
@@ -157,8 +160,8 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
     }
 
     private void showAccessDeniedNotification() {
-        Notification notification = new Notification("Access Denied", 0, Notification.Position.TOP_CENTER);
-        notification.setText("You can only view your own projects.");
+        Notification notification = new Notification(localizationService.t("projects.accessdenied"), 0, Notification.Position.TOP_CENTER);
+        notification.setText(localizationService.t("projects.onlyviewown"));
         notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
         notification.setDuration(3000);
         notification.open();

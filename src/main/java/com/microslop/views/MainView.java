@@ -2,6 +2,7 @@ package com.microslop.views;
 
 import com.microslop.entity.Competition;
 import com.microslop.service.CompetitionService;
+import com.microslop.service.LocalizationService;
 import com.microslop.views.components.CompetitionCardComponent;
 import com.microslop.views.components.BallotLoadingComponent;
 import com.microslop.base.ui.MainLayout;
@@ -26,14 +27,16 @@ import java.util.List;
 public class MainView extends VerticalLayout {
 
     private final CompetitionService competitionService;
+    private final LocalizationService localizationService;
     private Div cardsContainer;
     private List<Competition> currentCompetitions;
     private Button btnAll;
     private Button btnActive;
     private Button btnFinished;
 
-    public MainView(CompetitionService competitionService) {
+    public MainView(CompetitionService competitionService, LocalizationService localizationService) {
         this.competitionService = competitionService;
+        this.localizationService = localizationService;
         initializeView();
         refreshCompetitions("All");
     }
@@ -60,7 +63,7 @@ public class MainView extends VerticalLayout {
         header.addClassName("votify-header");
         header.getStyle().set("padding", "2rem");
 
-        Span title = new Span("Discover Competitions");
+        Span title = new Span(localizationService.t("home.discover"));
         title.getStyle()
             .set("font-size", "20px")
             .set("font-weight", "700")
@@ -68,7 +71,7 @@ public class MainView extends VerticalLayout {
             .set("letter-spacing", "-0.3px");
 
         header.add(title);
-        
+
         return header;
     }
 
@@ -91,7 +94,7 @@ public class MainView extends VerticalLayout {
             .set("animation", "float 3s ease-in-out infinite")
             .set("text-shadow", "0 1px 4px rgba(0,0,0,0.3)");
 
-        H2 heading = new H2("Discover Competitions");
+        H2 heading = new H2(localizationService.t("home.discover"));
         heading.getStyle()
             .set("color", "white")
             .set("margin", "0 0 8px")
@@ -100,7 +103,7 @@ public class MainView extends VerticalLayout {
             .set("letter-spacing", "-0.5px")
             .set("text-shadow", "0 2px 8px rgba(0,0,0,0.4)");
 
-        Span subtitle = new Span("Find and vote for the best projects");
+        Span subtitle = new Span(localizationService.t("home.findvote"));
         subtitle.getStyle()
             .set("color", "rgba(255, 255, 255, 0.95)")
             .set("font-size", "1.1rem")
@@ -126,9 +129,9 @@ public class MainView extends VerticalLayout {
         filters.setSpacing(true);
         filters.setPadding(false);
 
-        btnAll = new Button("All");
-        btnActive = new Button("Active");
-        btnFinished = new Button("Finished");
+        btnAll = new Button(localizationService.t("home.filter.all"));
+        btnActive = new Button(localizationService.t("home.filter.active"));
+        btnFinished = new Button(localizationService.t("home.filter.finished"));
 
         btnAll.addClassName("votify-btn-primary");
         btnActive.addClassName("votify-btn-secondary");
@@ -150,7 +153,7 @@ public class MainView extends VerticalLayout {
         filters.add(btnAll, btnActive, btnFinished);
 
         TextField searchField = new TextField();
-        searchField.setPlaceholder("Search competitions...");
+        searchField.setPlaceholder(localizationService.t("home.search.placeholder"));
         searchField.setPrefixComponent(new Icon(VaadinIcon.SEARCH));
         searchField.setWidth("320px");
         searchField.setClearButtonVisible(true);
@@ -196,28 +199,26 @@ public class MainView extends VerticalLayout {
             }
             displayCompetitions(currentCompetitions);
         } catch (Exception e) {
-            showErrorNotification("Error loading competitions: " + e.getMessage());
+            showErrorNotification(localizationService.t("home.errorloading") + e.getMessage());
         }
     }
 
     private void displayCompetitions(List<Competition> competitions) {
         cardsContainer.removeAll();
-        
+
         if (competitions.isEmpty()) {
             showEmptyState();
             return;
         }
-        
-        // Show loading animation
-        BallotLoadingComponent loading = new BallotLoadingComponent("Loading competitions...");
+
+        BallotLoadingComponent loading = new BallotLoadingComponent(localizationService.t("common.loading"));
         cardsContainer.add(loading);
-        
-        // Add cards but hidden
+
         Div cardsGrid = new Div();
         cardsGrid.getElement().setAttribute("id", "main-cards-grid");
         cardsGrid.setWidthFull();
         cardsGrid.getStyle().set("display", "none");
-        
+
         for (int i = 0; i < competitions.size(); i++) {
             CompetitionCardComponent card = new CompetitionCardComponent(competitions.get(i));
             int staggerIndex = (i % 8) + 1;
@@ -225,8 +226,7 @@ public class MainView extends VerticalLayout {
             cardsGrid.add(card);
         }
         cardsContainer.add(cardsGrid);
-        
-        // After 800ms, hide loading and show cards
+
         getElement().executeJs(
             "setTimeout(function() {" +
             "  var loadings = document.querySelectorAll('.votify-loading');" +
@@ -250,10 +250,10 @@ public class MainView extends VerticalLayout {
         emptyIcon.setSize("48px");
         emptyIcon.getStyle().set("color", "var(--text-muted)");
 
-        Span title = new Span("No competitions found");
+        Span title = new Span(localizationService.t("home.nocompetitions"));
         title.addClassName("empty-state-title");
 
-        Span message = new Span("There are no competitions matching your criteria.");
+        Span message = new Span(localizationService.t("home.nomatching"));
         message.addClassName("empty-state-message");
 
         emptyState.add(emptyIcon, title, message);

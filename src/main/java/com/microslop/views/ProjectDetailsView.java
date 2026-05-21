@@ -4,6 +4,7 @@ import com.microslop.entity.Project;
 import com.microslop.entity.ProjectComment;
 import com.microslop.entity.User;
 import com.microslop.entity.Vote;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.ProjectService;
 import com.microslop.views.components.CommentCardComponent;
 import com.microslop.base.ui.MainLayout;
@@ -30,13 +31,15 @@ import java.util.List;
 public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObserver {
 
     private final ProjectService projectService;
+    private final LocalizationService localizationService;
     private String currentUsername;
     private Long projectId;
     private Project project;
     private Div commentsContainer;
 
-    public ProjectDetailsView(ProjectService projectService) {
+    public ProjectDetailsView(ProjectService projectService, LocalizationService localizationService) {
         this.projectService = projectService;
+        this.localizationService = localizationService;
         initializeView();
     }
 
@@ -103,7 +106,7 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
         backButton.setHeight("40px");
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/projects")));
 
-        H2 title = new H2("Project Discussion");
+        H2 title = new H2(localizationService.t("projects.details.title"));
         title.getStyle()
             .set("margin", "0")
             .set("color", "var(--text-primary)")
@@ -170,7 +173,7 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
                 showNoCommentsMessage();
             }
         } catch (Exception e) {
-            showErrorNotification("Error loading project: " + e.getMessage());
+            showErrorNotification(localizationService.t("common.error") + ": " + e.getMessage());
         }
     }
 
@@ -192,10 +195,10 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
         icon.addClassName("animate-float");
         icon.setText("\uD83D\uDCAC");
 
-        Span title = new Span("No comments yet");
+        Span title = new Span(localizationService.t("projects.details.nocomments"));
         title.addClassName("empty-state-title");
 
-        Span message = new Span("Start the discussion by leaving a comment.");
+        Span message = new Span(localizationService.t("projects.details.startdiscussion"));
         message.addClassName("empty-state-message");
 
         emptyState.add(icon, title, message);
@@ -203,8 +206,8 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
     }
 
     private void showAccessDeniedNotification() {
-        Notification notification = new Notification("Access Denied", 0, Notification.Position.TOP_CENTER);
-        notification.setText("You can only view your own projects.");
+        Notification notification = new Notification(localizationService.t("projects.accessdenied"), 0, Notification.Position.TOP_CENTER);
+        notification.setText(localizationService.t("projects.onlyviewown"));
         notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
         notification.setDuration(3000);
         notification.open();

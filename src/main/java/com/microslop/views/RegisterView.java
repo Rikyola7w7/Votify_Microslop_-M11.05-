@@ -1,6 +1,7 @@
 package com.microslop.views;
 
 import com.microslop.entity.User;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.UserService;
 import com.microslop.views.components.CelebrationAnimation;
 import com.vaadin.flow.component.button.Button;
@@ -42,10 +43,12 @@ import java.time.LocalDateTime;
 public class RegisterView extends HorizontalLayout {
 
     private final UserService userService;
+    private final LocalizationService localizationService;
     private byte[] profilePictureBytes = null;
 
-    public RegisterView(UserService userService) {
+    public RegisterView(UserService userService, LocalizationService localizationService) {
         this.userService = userService;
+        this.localizationService = localizationService;
 
         setSizeFull();
         setPadding(false);
@@ -81,7 +84,7 @@ public class RegisterView extends HorizontalLayout {
                 .set("color", "white")
                 .set("text-shadow", "0 2px 8px rgba(0,0,0,0.3)");
 
-        H1 brand = new H1("Join Votify");
+        H1 brand = new H1(localizationService.t("register.join"));
         brand.getStyle()
                 .set("color", "white")
                 .set("margin", "0")
@@ -90,7 +93,7 @@ public class RegisterView extends HorizontalLayout {
                 .set("letter-spacing", "-0.5px")
                 .set("text-shadow", "0 2px 8px rgba(0,0,0,0.4)");
 
-        Paragraph tagline = new Paragraph("Create your account");
+        Paragraph tagline = new Paragraph(localizationService.t("register.createaccount"));
         tagline.getStyle()
                 .set("color", "rgba(255, 255, 255, 0.95)")
                 .set("font-size", "1.1rem")
@@ -127,7 +130,7 @@ public class RegisterView extends HorizontalLayout {
                 .set("padding", "32px 24px")
                 .set("margin", "auto");
 
-        H2 title = new H2("Create your account");
+        H2 title = new H2(localizationService.t("register.createaccount"));
         title.getStyle()
                 .set("margin", "0 0 24px 0")
                 .set("font-size", "1.75rem")
@@ -135,34 +138,34 @@ public class RegisterView extends HorizontalLayout {
                 .set("color", "var(--text-primary)")
                 .set("text-align", "center");
 
-        TextField usernameField = new TextField("Username *");
+        TextField usernameField = new TextField(localizationService.t("register.username"));
         usernameField.setWidthFull();
         usernameField.addClassNames("votify-input");
-        usernameField.setPlaceholder("Choose a username");
+        usernameField.setPlaceholder(localizationService.t("register.username.placeholder"));
 
-        TextField nameField = new TextField("Full Name *");
+        TextField nameField = new TextField(localizationService.t("register.fullname"));
         nameField.setWidthFull();
         nameField.addClassNames("votify-input");
-        nameField.setPlaceholder("Enter your full name");
+        nameField.setPlaceholder(localizationService.t("register.fullname.placeholder"));
 
-        EmailField emailField = new EmailField("Email *");
+        EmailField emailField = new EmailField(localizationService.t("register.email"));
         emailField.setWidthFull();
         emailField.addClassNames("votify-input");
-        emailField.setPlaceholder("Enter your email");
+        emailField.setPlaceholder(localizationService.t("register.email.placeholder"));
 
-        DatePicker birthDateField = new DatePicker("Birth Date *");
+        DatePicker birthDateField = new DatePicker(localizationService.t("register.birthdate"));
         birthDateField.setWidthFull();
         birthDateField.addClassNames("votify-input");
 
-        PasswordField passwordField = new PasswordField("Password *");
+        PasswordField passwordField = new PasswordField(localizationService.t("register.password"));
         passwordField.setWidthFull();
         passwordField.addClassNames("votify-input");
-        passwordField.setPlaceholder("Create a password");
+        passwordField.setPlaceholder(localizationService.t("register.password.placeholder"));
 
-        PasswordField confirmPasswordField = new PasswordField("Confirm Password *");
+        PasswordField confirmPasswordField = new PasswordField(localizationService.t("register.confirmpassword"));
         confirmPasswordField.setWidthFull();
         confirmPasswordField.addClassNames("votify-input");
-        confirmPasswordField.setPlaceholder("Confirm your password");
+        confirmPasswordField.setPlaceholder(localizationService.t("register.confirmpassword.placeholder"));
 
         FormLayout formLayout = new FormLayout();
         formLayout.add(usernameField, nameField, emailField, birthDateField, passwordField, confirmPasswordField);
@@ -174,26 +177,25 @@ public class RegisterView extends HorizontalLayout {
 
         Div uploadArea = buildUploadArea();
 
-        Button registerButton = new Button("Create Account", e -> {
+        Button registerButton = new Button(localizationService.t("register.createbutton"), e -> {
             if (usernameField.isEmpty() || nameField.isEmpty() || emailField.isEmpty() ||
                 passwordField.isEmpty() || confirmPasswordField.isEmpty() || birthDateField.isEmpty()) {
-                Notification.show("Please fill in all required fields.");
+                Notification.show(localizationService.t("register.fillall"));
                 return;
             }
 
             if (!passwordField.getValue().equals(confirmPasswordField.getValue())) {
-                Notification.show("Passwords do not match.");
+                Notification.show(localizationService.t("register.passwordmismatch"));
                 return;
             }
 
-            // Show confirmation dialog
             Dialog confirmDialog = new Dialog();
-            confirmDialog.setHeaderTitle("Confirm Registration");
-            
-            Paragraph message = new Paragraph("Do you want to create your account with the username \"" + 
-                    usernameField.getValue().trim() + "\"?");
-            
-            Button confirmButton = new Button("Yes", event -> {
+            confirmDialog.setHeaderTitle(localizationService.t("register.confirmtitle"));
+
+            Paragraph message = new Paragraph(localizationService.t("register.confirmmessage") +
+                    usernameField.getValue().trim() + "\"");
+
+            Button confirmButton = new Button(localizationService.t("register.yes"), event -> {
                 try {
                     LocalDateTime birthDateLDT = birthDateField.getValue().atStartOfDay();
 
@@ -207,11 +209,10 @@ public class RegisterView extends HorizontalLayout {
                             .build();
 
                     this.userService.registerUser(newUser);
-                    
-                    // Fetch the registered user from database to get the ID
+
                     User registeredUser = this.userService.searchByUsernameIgnoreCase(newUser.getUsername())
                             .orElse(null);
-                    
+
                     if (registeredUser == null) {
                         throw new IllegalArgumentException("Failed to retrieve registered user from database");
                     }
@@ -220,10 +221,9 @@ public class RegisterView extends HorizontalLayout {
                     VaadinSession.getCurrent().setAttribute("username", registeredUser.getUsername());
                     VaadinSession.getCurrent().setAttribute("userId", registeredUser.getId());
 
-                    Notification success = Notification.show("Account created successfully!");
+                    Notification success = Notification.show(localizationService.t("register.success"));
                     success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
-                    // Mini confetti burst on register button
                     String[] colors = {"#6C5CE7", "#00CEC9", "#FD79A8", "#00B894", "#F39C12"};
                     for (int i = 0; i < 6; i++) {
                         Span dot = new Span();
@@ -246,12 +246,11 @@ public class RegisterView extends HorizontalLayout {
 
                     confirmDialog.close();
 
-                    // Show celebration then redirect via JS after animation
                     var uiRef = getUI().orElse(null);
                     if (uiRef != null) {
                         uiRef.add(new CelebrationAnimation(
-                            "WELCOME ABOARD",
-                            "Your account is ready — let the voting begin",
+                            localizationService.t("register.welcome"),
+                            localizationService.t("register.ready"),
                             () -> {}
                         ));
                         uiRef.getPage().executeJs("setTimeout(function(){ window.location.href = '/'; }, 4200);");
@@ -265,10 +264,10 @@ public class RegisterView extends HorizontalLayout {
                 }
             });
             confirmButton.addClassNames("votify-btn-primary");
-            
-            Button cancelButton = new Button("No", event -> confirmDialog.close());
+
+            Button cancelButton = new Button(localizationService.t("register.no"), event -> confirmDialog.close());
             cancelButton.addClassNames("votify-btn-secondary");
-            
+
             confirmDialog.add(message);
             confirmDialog.getFooter().add(cancelButton, confirmButton);
             confirmDialog.open();
@@ -288,7 +287,7 @@ public class RegisterView extends HorizontalLayout {
         passwordField.addKeyPressListener(Key.ENTER, e -> registerButton.click());
         confirmPasswordField.addKeyPressListener(Key.ENTER, e -> registerButton.click());
 
-        RouterLink linkLogin = new RouterLink("Already have an account? Sign in", LoginView.class);
+        RouterLink linkLogin = new RouterLink(localizationService.t("register.alreadyaccount"), LoginView.class);
         linkLogin.getStyle()
                 .set("color", "var(--primary)")
                 .set("font-weight", "600")
@@ -307,7 +306,7 @@ public class RegisterView extends HorizontalLayout {
         uploadProfilePicture.setReceiver(buffer);
         uploadProfilePicture.setAcceptedFileTypes("image/jpeg", "image/png", "image/gif");
         uploadProfilePicture.setMaxFiles(1);
-        uploadProfilePicture.setDropLabel(new Span("Drag your profile picture here"));
+        uploadProfilePicture.setDropLabel(new Span(localizationService.t("register.dragphoto")));
         uploadProfilePicture.getStyle()
                 .set("width", "100%");
 
@@ -332,7 +331,7 @@ public class RegisterView extends HorizontalLayout {
                 imagePreview.setSrc(imageResource);
                 imagePreview.setVisible(true);
             } catch (IOException ex) {
-                Notification.show("Error processing image.");
+                Notification.show(localizationService.t("register.imageerror"));
             }
         });
 
@@ -345,7 +344,7 @@ public class RegisterView extends HorizontalLayout {
                 .set("background", "var(--background)")
                 .set("margin-top", "8px");
 
-        Span uploadLabel = new Span("Profile picture (optional)");
+        Span uploadLabel = new Span(localizationService.t("register.profilepicture"));
         uploadLabel.getStyle()
                 .set("font-size", "0.9rem")
                 .set("color", "var(--text-muted)")

@@ -3,6 +3,7 @@ package com.microslop.views;
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Invitation;
 import com.microslop.service.InvitationService;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.NotificationService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -29,11 +30,13 @@ public class InvitationsView extends VerticalLayout implements BeforeEnterObserv
 
     private final InvitationService invitationService;
     private final NotificationService notificationService;
+    private final LocalizationService localizationService;
     private Div invitationsContainer;
 
-    public InvitationsView(InvitationService invitationService, NotificationService notificationService) {
+    public InvitationsView(InvitationService invitationService, NotificationService notificationService, LocalizationService localizationService) {
         this.invitationService = invitationService;
         this.notificationService = notificationService;
+        this.localizationService = localizationService;
         initializeView();
     }
 
@@ -57,7 +60,7 @@ public class InvitationsView extends VerticalLayout implements BeforeEnterObserv
             .set("padding", "2rem")
             .set("background", "var(--surface)");
 
-        H1 title = new H1("Invitations");
+        H1 title = new H1(localizationService.t("invitations.title"));
         title.getStyle()
             .set("margin", "0")
             .set("color", "var(--dark)")
@@ -132,7 +135,15 @@ public class InvitationsView extends VerticalLayout implements BeforeEnterObserv
             .set("font-size", "16px")
             .set("flex", "1");
 
-        Span statusBadge = new Span(invitation.getStatus().name());
+        String statusKey;
+        if (invitation.getStatus() == Invitation.InvitationStatus.PENDING) {
+            statusKey = "invitations.pending";
+        } else if (invitation.getStatus() == Invitation.InvitationStatus.ACCEPTED) {
+            statusKey = "invitations.accepted";
+        } else {
+            statusKey = "invitations.declined";
+        }
+        Span statusBadge = new Span(localizationService.t(statusKey));
         statusBadge.getStyle()
             .set("font-size", "12px")
             .set("font-weight", "600")
@@ -159,12 +170,14 @@ public class InvitationsView extends VerticalLayout implements BeforeEnterObserv
         body.setSpacing(false);
         body.getStyle().set("margin-top", "8px");
 
-        Span invitedBy = new Span("Invited by: " + invitation.getInvitedBy().getUsername());
+        String invitedByText = localizationService.t("invitations.invitedby") + ": " + invitation.getInvitedBy().getUsername();
+        Span invitedBy = new Span(invitedByText);
         invitedBy.getStyle()
             .set("color", "var(--text-secondary)")
             .set("font-size", "14px");
 
-        Span competitionName = new Span("Competition: " + invitation.getCompetition().getName());
+        String competitionText = localizationService.t("competition.details") + ": " + invitation.getCompetition().getName();
+        Span competitionName = new Span(competitionText);
         competitionName.getStyle()
             .set("color", "var(--text-secondary)")
             .set("font-size", "14px");
@@ -176,12 +189,12 @@ public class InvitationsView extends VerticalLayout implements BeforeEnterObserv
         actions.getStyle().set("margin-top", "12px");
 
         if (invitation.isPending()) {
-            Button acceptBtn = new Button("Accept", new Icon(VaadinIcon.CHECK));
+            Button acceptBtn = new Button(localizationService.t("invitations.accept"), new Icon(VaadinIcon.CHECK));
             acceptBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
             acceptBtn.getStyle().set("cursor", "pointer");
             acceptBtn.addClickListener(e -> handleInvitation(invitation.getId(), true));
 
-            Button refuseBtn = new Button("Refuse", new Icon(VaadinIcon.CLOSE_SMALL));
+            Button refuseBtn = new Button(localizationService.t("invitations.decline"), new Icon(VaadinIcon.CLOSE_SMALL));
             refuseBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
             refuseBtn.getStyle().set("cursor", "pointer");
             refuseBtn.addClickListener(e -> handleInvitation(invitation.getId(), false));
@@ -197,16 +210,16 @@ public class InvitationsView extends VerticalLayout implements BeforeEnterObserv
         try {
             if (accept) {
                 invitationService.acceptInvitation(invitationId);
-                Notification.show("Invitation accepted!", 3000, Notification.Position.MIDDLE)
+                Notification.show(localizationService.t("invitations.acceptedmsg"), 3000, Notification.Position.MIDDLE)
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             } else {
                 invitationService.refuseInvitation(invitationId);
-                Notification.show("Invitation refused.", 3000, Notification.Position.MIDDLE)
+                Notification.show(localizationService.t("invitations.declinedmsg"), 3000, Notification.Position.MIDDLE)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
             loadInvitations();
         } catch (Exception e) {
-            Notification.show("Error: " + e.getMessage(), 4000, Notification.Position.MIDDLE)
+            Notification.show(localizationService.t("common.error") + ": " + e.getMessage(), 4000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }

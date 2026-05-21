@@ -6,6 +6,7 @@ import com.microslop.entity.Project;
 import com.microslop.repository.JudgeRepository;
 import com.microslop.service.CategoryService;
 import com.microslop.service.CompetitionService;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
 import com.microslop.service.VoterService;
@@ -47,6 +48,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     private final UserService userService;
     private final VoterService voterService;
     private final JudgeRepository judgeRepository;
+    private final LocalizationService localizationService;
     private Long competitionId;
     private Long categoryId;
     private Competition currentCompetition;
@@ -61,7 +63,8 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                        ProjectService projectService,
                        UserService userService,
                        VoterService voterService,
-                       JudgeRepository judgeRepository) {
+                       JudgeRepository judgeRepository,
+                       LocalizationService localizationService) {
         this.competitionService = competitionService;
         this.categoryService = categoryService;
         this.voteService = voteService;
@@ -69,6 +72,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         this.userService = userService;
         this.voterService = voterService;
         this.judgeRepository = judgeRepository;
+        this.localizationService = localizationService;
 
         setSizeFull();
         setPadding(false);
@@ -137,7 +141,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
-        Button backButton = new Button("\u2190 Categories");
+        Button backButton = new Button("\u2190 " + localizationService.t("ranking.categories"));
         backButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         backButton.getStyle()
             .set("color", "white")
@@ -148,7 +152,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         backButton.addClickListener(e ->
             getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories")));
 
-        var title = new H2("RANKING");
+        var title = new H2(localizationService.t("ranking.title"));
         title.getStyle()
             .set("color", "white")
             .set("margin", "0")
@@ -165,7 +169,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         rightSection.setPadding(false);
 
         if (isUserOrganizerOrJudge()) {
-            Button modifyEntriesButton = new Button("Modify entries");
+            Button modifyEntriesButton = new Button(localizationService.t("ranking.modifyentries"));
             modifyEntriesButton.addClassName("votify-btn-secondary");
             modifyEntriesButton.getStyle()
                 .set("background", "white")
@@ -180,7 +184,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             rightSection.add(modifyEntriesButton);
         }
 
-        Button voteButton = new Button("Vote");
+        Button voteButton = new Button(localizationService.t("ranking.vote"));
         voteButton.addClassName("votify-btn-secondary");
         voteButton.getStyle()
             .set("background", "white")
@@ -218,16 +222,14 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
     private void showVoterRegistrationDialog(long userId) {
         var dialog = new Dialog();
-        dialog.setHeaderTitle("Register as Voter");
+        dialog.setHeaderTitle(localizationService.t("ranking.registervoter"));
 
         var content = new VerticalLayout();
         content.setPadding(false);
         content.setSpacing(true);
         content.setWidth("400px");
 
-        var message = new Paragraph(
-            "You are not registered as a voter for this competition. "
-            + "Would you like to register as a voter to participate in voting?");
+        var message = new Paragraph(localizationService.t("ranking.notregistered"));
         message.getStyle()
             .set("color", "var(--text-primary)")
             .set("font-size", "1rem")
@@ -235,19 +237,18 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         content.add(message);
 
-        var yesButton = new Button("Yes, register me");
+        var yesButton = new Button(localizationService.t("ranking.yesregister"));
         yesButton.addClassName("votify-btn-primary");
         yesButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         yesButton.addClickListener(e -> {
             try {
                 voterService.registerVoter(userId, competitionId, categoryId);
-                
+
                 dialog.close();
-                
-                // Show epic celebration, then redirect to voting
+
                 CelebrationAnimation celebration = new CelebrationAnimation(
-                    "VOTER REGISTERED",
-                    "Welcome aboard — time to make your voice heard",
+                    localizationService.t("ranking.voterregistered"),
+                    localizationService.t("ranking.makevoiceheard"),
                     () -> {
                         String votingUrl = "/competition/" + competitionId + "/category/" + categoryId + "/vote";
                         getUI().ifPresent(ui -> ui.getPage().executeJs(
@@ -256,19 +257,19 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 );
                 getUI().ifPresent(ui -> ui.add(celebration));
             } catch (IllegalStateException ex) {
-                Notification error = Notification.show("Error: " + ex.getMessage(), 3000,
+                Notification error = Notification.show(localizationService.t("ranking.error") + ex.getMessage(), 3000,
                     Notification.Position.BOTTOM_CENTER);
                 error.addThemeVariants(NotificationVariant.LUMO_ERROR);
                 dialog.close();
             } catch (Exception ex) {
-                Notification error = Notification.show("Unexpected error: " + ex.getMessage(), 3000,
+                Notification error = Notification.show(localizationService.t("ranking.unexpectederror") + ex.getMessage(), 3000,
                     Notification.Position.BOTTOM_CENTER);
                 error.addThemeVariants(NotificationVariant.LUMO_ERROR);
                 dialog.close();
             }
         });
 
-        var noButton = new Button("No, stay here");
+        var noButton = new Button(localizationService.t("ranking.nostayhere"));
         noButton.addClassName("votify-btn-secondary");
         noButton.getStyle()
             .set("padding", "0.5rem 1.5rem");
@@ -333,10 +334,10 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         String startDateStr = currentCompetition.getStartDate() != null
             ? currentCompetition.getStartDate().format(dateFormatter)
-            : "N/A";
+            : localizationService.t("common.na");
         String endDateStr = currentCompetition.getEndDate() != null
             ? currentCompetition.getEndDate().format(dateFormatter)
-            : "N/A";
+            : localizationService.t("common.na");
 
         var datesRow = new HorizontalLayout();
         datesRow.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -344,7 +345,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         datesRow.setPadding(false);
         datesRow.getStyle().set("margin-top", "0.5rem");
 
-        var startDate = new Span("Start: " + startDateStr);
+        var startDate = new Span(localizationService.t("ranking.start") + startDateStr);
         startDate.getStyle()
             .set("font-size", "0.9rem")
             .set("color", "var(--text-muted)");
@@ -354,7 +355,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("color", "var(--border)")
             .set("font-size", "0.9rem");
 
-        var endDate = new Span("End: " + endDateStr);
+        var endDate = new Span(localizationService.t("ranking.end") + endDateStr);
         endDate.getStyle()
             .set("font-size", "0.9rem")
             .set("color", "var(--text-muted)");
@@ -380,15 +381,15 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         var rankingComboBox = new ComboBox<String>();
         rankingComboBox.setWidth("300px");
-        rankingComboBox.setItems("Judges' Ranking", "Popular Ranking");
-        rankingComboBox.setValue("Judges' Ranking");
+        rankingComboBox.setItems(localizationService.t("ranking.judgesranking"), localizationService.t("ranking.popularranking"));
+        rankingComboBox.setValue(localizationService.t("ranking.judgesranking"));
         rankingComboBox.setClearButtonVisible(false);
         rankingComboBox.addClassName("votify-input");
 
         rankingComboBox.addValueChangeListener(event -> {
             String selectedValue = event.getValue();
             if (selectedValue != null) {
-                isJudgesRanking = "Judges' Ranking".equals(selectedValue);
+                isJudgesRanking = localizationService.t("ranking.judgesranking").equals(selectedValue);
                 loadRanking(isJudgesRanking);
             }
         });
@@ -402,7 +403,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         rankingContainer.removeAll();
 
-        BallotLoadingComponent loading = new BallotLoadingComponent("Calculating rankings...");
+        BallotLoadingComponent loading = new BallotLoadingComponent(localizationService.t("ranking.calculating"));
         rankingContainer.add(loading);
 
         List<Project> ranking = projectService.getRankingForCategory(categoryId, isJudgesRanking);
@@ -415,7 +416,10 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("max-width", "760px")
             .set("margin", "0 auto");
 
-        var title = new H3(isJudgesRanking ? "Judges' Ranking" : "Popular Ranking");
+        String rankingTitle = isJudgesRanking
+            ? localizationService.t("ranking.judgesranking")
+            : localizationService.t("ranking.popularranking");
+        var title = new H3(rankingTitle);
         title.getStyle()
             .set("font-size", "1.3rem")
             .set("font-weight", "700")
@@ -429,7 +433,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             emptyWrapper.addClassName("empty-state");
             var emptyIcon = new Span("\uD83C\uDFC6");
             emptyIcon.addClassName("empty-state-icon");
-            var emptyTitle = new Span("No projects in this category");
+            var emptyTitle = new Span(localizationService.t("ranking.noprojectscategory"));
             emptyTitle.addClassName("empty-state-title");
             emptyWrapper.add(emptyIcon, emptyTitle);
             content.add(emptyWrapper);
@@ -514,7 +518,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("margin-top", "0.25rem")
             .set("justify-content", "center");
 
-        Button reclassifyBtn = new Button("Reclassify");
+        Button reclassifyBtn = new Button(localizationService.t("ranking.reclassify"));
         reclassifyBtn.addClassName("votify-btn-secondary");
         reclassifyBtn.getStyle()
             .set("font-size", "0.7rem")
@@ -522,7 +526,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("cursor", "pointer");
         reclassifyBtn.addClickListener(e -> showReclassifyDialog(project));
 
-        Button declassifyBtn = new Button("Declassify");
+        Button declassifyBtn = new Button(localizationService.t("ranking.declassify"));
         declassifyBtn.addClassName("votify-btn-danger");
         declassifyBtn.getStyle()
             .set("font-size", "0.7rem")
@@ -530,7 +534,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("cursor", "pointer");
         declassifyBtn.addClickListener(e -> showDeclassifyConfirmDialog(project));
 
-        Button editVotesBtn = new Button("Edit Votes");
+        Button editVotesBtn = new Button(localizationService.t("ranking.editvotes"));
         editVotesBtn.addClassName("votify-btn-secondary");
         editVotesBtn.getStyle()
             .set("font-size", "0.7rem")
@@ -602,7 +606,6 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             wrapper.add(buildActionButtons(p));
         }
 
-        // Cast to HorizontalLayout for compatibility - wrapper is returned as HorizontalLayout-like
         var result = new HorizontalLayout();
         result.setWidthFull();
         result.setPadding(false);
@@ -613,19 +616,19 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
     private void showReclassifyDialog(Project project) {
         var dialog = new Dialog();
-        dialog.setHeaderTitle("Reclassify: " + project.getName());
+        dialog.setHeaderTitle(localizationService.t("ranking.reclassifyaction") + project.getName());
 
         var content = new VerticalLayout();
         content.setPadding(false);
         content.setSpacing(true);
         content.setWidth("350px");
 
-        var message = new Paragraph("Enter the new position for this project:");
+        var message = new Paragraph(localizationService.t("ranking.newposition") + ":");
         message.getStyle()
             .set("color", "var(--text-primary)")
             .set("font-size", "1rem");
 
-        var positionField = new IntegerField("New position");
+        var positionField = new IntegerField(localizationService.t("ranking.newposition"));
         positionField.setMin(1);
         positionField.setValue(1);
         positionField.setStepButtonsVisible(true);
@@ -633,11 +636,11 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         content.add(message, positionField);
 
-        var cancelButton = new Button("Cancel");
+        var cancelButton = new Button(localizationService.t("voting.cancel"));
         cancelButton.addClassName("votify-btn-secondary");
         cancelButton.addClickListener(e -> dialog.close());
 
-        var acceptButton = new Button("Accept");
+        var acceptButton = new Button(localizationService.t("ranking.accept"));
         acceptButton.addClassName("votify-btn-primary");
         acceptButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         acceptButton.addClickListener(e -> {
@@ -645,11 +648,11 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 int newPosition = positionField.getValue();
                 projectService.reclassifyProject(project.getId(), newPosition);
                 dialog.close();
-                Notification.show("Project reclassified to position " + newPosition, 3000,
+                Notification.show(localizationService.t("ranking.projectreclassified") + newPosition, 3000,
                     Notification.Position.BOTTOM_CENTER);
                 loadRanking(isJudgesRanking);
             } catch (Exception ex) {
-                Notification.show("Error: " + ex.getMessage(), 3000,
+                Notification.show(localizationService.t("common.error") + ": " + ex.getMessage(), 3000,
                     Notification.Position.BOTTOM_CENTER);
             }
         });
@@ -666,16 +669,14 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
     private void showDeclassifyConfirmDialog(Project project) {
         var dialog = new Dialog();
-        dialog.setHeaderTitle("Declassify: " + project.getName());
+        dialog.setHeaderTitle(localizationService.t("ranking.confirmdeclassify") + project.getName());
 
         var content = new VerticalLayout();
         content.setPadding(false);
         content.setSpacing(true);
         content.setWidth("400px");
 
-        var message = new Paragraph(
-            "Are you sure you want to remove this project from the competition? "
-            + "This action cannot be undone. All votes and comments will be permanently deleted.");
+        var message = new Paragraph(localizationService.t("ranking.confirmmsg"));
         message.getStyle()
             .set("color", "var(--text-primary)")
             .set("font-size", "1rem")
@@ -683,21 +684,21 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         content.add(message);
 
-        var cancelButton = new Button("Cancel");
+        var cancelButton = new Button(localizationService.t("voting.cancel"));
         cancelButton.addClassName("votify-btn-secondary");
         cancelButton.addClickListener(e -> dialog.close());
 
-        var deleteButton = new Button("Delete permanently");
+        var deleteButton = new Button(localizationService.t("ranking.deletepermanently"));
         deleteButton.addClassName("votify-btn-danger");
         deleteButton.addClickListener(e -> {
             try {
                 projectService.declassifyProject(project.getId());
                 dialog.close();
-                Notification.show("Project declassified successfully", 3000,
+                Notification.show(localizationService.t("ranking.projectdeclassified"), 3000,
                     Notification.Position.BOTTOM_CENTER);
                 loadRanking(isJudgesRanking);
             } catch (Exception ex) {
-                Notification.show("Error: " + ex.getMessage(), 3000,
+                Notification.show(localizationService.t("common.error") + ": " + ex.getMessage(), 3000,
                     Notification.Position.BOTTOM_CENTER);
             }
         });
@@ -714,14 +715,14 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
     private void showEditVotesDialog(Project project) {
         var dialog = new Dialog();
-        dialog.setHeaderTitle("Edit Votes: " + project.getName());
+        dialog.setHeaderTitle(localizationService.t("ranking.editvotes") + ": " + project.getName());
 
         var content = new VerticalLayout();
         content.setPadding(false);
         content.setSpacing(true);
         content.setWidth("350px");
 
-        var message = new Paragraph("Enter the new amount of votes:");
+        var message = new Paragraph(localizationService.t("ranking.newamountofvotes"));
         message.getStyle()
             .set("color", "var(--text-primary)")
             .set("font-size", "1rem");
@@ -730,7 +731,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             ? project.getManualVoteCount()
             : project.getVotes().size();
 
-        var votesField = new IntegerField("Votes");
+        var votesField = new IntegerField(localizationService.t("ranking.votes"));
         votesField.setMin(0);
         votesField.setValue(currentVotes);
         votesField.setStepButtonsVisible(true);
@@ -738,11 +739,11 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         content.add(message, votesField);
 
-        var cancelButton = new Button("Cancel");
+        var cancelButton = new Button(localizationService.t("voting.cancel"));
         cancelButton.addClassName("votify-btn-secondary");
         cancelButton.addClickListener(e -> dialog.close());
 
-        var acceptButton = new Button("Accept");
+        var acceptButton = new Button(localizationService.t("ranking.accept"));
         acceptButton.addClassName("votify-btn-primary");
         acceptButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         acceptButton.addClickListener(e -> {
@@ -750,11 +751,11 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 int newVotes = votesField.getValue();
                 projectService.editProjectVotes(project.getId(), newVotes);
                 dialog.close();
-                Notification.show("Votes updated to " + newVotes, 3000,
+                Notification.show(localizationService.t("ranking.votesupdated") + newVotes, 3000,
                     Notification.Position.BOTTOM_CENTER);
                 loadRanking(isJudgesRanking);
             } catch (Exception ex) {
-                Notification.show("Error: " + ex.getMessage(), 3000,
+                Notification.show(localizationService.t("common.error") + ": " + ex.getMessage(), 3000,
                     Notification.Position.BOTTOM_CENTER);
             }
         });

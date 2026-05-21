@@ -1,9 +1,12 @@
 package com.microslop.base.ui;
 
 import com.microslop.service.InvitationService;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.NotificationService;
 import com.microslop.service.UserService;
+import com.microslop.views.components.LanguageSelectorComponent;
 import com.microslop.views.components.NotificationCardComponent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
@@ -35,6 +38,10 @@ public final class MainLayout extends AppLayout {
     @Autowired(required = false)
     private InvitationService invitationService;
 
+    @Autowired(required = false)
+    private LocalizationService localizationService;
+
+    private LanguageSelectorComponent languageSelector;
     private HorizontalLayout rightActions;
     private Div userMenuContainer;
     private boolean notificationInitialized;
@@ -86,6 +93,12 @@ public final class MainLayout extends AppLayout {
     protected void onAttach(com.vaadin.flow.component.AttachEvent attachEvent) {
         if (!notificationInitialized) {
             notificationInitialized = true;
+
+            if (languageSelector == null && localizationService != null) {
+                languageSelector = new LanguageSelectorComponent(localizationService);
+                rightActions.add(languageSelector.createLanguageSelector());
+            }
+
             if (notificationService != null) {
                 rightActions.add(createNotificationBell());
             }
@@ -104,7 +117,7 @@ public final class MainLayout extends AppLayout {
         });
     }
 
-    private void rebuildUserMenu() {
+private void rebuildUserMenu() {
         if (userMenuContainer == null || userService == null) return;
         userMenuContainer.removeAll();
 
@@ -116,7 +129,7 @@ public final class MainLayout extends AppLayout {
             .set("padding", "0");
 
         MenuBar userMenu = new MenuBar();
-        userMenu.addThemeVariants(com.vaadin.flow.component.menubar.MenuBarVariant.LUMO_ICON);
+        userMenu.addThemeVariants(MenuBarVariant.LUMO_ICON);
 
         boolean isLoggedIn = userService.isLoggedIn();
 
@@ -125,15 +138,26 @@ public final class MainLayout extends AppLayout {
 
         if (isLoggedIn) {
             String username = userService.getCurrentUsername();
-            subMenu.addItem("My Projects", event -> getUI().ifPresent(ui -> ui.navigate(username + "/projects")));
-            subMenu.addItem("My Competitions", event -> getUI().ifPresent(ui -> ui.navigate(username + "/competitions")));
-            subMenu.addItem("Invitations", event -> getUI().ifPresent(ui -> ui.navigate("invitations")));
-            subMenu.addItem("Edit Profile", event -> getUI().ifPresent(ui -> ui.navigate("profile")));
-            subMenu.addItem("Sign Out", event -> handleLogout());
+            subMenu.addItem(localizationService.t("nav.myprojects"), event -> getUI().ifPresent(ui -> ui.navigate(username + "/projects")));
+            subMenu.addItem(localizationService.t("nav.mycompetitions"), event -> getUI().ifPresent(ui -> ui.navigate(username + "/competitions")));
+            subMenu.addItem(localizationService.t("nav.invitations"), event -> getUI().ifPresent(ui -> ui.navigate("invitations")));
+            subMenu.addItem(localizationService.t("nav.editprofile"), event -> getUI().ifPresent(ui -> ui.navigate("profile")));
+            subMenu.addItem(localizationService.t("nav.signout"), event -> handleLogout());
         } else {
-            subMenu.addItem("Sign In", event -> getUI().ifPresent(ui -> ui.navigate("login")));
-            subMenu.addItem("Register", event -> getUI().ifPresent(ui -> ui.navigate("register")));
+            subMenu.addItem(localizationService.t("nav.signin"), event -> getUI().ifPresent(ui -> ui.navigate("login")));
+            subMenu.addItem(localizationService.t("nav.register"), event -> getUI().ifPresent(ui -> ui.navigate("register")));
         }
+
+        userMenuContainer.add(userMenu);
+    }
+
+    private void handleLogout() {
+        if (userService != null) {
+            userService.logout();
+            getUI().ifPresent(ui -> ui.navigate("login"));
+            Notification.show(localizationService.t("profile.sessionclosed"), 3000, Notification.Position.TOP_CENTER);
+        }
+    }
 
         userMenuContainer.add(userMenu);
     }
@@ -240,7 +264,7 @@ public final class MainLayout extends AppLayout {
                 var recentNotifications = notificationService.getRecentNotificationsForCurrentUser();
 
                 if (recentNotifications.isEmpty()) {
-                    Span emptyText = new Span("No recent notifications");
+                    Span emptyText = new Span(localizationService.t("nav.nonotifications"));
                     emptyText.getStyle()
                         .set("padding", "16px")
                         .set("text-align", "center")
@@ -259,7 +283,7 @@ public final class MainLayout extends AppLayout {
                     }
                 }
             } catch (Exception e) {
-                Span errorText = new Span("Error loading notifications");
+                Span errorText = new Span(localizationService.t("nav.errorloadingnotifications"));
                 errorText.getStyle()
                     .set("padding", "16px")
                     .set("color", "var(--text-muted)");
@@ -270,7 +294,7 @@ public final class MainLayout extends AppLayout {
         content.add(notificationsContainer);
 
         // Sticky footer - always visible at bottom
-        Button viewAllBtn = new Button("View All Notifications");
+        Button viewAllBtn = new Button(localizationService.t("nav.viewallnotifications"));
         viewAllBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         viewAllBtn.getStyle()
             .set("width", "100%")

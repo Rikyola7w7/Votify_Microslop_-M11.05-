@@ -8,6 +8,7 @@ import com.microslop.repository.ChecklistItemRepository;
 import com.microslop.service.CategoryService;
 import com.microslop.service.ChecklistVoteService;
 import com.microslop.service.CompetitionService;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.ProjectCommentService;
 import com.microslop.service.UserService;
 import com.microslop.service.ProjectService;
@@ -59,6 +60,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private final ChecklistVoteService checklistVoteService;
     private final ChecklistItemRepository checklistItemRepository;
     private final VoterService voterService;
+    private final LocalizationService localizationService;
 
     private Long competitionId;
     private Long categoryId;
@@ -77,7 +79,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                       CategoryService categoryService,
                       ChecklistVoteService checklistVoteService,
                       ChecklistItemRepository checklistItemRepository,
-                      VoterService voterService) {
+                      VoterService voterService,
+                      LocalizationService localizationService) {
         this.competitionService = competitionService;
         this.projectService     = projectService;
         this.voteService        = voteService;
@@ -87,6 +90,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         this.checklistVoteService = checklistVoteService;
         this.checklistItemRepository = checklistItemRepository;
         this.voterService = voterService;
+        this.localizationService = localizationService;
 
         setSizeFull();
         setPadding(false);
@@ -98,7 +102,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     public void beforeEnter(BeforeEnterEvent event) {
         String competitionIdParam = event.getRouteParameters().get("competitionId").orElse(null);
         String categoryIdParam = event.getRouteParameters().get("categoryId").orElse(null);
-        
+
         if (competitionIdParam == null || categoryIdParam == null) {
             event.forwardTo("");
             return;
@@ -116,7 +120,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         if (!competition.canVote()) {
             Notification n = Notification.show(
-                    "This competition does not accept votes at this time.",
+                    localizationService.t("voting.nocompetitionvotes"),
                     4000, Notification.Position.BOTTOM_CENTER);
             n.addThemeVariants(NotificationVariant.LUMO_WARNING);
             event.forwardTo("competition/" + competitionId);
@@ -132,13 +136,11 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
 
-        // Load the selected category
         this.selectedCategory = categoryService.getByIdOrFail(categoryId);
-        
-        // Verify category belongs to this competition
+
         if (!selectedCategory.getCompetition().getId().equals(competitionId)) {
             Notification n = Notification.show(
-                    "Category does not belong to this competition.",
+                    localizationService.t("voting.categorynotbelong"),
                     4000, Notification.Position.BOTTOM_CENTER);
             n.addThemeVariants(NotificationVariant.LUMO_ERROR);
             event.forwardTo("competition/" + competitionId);
@@ -149,8 +151,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         buildUi();
     }
 
-    // ── UI ────────────────────────────────────────────────────────────────
-
     private void buildUi() {
         var competition = competitionService.getByIdOrFail(competitionId);
         this.currentCompetition = competition;
@@ -158,16 +158,13 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         var projects = projectService.listByCompetition(competitionId);
 
-        add(new ViewHeader("VOTING", userService, "competition/" + competitionId + "/categories"));
+        add(new ViewHeader(localizationService.t("voting.title"), userService, "competition/" + competitionId + "/categories"));
         add(buildBody(projects, competition.getName()));
     }
-
-    // ── Utility Methods ────────────────────────────────────────────────────
 
     private int getAvailableVotes(Category selectedCategory) {
         if (currentUser == null || selectedCategory == null) return 0;
 
-        // Checklist voting ignores vote limits
         if (selectedCategory.isChecklistVoting()) return Integer.MAX_VALUE;
 
         return voterService.getVotesLeft(currentUser.getId(), competitionId, selectedCategory.getId());
@@ -175,26 +172,27 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
     private void updateMaxVotesLabel(Category selectedCategory) {
         if (maxVotesLabel == null || currentCompetition == null) return;
-        
-        // Checklist voting ignores max votes
+
         if (selectedCategory != null && selectedCategory.isChecklistVoting()) {
-            maxVotesLabel.setText("Mark checklist items for each project");
+            maxVotesLabel.setText(localizationService.t("voting.markchecklist"));
             maxVotesLabel.getStyle()
                 .set("color", "var(--primary)")
                 .set("background", "rgba(108, 92, 231, 0.1)");
             return;
         }
-        
+
         int available = getAvailableVotes(selectedCategory);
         if (available <= 0) {
-            maxVotesLabel.setText("No votes remaining");
+            maxVotesLabel.setText(localizationService.t("voting.no votes remaining"));
         } else {
-            maxVotesLabel.setText("You have " + available + " vote" + (available != 1 ? "s" : "") + " left");
+            String votesText = available == 1
+                ? localizationService.t("voting.votesleft")
+                : localizationService.t("voting.votesleft.plural");
+            maxVotesLabel.setText(localizationService.t("voting.youhave") + available + votesText);
         }
 
-        // Pulse animation when vote counter changes
         maxVotesLabel.getStyle().set("animation", "vote-success-pulse 0.4s ease");
-        
+
         if (available == 0) {
             maxVotesLabel.getStyle()
                 .set("color", "var(--error)")
@@ -210,8 +208,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         }
     }
 
-    // ── Body ──────────────────────────────────────────────────────────────
-
     private VerticalLayout buildBody(List<Project> projects, String competitionName) {
         var body = new VerticalLayout();
         body.setWidthFull();
@@ -224,7 +220,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             .set("max-width", "760px")
             .set("padding", "0 0 1.5rem 0");
 
-        var title = new H1("VOTING");
+        var title = new H1(localizationService.t("voting.title"));
         title.getStyle()
                 .set("font-size", "2rem")
                 .set("font-weight", "800")
@@ -232,7 +228,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("margin", "0 0 0.25rem 0")
                 .set("text-align", "center");
 
-        var subtitle = new Span("Category: " + selectedCategory.getName() + " • " + competitionName);
+        var subtitle = new Span(localizationService.t("voting.category") + selectedCategory.getName() + " • " + competitionName);
         subtitle.getStyle()
                 .set("font-size", "1rem")
                 .set("color", "var(--text-muted)")
@@ -243,19 +239,21 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         titleWrapper.add(title, subtitle);
 
-        // Vote counter badge
         maxVotesLabel = new Span();
         if (selectedCategory.isChecklistVoting()) {
-            maxVotesLabel.setText("Mark checklist items for each project");
+            maxVotesLabel.setText(localizationService.t("voting.markchecklist"));
             maxVotesLabel.getStyle()
                 .set("color", "var(--primary)")
                 .set("background", "rgba(108, 92, 231, 0.1)");
         } else {
             int initialAvailable = getAvailableVotes(selectedCategory);
             if (initialAvailable <= 0) {
-                maxVotesLabel.setText("No votes remaining");
+                maxVotesLabel.setText(localizationService.t("voting.no votes remaining"));
             } else {
-                maxVotesLabel.setText("You have " + initialAvailable + " vote" + (initialAvailable != 1 ? "s" : "") + " left");
+                String votesText = initialAvailable == 1
+                    ? localizationService.t("voting.votesleft")
+                    : localizationService.t("voting.votesleft.plural");
+                maxVotesLabel.setText(localizationService.t("voting.youhave") + initialAvailable + votesText);
             }
             if (initialAvailable == 0) {
                 maxVotesLabel.getStyle()
@@ -297,8 +295,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         var currentUserLocal = userService.getCurrentUser();
         if (currentUserLocal == null) {
-            Notification.show("User not found. Please log in again.");
-            body.add(new Paragraph("Error: User not found. Please log in again."));
+            Notification.show(localizationService.t("voting.usernotfound"));
+            body.add(new Paragraph(localizationService.t("voting.usernotfound")));
             return body;
         }
 
@@ -308,7 +306,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
             boolean hasVotedInCategory = voteService.countVotesByUserAndCategory(currentUserLocal.getId(), selectedCategory.getId()) > 0;
 
-            // Preload checklist items once for all project cards
             var cachedChecklistItems = selectedCategory.isChecklistVoting()
                     ? checklistItemRepository.findByCompetitionId(competitionId)
                     : java.util.List.<com.microslop.entity.ChecklistItem>of();
@@ -316,10 +313,9 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             int staggerIndex = 1;
             boolean isFirst = true;
             for (Project p : projects) {
-                // Filter projects that belong to this category
                 boolean belongsToCategory = p.getCategories().stream()
                         .anyMatch(c -> c.getId().equals(selectedCategory.getId()));
-                        
+
                 if (belongsToCategory) {
                     long alreadyVoted = voteService.countVotesByUserAndProjectAndCategory(currentUserLocal.getId(), p.getId(), selectedCategory.getId());
                     projectsContainer.add(buildProjectCard(p, alreadyVoted > 0, hasVotedInCategory, staggerIndex, cachedChecklistItems, isFirst));
@@ -334,8 +330,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         body.add(titleWrapper, counterWrapper, projectsContainer);
         return body;
     }
-
-    // ── Project Card ──────────────────────────────────────────────────────
 
     private Div buildProjectCard(Project p, boolean alreadySelected, boolean hasVotedInCategory, int staggerIndex, java.util.List<com.microslop.entity.ChecklistItem> cachedChecklistItems, boolean isFirst) {
         long totalVotes = voteService.countVotesByProject(p.getId());
@@ -370,7 +364,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("color", "var(--text-muted)")
                 .set("margin-top", "0.25rem");
 
-        var votesLabel = new Span("Total votes: " + totalVotes);
+        var votesLabel = new Span(localizationService.t("voting.totalvotes") + totalVotes);
         votesLabel.getStyle()
                 .set("font-size", "0.85rem")
                 .set("color", "var(--text-muted)")
@@ -384,21 +378,18 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         voteInterface.setPadding(false);
         voteInterface.setMargin(false);
 
-        // Check category voting type and show appropriate voting interface
         if (selectedCategory != null && selectedCategory.isChecklistVoting()) {
-            // Show checklist voting button - max votes is ignored for checklist
-            Button checklistButton = new Button("Vote (Checklist)");
+            Button checklistButton = new Button(localizationService.t("voting.votepoints"));
             checklistButton.addClassName("votify-btn-primary");
             checklistButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
             checklistButton.setWidth("auto");
             checklistButton.getStyle().set("padding", "0.75rem 1.25rem");
-            
+
             checklistButton.addClickListener(e -> handleChecklistVoting(p, selectedCategory, cachedChecklistItems));
             voteInterface.add(checklistButton);
         } else {
-            // Show points-based voting interface
             var pointsInput = new IntegerField();
-            pointsInput.setLabel("Points");
+            pointsInput.setLabel(localizationService.t("voting.points"));
             pointsInput.setMin(1);
             pointsInput.setValue(1);
             pointsInput.setWidth("90px");
@@ -407,12 +398,12 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                     .set("font-weight", "600")
                     .set("text-align", "center");
 
-            Button submitButton = new Button("Vote");
+            Button submitButton = new Button(localizationService.t("voting.vote"));
             submitButton.addClassName("votify-btn-primary");
             submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
             submitButton.setWidth("auto");
             submitButton.getStyle().set("padding", "0.75rem 1.25rem");
-            
+
             int availableVotes = getAvailableVotes(selectedCategory);
             if (availableVotes <= 0) {
                 submitButton.setEnabled(false);
@@ -424,7 +415,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                         .set("cursor", "not-allowed");
                 card.addClassName("animate-card-flash");
             }
-            
+
             submitButton.addClickListener(e -> {
                 handleVoteWithPoints(p, pointsInput.getValue() != null ? pointsInput.getValue() : 1, selectedCategory);
             });
@@ -432,7 +423,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             voteInterface.add(pointsInput, submitButton);
         }
 
-        Button commentsBtn = new Button("Comments");
+        Button commentsBtn = new Button(localizationService.t("voting.comments"));
         commentsBtn.addClassName("votify-btn-secondary");
         commentsBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         commentsBtn.getStyle()
@@ -456,21 +447,19 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         return card;
     }
 
-    // ── Comments dialog ───────────────────────────────────────────────────
-
     private void openCommentsDialog(String projectName, Long projectId) {
         var dialog = new Dialog();
-        dialog.setHeaderTitle("Comments for: " + projectName);
+        dialog.setHeaderTitle(localizationService.t("voting.commentsfor") + projectName);
 
-        var textArea = new TextArea("Your comment");
+        var textArea = new TextArea(localizationService.t("voting.yourcomment"));
         textArea.setWidthFull();
         textArea.setHeight("150px");
-        textArea.setPlaceholder("Write your feedback here...");
+        textArea.setPlaceholder(localizationService.t("voting.writefeedback"));
 
-        var saveBtn = new Button("Save", e -> {
+        var saveBtn = new Button(localizationService.t("voting.save"), e -> {
             String commentText = textArea.getValue().trim();
             if (commentText.isEmpty()) {
-                showNotification("Comment cannot be empty.", NotificationVariant.LUMO_CONTRAST);
+                showNotification(localizationService.t("voting.commentempty"), NotificationVariant.LUMO_CONTRAST);
                 return;
             }
 
@@ -479,17 +468,16 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 commentService.saveComment(projectId, username, commentText, selectedCategory.getId());
                 dialog.close();
 
-                // Show comment animation
                 CommentAnimation commentAnim = new CommentAnimation(() -> {});
                 getUI().ifPresent(ui -> ui.add(commentAnim));
             } catch (Exception ex) {
-                showNotification("Error saving comment: " + ex.getMessage(), NotificationVariant.LUMO_ERROR);
+                showNotification(localizationService.t("voting.errorsavingcomment") + ex.getMessage(), NotificationVariant.LUMO_ERROR);
             }
         });
         saveBtn.addClassName("votify-btn-primary");
         saveBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        var cancelBtn = new Button("Cancel", e -> dialog.close());
+        var cancelBtn = new Button(localizationService.t("voting.cancel"), e -> dialog.close());
         cancelBtn.addClassName("votify-btn-secondary");
 
         var footer = new HorizontalLayout(saveBtn, cancelBtn);
@@ -497,7 +485,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         footer.setSpacing(true);
 
         var content = new VerticalLayout(
-                new Paragraph("Leave your feedback for this project."),
+                new Paragraph(localizationService.t("voting.leavefeedback")),
                 textArea, footer);
         content.setPadding(false);
 
@@ -505,35 +493,35 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         dialog.open();
     }
 
-    // ── Utilities ─────────────────────────────────────────────────────────
-
     private void handleVoteWithPoints(Project project, int points, Category selectedCategory) {
         String username = userService.getCurrentUsername();
         if (username == null || username.isEmpty()) {
-            showNotification("You must be logged in to vote.", NotificationVariant.LUMO_CONTRAST);
+            showNotification(localizationService.t("voting.mustlogin"), NotificationVariant.LUMO_CONTRAST);
             return;
         }
 
         if (selectedCategory == null) {
-            showNotification("Please select a category before voting.", NotificationVariant.LUMO_WARNING);
+            showNotification(localizationService.t("voting.selectcategory"), NotificationVariant.LUMO_WARNING);
             return;
         }
 
         if (points <= 0) {
-            showNotification("You must assign at least 1 point to vote.", NotificationVariant.LUMO_CONTRAST);
+            showNotification(localizationService.t("voting.assignpoints"), NotificationVariant.LUMO_CONTRAST);
             return;
         }
 
         var competition = competitionService.getByIdOrFail(competitionId);
         if (!competition.canVote()) {
-            showNotification("This competition does not accept votes at this time.",
+            showNotification(localizationService.t("voting.nocompetition"),
                     NotificationVariant.LUMO_WARNING);
             return;
         }
 
         int availableVotes = getAvailableVotes(selectedCategory);
         if (points > availableVotes) {
-            showNotification("Error! You only have " + availableVotes + " votes available. Cannot assign " + points + " points.", 
+            showNotification(localizationService.t("voting.onlyvotes") + availableVotes +
+                    localizationService.t("voting.votesavailable") + points +
+                    localizationService.t("voting.points.plural"),
                     NotificationVariant.LUMO_ERROR);
             return;
         }
@@ -541,18 +529,19 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         try {
             voteService.submitVote(username, project.getId(), selectedCategory.getId(), points);
 
-            // Decrement votes left in the Voter record
             voterService.decrementVotesLeft(currentUser.getId(), competitionId, selectedCategory.getId(), points);
 
             int remainingVotes = getAvailableVotes(selectedCategory);
             boolean isLastVote = remainingVotes <= 0;
 
-            // Update label immediately with correct remaining count
             if (!isLastVote) {
                 if (remainingVotes <= 0) {
-                    maxVotesLabel.setText("No votes remaining");
+                    maxVotesLabel.setText(localizationService.t("voting.no votes remaining"));
                 } else {
-                    maxVotesLabel.setText("You have " + remainingVotes + " vote" + (remainingVotes != 1 ? "s" : "") + " left");
+                    String votesText = remainingVotes == 1
+                        ? localizationService.t("voting.votesleft")
+                        : localizationService.t("voting.votesleft.plural");
+                    maxVotesLabel.setText(localizationService.t("voting.youhave") + remainingVotes + votesText);
                 }
                 maxVotesLabel.getStyle().set("animation", "vote-success-pulse 0.4s ease");
             }
@@ -582,19 +571,19 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private void handleVote(Project project) {
         String username = userService.getCurrentUsername();
         if (username == null || username.isEmpty()) {
-            showNotification("You must be logged in to vote.", NotificationVariant.LUMO_CONTRAST);
+            showNotification(localizationService.t("voting.mustlogin"), NotificationVariant.LUMO_CONTRAST);
             return;
         }
 
         if (selectedCategory == null) {
-            showNotification("Please select a category before voting.", NotificationVariant.LUMO_WARNING);
+            showNotification(localizationService.t("voting.selectcategory"), NotificationVariant.LUMO_WARNING);
             return;
         }
 
         var competition = competitionService.getByIdOrFail(competitionId);
 
         if (!competition.canVote()) {
-            showNotification("This competition does not accept votes at this time.",
+            showNotification(localizationService.t("voting.nocompetition"),
                     NotificationVariant.LUMO_WARNING);
             return;
         }
@@ -602,18 +591,19 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         try {
             voteService.submitVote(username, project.getId(), selectedCategory.getId());
 
-            // Decrement votes left in the Voter record
             voterService.decrementVotesLeft(currentUser.getId(), competitionId, selectedCategory.getId(), 1);
 
             int remainingVotes = getAvailableVotes(selectedCategory);
             boolean isLastVote = remainingVotes <= 0;
 
-            // Update label immediately
             if (!isLastVote) {
                 if (remainingVotes <= 0) {
-                    maxVotesLabel.setText("No votes remaining");
+                    maxVotesLabel.setText(localizationService.t("voting.no votes remaining"));
                 } else {
-                    maxVotesLabel.setText("You have " + remainingVotes + " vote" + (remainingVotes != 1 ? "s" : "") + " left");
+                    String votesText = remainingVotes == 1
+                        ? localizationService.t("voting.votesleft")
+                        : localizationService.t("voting.votesleft.plural");
+                    maxVotesLabel.setText(localizationService.t("voting.youhave") + remainingVotes + votesText);
                 }
                 maxVotesLabel.getStyle().set("animation", "vote-success-pulse 0.4s ease");
             }
@@ -648,22 +638,21 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private void handleChecklistVoting(Project project, Category category, java.util.List<com.microslop.entity.ChecklistItem> cachedChecklistItems) {
         String username = userService.getCurrentUsername();
         if (username == null || username.isEmpty()) {
-            showNotification("You must be logged in to vote.", NotificationVariant.LUMO_CONTRAST);
+            showNotification(localizationService.t("voting.mustlogin"), NotificationVariant.LUMO_CONTRAST);
             return;
         }
 
         if (category == null) {
-            showNotification("Please select a category before voting.", NotificationVariant.LUMO_WARNING);
+            showNotification(localizationService.t("voting.selectcategory"), NotificationVariant.LUMO_WARNING);
             return;
         }
 
         try {
             if (cachedChecklistItems.isEmpty()) {
-                showNotification("No checklist items available for this category.", NotificationVariant.LUMO_WARNING);
+                showNotification(localizationService.t("voting.nochecklist"), NotificationVariant.LUMO_WARNING);
                 return;
             }
 
-            // Show checklist voting dialog — pass only IDs and name, not the detached entity
             ChecklistVotingDialog dialog = new ChecklistVotingDialog(
                 project.getId(),
                 project.getName(),
@@ -678,7 +667,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             dialog.open();
 
         } catch (Exception ex) {
-            showNotification("Error opening checklist voting: " + ex.getMessage(), NotificationVariant.LUMO_ERROR);
+            showNotification(localizationService.t("voting.checklisterror") + ex.getMessage(), NotificationVariant.LUMO_ERROR);
         }
     }
 }

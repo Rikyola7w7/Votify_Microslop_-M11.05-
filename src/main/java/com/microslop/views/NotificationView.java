@@ -3,6 +3,7 @@ package com.microslop.views;
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Notification;
 import com.microslop.service.InvitationService;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.NotificationService;
 import com.microslop.views.components.NotificationCardComponent;
 import com.vaadin.flow.component.button.Button;
@@ -26,11 +27,13 @@ public class NotificationView extends VerticalLayout {
 
     private final NotificationService notificationService;
     private final InvitationService invitationService;
+    private final LocalizationService localizationService;
     private Div notificationsContainer;
 
-    public NotificationView(NotificationService notificationService, InvitationService invitationService) {
+    public NotificationView(NotificationService notificationService, InvitationService invitationService, LocalizationService localizationService) {
         this.notificationService = notificationService;
         this.invitationService = invitationService;
+        this.localizationService = localizationService;
         initializeView();
         refreshNotifications();
     }
@@ -57,13 +60,12 @@ public class NotificationView extends VerticalLayout {
             .set("padding", "2rem")
             .set("background", "var(--surface)");
 
-        H1 title = new H1("Notifications");
+        H1 title = new H1(localizationService.t("notification.title"));
         title.getStyle()
             .set("margin", "0")
             .set("color", "var(--dark)")
             .set("font-size", "28px");
 
-        // Header actions
         HorizontalLayout actions = new HorizontalLayout();
         actions.setSpacing(true);
         actions.setPadding(false);
@@ -81,11 +83,10 @@ public class NotificationView extends VerticalLayout {
 
         Button refreshBtn = new Button(new Icon(VaadinIcon.REFRESH));
         refreshBtn.addThemeVariants(ButtonVariant.LUMO_ICON);
-        refreshBtn.getElement().setAttribute("title", "Refresh notifications");
+        refreshBtn.getElement().setAttribute("title", "Refresh");
         refreshBtn.addClickListener(e -> refreshNotifications());
         actions.add(refreshBtn);
 
-        // Delete All button
         Button deleteAllBtn = new Button("Delete All");
         deleteAllBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
         deleteAllBtn.getElement().setAttribute("title", "Delete all notifications");
@@ -109,7 +110,6 @@ public class NotificationView extends VerticalLayout {
             .set("padding", "2rem")
             .set("overflow-y", "auto");
 
-        // Unread count badge
         long unreadCount = notificationService.getUnreadCountForCurrentUser();
         if (unreadCount > 0) {
             HorizontalLayout unreadInfo = new HorizontalLayout();
@@ -129,15 +129,15 @@ public class NotificationView extends VerticalLayout {
                 .set("border-radius", "4px")
                 .set("font-weight", "600");
 
-            Span unreadText = new Span("unread notification" + (unreadCount > 1 ? "s" : ""));
-            unreadText.getStyle()
+            String unreadText = unreadCount > 1 ? "unread notifications" : "unread notification";
+            Span unreadLabel = new Span(unreadText);
+            unreadLabel.getStyle()
                 .set("color", "var(--text-muted)");
 
-            unreadInfo.add(unreadBadge, unreadText);
+            unreadInfo.add(unreadBadge, unreadLabel);
             content.add(unreadInfo);
         }
 
-        // Notifications container
         notificationsContainer = new Div();
         notificationsContainer.setWidthFull();
         notificationsContainer.getStyle()
@@ -190,7 +190,7 @@ public class NotificationView extends VerticalLayout {
             .set("margin-bottom", "16px")
             .set("opacity", "0.5");
 
-        Span emptyText = new Span("No notifications yet");
+        Span emptyText = new Span(localizationService.t("nav.nonotifications"));
         emptyText.getStyle()
             .set("font-size", "18px")
             .set("font-weight", "500")

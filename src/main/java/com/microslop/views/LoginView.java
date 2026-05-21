@@ -1,6 +1,7 @@
 package com.microslop.views;
 
 import com.microslop.entity.User;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.UserService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -15,8 +16,6 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
@@ -32,9 +31,11 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 public class LoginView extends HorizontalLayout {
 
     private final UserService userService;
+    private final LocalizationService localizationService;
 
-    public LoginView(UserService userService) {
+    public LoginView(UserService userService, LocalizationService localizationService) {
         this.userService = userService;
+        this.localizationService = localizationService;
 
         setSizeFull();
         setPadding(false);
@@ -79,7 +80,7 @@ public class LoginView extends HorizontalLayout {
                 .set("letter-spacing", "-0.5px")
                 .set("text-shadow", "0 2px 8px rgba(0,0,0,0.4)");
 
-        Paragraph tagline = new Paragraph("Your vote matters.");
+        Paragraph tagline = new Paragraph(localizationService.t("home.findvote"));
         tagline.getStyle()
                 .set("color", "rgba(255, 255, 255, 0.95)")
                 .set("font-size", "1.1rem")
@@ -113,35 +114,35 @@ public class LoginView extends HorizontalLayout {
                 .set("box-shadow", "var(--shadow-modal)")
                 .set("padding", "48px 40px");
 
-        H2 title = new H2("Welcome back");
+        H2 title = new H2(localizationService.t("login.welcome"));
         title.getStyle()
                 .set("margin", "0 0 4px 0")
                 .set("font-size", "1.75rem")
                 .set("font-weight", "700")
                 .set("color", "var(--text-primary)");
 
-        Paragraph subtitle = new Paragraph("Sign in to continue");
+        Paragraph subtitle = new Paragraph(localizationService.t("login.signincontinue"));
         subtitle.getStyle()
                 .set("margin", "0 0 24px 0")
                 .set("color", "var(--text-muted)")
                 .set("font-size", "0.95rem");
 
-        TextField usernameField = new TextField("Username");
+        TextField usernameField = new TextField(localizationService.t("login.username"));
         usernameField.setWidthFull();
         usernameField.addClassNames("votify-input");
-        usernameField.setPlaceholder("Enter your username");
+        usernameField.setPlaceholder(localizationService.t("login.username.placeholder"));
 
-        PasswordField passwordField = new PasswordField("Password");
+        PasswordField passwordField = new PasswordField(localizationService.t("login.password"));
         passwordField.setWidthFull();
         passwordField.addClassNames("votify-input");
-        passwordField.setPlaceholder("Enter your password");
+        passwordField.setPlaceholder(localizationService.t("login.password.placeholder"));
 
-        Button loginButton = new Button("Sign In", e -> {
+        Button loginButton = new Button(localizationService.t("login.signin"), e -> {
             String username = usernameField.getValue().trim();
             String password = passwordField.getValue().trim();
 
             if (username.isEmpty() || password.isEmpty()) {
-                Notification.show("Please fill in all fields.");
+                Notification.show(localizationService.t("login.fillall"));
                 return;
             }
 
@@ -158,10 +159,9 @@ public class LoginView extends HorizontalLayout {
                     session.setAttribute("userId", loggedUser.getId());
                 }
 
-                Notification success = Notification.show("Login successful!");
+                Notification success = Notification.show(localizationService.t("login.success"));
                 success.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
-                // Mini confetti burst on login button
                 String[] colors = {"#6C5CE7", "#00CEC9", "#FD79A8", "#00B894", "#F39C12"};
                 for (int i = 0; i < 6; i++) {
                     Span dot = new Span();
@@ -187,8 +187,7 @@ public class LoginView extends HorizontalLayout {
                     destination = session.getAttribute("postLoginRoute").toString();
                     session.setAttribute("postLoginRoute", null);
                 }
-                
-                // Navigate using hard redirect so MainLayout is rebuilt with fresh session state
+
                 String finalDestination = destination.isBlank() ? "/" : "/" + destination;
                 String finalDest = finalDestination;
                 getUI().ifPresent(ui -> ui.getPage().executeJs("window.location.href = $0", finalDest));
@@ -197,7 +196,7 @@ public class LoginView extends HorizontalLayout {
                 Notification error = Notification.show(ex.getMessage());
                 error.addThemeVariants(NotificationVariant.LUMO_ERROR);
             } catch (IllegalStateException ex) {
-                Notification error = Notification.show("An unexpected error occurred.");
+                Notification error = Notification.show(localizationService.t("login.unexpectederror"));
                 error.addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
         });
@@ -213,7 +212,7 @@ public class LoginView extends HorizontalLayout {
         usernameField.addKeyPressListener(Key.ENTER, e -> loginButton.click());
         passwordField.addKeyPressListener(Key.ENTER, e -> loginButton.click());
 
-        RouterLink linkRegister = new RouterLink("Don't have an account? Register", RegisterView.class);
+        RouterLink linkRegister = new RouterLink(localizationService.t("login.noaccount"), RegisterView.class);
         linkRegister.getStyle()
                 .set("color", "var(--primary)")
                 .set("font-weight", "600")
