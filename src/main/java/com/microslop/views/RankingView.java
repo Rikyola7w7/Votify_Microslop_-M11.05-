@@ -12,7 +12,7 @@ import com.microslop.service.UserService;
 import com.microslop.service.VoterService;
 import com.microslop.service.VoteService;
 import com.microslop.views.components.BallotLoadingComponent;
-import com.microslop.views.components.CelebrationAnimation;
+import com.microslop.views.components.VoterRegisteredAnimation;
 import com.microslop.views.components.PodiumCardComponent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -246,16 +246,14 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
                 dialog.close();
 
-                CelebrationAnimation celebration = new CelebrationAnimation(
-                    localizationService.t("ranking.voterregistered"),
-                    localizationService.t("ranking.makevoiceheard"),
+                VoterRegisteredAnimation vrAnim = new VoterRegisteredAnimation(
                     () -> {
                         String votingUrl = "/competition/" + competitionId + "/category/" + categoryId + "/vote";
                         getUI().ifPresent(ui -> ui.getPage().executeJs(
                             "window.location.href = '" + votingUrl + "'"));
                     }
                 );
-                getUI().ifPresent(ui -> ui.add(celebration));
+                getUI().ifPresent(ui -> ui.add(vrAnim));
             } catch (IllegalStateException ex) {
                 Notification error = Notification.show(localizationService.t("ranking.error") + ex.getMessage(), 3000,
                     Notification.Position.BOTTOM_CENTER);
