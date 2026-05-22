@@ -57,12 +57,13 @@ public class AiFeedbackServiceImpl implements AiFeedbackService {
             throw new IllegalStateException("No comments found for this project. Feedback cannot be generated without comments.");
         }
 
+        int actualCommentCount = comments.size();
         String commentsText = comments.stream()
             .map(ProjectComment::getCommentText)
             .reduce((a, b) -> a + "\n---\n" + b)
             .orElse("");
 
-        log.info("Generating AI feedback for project {} with {} comments", projectId, comments.size());
+        log.info("Generating AI feedback for project {} with {} comments", projectId, actualCommentCount);
 
         String rawJson;
         try {
@@ -74,7 +75,53 @@ public class AiFeedbackServiceImpl implements AiFeedbackService {
 
         log.info("Raw Gemini response for project {} (length={}): {}", projectId, rawJson.length(), rawJson.length() > 1000 ? rawJson.substring(0, 1000) + "..." : rawJson);
         AiFeedbackResult result = parseGeminiResponse(rawJson);
-        log.info("Parsed AI feedback for project {}: summary='{}', positivePoints={}, negativePoints={}, frequentWords={}, sentiment={}, counts=({}/{}/{})",
+
+        // Override Gemini's counts with the ACTUAL comment count if they don't match
+        int geminiTotal = result.getPositiveCount() + result.getNeutralCount() + result.getNegativeCount();
+        if (geminiTotal != actualCommentCount) {
+            log.warn("Gemini returned total={} but actual comments={}. Overriding counts to match reality.", geminiTotal, actualCommentCount);
+            // Redistribute proportionally or just use Gemini's ratio
+            if (geminiTotal > 0) {
+                double ratio = (double) actualCommentCount / geminiTotal;
+                result = AiFeedbackResult.builder()
+                    .summary(result.getSummary())
+                    .positivePoints(result.getPositivePoints())
+                    .negativePoints(result.getNegativePoints())
+                    .sentimentScore(result.getSentimentScore())
+                    .positiveCount((int) Math.round(result.getPositiveCount() * ratio))
+                    .neutralCount((int) Math.round(result.getNeutralCount() * ratio))
+                    .negativeCount(actualCommentCount - (int) Math.round(result.getPositiveCount() * ratio) - (int) Math.round(result.getNeutralCount() * ratio))
+                    .frequentWords(result.getFrequentWords())
+                    .build();
+                // Ensure negativeCount is not negative
+                if (result.getNegativeCount() < 0) {
+                    result = AiFeedbackResult.builder()
+                        .summary(result.getSummary())
+                        .positivePoints(result.getPositivePoints())
+                        .negativePoints(result.getNegativePoints())
+                        .sentimentScore(result.getSentimentScore())
+                        .positiveCount(result.getPositiveCount())
+                        .neutralCount(result.getNeutralCount())
+                        .negativeCount(0)
+                        .frequentWords(result.getFrequentWords())
+                        .build();
+                }
+            } else {
+                // Gemini returned 0/0/0 - put all in neutral
+                result = AiFeedbackResult.builder()
+                    .summary(result.getSummary())
+                    .positivePoints(result.getPositivePoints())
+                    .negativePoints(result.getNegativePoints())
+                    .sentimentScore(result.getSentimentScore())
+                    .positiveCount(0)
+                    .neutralCount(actualCommentCount)
+                    .negativeCount(0)
+                    .frequentWords(result.getFrequentWords())
+                    .build();
+            }
+        }
+
+        log.info("Final AI feedback for project {}: summary='{}', positivePoints={}, negativePoints={}, frequentWords={}, sentiment={}, counts=({}/{}/{})",
             projectId, result.getSummary(), result.getPositivePoints(), result.getNegativePoints(),
             result.getFrequentWords(), result.getSentimentScore(),
             result.getPositiveCount(), result.getNeutralCount(), result.getNegativeCount());

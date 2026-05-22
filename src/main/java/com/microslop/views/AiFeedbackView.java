@@ -217,14 +217,13 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         sidebarPanel = new VerticalLayout();
         sidebarPanel.addClassName("votify-card-static");
         sidebarPanel.setWidth("340px");
-        sidebarPanel.setHeightFull();
         sidebarPanel.setSpacing(true);
         sidebarPanel.setPadding(true);
         sidebarPanel.getStyle()
             .set("padding", "20px")
             .set("border-radius", "var(--radius-lg)")
             .set("overflow-y", "auto")
-            .set("max-height", "640px");
+            .set("max-height", "800px");
 
         H3 sidebarTitle = new H3("Projects");
         sidebarTitle.getStyle()
@@ -237,14 +236,12 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         // Right dashboard
         dashboardPanel = new VerticalLayout();
         dashboardPanel.addClassName("votify-card-static");
-        dashboardPanel.setSizeFull();
+        dashboardPanel.setWidthFull();
         dashboardPanel.setSpacing(true);
         dashboardPanel.setPadding(true);
         dashboardPanel.getStyle()
             .set("padding", "24px")
-            .set("border-radius", "var(--radius-lg)")
-            .set("overflow-y", "auto")
-            .set("max-height", "640px");
+            .set("border-radius", "var(--radius-lg)");
 
         H3 dashboardTitle = new H3("Overview");
         dashboardTitle.getStyle()
