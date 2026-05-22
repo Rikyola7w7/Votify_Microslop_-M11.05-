@@ -70,6 +70,11 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
     private VerticalLayout projectsContainer;
 
+    private java.util.List<Project> cachedProjects = java.util.List.of();
+    private java.util.List<Long> cachedProjectIds = java.util.List.of();
+    private Map<Long, Long> cachedTotalVotes = Map.of();
+    private Map<Long, Long> cachedUserVotes = Map.of();
+
     public VotingView(CompetitionService competitionService,
                       ProjectService projectService,
                       VoteService voteService,
@@ -152,6 +157,38 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     // ── UI ────────────────────────────────────────────────────────────────
+
+    private void refreshProjectList() {
+        if (cachedProjects.isEmpty() || cachedProjectIds.isEmpty()) {
+            removeAll();
+            buildUi();
+            return;
+        }
+
+        var currentUserLocal = currentUser != null ? currentUser : userService.getCurrentUser();
+        if (currentUserLocal == null) return;
+
+        boolean hasVotedInCategory = voteService.countVotesByUserAndCategory(currentUserLocal.getId(), selectedCategory.getId()) > 0;
+
+        cachedTotalVotes = voteService.countVotesByProjectIdsAndCategory(cachedProjectIds, selectedCategory.getId());
+        cachedUserVotes = voteService.countUserVotesByProjectIdsAndCategory(cachedProjectIds, currentUserLocal.getId(), selectedCategory.getId());
+
+        projectsContainer.removeAll();
+
+        var cachedChecklistItems = selectedCategory.isChecklistVoting()
+                ? checklistItemRepository.findByCompetitionId(competitionId)
+                : java.util.List.<com.microslop.entity.ChecklistItem>of();
+
+        int staggerIndex = 1;
+        boolean isFirst = true;
+        for (Project p : cachedProjects) {
+            boolean alreadyVoted = cachedUserVotes.getOrDefault(p.getId(), 0L) > 0;
+            long totalVotes = cachedTotalVotes.getOrDefault(p.getId(), 0L);
+            projectsContainer.add(buildProjectCard(p, alreadyVoted, hasVotedInCategory, staggerIndex, cachedChecklistItems, isFirst, totalVotes));
+            staggerIndex = Math.min(staggerIndex + 1, 8);
+            isFirst = false;
+        }
+    }
 
     private void buildUi() {
         this.currentUser = userService.getCurrentUser();
@@ -302,7 +339,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         Runnable updateProjectsList = () -> {
             projectsContainer.removeAll();
-            updateMaxVotesLabel(selectedCategory);
 
             boolean hasVotedInCategory = voteService.countVotesByUserAndCategory(currentUserLocal.getId(), selectedCategory.getId()) > 0;
 
@@ -312,15 +348,16 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
             var projectsWithCategories = projectService.listByCompetitionWithCategories(competitionId, selectedCategory.getId());
 
-            List<Long> projectIds = projectsWithCategories.stream().map(Project::getId).toList();
-            Map<Long, Long> totalVoteCounts = voteService.countVotesByProjectIdsAndCategory(projectIds, selectedCategory.getId());
-            Map<Long, Long> userVoteCounts = voteService.countUserVotesByProjectIdsAndCategory(projectIds, currentUserLocal.getId(), selectedCategory.getId());
+            cachedProjects = new java.util.ArrayList<>(projectsWithCategories);
+            cachedProjectIds = cachedProjects.stream().map(Project::getId).toList();
+            cachedTotalVotes = voteService.countVotesByProjectIdsAndCategory(cachedProjectIds, selectedCategory.getId());
+            cachedUserVotes = voteService.countUserVotesByProjectIdsAndCategory(cachedProjectIds, currentUserLocal.getId(), selectedCategory.getId());
 
             int staggerIndex = 1;
             boolean isFirst = true;
-            for (Project p : projectsWithCategories) {
-                boolean alreadyVoted = userVoteCounts.getOrDefault(p.getId(), 0L) > 0;
-                long totalVotes = totalVoteCounts.getOrDefault(p.getId(), 0L);
+            for (Project p : cachedProjects) {
+                boolean alreadyVoted = cachedUserVotes.getOrDefault(p.getId(), 0L) > 0;
+                long totalVotes = cachedTotalVotes.getOrDefault(p.getId(), 0L);
                 projectsContainer.add(buildProjectCard(p, alreadyVoted, hasVotedInCategory, staggerIndex, cachedChecklistItems, isFirst, totalVotes));
                 staggerIndex = Math.min(staggerIndex + 1, 8);
                 isFirst = false;
@@ -558,8 +595,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 if (isLastVote) {
                     getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories/" + selectedCategory.getId() + "/ranking"));
                 } else {
-                    removeAll();
-                    buildUi();
+                    refreshProjectList();
                 }
             };
 
@@ -617,8 +653,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 if (isLastVote) {
                     getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories/" + selectedCategory.getId() + "/ranking"));
                 } else {
-                    removeAll();
-                    buildUi();
+                    refreshProjectList();
                 }
             };
 

@@ -129,30 +129,33 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
             List<Long> projectIds = projects.stream().map(Project::getId).toList();
             Map<Long, Long> voteCounts = voteService.countVotesByProjectIds(projectIds);
 
-            Set<Long> competitionIds = new HashSet<>();
+            Map<Long, Map<Long, Integer>> positionsByCompetition = new HashMap<>();
+            Map<Long, String> competitionNames = new HashMap<>();
+
             for (Project p : projects) {
                 if (p.getCompetition() != null) {
-                    competitionIds.add(p.getCompetition().getId());
+                    Long compId = p.getCompetition().getId();
+                    competitionNames.put(compId, p.getCompetition().getName());
                 }
             }
 
-            Map<Long, List<Project>> rankingsByCompetition = new HashMap<>();
-            for (Long compId : competitionIds) {
-                rankingsByCompetition.put(compId, projectService.getRanking(compId));
-            }
-
-            Map<Long, Integer> positionMap = new HashMap<>();
-            for (List<Project> ranking : rankingsByCompetition.values()) {
+            for (Long compId : competitionNames.keySet()) {
+                List<Project> ranking = projectService.getRanking(compId);
+                Map<Long, Integer> positions = new HashMap<>();
                 for (int i = 0; i < ranking.size(); i++) {
-                    positionMap.put(ranking.get(i).getId(), i + 1);
+                    positions.put(ranking.get(i).getId(), i + 1);
                 }
+                positionsByCompetition.put(compId, positions);
             }
 
             int[] index = {0};
             for (Project project : projects) {
-                String compName = project.getCompetition() != null ? project.getCompetition().getName() : "Unknown";
+                Long compId = project.getCompetition() != null ? project.getCompetition().getId() : null;
+                String compName = compId != null ? competitionNames.getOrDefault(compId, "Unknown") : "Unknown";
                 long votes = voteCounts.getOrDefault(project.getId(), 0L);
-                int position = positionMap.getOrDefault(project.getId(), 0);
+                int position = compId != null && positionsByCompetition.containsKey(compId)
+                    ? positionsByCompetition.get(compId).getOrDefault(project.getId(), 0)
+                    : 0;
 
                 Div cardWrapper = new Div(new ProjectCardComponent(
                     project,

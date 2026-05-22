@@ -194,18 +194,8 @@ public class NotificationServiceImpl implements NotificationService, Notificatio
     
     @Override
     public void markAllAsReadForCurrentUser() {
-        User currentUser = userService.getCurrentUser();
-        List<Notification> unreadNotifications = notificationRepository.findByUserAndIsReadFalseOrderByCreationDateDesc(currentUser);
-        unreadNotifications.forEach(n -> n.setIsRead(true));
-        List<Notification> savedNotifications = notificationRepository.saveAll(unreadNotifications);
-        
-        // Publish event for each marked as read
-        for (Notification notification : savedNotifications) {
-            NotificationReadEvent event = new NotificationReadEvent(notification, currentUser.getUsername());
-            notifyNotificationRead(event);
-        }
-        
-        log.info("Marked {} notifications as read for user {}", unreadNotifications.size(), currentUser.getUsername());
+        int count = notificationRepository.markAllAsReadByUser(userService.getCurrentUser());
+        log.info("Marked {} notifications as read for user {}", count, userService.getCurrentUsername());
     }
     
     @Override
@@ -261,35 +251,14 @@ public class NotificationServiceImpl implements NotificationService, Notificatio
         if (notificationIds == null || notificationIds.isEmpty()) {
             return;
         }
-        
-        User currentUser = userService.getCurrentUser();
-        List<Notification> notificationsToDelete = notificationIds.stream()
-            .map(id -> notificationRepository.findById(id))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .filter(n -> n.getUser().getId().equals(currentUser.getId()))
-            .toList();
-        
-        for (Notification notification : notificationsToDelete) {
-            notificationRepository.deleteById(notification.getId());
-            NotificationDeletedEvent event = new NotificationDeletedEvent(notification, currentUser.getUsername());
-            notifyNotificationDeleted(event);
-        }
-        
-        log.info("Deleted {} notifications for user {}", notificationsToDelete.size(), currentUser.getUsername());
+        notificationRepository.deleteAllById(notificationIds);
+        log.info("Deleted {} notifications for user {}", notificationIds.size(), userService.getCurrentUsername());
     }
     
     @Override
     public void deleteAllNotificationsForCurrentUser() {
         User currentUser = userService.getCurrentUser();
-        List<Notification> allNotifications = notificationRepository.findByUserOrderByCreationDateDesc(currentUser);
-        
-        for (Notification notification : allNotifications) {
-            notificationRepository.deleteById(notification.getId());
-            NotificationDeletedEvent event = new NotificationDeletedEvent(notification, currentUser.getUsername());
-            notifyNotificationDeleted(event);
-        }
-        
+        notificationRepository.deleteByUser(currentUser);
         log.info("Deleted all notifications for user {}", currentUser.getUsername());
     }
     

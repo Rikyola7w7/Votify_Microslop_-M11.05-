@@ -28,4 +28,10 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     
     @Query("SELECT n FROM Notification n LEFT JOIN FETCH n.competition WHERE n.user = :user AND (n.expirationDate IS NULL OR n.expirationDate > CURRENT_TIMESTAMP) ORDER BY n.creationDate DESC")
     List<Notification> findActiveNotifications(@Param("user") User user);
+
+    void deleteByUser(User user);
+
+    @Modifying
+    @Query("UPDATE Notification n SET n.isRead = true WHERE n.user = :user AND n.isRead = false")
+    int markAllAsReadByUser(@Param("user") User user);
 }

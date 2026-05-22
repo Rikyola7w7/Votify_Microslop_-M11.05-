@@ -219,13 +219,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public List<Project> getUserProjects(String username) {
-        List<Project> projects = projectRepository.findProjectsByParticipantUsername(username);
-        projects.forEach(p -> {
-            if (p.getCompetition() != null) {
-                p.getCompetition().getName();
-            }
-        });
-        return projects;
+        return projectRepository.findProjectsByParticipantUsername(username);
     }
 
     @Override
