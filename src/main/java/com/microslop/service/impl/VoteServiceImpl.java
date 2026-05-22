@@ -28,7 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -231,6 +233,30 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
         Specification<Vote> spec = new VotesByUserSpecification(userId)
             .and(new VotesByProjectSpecification(projectId));
         return voteRepository.findAll(spec);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Long> countVotesByProjectIds(List<Long> projectIds) {
+        if (projectIds == null || projectIds.isEmpty()) return Map.of();
+        return voteRepository.countVotesByProjectIds(projectIds).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Long> countVotesByProjectIdsAndCategory(List<Long> projectIds, Long categoryId) {
+        if (projectIds == null || projectIds.isEmpty()) return Map.of();
+        return voteRepository.countVotesByProjectIdsAndCategory(projectIds, categoryId).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Long> countUserVotesByProjectIdsAndCategory(List<Long> projectIds, Long userId, Long categoryId) {
+        if (projectIds == null || projectIds.isEmpty()) return Map.of();
+        return voteRepository.countUserVotesByProjectIdsAndCategory(projectIds, userId, categoryId).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
     }
 
     @Override

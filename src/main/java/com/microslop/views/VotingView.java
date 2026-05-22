@@ -2,6 +2,7 @@ package com.microslop.views;
 
 import com.microslop.entity.Competition;
 import java.time.LocalDateTime;
+import java.util.Map;
 import com.microslop.entity.Category;
 import com.microslop.entity.Project;
 import com.microslop.repository.ChecklistItemRepository;
@@ -308,19 +309,22 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
             boolean hasVotedInCategory = voteService.countVotesByUserAndCategory(currentUserLocal.getId(), selectedCategory.getId()) > 0;
 
-            // Preload checklist items once for all project cards
             var cachedChecklistItems = selectedCategory.isChecklistVoting()
                     ? checklistItemRepository.findByCompetitionId(competitionId)
                     : java.util.List.<com.microslop.entity.ChecklistItem>of();
 
-            // Fetch projects with categories in one query while session is open
             var projectsWithCategories = projectService.listByCompetitionWithCategories(competitionId, selectedCategory.getId());
+
+            List<Long> projectIds = projectsWithCategories.stream().map(Project::getId).toList();
+            Map<Long, Long> totalVoteCounts = voteService.countVotesByProjectIdsAndCategory(projectIds, selectedCategory.getId());
+            Map<Long, Long> userVoteCounts = voteService.countUserVotesByProjectIdsAndCategory(projectIds, currentUserLocal.getId(), selectedCategory.getId());
 
             int staggerIndex = 1;
             boolean isFirst = true;
             for (Project p : projectsWithCategories) {
-                long alreadyVoted = voteService.countVotesByUserAndProjectAndCategory(currentUserLocal.getId(), p.getId(), selectedCategory.getId());
-                projectsContainer.add(buildProjectCard(p, alreadyVoted > 0, hasVotedInCategory, staggerIndex, cachedChecklistItems, isFirst));
+                boolean alreadyVoted = userVoteCounts.getOrDefault(p.getId(), 0L) > 0;
+                long totalVotes = totalVoteCounts.getOrDefault(p.getId(), 0L);
+                projectsContainer.add(buildProjectCard(p, alreadyVoted, hasVotedInCategory, staggerIndex, cachedChecklistItems, isFirst, totalVotes));
                 staggerIndex = Math.min(staggerIndex + 1, 8);
                 isFirst = false;
             }
@@ -334,8 +338,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
     // ── Project Card ──────────────────────────────────────────────────────
 
-    private Div buildProjectCard(Project p, boolean alreadySelected, boolean hasVotedInCategory, int staggerIndex, java.util.List<com.microslop.entity.ChecklistItem> cachedChecklistItems, boolean isFirst) {
-        long totalVotes = voteService.countVotesByProject(p.getId());
+    private Div buildProjectCard(Project p, boolean alreadySelected, boolean hasVotedInCategory, int staggerIndex, java.util.List<com.microslop.entity.ChecklistItem> cachedChecklistItems, boolean isFirst, long totalVotes) {
         boolean otherProjectVoted = hasVotedInCategory && !alreadySelected;
 
         var card = new Div();

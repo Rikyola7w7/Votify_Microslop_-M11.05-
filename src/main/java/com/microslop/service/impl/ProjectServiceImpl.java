@@ -108,11 +108,15 @@ public class ProjectServiceImpl implements ProjectService {
             baseOrder.put(baseRanking.get(i).getId(), i);
         }
 
+        List<Long> projectIds = baseRanking.stream().map(Project::getId).toList();
+        Map<Long, Long> batchCounts = voteRepository.countVotesByProjectIds(projectIds).stream()
+                .collect(java.util.stream.Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+
         Map<Long, Integer> effectiveVoteCounts = new HashMap<>();
         for (Project p : baseRanking) {
             int count = p.getManualVoteCount() != null
                     ? p.getManualVoteCount()
-                    : (int) voteRepository.countByProjectId(p.getId());
+                    : batchCounts.getOrDefault(p.getId(), 0L).intValue();
             effectiveVoteCounts.put(p.getId(), count);
         }
 

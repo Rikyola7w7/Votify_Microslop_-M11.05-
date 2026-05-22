@@ -36,6 +36,8 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @PageTitle("Ranking")
 @Route("competition/:competitionId/categories/:categoryId/ranking")
@@ -57,6 +59,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     private boolean isJudgesRanking;
     private Button modifyEntriesButton;
     private Div revertButtonContainer;
+    private Map<Long, Long> voteCounts = Map.of();
 
     public RankingView(CompetitionService competitionService,
                        CategoryService categoryService,
@@ -473,6 +476,9 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             emptyWrapper.add(emptyIcon, emptyTitle);
             content.add(emptyWrapper);
         } else {
+            List<Long> projectIds = ranking.stream().map(Project::getId).toList();
+            voteCounts = voteService.countVotesByProjectIds(projectIds);
+
             var podiumSection = new Div();
             podiumSection.setWidthFull();
             podiumSection.getStyle()
@@ -495,7 +501,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 Project p = ranking.get(idx);
                 long votes = p.getManualVoteCount() != null
                     ? p.getManualVoteCount()
-                    : voteService.countVotesByProject(p.getId());
+                    : voteCounts.getOrDefault(p.getId(), 0L);
                 if (modifyMode) {
                     podiumSection.add(buildModifiablePodiumWrapper(p, positions[slot], votes));
                 } else {
@@ -514,7 +520,10 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 for (int i = 3; i < ranking.size(); i++) {
                     Project p = ranking.get(i);
                     int staggerIndex = Math.min(i - 2, 8);
-                    listSection.add(buildListRow(p, i + 1, staggerIndex));
+                    long votes = p.getManualVoteCount() != null
+                        ? p.getManualVoteCount()
+                        : voteCounts.getOrDefault(p.getId(), 0L);
+                    listSection.add(buildListRow(p, i + 1, staggerIndex, votes));
                 }
                 content.add(listSection);
             }
@@ -581,7 +590,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         return container;
     }
 
-    private HorizontalLayout buildListRow(Project p, int position, int staggerIndex) {
+    private HorizontalLayout buildListRow(Project p, int position, int staggerIndex, long voteCount) {
         var wrapper = new VerticalLayout();
         wrapper.setPadding(false);
         wrapper.setSpacing(false);
@@ -625,7 +634,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         long votes = p.getManualVoteCount() != null
             ? p.getManualVoteCount()
-            : voteService.countVotesByProject(p.getId());
+            : voteCount;
 
         var votesSpan = new Span(votes + " vote" + (votes != 1 ? "s" : ""));
         votesSpan.getStyle()
@@ -767,7 +776,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         int currentVotes = project.getManualVoteCount() != null
             ? project.getManualVoteCount()
-            : (int) voteService.countVotesByProject(project.getId());
+            : (int) voteCounts.getOrDefault(project.getId(), 0L);
 
         var votesField = new IntegerField("Votes");
         votesField.setMin(0);

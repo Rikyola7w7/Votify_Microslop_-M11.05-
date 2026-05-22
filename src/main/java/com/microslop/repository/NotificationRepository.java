@@ -14,35 +14,18 @@ import java.util.List;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long>, JpaSpecificationExecutor<Notification> {
     
-    /**
-     * Find all notifications for a user, ordered by creation date (newest first)
-     */
-    List<Notification> findByUserOrderByCreationDateDesc(User user);
+    @Query("SELECT n FROM Notification n LEFT JOIN FETCH n.competition WHERE n.user = :user ORDER BY n.creationDate DESC")
+    List<Notification> findByUserOrderByCreationDateDesc(@Param("user") User user);
     
-    /**
-     * Find unread notifications for a user
-     */
     List<Notification> findByUserAndIsReadFalseOrderByCreationDateDesc(User user);
     
-    /**
-     * Find unread notifications count for a user
-     */
     long countByUserAndIsReadFalse(User user);
     
-    /**
-     * Find recent notifications (last N notifications)
-     */
-    @Query("SELECT n FROM Notification n WHERE n.user = :user ORDER BY n.creationDate DESC LIMIT :limit")
+    @Query("SELECT n FROM Notification n LEFT JOIN FETCH n.competition WHERE n.user = :user ORDER BY n.creationDate DESC LIMIT :limit")
     List<Notification> findRecentNotifications(@Param("user") User user, @Param("limit") int limit);
     
-    /**
-     * Delete expired notifications
-     */
     void deleteByExpirationDateBeforeAndUser(LocalDateTime expirationDate, User user);
     
-    /**
-     * Find notifications that are not expired
-     */
-    @Query("SELECT n FROM Notification n WHERE n.user = :user AND (n.expirationDate IS NULL OR n.expirationDate > CURRENT_TIMESTAMP) ORDER BY n.creationDate DESC")
+    @Query("SELECT n FROM Notification n LEFT JOIN FETCH n.competition WHERE n.user = :user AND (n.expirationDate IS NULL OR n.expirationDate > CURRENT_TIMESTAMP) ORDER BY n.creationDate DESC")
     List<Notification> findActiveNotifications(@Param("user") User user);
 }
