@@ -48,24 +48,24 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
     // Judge-only ranking: projects ordered by count of votes from judges
     @Query("""
         SELECT p FROM Project p
-        LEFT JOIN p.votes v
         LEFT JOIN p.categories c
+        LEFT JOIN p.votes v
         LEFT JOIN com.microslop.entity.Judge j ON j.user = v.user AND j.competition = p.competition
-        WHERE c.id = :categoryId AND j.id IS NOT NULL
+        WHERE c.id = :categoryId
         GROUP BY p
-        ORDER BY COUNT(v) DESC
+        ORDER BY COUNT(CASE WHEN j.id IS NOT NULL THEN v.id END) DESC, p.id ASC
         """)
     List<Project> findJudgeRankingByCategory(@Param("categoryId") Long categoryId);
 
     // Popular ranking: projects ordered by count of votes from non-judges
     @Query("""
         SELECT p FROM Project p
-        LEFT JOIN p.votes v
         LEFT JOIN p.categories c
+        LEFT JOIN p.votes v
         LEFT JOIN com.microslop.entity.Judge j ON j.user = v.user AND j.competition = p.competition
-        WHERE c.id = :categoryId AND j.id IS NULL AND v.id IS NOT NULL
+        WHERE c.id = :categoryId
         GROUP BY p
-        ORDER BY COUNT(v) DESC
+        ORDER BY COUNT(CASE WHEN j.id IS NULL THEN v.id END) DESC, p.id ASC
         """)
     List<Project> findPopularRankingByCategory(@Param("categoryId") Long categoryId);
 
@@ -79,4 +79,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
         WHERE c.id = :categoryId
         """)
     List<Project> findAllByCategoryId(@Param("categoryId") Long categoryId);
+
+    List<Project> findByCompetitionIdAndCustomPositionIsNotNull(Long competitionId);
 }
