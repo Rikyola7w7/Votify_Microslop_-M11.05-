@@ -61,7 +61,7 @@ public class AiFeedbackServiceImpl implements AiFeedbackService {
         if (comments.size() < 3) {
             log.warn("Project {} has only {} comment(s). Minimum 3 required for AI analysis.", projectId, comments.size());
             return AiFeedbackResult.builder()
-                .summary("No se puede generar un análisis de IA: se necesitan al menos 3 comentarios para obtener un feedback significativo. Actualmente hay " + comments.size() + " comentario(s).")
+                .summary("AI analysis cannot be generated: at least 3 comments are required for meaningful feedback. Currently there are " + comments.size() + " comment(s).")
                 .positivePoints(List.of())
                 .negativePoints(List.of())
                 .sentimentScore(0.0)
@@ -87,7 +87,7 @@ public class AiFeedbackServiceImpl implements AiFeedbackService {
             throw new IllegalStateException(e.getMessage(), e);
         }
 
-        log.debug("Raw Gemini response for project {}: {}", projectId, rawJson);
+        log.info("Raw Gemini response for project {}: {}", projectId, rawJson);
         AiFeedbackResult result = parseGeminiResponse(rawJson);
 
         // Persist
@@ -150,7 +150,7 @@ public class AiFeedbackServiceImpl implements AiFeedbackService {
             String summary = response.summary;
             if (summary == null || summary.isBlank()) {
                 log.warn("Gemini response missing 'summary', using fallback. Raw JSON: {}", cleaned);
-                summary = "No se pudo generar un resumen a partir de los comentarios disponibles.";
+                summary = "Unable to generate a summary from the available comments.";
             }
 
             List<String> frequentWords = response.frequentWords;
@@ -159,10 +159,22 @@ public class AiFeedbackServiceImpl implements AiFeedbackService {
                 frequentWords = List.of();
             }
 
+            List<String> positivePoints = response.positivePoints;
+            if (positivePoints == null) {
+                log.warn("Gemini response missing 'positivePoints', using empty list. Raw JSON: {}", cleaned);
+                positivePoints = List.of();
+            }
+
+            List<String> negativePoints = response.negativePoints;
+            if (negativePoints == null) {
+                log.warn("Gemini response missing 'negativePoints', using empty list. Raw JSON: {}", cleaned);
+                negativePoints = List.of();
+            }
+
             return AiFeedbackResult.builder()
                 .summary(summary)
-                .positivePoints(response.positivePoints)
-                .negativePoints(response.negativePoints)
+                .positivePoints(positivePoints)
+                .negativePoints(negativePoints)
                 .sentimentScore(response.sentimentScore)
                 .positiveCount(response.positiveCount)
                 .neutralCount(response.neutralCount)

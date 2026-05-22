@@ -135,8 +135,8 @@ class AiFeedbackServiceImplTest {
         AiFeedbackResult result = aiFeedbackService.generateFeedbackForProject(1L);
 
         assertThat(result).isNotNull();
-        assertThat(result.getSummary()).contains("al menos 3 comentarios");
-        assertThat(result.getSummary()).contains("2 comentario(s)");
+        assertThat(result.getSummary()).contains("at least 3 comments");
+        assertThat(result.getSummary()).contains("2 comment(s)");
         assertThat(result.getFrequentWords()).isEmpty();
         assertThat(result.getSentimentScore()).isEqualTo(0.0);
         assertThat(result.getTotalComments()).isEqualTo(0);
@@ -231,7 +231,7 @@ class AiFeedbackServiceImplTest {
 
         AiFeedbackResult result = aiFeedbackService.generateFeedbackForProject(1L);
 
-        assertThat(result.getSummary()).isEqualTo("No se pudo generar un resumen a partir de los comentarios disponibles.");
+        assertThat(result.getSummary()).isEqualTo("Unable to generate a summary from the available comments.");
         assertThat(result.getFrequentWords()).containsExactly("test");
     }
 
@@ -263,7 +263,7 @@ class AiFeedbackServiceImplTest {
 
         AiFeedbackResult result = aiFeedbackService.generateFeedbackForProject(1L);
 
-        assertThat(result.getSummary()).isEqualTo("No se pudo generar un resumen a partir de los comentarios disponibles.");
+        assertThat(result.getSummary()).isEqualTo("Unable to generate a summary from the available comments.");
     }
 
     @Test

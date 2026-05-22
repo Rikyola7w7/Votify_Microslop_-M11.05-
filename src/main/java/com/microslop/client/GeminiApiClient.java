@@ -95,9 +95,9 @@ public class GeminiApiClient {
         } catch (HttpClientErrorException e) {
             log.error("OpenRouter API client error: {}, response body: {}", e.getStatusCode(), e.getResponseBodyAsString());
             if (e.getStatusCode().value() == 429) {
-                log.warn("OpenRouter API rate limit exceeded (429)");
+                log.warn("OpenRouter API rate limit exceeded (429). Retry after a few seconds.");
                 throw new GeminiApiException(
-                    "The AI service is temporarily unavailable due to high demand. Please wait a minute and try again.", 429);
+                    "AI request limit reached. Please wait a moment and try again.", 429);
             }
             throw new GeminiApiException("OpenRouter API error: " + e.getStatusText() + " - " + e.getResponseBodyAsString(), e);
         } catch (Exception e) {
@@ -108,16 +108,16 @@ public class GeminiApiClient {
 
     private String buildPrompt(String commentsText) {
         return """
-            Eres un analista de sentimientos experto. Analiza los siguientes comentarios de los usuarios sobre la entrega de un proyecto/competencia.
+            You are an expert sentiment analyst. Analyze the following user comments about a project/competition delivery.
 
-            Comentarios:
+            Comments:
             %s
 
-            IMPORTANTE: Debes responder ÚNICAMENTE con un objeto JSON válido. NO uses bloques markdown (no ```json). NO añadas texto antes o después del JSON.
+            CRITICAL: Respond ONLY with a valid JSON object. NO markdown blocks (no ```json). NO text before or after the JSON.
 
-            Estructura EXACTA obligatoria (los nombres de las claves deben respetarse en inglés):
+            REQUIRED exact structure (keys must be in English):
             {
-              "summary": "string obligatorio",
+              "summary": "mandatory string",
               "positivePoints": ["string"],
               "negativePoints": ["string"],
               "sentimentScore": number,
@@ -127,27 +127,28 @@ public class GeminiApiClient {
               "frequentWords": ["string"]
             }
 
-            EJEMPLO de respuesta correcta para 3 comentarios:
+            Example correct response for 3 comments:
             {
-              "summary": "Los usuarios valoran positivamente el diseño visual, aunque señalan que la carga inicial es lenta.",
-              "positivePoints": ["Diseño atractivo", "Navegación intuitiva"],
-              "negativePoints": ["Tiempo de carga alto", "Falta de modo oscuro"],
+              "summary": "Users appreciate the visual design but report slow initial loading times.",
+              "positivePoints": ["Attractive design", "Intuitive navigation"],
+              "negativePoints": ["High loading time", "Missing dark mode"],
               "sentimentScore": 3.2,
               "positiveCount": 2,
               "neutralCount": 0,
               "negativeCount": 1,
-              "frequentWords": ["diseño", "carga", "lento", "interfaz", "responsive"]
+              "frequentWords": ["design", "loading", "slow", "interface", "responsive"]
             }
 
-            REGLAS ESTRICTAS:
-            1. Todo el contenido textual (summary, positivePoints, negativePoints, frequentWords) debe estar en ESPAÑOL.
-            2. "summary" es OBLIGATORIO. Debe ser un resumen conciso (máximo 300 caracteres). Si no puedes generarlo, usa: "No se pudo generar un resumen a partir de los comentarios disponibles." NUNCA lo omitas. NUNCA lo dejes vacío.
-            3. "positivePoints" y "negativePoints": máximo 10 frases cortas cada una.
-            4. "sentimentScore": número decimal de 0.0 a 5.0.
-            5. "positiveCount" + "neutralCount" + "negativeCount" DEBE ser igual al número total de comentarios analizados.
-            6. "frequentWords" es OBLIGATORIO. Lista de hasta 10 palabras frecuentes y significativas (excluye artículos, preposiciones y conectores: el, la, y, de, que, en, un, es, etc.). Si no hay palabras relevantes, devuelve []. NUNCA omitas este campo. NUNCA lo dejes null.
-            7. Responde ÚNICAMENTE con el objeto JSON. Sin explicaciones, sin markdown, sin texto adicional.
-            8. Verifica que tu JSON sea válido antes de responder. Asegúrate de que summary y frequentWords SIEMPRE estén presentes.
+            STRICT RULES:
+            1. All text content (summary, positivePoints, negativePoints, frequentWords) MUST be in ENGLISH.
+            2. "summary" is MANDATORY. Must be a concise summary (max 300 chars). If you cannot generate one, use: "Unable to generate a summary from the available comments." NEVER omit it. NEVER leave it empty.
+            3. "positivePoints" and "negativePoints": up to 10 short phrases each. ALWAYS provide at least 1 positive and 1 negative point if any comments exist.
+            4. "sentimentScore": decimal number from 0.0 to 5.0.
+            5. "positiveCount" + "neutralCount" + "negativeCount" MUST equal the total number of comments analyzed.
+            6. "frequentWords" is MANDATORY. List up to 10 frequent and significant words (exclude articles, prepositions, and common connectors: the, and, of, a, to, in, is, etc.). If no relevant words, return []. NEVER omit this field. NEVER leave it null.
+            7. Respond ONLY with the JSON object. No explanations, no markdown, no additional text.
+            8. Verify your JSON is valid before responding. Ensure summary and frequentWords are ALWAYS present.
+            9. If you receive comments, you MUST analyze them and provide meaningful positivePoints and negativePoints. Do NOT return empty arrays unless there are truly no positive or negative aspects.
             """.formatted(commentsText);
     }
 
