@@ -498,11 +498,9 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
     }
 
     private void renderFeedback(AiFeedbackResult result) {
-        System.out.println("DEBUG - renderFeedback: summary = " + result.getSummary());
-        System.out.println("DEBUG - renderFeedback: frequentWords = " + result.getFrequentWords());
         dashboardPanel.removeAll();
 
-        H3 title = new H3("Resumen general");
+        H3 title = new H3("Overview");
         title.getStyle()
             .set("margin", "0 0 16px 0")
             .set("font-size", "1.1rem")
@@ -510,34 +508,39 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("color", "var(--dark)");
         dashboardPanel.add(title);
 
-        // 1. Summary paragraph
+        // Guard against null result fields
+        String summary = result.getSummary();
+        List<String> positivePoints = result.getPositivePoints();
+        List<String> negativePoints = result.getNegativePoints();
+        List<String> frequentWords = result.getFrequentWords();
+
+        // Detect whether result indicates an error/empty state
+        boolean isErrorResult = summary != null && summary.contains("could not be completed");
+
+        // 1. Summary paragraph - ALWAYS show something
         Div summaryBox = new Div();
         summaryBox.addClassName("votify-card-static");
         summaryBox.getStyle()
             .set("padding", "20px")
             .set("margin-bottom", "16px")
-            .set("border-left", "4px solid var(--primary)");
+            .set("border-left", isErrorResult ? "4px solid var(--error)" : "4px solid var(--primary)");
 
         Span summaryLabel = new Span("AI Analysis");
         summaryLabel.getStyle()
             .set("font-size", "0.75rem")
             .set("font-weight", "700")
-            .set("color", "var(--primary)")
+            .set("color", isErrorResult ? "var(--error)" : "var(--primary)")
             .set("text-transform", "uppercase")
             .set("letter-spacing", "0.5px")
             .set("display", "block")
             .set("margin-bottom", "8px");
 
-        String summary = result.getSummary();
-        boolean isInsufficientComments = summary != null && summary.contains("at least 3 comments");
-        boolean isFallbackSummary = summary == null || summary.isBlank() || summary.contains("Unable to generate");
-
         if (summary == null || summary.isBlank()) {
-            summary = "Unable to generate a summary from the analysis.";
+            summary = "AI analysis could not be completed. The service may be temporarily unavailable. Please try again later.";
         }
 
         Span summaryText = new Span(summary);
-        if (isInsufficientComments || isFallbackSummary) {
+        if (isErrorResult || summary.contains("Unable to generate") || summary.contains("could not be completed") || summary.contains("at least 3 comments")) {
             summaryText.getStyle()
                 .set("color", "var(--text-muted)")
                 .set("line-height", "1.6")
@@ -552,14 +555,21 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         summaryBox.add(summaryLabel, summaryText);
         dashboardPanel.add(summaryBox);
 
-        // 2. Positive / Negative boxes
+        // 2. Positive / Negative boxes - ALWAYS show, with fallback if empty
         HorizontalLayout insights = new HorizontalLayout();
         insights.setWidthFull();
         insights.setSpacing(true);
         insights.getStyle().set("margin-bottom", "16px");
 
-        insights.add(createInsightCard("Positive Aspects", result.getPositivePoints(), "var(--success)", new Icon(VaadinIcon.CHECK_CIRCLE)));
-        insights.add(createInsightCard("Negative Aspects", result.getNegativePoints(), "var(--error)", new Icon(VaadinIcon.EXCLAMATION_CIRCLE)));
+        if (positivePoints == null) {
+            positivePoints = List.of();
+        }
+        if (negativePoints == null) {
+            negativePoints = List.of();
+        }
+
+        insights.add(createInsightCard("Positive Aspects", positivePoints, "var(--success)", new Icon(VaadinIcon.CHECK_CIRCLE)));
+        insights.add(createInsightCard("Negative Aspects", negativePoints, "var(--error)", new Icon(VaadinIcon.EXCLAMATION_CIRCLE)));
         insights.getChildren().forEach(child -> insights.setFlexGrow(1, child));
         dashboardPanel.add(insights);
 
@@ -604,7 +614,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         metricsRow.setFlexGrow(1, metricsBox, chartBox);
         dashboardPanel.add(metricsRow);
 
-        // 4. Frequent words
+        // 4. Frequent words - ALWAYS show the section
         Div wordsBox = new Div();
         wordsBox.addClassName("votify-card-static");
         wordsBox.getStyle().set("padding", "20px");
@@ -618,8 +628,11 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("margin-bottom", "12px");
         wordsBox.add(wordsTitle);
 
-        List<String> frequentWords = result.getFrequentWords();
-        if (frequentWords != null && !frequentWords.isEmpty()) {
+        if (frequentWords == null) {
+            frequentWords = List.of();
+        }
+
+        if (!frequentWords.isEmpty()) {
             HorizontalLayout wordsLayout = new HorizontalLayout();
             wordsLayout.setSpacing(true);
             wordsLayout.setWrap(true);
@@ -639,9 +652,11 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             }
             wordsBox.add(wordsLayout);
         } else {
-            String wordsMessage = isInsufficientComments
-                ? "Not enough comments to identify frequent words (minimum 3 comments required)."
-                : "No significant frequent words were identified in the analyzed comments.";
+            String wordsMessage = isErrorResult
+                ? "AI analysis could not be completed. No frequent words available."
+                : summary.contains("at least 3 comments")
+                    ? "Not enough comments to identify frequent words (minimum 3 comments required)."
+                    : "No significant frequent words were identified in the analyzed comments.";
             Span noWords = new Span(wordsMessage);
             noWords.getStyle()
                 .set("color", "var(--text-muted)")

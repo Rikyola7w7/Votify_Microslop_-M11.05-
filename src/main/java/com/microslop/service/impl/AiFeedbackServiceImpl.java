@@ -144,31 +144,53 @@ public class AiFeedbackServiceImpl implements AiFeedbackService {
                 cleaned = cleaned.substring(firstBrace, lastBrace + 1);
             }
 
+            log.info("Parsing Gemini JSON response (length={}): {}", cleaned.length(), cleaned.length() > 500 ? cleaned.substring(0, 500) + "..." : cleaned);
+
             JsonResponse response = objectMapper.readValue(cleaned, JsonResponse.class);
 
-            // Validate and apply defaults for mandatory fields
+            // Validate and apply defaults for ALL fields
             String summary = response.summary;
             if (summary == null || summary.isBlank()) {
-                log.warn("Gemini response missing 'summary', using fallback. Raw JSON: {}", cleaned);
+                log.warn("Gemini response missing 'summary', using fallback.");
                 summary = "Unable to generate a summary from the available comments.";
             }
 
             List<String> frequentWords = response.frequentWords;
             if (frequentWords == null) {
-                log.warn("Gemini response missing 'frequentWords', using empty list. Raw JSON: {}", cleaned);
+                log.warn("Gemini response missing 'frequentWords', using empty list.");
                 frequentWords = List.of();
             }
 
             List<String> positivePoints = response.positivePoints;
             if (positivePoints == null) {
-                log.warn("Gemini response missing 'positivePoints', using empty list. Raw JSON: {}", cleaned);
+                log.warn("Gemini response missing 'positivePoints', using empty list.");
                 positivePoints = List.of();
             }
 
             List<String> negativePoints = response.negativePoints;
             if (negativePoints == null) {
-                log.warn("Gemini response missing 'negativePoints', using empty list. Raw JSON: {}", cleaned);
+                log.warn("Gemini response missing 'negativePoints', using empty list.");
                 negativePoints = List.of();
+            }
+
+            // Detect completely empty/useless response from Gemini
+            boolean isEmptyResponse = (summary.isBlank() || summary.startsWith("Unable to generate"))
+                && positivePoints.isEmpty()
+                && negativePoints.isEmpty()
+                && frequentWords.isEmpty();
+
+            if (isEmptyResponse) {
+                log.warn("Gemini returned a completely empty/minimal response. Using fallback.");
+                return AiFeedbackResult.builder()
+                    .summary("AI analysis could not be completed. The service may be temporarily unavailable. Please try again later.")
+                    .positivePoints(List.of("Unable to analyze positive aspects."))
+                    .negativePoints(List.of("Unable to analyze negative aspects."))
+                    .sentimentScore(0.0)
+                    .positiveCount(0)
+                    .neutralCount(0)
+                    .negativeCount(0)
+                    .frequentWords(List.of())
+                    .build();
             }
 
             return AiFeedbackResult.builder()
