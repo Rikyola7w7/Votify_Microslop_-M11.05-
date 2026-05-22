@@ -54,6 +54,8 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     private VerticalLayout rankingContainer;
     private boolean modifyMode;
     private boolean isJudgesRanking;
+    private Button modifyEntriesButton;
+    private Div revertButtonContainer;
 
     public RankingView(CompetitionService competitionService,
                        CategoryService categoryService,
@@ -119,7 +121,43 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("max-width", "760px")
             .set("margin", "0 auto");
         add(rankingContainer);
+        if (isUserOrganizerOrJudge()) {
+            add(buildRevertButton());
+        }
         loadRanking(true);
+    }
+
+    private Div buildRevertButton() {
+        revertButtonContainer = new Div();
+        revertButtonContainer.setVisible(false);
+        revertButtonContainer.getStyle()
+            .set("position", "fixed")
+            .set("bottom", "1rem")
+            .set("left", "1rem")
+            .set("z-index", "1000");
+
+        Button revertButton = new Button("Revert all changes");
+        revertButton.addClassName("votify-btn-danger");
+        revertButton.getStyle()
+            .set("cursor", "pointer")
+            .set("font-weight", "600");
+        revertButton.addClickListener(e -> {
+            try {
+                projectService.resetAllModifications(competitionId);
+                modifyMode = false;
+                modifyEntriesButton.setText("Modify entries");
+                revertButtonContainer.setVisible(false);
+                Notification.show("All modifications reverted", 3000,
+                    Notification.Position.BOTTOM_CENTER);
+                loadRanking(isJudgesRanking);
+            } catch (Exception ex) {
+                Notification.show("Error: " + ex.getMessage(), 3000,
+                    Notification.Position.BOTTOM_CENTER);
+            }
+        });
+
+        revertButtonContainer.add(revertButton);
+        return revertButtonContainer;
     }
 
     private boolean isUserOrganizerOrJudge() {
@@ -165,7 +203,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         rightSection.setPadding(false);
 
         if (isUserOrganizerOrJudge()) {
-            Button modifyEntriesButton = new Button("Modify entries");
+            modifyEntriesButton = new Button("Modify entries");
             modifyEntriesButton.addClassName("votify-btn-secondary");
             modifyEntriesButton.getStyle()
                 .set("background", "white")
@@ -175,6 +213,8 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("font-weight", "600");
             modifyEntriesButton.addClickListener(e -> {
                 modifyMode = !modifyMode;
+                modifyEntriesButton.setText(modifyMode ? "Finish changes" : "Modify entries");
+                revertButtonContainer.setVisible(modifyMode);
                 loadRanking(isJudgesRanking);
             });
             rightSection.add(modifyEntriesButton);
