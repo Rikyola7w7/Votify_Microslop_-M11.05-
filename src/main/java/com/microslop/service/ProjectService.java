@@ -64,4 +64,11 @@ public interface ProjectService {
      * @param newVoteCount the new vote count
      */
     void editProjectVotes(Long projectId, int newVoteCount);
+
+    /**
+     * Reset all custom positions and manual vote counts for projects in a competition,
+     * restoring the natural ranking order.
+     * @param competitionId the competition ID
+     */
+    void resetAllModifications(Long competitionId);
 }

@@ -8,6 +8,8 @@ import com.microslop.specification.project.ProjectsByCompetitionSpecification;
 import com.microslop.specification.project.ProjectsByCreatorSpecification;
 import com.microslop.command.CommandExecutor;
 import com.microslop.command.project.CreateProjectCommand;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,9 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository projectRepository;
     private final VoteRepository voteRepository;
     private final CommandExecutor commandExecutor;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public ProjectServiceImpl(ProjectRepository projectRepository,
                             VoteRepository voteRepository,
@@ -145,6 +150,18 @@ public class ProjectServiceImpl implements ProjectService {
         }
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
+
+        List<Project> projectsWithCustomPosition = projectRepository
+                .findByCompetitionIdAndCustomPositionIsNotNull(project.getCompetition().getId());
+        projectsWithCustomPosition.removeIf(p -> p.getId().equals(projectId));
+
+        for (Project p : projectsWithCustomPosition) {
+            if (p.getCustomPosition() >= newPosition) {
+                p.setCustomPosition(p.getCustomPosition() + 1);
+            }
+        }
+        projectRepository.saveAll(projectsWithCustomPosition);
+
         project.setCustomPosition(newPosition);
         projectRepository.save(project);
     }
@@ -153,6 +170,22 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional
     @CacheEvict(value = {"projects", "projectsAll"}, allEntries = true)
     public void declassifyProject(Long projectId) {
+        Project project = projectRepository.findById(projectId).orElse(null);
+        if (project != null && project.getCustomPosition() != null) {
+            List<Project> projectsWithCustomPosition = projectRepository
+                    .findByCompetitionIdAndCustomPositionIsNotNull(project.getCompetition().getId());
+            projectsWithCustomPosition.removeIf(p -> p.getId().equals(projectId));
+            for (Project p : projectsWithCustomPosition) {
+                if (p.getCustomPosition() > project.getCustomPosition()) {
+                    p.setCustomPosition(p.getCustomPosition() - 1);
+                }
+            }
+            projectRepository.saveAll(projectsWithCustomPosition);
+        }
+
+        entityManager.createNativeQuery("DELETE FROM ai_feedback WHERE project_id = :projectId")
+                .setParameter("projectId", projectId)
+                .executeUpdate();
         projectRepository.deleteById(projectId);
     }
 
@@ -167,6 +200,16 @@ public class ProjectServiceImpl implements ProjectService {
                 .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
         project.setManualVoteCount(newVoteCount);
         projectRepository.save(project);
+    }
+
+    @Override
+    public void resetAllModifications(Long competitionId) {
+        List<Project> projects = projectRepository.findByCompetitionId(competitionId);
+        for (Project p : projects) {
+            p.setCustomPosition(null);
+            p.setManualVoteCount(null);
+        }
+        projectRepository.saveAll(projects);
     }
 
     @Override
