@@ -205,8 +205,23 @@ public class AiFeedbackServiceImpl implements AiFeedbackService {
             List<String> negative = objectMapper.readValue(feedback.getNegativePoints(), new TypeReference<>() {});
             List<String> words = objectMapper.readValue(feedback.getFrequentWords(), new TypeReference<>() {});
 
+            // Protect against null/blank persisted values
+            String summary = feedback.getSummary();
+            if (summary == null || summary.isBlank()) {
+                summary = "AI analysis could not be completed. The service may be temporarily unavailable. Please try again later.";
+            }
+            if (positive == null) {
+                positive = List.of();
+            }
+            if (negative == null) {
+                negative = List.of();
+            }
+            if (words == null) {
+                words = List.of();
+            }
+
             return AiFeedbackResult.builder()
-                .summary(feedback.getSummary())
+                .summary(summary)
                 .positivePoints(positive)
                 .negativePoints(negative)
                 .sentimentScore(feedback.getSentimentScore())

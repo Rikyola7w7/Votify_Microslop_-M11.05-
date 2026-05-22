@@ -508,16 +508,22 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("color", "var(--dark)");
         dashboardPanel.add(title);
 
-        // Guard against null result fields
+        // Extract with bulletproof null-safe defaults so the UI NEVER shows empty
         String summary = result.getSummary();
-        List<String> positivePoints = result.getPositivePoints();
-        List<String> negativePoints = result.getNegativePoints();
-        List<String> frequentWords = result.getFrequentWords();
+        if (summary == null || summary.isBlank()) {
+            summary = "AI analysis could not be completed. The service may be temporarily unavailable. Please try again later.";
+        }
+        List<String> positivePoints = result.getPositivePoints() != null ? result.getPositivePoints() : List.of();
+        List<String> negativePoints = result.getNegativePoints() != null ? result.getNegativePoints() : List.of();
+        List<String> frequentWords = result.getFrequentWords() != null ? result.getFrequentWords() : List.of();
+        double sentimentScore = result.getSentimentScore();
+        int positiveCount = result.getPositiveCount();
+        int neutralCount = result.getNeutralCount();
+        int negativeCount = result.getNegativeCount();
 
-        // Detect whether result indicates an error/empty state
-        boolean isErrorResult = summary != null && summary.contains("could not be completed");
+        boolean isErrorResult = summary.contains("could not be completed");
 
-        // 1. Summary paragraph - ALWAYS show something
+        // 1. Summary paragraph - ALWAYS shows text
         Div summaryBox = new Div();
         summaryBox.addClassName("votify-card-static");
         summaryBox.getStyle()
@@ -535,38 +541,22 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("display", "block")
             .set("margin-bottom", "8px");
 
-        if (summary == null || summary.isBlank()) {
-            summary = "AI analysis could not be completed. The service may be temporarily unavailable. Please try again later.";
-        }
-
         Span summaryText = new Span(summary);
-        if (isErrorResult || summary.contains("Unable to generate") || summary.contains("could not be completed")) {
-            summaryText.getStyle()
-                .set("color", "var(--text-muted)")
-                .set("line-height", "1.6")
-                .set("font-size", "0.95rem")
-                .set("font-style", "italic");
-        } else {
-            summaryText.getStyle()
-                .set("color", "var(--text-primary)")
-                .set("line-height", "1.6")
-                .set("font-size", "0.95rem");
+        summaryText.getStyle()
+            .set("color", "var(--text-primary)")
+            .set("line-height", "1.6")
+            .set("font-size", "0.95rem");
+        if (isErrorResult) {
+            summaryText.getStyle().set("font-style", "italic").set("color", "var(--text-muted)");
         }
         summaryBox.add(summaryLabel, summaryText);
         dashboardPanel.add(summaryBox);
 
-        // 2. Positive / Negative boxes - ALWAYS show, with fallback if empty
+        // 2. Positive / Negative boxes - ALWAYS show
         HorizontalLayout insights = new HorizontalLayout();
         insights.setWidthFull();
         insights.setSpacing(true);
         insights.getStyle().set("margin-bottom", "16px");
-
-        if (positivePoints == null) {
-            positivePoints = List.of();
-        }
-        if (negativePoints == null) {
-            negativePoints = List.of();
-        }
 
         insights.add(createInsightCard("Positive Aspects", positivePoints, "var(--success)", new Icon(VaadinIcon.CHECK_CIRCLE)));
         insights.add(createInsightCard("Negative Aspects", negativePoints, "var(--error)", new Icon(VaadinIcon.EXCLAMATION_CIRCLE)));
@@ -585,11 +575,11 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         metricsBox.setPadding(true);
         metricsBox.getStyle().set("padding", "20px").set("flex", "1");
 
-        metricsBox.add(createMetricItem("Overall Sentiment", String.format("%.1f/5", result.getSentimentScore()), "var(--primary)", new Icon(VaadinIcon.HEART)));
-        metricsBox.add(createMetricItem("Comments Analyzed", String.valueOf(result.getTotalComments()), "var(--text-primary)", new Icon(VaadinIcon.COMMENT)));
-        metricsBox.add(createMetricItem("Positive Comments", String.valueOf(result.getPositiveCount()), "var(--success)", new Icon(VaadinIcon.THUMBS_UP)));
-        metricsBox.add(createMetricItem("Neutral Comments", String.valueOf(result.getNeutralCount()), "var(--text-muted)", new Icon(VaadinIcon.MINUS_CIRCLE_O)));
-        metricsBox.add(createMetricItem("Negative Comments", String.valueOf(result.getNegativeCount()), "var(--error)", new Icon(VaadinIcon.THUMBS_DOWN)));
+        metricsBox.add(createMetricItem("Overall Sentiment", String.format("%.1f/5", sentimentScore), "var(--primary)", new Icon(VaadinIcon.HEART)));
+        metricsBox.add(createMetricItem("Comments Analyzed", String.valueOf(positiveCount + neutralCount + negativeCount), "var(--text-primary)", new Icon(VaadinIcon.COMMENT)));
+        metricsBox.add(createMetricItem("Positive Comments", String.valueOf(positiveCount), "var(--success)", new Icon(VaadinIcon.THUMBS_UP)));
+        metricsBox.add(createMetricItem("Neutral Comments", String.valueOf(neutralCount), "var(--text-muted)", new Icon(VaadinIcon.MINUS_CIRCLE_O)));
+        metricsBox.add(createMetricItem("Negative Comments", String.valueOf(negativeCount), "var(--error)", new Icon(VaadinIcon.THUMBS_DOWN)));
 
         VerticalLayout chartBox = new VerticalLayout();
         chartBox.addClassName("votify-card-static");
@@ -607,14 +597,14 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         chartBox.add(chartTitle);
 
         donutChart = new SentimentDonutChartComponent();
-        donutChart.updateValues(result.getPositiveCount(), result.getNeutralCount(), result.getNegativeCount());
+        donutChart.updateValues(positiveCount, neutralCount, negativeCount);
         chartBox.add(donutChart);
 
         metricsRow.add(metricsBox, chartBox);
         metricsRow.setFlexGrow(1, metricsBox, chartBox);
         dashboardPanel.add(metricsRow);
 
-        // 4. Frequent words - ALWAYS show the section
+        // 4. Frequent words - ALWAYS shows the section
         Div wordsBox = new Div();
         wordsBox.addClassName("votify-card-static");
         wordsBox.getStyle().set("padding", "20px");
@@ -627,10 +617,6 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("display", "block")
             .set("margin-bottom", "12px");
         wordsBox.add(wordsTitle);
-
-        if (frequentWords == null) {
-            frequentWords = List.of();
-        }
 
         if (!frequentWords.isEmpty()) {
             HorizontalLayout wordsLayout = new HorizontalLayout();
