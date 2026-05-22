@@ -113,7 +113,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
 
-        var competition = competitionService.getByIdOrFail(competitionId);
+        this.currentCompetition = competitionService.getByIdOrFail(competitionId);
+        var competition = this.currentCompetition;
 
         if (!competition.canVote()) {
             Notification n = Notification.show(
@@ -153,14 +154,10 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     // ── UI ────────────────────────────────────────────────────────────────
 
     private void buildUi() {
-        var competition = competitionService.getByIdOrFail(competitionId);
-        this.currentCompetition = competition;
         this.currentUser = userService.getCurrentUser();
-
         var projects = projectService.listByCompetition(competitionId);
-
         add(new ViewHeader("VOTING", userService, "competition/" + competitionId + "/categories"));
-        add(buildBody(projects, competition.getName()));
+        add(buildBody(projects, currentCompetition.getName()));
     }
 
     // ── Utility Methods ────────────────────────────────────────────────────
@@ -524,7 +521,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
 
-        var competition = competitionService.getByIdOrFail(competitionId);
+        var competition = currentCompetition;
         if (!competition.canVote()) {
             showNotification("This competition does not accept votes at this time.",
                     NotificationVariant.LUMO_WARNING);
@@ -591,9 +588,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
 
-        var competition = competitionService.getByIdOrFail(competitionId);
-
-        if (!competition.canVote()) {
+        if (!currentCompetition.canVote()) {
             showNotification("This competition does not accept votes at this time.",
                     NotificationVariant.LUMO_WARNING);
             return;

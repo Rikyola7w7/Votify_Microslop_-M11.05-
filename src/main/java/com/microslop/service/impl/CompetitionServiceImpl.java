@@ -343,7 +343,7 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
     @Override
     @Transactional(readOnly = true)
     public List<Competition> getActiveCompetitions() {
-        return competitionRepository.findActiveWithProjects();
+        return competitionRepository.findActiveWithCategories();
     }
 
     @Override
@@ -351,6 +351,13 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
     @Cacheable(value = "competitionsAll")
     public List<Competition> findAll() {
         return competitionRepository.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "competitionsAll")
+    public List<Competition> findAllWithoutProjects() {
+        return competitionRepository.findAllBasic();
     }
 
     @Override

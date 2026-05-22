@@ -59,6 +59,8 @@ public interface CompetitionService extends CompetitionEventSubject {
 
     List<Competition> findAll();
 
+    List<Competition> findAllWithoutProjects();
+
     List<Competition> searchByName(String searchTerm);
 
     List<Competition> searchByName(List<Competition> competitions, String searchTerm);
