@@ -8,6 +8,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Unit tests for {@link AiFeedbackResult} builder pattern and business logic.
+ *
+ * <p>Test coverage includes:</p>
+ * <ul>
+ *   <li>Building a fully populated DTO via the builder</li>
+ *   <li>Building with omitted optional collections (null defaults)</li>
+ *   <li>Building with explicitly empty collections</li>
+ *   <li>Business logic: total comments calculation</li>
+ * </ul>
+ */
 class AiFeedbackResultBuilderTest {
 
     @Test

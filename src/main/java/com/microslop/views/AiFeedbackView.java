@@ -524,11 +524,27 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("display", "block")
             .set("margin-bottom", "8px");
 
-        Span summaryText = new Span(result.getSummary());
-        summaryText.getStyle()
-            .set("color", "var(--text-primary)")
-            .set("line-height", "1.6")
-            .set("font-size", "0.95rem");
+        String summary = result.getSummary();
+        boolean isInsufficientComments = summary != null && summary.contains("al menos 3 comentarios");
+        boolean isFallbackSummary = summary == null || summary.isBlank() || summary.contains("No se pudo generar");
+
+        if (summary == null || summary.isBlank()) {
+            summary = "No se pudo generar un resumen del análisis.";
+        }
+
+        Span summaryText = new Span(summary);
+        if (isInsufficientComments || isFallbackSummary) {
+            summaryText.getStyle()
+                .set("color", "var(--text-muted)")
+                .set("line-height", "1.6")
+                .set("font-size", "0.95rem")
+                .set("font-style", "italic");
+        } else {
+            summaryText.getStyle()
+                .set("color", "var(--text-primary)")
+                .set("line-height", "1.6")
+                .set("font-size", "0.95rem");
+        }
         summaryBox.add(summaryLabel, summaryText);
         dashboardPanel.add(summaryBox);
 
@@ -585,26 +601,27 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         dashboardPanel.add(metricsRow);
 
         // 4. Frequent words
-        if (result.getFrequentWords() != null && !result.getFrequentWords().isEmpty()) {
-            Div wordsBox = new Div();
-            wordsBox.addClassName("votify-card-static");
-            wordsBox.getStyle().set("padding", "20px");
+        Div wordsBox = new Div();
+        wordsBox.addClassName("votify-card-static");
+        wordsBox.getStyle().set("padding", "20px");
 
-            Span wordsTitle = new Span("Palabras frecuentes");
-            wordsTitle.getStyle()
-                .set("font-weight", "700")
-                .set("font-size", "0.95rem")
-                .set("color", "var(--dark)")
-                .set("display", "block")
-                .set("margin-bottom", "12px");
-            wordsBox.add(wordsTitle);
+        Span wordsTitle = new Span("Palabras frecuentes");
+        wordsTitle.getStyle()
+            .set("font-weight", "700")
+            .set("font-size", "0.95rem")
+            .set("color", "var(--dark)")
+            .set("display", "block")
+            .set("margin-bottom", "12px");
+        wordsBox.add(wordsTitle);
 
+        List<String> frequentWords = result.getFrequentWords();
+        if (frequentWords != null && !frequentWords.isEmpty()) {
             HorizontalLayout wordsLayout = new HorizontalLayout();
             wordsLayout.setSpacing(true);
             wordsLayout.setWrap(true);
             wordsLayout.getStyle().set("gap", "8px");
 
-            for (String word : result.getFrequentWords()) {
+            for (String word : frequentWords) {
                 Span badge = new Span(word);
                 badge.getStyle()
                     .set("background", "var(--background)")
@@ -617,8 +634,18 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
                 wordsLayout.add(badge);
             }
             wordsBox.add(wordsLayout);
-            dashboardPanel.add(wordsBox);
+        } else {
+            String wordsMessage = isInsufficientComments
+                ? "No hay suficientes comentarios para identificar palabras frecuentes (mínimo 3 comentarios)."
+                : "No se identificaron palabras frecuentes significativas en los comentarios analizados.";
+            Span noWords = new Span(wordsMessage);
+            noWords.getStyle()
+                .set("color", "var(--text-muted)")
+                .set("font-size", "0.9rem")
+                .set("font-style", "italic");
+            wordsBox.add(noWords);
         }
+        dashboardPanel.add(wordsBox);
 
         lastGenerationLabel.setText("\u00daltima generaci\u00f3n: " +
             java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));

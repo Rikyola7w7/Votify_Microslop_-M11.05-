@@ -18,6 +18,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for {@link GeminiApiClient}.
+ *
+ * <p>Test coverage includes:</p>
+ * <ul>
+ *   <li>API key validation (missing, empty, placeholder values)</li>
+ *   <li>Successful OpenRouter response extraction</li>
+ *   <li>HTTP error handling (non-2xx status codes)</li>
+ *   <li>Network and RestTemplate failure scenarios</li>
+ *   <li>Malformed or unexpected response structures</li>
+ *   <li>Markdown-wrapped JSON content extraction</li>
+ *   <li>Edge cases: empty choices array, null content field</li>
+ * </ul>
+ */
 @ExtendWith(MockitoExtension.class)
 class GeminiApiClientTest {
 
@@ -115,6 +129,66 @@ class GeminiApiClientTest {
 
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
             .thenReturn(new ResponseEntity<>(invalidResponse, HttpStatus.OK));
+
+        assertThatThrownBy(() -> client.generateFeedback("comments"))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("Unexpected OpenRouter response");
+    }
+
+    @Test
+    @DisplayName("should extract JSON from markdown code block wrapper")
+    void should_extract_json_from_markdown_wrapper() {
+        String openRouterResponse = """
+            {
+              "choices": [
+                {
+                  "message": {
+                    "content": "```json\\n{\\"summary\\": \\"Wrapped\\", \\"sentimentScore\\": 3.0}\\n```"
+                  }
+                }
+              ]
+            }
+            """;
+
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
+            .thenReturn(new ResponseEntity<>(openRouterResponse, HttpStatus.OK));
+
+        String result = client.generateFeedback("comments");
+
+        assertThat(result).contains("Wrapped");
+        assertThat(result).contains("3.0");
+    }
+
+    @Test
+    @DisplayName("should throw when choices array is empty")
+    void should_throw_when_choices_is_empty() {
+        String emptyChoicesResponse = "{\"choices\": []}";
+
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
+            .thenReturn(new ResponseEntity<>(emptyChoicesResponse, HttpStatus.OK));
+
+        assertThatThrownBy(() -> client.generateFeedback("comments"))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("Unexpected OpenRouter response");
+    }
+
+    @Test
+    @DisplayName("should throw when content field is null")
+    void should_throw_when_content_is_null() {
+        String nullContentResponse = """
+            {
+              "choices": [
+                {
+                  "message": {
+                    "content": null
+                  }
+                }
+              ]
+            }
+            """;
+
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
+            .thenReturn(new ResponseEntity<>(nullContentResponse, HttpStatus.OK));
 
         assertThatThrownBy(() -> client.generateFeedback("comments"))
             .isInstanceOf(RuntimeException.class)

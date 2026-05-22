@@ -113,26 +113,41 @@ public class GeminiApiClient {
             Comentarios:
             %s
 
-            Debes responder ÚNICAMENTE con un objeto JSON válido que siga EXACTAMENTE esta estructura, respetando los nombres de las claves en inglés tal como están:
+            IMPORTANTE: Debes responder ÚNICAMENTE con un objeto JSON válido. NO uses bloques markdown (no ```json). NO añadas texto antes o después del JSON.
+
+            Estructura EXACTA obligatoria (los nombres de las claves deben respetarse en inglés):
             {
-              "summary": "Un resumen muy breve (de 2 a 3 frases) en español del análisis de los comentarios",
-              "positivePoints": ["punto positivo 1", "punto positivo 2", ...],
-              "negativePoints": ["punto negativo 1", "punto negativo 2", ...],
-              "sentimentScore": 3.5,
-              "positiveCount": 5,
-              "neutralCount": 3,
-              "negativeCount": 2,
-              "frequentWords": ["palabra1", "palabra2", "palabra3", "palabra4", "palabra5"]
+              "summary": "string obligatorio",
+              "positivePoints": ["string"],
+              "negativePoints": ["string"],
+              "sentimentScore": number,
+              "positiveCount": number,
+              "neutralCount": number,
+              "negativeCount": number,
+              "frequentWords": ["string"]
             }
 
-            Reglas estrictas:
-            1. El idioma de todo el contenido del JSON (los valores de: summary, positivePoints, negativePoints, frequentWords) debe ser estrictamente ESPAÑOL.
-            2. "summary": Debe ser un resumen conciso en español del análisis de los comentarios (máximo 300 caracteres).
-            3. "positivePoints" y "negativePoints": Listas de frases cortas en español (máximo 10 de cada una) que sinteticen lo bueno y lo malo.
-            4. "sentimentScore": Un número decimal del 0.0 al 5.0 (0.0 = extremadamente negativo, 5.0 = extremadamente positivo).
-            5. "positiveCount", "neutralCount", "negativeCount": Distribución estimada del sentimiento de los comentarios (la suma de estos tres campos DEBE ser exactamente igual al número total de comentarios analizados).
-            6. "frequentWords": Lista de hasta 10 palabras más frecuentes y significativas de los comentarios (excluye preposiciones, artículos y conectores comunes como "el", "y", "de", "que", etc.).
-            7. Responde ÚNICAMENTE con el objeto JSON. No incluyas bloques de código markdown (como ```json o ```), ni texto explicativo adicional antes o después del JSON.
+            EJEMPLO de respuesta correcta para 3 comentarios:
+            {
+              "summary": "Los usuarios valoran positivamente el diseño visual, aunque señalan que la carga inicial es lenta.",
+              "positivePoints": ["Diseño atractivo", "Navegación intuitiva"],
+              "negativePoints": ["Tiempo de carga alto", "Falta de modo oscuro"],
+              "sentimentScore": 3.2,
+              "positiveCount": 2,
+              "neutralCount": 0,
+              "negativeCount": 1,
+              "frequentWords": ["diseño", "carga", "lento", "interfaz", "responsive"]
+            }
+
+            REGLAS ESTRICTAS:
+            1. Todo el contenido textual (summary, positivePoints, negativePoints, frequentWords) debe estar en ESPAÑOL.
+            2. "summary" es OBLIGATORIO. Debe ser un resumen conciso (máximo 300 caracteres). Si no puedes generarlo, usa: "No se pudo generar un resumen a partir de los comentarios disponibles." NUNCA lo omitas. NUNCA lo dejes vacío.
+            3. "positivePoints" y "negativePoints": máximo 10 frases cortas cada una.
+            4. "sentimentScore": número decimal de 0.0 a 5.0.
+            5. "positiveCount" + "neutralCount" + "negativeCount" DEBE ser igual al número total de comentarios analizados.
+            6. "frequentWords" es OBLIGATORIO. Lista de hasta 10 palabras frecuentes y significativas (excluye artículos, preposiciones y conectores: el, la, y, de, que, en, un, es, etc.). Si no hay palabras relevantes, devuelve []. NUNCA omitas este campo. NUNCA lo dejes null.
+            7. Responde ÚNICAMENTE con el objeto JSON. Sin explicaciones, sin markdown, sin texto adicional.
+            8. Verifica que tu JSON sea válido antes de responder. Asegúrate de que summary y frequentWords SIEMPRE estén presentes.
             """.formatted(commentsText);
     }
 
@@ -143,7 +158,7 @@ public class GeminiApiClient {
             if (choices.isArray() && !choices.isEmpty()) {
                 JsonNode message = choices.get(0).path("message");
                 JsonNode content = message.path("content");
-                if (content.isTextual() || !content.isMissingNode()) {
+                if (content.isTextual()) {
                     return content.asText();
                 }
             }

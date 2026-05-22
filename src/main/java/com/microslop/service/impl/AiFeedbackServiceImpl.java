@@ -57,10 +57,27 @@ public class AiFeedbackServiceImpl implements AiFeedbackService {
             throw new IllegalStateException("No comments found for this project. Feedback cannot be generated without comments.");
         }
 
+        // Not enough comments for meaningful analysis
+        if (comments.size() < 3) {
+            log.warn("Project {} has only {} comment(s). Minimum 3 required for AI analysis.", projectId, comments.size());
+            return AiFeedbackResult.builder()
+                .summary("No se puede generar un análisis de IA: se necesitan al menos 3 comentarios para obtener un feedback significativo. Actualmente hay " + comments.size() + " comentario(s).")
+                .positivePoints(List.of())
+                .negativePoints(List.of())
+                .sentimentScore(0.0)
+                .positiveCount(0)
+                .neutralCount(0)
+                .negativeCount(0)
+                .frequentWords(List.of())
+                .build();
+        }
+
         String commentsText = comments.stream()
             .map(ProjectComment::getCommentText)
             .reduce((a, b) -> a + "\n---\n" + b)
             .orElse("");
+
+        log.debug("Sending {} comments to Gemini for project {}", comments.size(), projectId);
 
         String rawJson;
         try {
@@ -69,6 +86,8 @@ public class AiFeedbackServiceImpl implements AiFeedbackService {
             log.warn("Gemini API error for project {}: {}", projectId, e.getMessage());
             throw new IllegalStateException(e.getMessage(), e);
         }
+
+        log.debug("Raw Gemini response for project {}: {}", projectId, rawJson);
         AiFeedbackResult result = parseGeminiResponse(rawJson);
 
         // Persist
@@ -127,15 +146,28 @@ public class AiFeedbackServiceImpl implements AiFeedbackService {
 
             JsonResponse response = objectMapper.readValue(cleaned, JsonResponse.class);
 
+            // Validate and apply defaults for mandatory fields
+            String summary = response.summary;
+            if (summary == null || summary.isBlank()) {
+                log.warn("Gemini response missing 'summary', using fallback. Raw JSON: {}", cleaned);
+                summary = "No se pudo generar un resumen a partir de los comentarios disponibles.";
+            }
+
+            List<String> frequentWords = response.frequentWords;
+            if (frequentWords == null) {
+                log.warn("Gemini response missing 'frequentWords', using empty list. Raw JSON: {}", cleaned);
+                frequentWords = List.of();
+            }
+
             return AiFeedbackResult.builder()
-                .summary(response.summary)
+                .summary(summary)
                 .positivePoints(response.positivePoints)
                 .negativePoints(response.negativePoints)
                 .sentimentScore(response.sentimentScore)
                 .positiveCount(response.positiveCount)
                 .neutralCount(response.neutralCount)
                 .negativeCount(response.negativeCount)
-                .frequentWords(response.frequentWords)
+                .frequentWords(frequentWords)
                 .build();
         } catch (Exception e) {
             log.error("Failed to parse Gemini JSON response: {}", rawJson, e);
