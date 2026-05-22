@@ -57,38 +57,27 @@ public class AiFeedbackServiceImpl implements AiFeedbackService {
             throw new IllegalStateException("No comments found for this project. Feedback cannot be generated without comments.");
         }
 
-        // Not enough comments for meaningful analysis
-        if (comments.size() < 3) {
-            log.warn("Project {} has only {} comment(s). Minimum 3 required for AI analysis.", projectId, comments.size());
-            return AiFeedbackResult.builder()
-                .summary("AI analysis cannot be generated: at least 3 comments are required for meaningful feedback. Currently there are " + comments.size() + " comment(s).")
-                .positivePoints(List.of())
-                .negativePoints(List.of())
-                .sentimentScore(0.0)
-                .positiveCount(0)
-                .neutralCount(0)
-                .negativeCount(0)
-                .frequentWords(List.of())
-                .build();
-        }
-
         String commentsText = comments.stream()
             .map(ProjectComment::getCommentText)
             .reduce((a, b) -> a + "\n---\n" + b)
             .orElse("");
 
-        log.debug("Sending {} comments to Gemini for project {}", comments.size(), projectId);
+        log.info("Generating AI feedback for project {} with {} comments", projectId, comments.size());
 
         String rawJson;
         try {
             rawJson = geminiApiClient.generateFeedback(commentsText);
         } catch (GeminiApiException e) {
-            log.warn("Gemini API error for project {}: {}", projectId, e.getMessage());
+            log.error("Gemini API error for project {}: {}", projectId, e.getMessage());
             throw new IllegalStateException(e.getMessage(), e);
         }
 
-        log.info("Raw Gemini response for project {}: {}", projectId, rawJson);
+        log.info("Raw Gemini response for project {} (length={}): {}", projectId, rawJson.length(), rawJson.length() > 1000 ? rawJson.substring(0, 1000) + "..." : rawJson);
         AiFeedbackResult result = parseGeminiResponse(rawJson);
+        log.info("Parsed AI feedback for project {}: summary='{}', positivePoints={}, negativePoints={}, frequentWords={}, sentiment={}, counts=({}/{}/{})",
+            projectId, result.getSummary(), result.getPositivePoints(), result.getNegativePoints(),
+            result.getFrequentWords(), result.getSentimentScore(),
+            result.getPositiveCount(), result.getNeutralCount(), result.getNegativeCount());
 
         // Persist
         try {
@@ -173,14 +162,15 @@ public class AiFeedbackServiceImpl implements AiFeedbackService {
                 negativePoints = List.of();
             }
 
-            // Detect completely empty/useless response from Gemini
-            boolean isEmptyResponse = (summary.isBlank() || summary.startsWith("Unable to generate"))
+            // Detect completly unusable response: all meaningful fields empty AND zero scores
+            boolean isUnusableResponse = summary.isBlank()
                 && positivePoints.isEmpty()
                 && negativePoints.isEmpty()
-                && frequentWords.isEmpty();
+                && frequentWords.isEmpty()
+                && response.sentimentScore == 0.0;
 
-            if (isEmptyResponse) {
-                log.warn("Gemini returned a completely empty/minimal response. Using fallback.");
+            if (isUnusableResponse) {
+                log.warn("Gemini returned a completely unusable response (all fields empty/zero). Using fallback.");
                 return AiFeedbackResult.builder()
                     .summary("AI analysis could not be completed. The service may be temporarily unavailable. Please try again later.")
                     .positivePoints(List.of("Unable to analyze positive aspects."))

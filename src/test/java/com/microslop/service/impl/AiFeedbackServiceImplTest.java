@@ -122,8 +122,8 @@ class AiFeedbackServiceImplTest {
     }
 
     @Test
-    @DisplayName("should return insufficient comments message when less than 3 comments")
-    void should_return_insufficient_comments_message() {
+    @DisplayName("should generate feedback even with only 2 comments")
+    void should_generate_feedback_with_few_comments() {
         List<ProjectComment> comments = Arrays.asList(
             new ProjectComment(project, user, "Great design!", null),
             new ProjectComment(project, user, "Could be faster", null)
@@ -132,18 +132,29 @@ class AiFeedbackServiceImplTest {
         when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(commentRepository.findByProjectIdOrderByCreationDateDesc(1L)).thenReturn(comments);
 
+        String geminiJson = """
+            {
+              "summary": "Two comments reviewed",
+              "positivePoints": ["Good design"],
+              "negativePoints": ["Slow performance"],
+              "sentimentScore": 3.0,
+              "positiveCount": 1,
+              "neutralCount": 0,
+              "negativeCount": 1,
+              "frequentWords": ["design", "fast"]
+            }
+            """;
+        when(geminiApiClient.generateFeedback(anyString())).thenReturn(geminiJson);
+
         AiFeedbackResult result = aiFeedbackService.generateFeedbackForProject(1L);
 
         assertThat(result).isNotNull();
-        assertThat(result.getSummary()).contains("at least 3 comments");
-        assertThat(result.getSummary()).contains("2 comment(s)");
-        assertThat(result.getFrequentWords()).isEmpty();
-        assertThat(result.getSentimentScore()).isEqualTo(0.0);
-        assertThat(result.getTotalComments()).isEqualTo(0);
+        assertThat(result.getSummary()).isEqualTo("Two comments reviewed");
+        assertThat(result.getPositivePoints()).containsExactly("Good design");
+        assertThat(result.getNegativePoints()).containsExactly("Slow performance");
 
-        // Gemini should NOT be called and nothing should be persisted
-        verify(geminiApiClient, never()).generateFeedback(anyString());
-        verify(aiFeedbackRepository, never()).save(any());
+        // Gemini SHOULD be called even with only 2 comments
+        verify(geminiApiClient, times(1)).generateFeedback(anyString());
     }
 
     @Test

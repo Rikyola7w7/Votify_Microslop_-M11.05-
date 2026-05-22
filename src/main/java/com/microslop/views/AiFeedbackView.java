@@ -540,7 +540,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         }
 
         Span summaryText = new Span(summary);
-        if (isErrorResult || summary.contains("Unable to generate") || summary.contains("could not be completed") || summary.contains("at least 3 comments")) {
+        if (isErrorResult || summary.contains("Unable to generate") || summary.contains("could not be completed")) {
             summaryText.getStyle()
                 .set("color", "var(--text-muted)")
                 .set("line-height", "1.6")
@@ -654,9 +654,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         } else {
             String wordsMessage = isErrorResult
                 ? "AI analysis could not be completed. No frequent words available."
-                : summary.contains("at least 3 comments")
-                    ? "Not enough comments to identify frequent words (minimum 3 comments required)."
-                    : "No significant frequent words were identified in the analyzed comments.";
+                : "No significant frequent words were identified in the analyzed comments.";
             Span noWords = new Span(wordsMessage);
             noWords.getStyle()
                 .set("color", "var(--text-muted)")
