@@ -29,6 +29,8 @@ import com.microslop.command.competition.CreateCompetitionCommand;
 import com.microslop.command.competition.ActivateCompetitionCommand;
 import com.microslop.command.competition.DeactivateCompetitionCommand;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -136,11 +138,15 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
     // ── Write Operations ────────────────────────────────────────────────────────
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"competitions", "competitionsAll"}, allEntries = true)
     public Competition save(Competition competition) {
         return competitionRepository.save(competition);
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"competitions", "competitionsAll"}, allEntries = true)
     public Competition createCompetition(String creatorUsername, CompetitionDTO competitionDTO) {
         // Validate creator user exists
         userRepository.findByUsernameIgnoreCase(creatorUsername)
@@ -198,6 +204,8 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"competitions", "competitionsAll"}, allEntries = true)
     public void delete(Long id) {
         competitionRepository.deleteById(id);
     }
@@ -318,6 +326,7 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "competitions", key = "#id")
     public Competition getByIdOrFail(Long id) {
         return competitionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
@@ -325,6 +334,7 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "competitions", key = "#id")
     public Competition getByIdOrFailWithCategories(Long id) {
         return competitionRepository.findByIdWithCategories(id)
                 .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
@@ -337,6 +347,8 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
     }
 
     @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "competitionsAll")
     public List<Competition> findAll() {
         return competitionRepository.findAll();
     }

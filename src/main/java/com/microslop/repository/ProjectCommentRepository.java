@@ -15,6 +15,8 @@ public interface ProjectCommentRepository extends JpaRepository<ProjectComment, 
      */
     List<ProjectComment> findByProjectIdOrderByCreationDateDesc(Long projectId);
 
+    List<ProjectComment> findByProjectId(Long projectId);
+
     /**
      * Find all comments by a user.
      */

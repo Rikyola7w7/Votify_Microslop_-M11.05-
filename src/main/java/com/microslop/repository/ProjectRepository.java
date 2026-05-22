@@ -14,7 +14,8 @@ import java.util.List;
 public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpecificationExecutor<Project> {
 
     // Find projects by competition ID
-    List<Project> findByCompetitionId(Long competitionId);
+    @Query("SELECT DISTINCT p FROM Project p LEFT JOIN FETCH p.categories WHERE p.competition.id = :competitionId")
+    List<Project> findByCompetitionId(@Param("competitionId") Long competitionId);
 
     // Find projects where a user is a participant
     @Query("""
@@ -25,24 +26,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
     List<Project> findProjectsByParticipantUsername(@Param("username") String username);
 
     // Projects of a competition ordered in descending order by number of votes
-    @Query("""
-        SELECT p FROM Project p
-        LEFT JOIN p.votes v
-        WHERE p.competition.id = :competitionId
-        GROUP BY p
-        ORDER BY COUNT(v) DESC
-        """)
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.votes v WHERE p.competition.id = :competitionId GROUP BY p ORDER BY COUNT(v) DESC")
     List<Project> findRankingByCompetition(@Param("competitionId") Long competitionId);
 
     // Projects with a specific category ordered by number of votes
-    @Query("""
-        SELECT p FROM Project p
-        LEFT JOIN p.votes v
-        LEFT JOIN p.categories c
-        WHERE c.id = :categoryId
-        GROUP BY p
-        ORDER BY COUNT(v) DESC
-        """)
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.votes v LEFT JOIN FETCH p.categories c WHERE c.id = :categoryId GROUP BY p ORDER BY COUNT(v) DESC")
     List<Project> findRankingByCategory(@Param("categoryId") Long categoryId);
 
     // Judge-only ranking: projects ordered by count of votes from judges
@@ -72,11 +60,9 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
     @Query("SELECT p FROM Project p LEFT JOIN FETCH p.votes v LEFT JOIN FETCH v.user WHERE p.id = :projectId")
     Optional<Project> findByIdWithVotesAndUsers(@Param("projectId") Long projectId);
 
-    @Query("""
-        SELECT p FROM Project p
-        LEFT JOIN FETCH p.votes
-        LEFT JOIN p.categories c
-        WHERE c.id = :categoryId
-        """)
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.votes LEFT JOIN FETCH p.categories c WHERE c.id = :categoryId")
     List<Project> findAllByCategoryId(@Param("categoryId") Long categoryId);
+
+    @Query("SELECT DISTINCT p FROM Project p JOIN FETCH p.categories c WHERE p.competition.id = :competitionId AND c.id = :categoryId")
+    List<Project> findByCompetitionIdAndCategoryId(@Param("competitionId") Long competitionId, @Param("categoryId") Long categoryId);
 }

@@ -20,6 +20,7 @@ import com.microslop.strategy.voting.VotingStrategy;
 import com.microslop.command.CommandExecutor;
 import com.microslop.command.vote.SubmitVoteCommand;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -117,6 +118,8 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
     // ── Write ─────────────────────────────────────────────────────────────
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"projects", "projectsAll"}, allEntries = true)
     public void submitVote(String userUsername, Long projectId, Long categoryId) {
         SubmitVoteCommand command = new SubmitVoteCommand(
             userUsername, projectId, categoryId,
@@ -137,6 +140,8 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"projects", "projectsAll"}, allEntries = true)
     public void submitVote(String userUsername, Long projectId, Long categoryId, int points) {
         SubmitVoteCommand command = new SubmitVoteCommand(
             userUsername, projectId, categoryId, points,

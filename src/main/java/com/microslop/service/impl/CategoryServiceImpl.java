@@ -8,6 +8,8 @@ import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.ProjectCommentRepository;
 import com.microslop.repository.VoteRepository;
 import com.microslop.service.CategoryService;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,11 +42,15 @@ public class CategoryServiceImpl implements CategoryService {
     // ── Write Operations ────────────────────────────────────────────────────────
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"categories", "categoriesAll"}, allEntries = true)
     public Category save(Category category) {
         return categoryRepository.save(category);
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"categories", "categoriesAll"}, allEntries = true)
     public Category createCategory(Long competitionId, CategoryDTO categoryDTO) {
         // Validate competition exists
         Competition competition = competitionRepository.findById(competitionId)
@@ -79,12 +85,15 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"categories", "categoriesAll"}, allEntries = true)
     public void delete(Long id) {
         categoryRepository.deleteById(id);
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = {"categories", "categoriesAll"}, allEntries = true)
     public void deleteWithCascade(Long categoryId) {
         // Delete all project comments for this category first (foreign key constraint)
         projectCommentRepository.deleteByCategory_Id(categoryId);
@@ -98,12 +107,14 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "categories", key = "#id")
     public Optional<Category> getById(Long id) {
         return categoryRepository.findById(id);
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "categories", key = "#id")
     public Category getByIdOrFail(Long id) {
         return categoryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found: " + id));
@@ -117,6 +128,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "categoriesAll")
     public List<Category> findAll() {
         return categoryRepository.findAll();
     }

@@ -455,7 +455,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 Project p = ranking.get(idx);
                 long votes = p.getManualVoteCount() != null
                     ? p.getManualVoteCount()
-                    : p.getVotes().size();
+                    : voteService.countVotesByProject(p.getId());
                 if (modifyMode) {
                     podiumSection.add(buildModifiablePodiumWrapper(p, positions[slot], votes));
                 } else {
@@ -585,7 +585,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         long votes = p.getManualVoteCount() != null
             ? p.getManualVoteCount()
-            : p.getVotes().size();
+            : voteService.countVotesByProject(p.getId());
 
         var votesSpan = new Span(votes + " vote" + (votes != 1 ? "s" : ""));
         votesSpan.getStyle()
@@ -727,7 +727,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         int currentVotes = project.getManualVoteCount() != null
             ? project.getManualVoteCount()
-            : project.getVotes().size();
+            : (int) voteService.countVotesByProject(project.getId());
 
         var votesField = new IntegerField("Votes");
         votesField.setMin(0);

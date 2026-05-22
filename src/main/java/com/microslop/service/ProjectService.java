@@ -38,6 +38,14 @@ public interface ProjectService {
     java.util.List<Project> getRankingForCategory(Long categoryId, boolean isJudgesRanking);
 
     /**
+     * Get projects for a competition that belong to a specific category, with categories eagerly loaded.
+     * @param competitionId the competition ID
+     * @param categoryId the category ID to filter by
+     * @return list of projects in that category
+     */
+    java.util.List<Project> listByCompetitionWithCategories(Long competitionId, Long categoryId);
+
+    /**
      * Reclassify a project to a new position in the ranking.
      * @param projectId the project ID
      * @param newPosition the desired position (1-indexed)

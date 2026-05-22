@@ -2,11 +2,13 @@ package com.microslop.service.impl;
 
 import com.microslop.entity.Project;
 import com.microslop.repository.ProjectRepository;
+import com.microslop.repository.VoteRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.specification.project.ProjectsByCompetitionSpecification;
 import com.microslop.specification.project.ProjectsByCreatorSpecification;
 import com.microslop.command.CommandExecutor;
 import com.microslop.command.project.CreateProjectCommand;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
@@ -16,22 +18,29 @@ import java.util.*;
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final VoteRepository voteRepository;
     private final CommandExecutor commandExecutor;
 
     public ProjectServiceImpl(ProjectRepository projectRepository,
+                            VoteRepository voteRepository,
                             CommandExecutor commandExecutor) {
         this.projectRepository = projectRepository;
+        this.voteRepository = voteRepository;
         this.commandExecutor = commandExecutor;
     }
 
     // ── Write Operations ────────────────────────────────────────────────────────────
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"projects", "projectsAll"}, allEntries = true)
     public Project save(Project project) {
         return projectRepository.save(project);
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"projects", "projectsAll"}, allEntries = true)
     public void delete(Long id) {
         projectRepository.deleteById(id);
     }
@@ -98,13 +107,12 @@ public class ProjectServiceImpl implements ProjectService {
         for (Project p : baseRanking) {
             int count = p.getManualVoteCount() != null
                     ? p.getManualVoteCount()
-                    : p.getVotes().size();
+                    : (int) voteRepository.countByProjectId(p.getId());
             effectiveVoteCounts.put(p.getId(), count);
         }
 
         List<Project> sorted = new ArrayList<>(baseRanking);
         sorted.sort((a, b) -> {
-            // First, sort by custom position
             Integer posA = a.getCustomPosition();
             Integer posB = b.getCustomPosition();
             if (posA != null && posB != null) {
@@ -115,12 +123,10 @@ public class ProjectServiceImpl implements ProjectService {
                 return 1;
             }
 
-            // Then, sort by effective vote count (manual override or actual count), descending
             int votesA = effectiveVoteCounts.getOrDefault(a.getId(), 0);
             int votesB = effectiveVoteCounts.getOrDefault(b.getId(), 0);
             if (votesA != votesB) return Integer.compare(votesB, votesA);
 
-            // Finally, tiebreak by base query order
             return Integer.compare(
                     baseOrder.getOrDefault(a.getId(), Integer.MAX_VALUE),
                     baseOrder.getOrDefault(b.getId(), Integer.MAX_VALUE)
@@ -131,6 +137,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"projects", "projectsAll"}, allEntries = true)
     public void reclassifyProject(Long projectId, int newPosition) {
         if (newPosition < 1) {
             throw new IllegalArgumentException("Position must be at least 1");
@@ -142,11 +150,15 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"projects", "projectsAll"}, allEntries = true)
     public void declassifyProject(Long projectId) {
         projectRepository.deleteById(projectId);
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"projects", "projectsAll"}, allEntries = true)
     public void editProjectVotes(Long projectId, int newVoteCount) {
         if (newVoteCount < 0) {
             throw new IllegalArgumentException("Vote count cannot be negative");
@@ -165,9 +177,6 @@ public class ProjectServiceImpl implements ProjectService {
             if (p.getCompetition() != null) {
                 p.getCompetition().getName();
             }
-            if (p.getVotes() != null) {
-                p.getVotes().size();
-            }
         });
         return projects;
     }
@@ -176,5 +185,11 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional(readOnly = true)
     public List<Project> getUserProjectsByUserId(Long userId) {
         return projectRepository.findAll(new ProjectsByCreatorSpecification(userId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Project> listByCompetitionWithCategories(Long competitionId, Long categoryId) {
+        return projectRepository.findByCompetitionIdAndCategoryId(competitionId, categoryId);
     }
 }

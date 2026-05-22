@@ -313,19 +313,16 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                     ? checklistItemRepository.findByCompetitionId(competitionId)
                     : java.util.List.<com.microslop.entity.ChecklistItem>of();
 
+            // Fetch projects with categories in one query while session is open
+            var projectsWithCategories = projectService.listByCompetitionWithCategories(competitionId, selectedCategory.getId());
+
             int staggerIndex = 1;
             boolean isFirst = true;
-            for (Project p : projects) {
-                // Filter projects that belong to this category
-                boolean belongsToCategory = p.getCategories().stream()
-                        .anyMatch(c -> c.getId().equals(selectedCategory.getId()));
-                        
-                if (belongsToCategory) {
-                    long alreadyVoted = voteService.countVotesByUserAndProjectAndCategory(currentUserLocal.getId(), p.getId(), selectedCategory.getId());
-                    projectsContainer.add(buildProjectCard(p, alreadyVoted > 0, hasVotedInCategory, staggerIndex, cachedChecklistItems, isFirst));
-                    staggerIndex = Math.min(staggerIndex + 1, 8);
-                    isFirst = false;
-                }
+            for (Project p : projectsWithCategories) {
+                long alreadyVoted = voteService.countVotesByUserAndProjectAndCategory(currentUserLocal.getId(), p.getId(), selectedCategory.getId());
+                projectsContainer.add(buildProjectCard(p, alreadyVoted > 0, hasVotedInCategory, staggerIndex, cachedChecklistItems, isFirst));
+                staggerIndex = Math.min(staggerIndex + 1, 8);
+                isFirst = false;
             }
         };
 
