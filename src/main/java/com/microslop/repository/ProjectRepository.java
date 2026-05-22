@@ -33,7 +33,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
 
     @Query("""
         SELECT p FROM Project p
-        LEFT JOIN FETCH p.competition
         LEFT JOIN p.categories c
         LEFT JOIN p.votes v
         LEFT JOIN com.microslop.entity.Judge j ON j.user = v.user AND j.competition = p.competition
@@ -45,7 +44,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
 
     @Query("""
         SELECT p FROM Project p
-        LEFT JOIN FETCH p.competition
         LEFT JOIN p.categories c
         LEFT JOIN p.votes v
         LEFT JOIN com.microslop.entity.Judge j ON j.user = v.user AND j.competition = p.competition
