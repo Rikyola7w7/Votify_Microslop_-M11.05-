@@ -776,7 +776,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         int currentVotes = project.getManualVoteCount() != null
             ? project.getManualVoteCount()
-            : (int) voteCounts.getOrDefault(project.getId(), 0L);
+            : voteCounts.getOrDefault(project.getId(), 0L).intValue();
 
         var votesField = new IntegerField("Votes");
         votesField.setMin(0);
