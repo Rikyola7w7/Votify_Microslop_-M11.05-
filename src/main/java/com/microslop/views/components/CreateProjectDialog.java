@@ -55,6 +55,7 @@ public class CreateProjectDialog extends Dialog {
 
         setHeaderTitle("Submit Project");
         setWidth("450px");
+        getElement().getStyle().set("animation", "fade-in-scale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards");
 
         add(buildContent());
         add(buildFooter());

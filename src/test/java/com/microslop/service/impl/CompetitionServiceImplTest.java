@@ -231,7 +231,7 @@ class CompetitionServiceImplTest {
          active2.setName("Active 2");
 
          List<Competition> activeList = Arrays.asList(active1, active2);
-         when(competitionRepository.findActiveWithProjects()).thenReturn(activeList);
+         when(competitionRepository.findActiveWithCategories()).thenReturn(activeList);
 
          List<Competition> result = competitionService.getActiveCompetitions();
 

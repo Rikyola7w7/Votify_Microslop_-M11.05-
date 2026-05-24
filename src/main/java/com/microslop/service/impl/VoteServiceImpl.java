@@ -121,7 +121,7 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
 
     @Override
     @Transactional
-    @CacheEvict(value = {"projects", "projectsAll"}, allEntries = true)
+    @CacheEvict(value = {"projects", "projectsAll", "projectsByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
     public void submitVote(String userUsername, Long projectId, Long categoryId) {
         SubmitVoteCommand command = new SubmitVoteCommand(
             userUsername, projectId, categoryId,
@@ -143,7 +143,7 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
 
     @Override
     @Transactional
-    @CacheEvict(value = {"projects", "projectsAll"}, allEntries = true)
+    @CacheEvict(value = {"projects", "projectsAll", "projectsByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
     public void submitVote(String userUsername, Long projectId, Long categoryId, int points) {
         SubmitVoteCommand command = new SubmitVoteCommand(
             userUsername, projectId, categoryId, points,

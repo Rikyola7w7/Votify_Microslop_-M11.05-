@@ -185,6 +185,7 @@ public class CategoryCard extends Div {
 
         viewButton.addClickListener(event -> {
             getStyle().set("animation", "category-select-flash 0.4s ease");
+            viewButton.setEnabled(false);
             if (navigationAction != null) {
                 navigationAction.run();
             }

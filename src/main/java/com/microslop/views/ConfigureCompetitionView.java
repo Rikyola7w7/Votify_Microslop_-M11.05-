@@ -836,16 +836,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             Notification notification = Notification.show("Configuration saved successfully");
             notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
-            getUI().ifPresent(ui -> {
-                ui.access(() -> {
-                    try {
-                        Thread.sleep(1500);
-                        navigateBack();
-                    } catch (InterruptedException e) {
-                        navigateBack();
-                    }
-                });
-            });
+            navigateBack();
         } catch (Exception e) {
             Notification notification = Notification.show("Error saving configuration: " + e.getMessage());
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);

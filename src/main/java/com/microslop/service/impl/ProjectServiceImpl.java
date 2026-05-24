@@ -11,6 +11,7 @@ import com.microslop.command.project.CreateProjectCommand;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
@@ -38,14 +39,14 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
-    @CacheEvict(value = {"projects", "projectsAll"}, allEntries = true)
+    @CacheEvict(value = {"projects", "projectsAll", "projectsByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
     public Project save(Project project) {
         return projectRepository.save(project);
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = {"projects", "projectsAll"}, allEntries = true)
+    @CacheEvict(value = {"projects", "projectsAll", "projectsByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
     public void delete(Long id) {
         projectRepository.deleteById(id);
     }
@@ -61,6 +62,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "projectsByCompetition", key = "#competitionId")
     public List<Project> listByCompetition(Long competitionId) {
         return projectRepository.findAll(new ProjectsByCompetitionSpecification(competitionId));
     }
@@ -91,6 +93,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "rankings", key = "{#categoryId, #isJudgesRanking}")
     public List<Project> getRankingForCategory(Long categoryId, boolean isJudgesRanking) {
         List<Project> baseRanking = isJudgesRanking
                 ? projectRepository.findJudgeRankingByCategory(categoryId)
@@ -147,7 +150,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
-    @CacheEvict(value = {"projects", "projectsAll"}, allEntries = true)
+    @CacheEvict(value = {"projects", "projectsAll", "projectsByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
     public void reclassifyProject(Long projectId, int newPosition) {
         if (newPosition < 1) {
             throw new IllegalArgumentException("Position must be at least 1");
@@ -172,7 +175,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
-    @CacheEvict(value = {"projects", "projectsAll"}, allEntries = true)
+    @CacheEvict(value = {"projects", "projectsAll", "projectsByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
     public void declassifyProject(Long projectId) {
         Project project = projectRepository.findById(projectId).orElse(null);
         if (project != null && project.getCustomPosition() != null) {
@@ -195,7 +198,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
-    @CacheEvict(value = {"projects", "projectsAll"}, allEntries = true)
+    @CacheEvict(value = {"projects", "projectsAll", "projectsByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
     public void editProjectVotes(Long projectId, int newVoteCount) {
         if (newVoteCount < 0) {
             throw new IllegalArgumentException("Vote count cannot be negative");
@@ -207,6 +210,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"projects", "projectsAll", "projectsByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
     public void resetAllModifications(Long competitionId) {
         List<Project> projects = projectRepository.findByCompetitionId(competitionId);
         for (Project p : projects) {
@@ -230,6 +235,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "projectsByCompetitionAndCategory", key = "{#competitionId, #categoryId}")
     public List<Project> listByCompetitionWithCategories(Long competitionId, Long categoryId) {
         return projectRepository.findByCompetitionIdAndCategoryId(competitionId, categoryId);
     }

@@ -25,6 +25,7 @@ public class InvitationDialog extends Dialog {
 
         setHeaderTitle("Project Invitation");
         setWidth("400px");
+        getElement().getStyle().set("animation", "fade-in-scale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards");
 
         Invitation invitation = invitationService.getInvitation(invitationId).orElse(null);
         if (invitation == null) {

@@ -43,14 +43,14 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    @CacheEvict(value = {"categories", "categoriesAll"}, allEntries = true)
+    @CacheEvict(value = {"categories", "categoriesAll", "categoriesByCompetition"}, allEntries = true)
     public Category save(Category category) {
         return categoryRepository.save(category);
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = {"categories", "categoriesAll"}, allEntries = true)
+    @CacheEvict(value = {"categories", "categoriesAll", "categoriesByCompetition"}, allEntries = true)
     public Category createCategory(Long competitionId, CategoryDTO categoryDTO) {
         // Validate competition exists
         Competition competition = competitionRepository.findById(competitionId)
@@ -86,14 +86,14 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    @CacheEvict(value = {"categories", "categoriesAll"}, allEntries = true)
+    @CacheEvict(value = {"categories", "categoriesAll", "categoriesByCompetition"}, allEntries = true)
     public void delete(Long id) {
         categoryRepository.deleteById(id);
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = {"categories", "categoriesAll"}, allEntries = true)
+    @CacheEvict(value = {"categories", "categoriesAll", "categoriesByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
     public void deleteWithCascade(Long categoryId) {
         // Delete all project comments for this category first (foreign key constraint)
         projectCommentRepository.deleteByCategory_Id(categoryId);
@@ -122,6 +122,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "categoriesByCompetition", key = "#competitionId")
     public List<Category> getCategoriesByCompetition(Long competitionId) {
         return categoryRepository.findByCompetitionId(competitionId);
     }

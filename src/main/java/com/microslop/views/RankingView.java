@@ -11,7 +11,6 @@ import com.microslop.service.UserService;
 import com.microslop.service.VoterService;
 import com.microslop.service.VoteService;
 import com.microslop.views.components.BallotLoadingComponent;
-import com.microslop.views.components.CelebrationAnimation;
 import com.microslop.views.components.VoterRegisteredAnimation;
 import com.microslop.views.components.PodiumCardComponent;
 import com.vaadin.flow.component.button.Button;
@@ -291,9 +290,8 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 // Show subtle voter registered animation, then redirect to voting
                 VoterRegisteredAnimation vrAnim = new VoterRegisteredAnimation(
                     () -> {
-                        String votingUrl = "/competition/" + competitionId + "/category/" + categoryId + "/vote";
-                        getUI().ifPresent(ui -> ui.getPage().executeJs(
-                            "window.location.href = '" + votingUrl + "'"));
+                        getUI().ifPresent(ui -> ui.navigate(
+                            "competition/" + competitionId + "/category/" + categoryId + "/vote"));
                     }
                 );
                 getUI().ifPresent(ui -> ui.add(vrAnim));
@@ -452,8 +450,8 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         var content = new Div();
         content.getElement().setAttribute("id", "ranking-content");
         content.setWidthFull();
+        content.addClassName("animate-fade-in");
         content.getStyle()
-            .set("display", "none")
             .set("max-width", "760px")
             .set("margin", "0 auto");
 
@@ -530,13 +528,16 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         }
         rankingContainer.add(content);
 
+        // Fade out loading and reveal content
         getElement().executeJs(
             "setTimeout(function() {" +
             "  var loadings = document.querySelectorAll('.votify-loading');" +
-            "  loadings.forEach(function(l) { l.style.display = 'none'; });" +
-            "  var c = document.getElementById('ranking-content');" +
-            "  if (c) { c.style.display = 'block'; }" +
-            "}, 900)");
+            "  loadings.forEach(function(l) { l.style.opacity = '0'; l.style.transition = 'opacity 0.15s ease'; });" +
+            "  setTimeout(function() {" +
+            "    var loadings = document.querySelectorAll('.votify-loading');" +
+            "    loadings.forEach(function(l) { l.style.display = 'none'; });" +
+            "  }, 150);" +
+            "}, 750)");
     }
 
     private Div buildModifiablePodiumWrapper(Project project, PodiumCardComponent.Position position, long votes) {

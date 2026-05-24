@@ -212,11 +212,16 @@ public class MainView extends VerticalLayout {
         BallotLoadingComponent loading = new BallotLoadingComponent("Loading competitions...");
         cardsContainer.add(loading);
         
-        // Add cards but hidden
+        // Add cards with stagger animation - CSS handles timing
         Div cardsGrid = new Div();
         cardsGrid.getElement().setAttribute("id", "main-cards-grid");
         cardsGrid.setWidthFull();
-        cardsGrid.getStyle().set("display", "none");
+        cardsGrid.addClassName("animate-fade-in");
+        cardsGrid.getStyle()
+            .set("display", "flex")
+            .set("flex-wrap", "wrap")
+            .set("gap", "24px")
+            .set("justify-content", "center");
         
         for (int i = 0; i < competitions.size(); i++) {
             CompetitionCardComponent card = new CompetitionCardComponent(competitions.get(i));
@@ -226,14 +231,16 @@ public class MainView extends VerticalLayout {
         }
         cardsContainer.add(cardsGrid);
         
-        // After 800ms, hide loading and show cards
+        // Fade out loading and reveal grid
         getElement().executeJs(
             "setTimeout(function() {" +
             "  var loadings = document.querySelectorAll('.votify-loading');" +
-            "  loadings.forEach(function(l) { l.style.display = 'none'; });" +
-            "  var grid = document.getElementById('main-cards-grid');" +
-            "  if (grid) { grid.style.display = 'flex'; grid.style.flexWrap = 'wrap'; grid.style.gap = '24px'; grid.style.justifyContent = 'center'; }" +
-            "}, 800)");
+            "  loadings.forEach(function(l) { l.style.opacity = '0'; l.style.transition = 'opacity 0.15s ease'; });" +
+            "  setTimeout(function() {" +
+            "    var loadings = document.querySelectorAll('.votify-loading');" +
+            "    loadings.forEach(function(l) { l.style.display = 'none'; });" +
+            "  }, 150);" +
+            "}, 750)");
     }
 
     private void filterByName(String searchTerm) {

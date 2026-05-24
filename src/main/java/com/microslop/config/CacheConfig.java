@@ -15,10 +15,14 @@ public class CacheConfig {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager(
             "categories",
             "categoriesAll",
+            "categoriesByCompetition",
             "competitions",
             "competitionsAll",
             "projects",
             "projectsAll",
+            "projectsByCompetition",
+            "projectsByCompetitionAndCategory",
+            "rankings",
             "votes"
         );
         cacheManager.setCaffeine(Caffeine.newBuilder()

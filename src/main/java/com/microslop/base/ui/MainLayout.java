@@ -183,8 +183,6 @@ public final class MainLayout extends AppLayout {
         notificationDialog.setWidth("350px");
         notificationDialog.setMaxWidth("90vw");
 
-        rebuildNotificationDialog();
-
         bellButton.addClickListener(e -> {
             rebuildNotificationDialog();
             notificationDialog.open();
@@ -203,7 +201,10 @@ public final class MainLayout extends AppLayout {
     }
 
     private void updateUnreadBadge() {
-        if (notificationService == null) return;
+        if (notificationService == null || userService == null || !userService.isLoggedIn()) {
+            unreadBadge.getStyle().set("visibility", "hidden");
+            return;
+        }
         try {
             long unreadCount = notificationService.getUnreadCountForCurrentUser();
             if (unreadCount > 0) {
