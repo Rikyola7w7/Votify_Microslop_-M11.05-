@@ -70,6 +70,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private com.microslop.entity.User currentUser;
 
     private VerticalLayout projectsContainer;
+    private ComboBox<Category> categoryDropdown;
 
     private java.util.List<Project> cachedProjects = java.util.List.of();
     private java.util.List<Long> cachedProjectIds = java.util.List.of();
