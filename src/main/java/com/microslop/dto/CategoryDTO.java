@@ -4,10 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Data Transfer Object for Category.
- * Used to transfer category data between the view, service, and controller layers.
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,9 +13,23 @@ public class CategoryDTO {
     private Long competitionId;
     private String name;
     private int weight = 1;
+    private String voterType = "NORMAL";
+    private String voteType = "NORMAL";
+    private byte[] image;
 
     public CategoryDTO(String name) {
         this.name = name;
+    }
+
+    public CategoryDTO(String name, String voterType) {
+        this.name = name;
+        this.voterType = voterType;
+    }
+
+    public CategoryDTO(String name, String voterType, String voteType) {
+        this.name = name;
+        this.voterType = voterType;
+        this.voteType = voteType;
     }
 
     public CategoryDTO(String name, int weight) {

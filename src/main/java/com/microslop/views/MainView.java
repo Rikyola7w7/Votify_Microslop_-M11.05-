@@ -2,15 +2,11 @@ package com.microslop.views;
 
 import com.microslop.entity.Competition;
 import com.microslop.service.CompetitionService;
-import com.microslop.service.UserService;
 import com.microslop.views.components.CompetitionCardComponent;
 import com.microslop.views.components.BallotLoadingComponent;
 import com.microslop.base.ui.MainLayout;
-import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -23,7 +19,6 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.VaadinSession;
 import java.util.List;
 
 @PageTitle("Votify")
@@ -31,16 +26,14 @@ import java.util.List;
 public class MainView extends VerticalLayout {
 
     private final CompetitionService competitionService;
-    private final UserService userService;
     private Div cardsContainer;
     private List<Competition> currentCompetitions;
     private Button btnAll;
     private Button btnActive;
     private Button btnFinished;
 
-    public MainView(CompetitionService competitionService, UserService userService) {
+    public MainView(CompetitionService competitionService) {
         this.competitionService = competitionService;
-        this.userService = userService;
         initializeView();
         refreshCompetitions("All");
     }
@@ -65,6 +58,7 @@ public class MainView extends VerticalLayout {
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         header.addClassName("votify-header");
+        header.getStyle().set("padding", "2rem");
 
         Span title = new Span("Discover Competitions");
         title.getStyle()
@@ -73,29 +67,8 @@ public class MainView extends VerticalLayout {
             .set("color", "var(--dark)")
             .set("letter-spacing", "-0.3px");
 
-        Avatar userAvatar = new Avatar();
-        userAvatar.setName(userService.getUserDisplayName());
-        userAvatar.setWidth("40px");
-        userAvatar.setHeight("40px");
-        userAvatar.getStyle().set("cursor", "pointer");
-
-        ContextMenu userMenu = new ContextMenu(userAvatar);
-        userMenu.setOpenOnClick(true);
-
-        boolean isLoggedIn = userService.isLoggedIn();
-
-        if (isLoggedIn) {
-            String username = userService.getCurrentUsername();
-            userMenu.addItem("My Projects", event -> getUI().ifPresent(ui -> ui.navigate(username + "/projects")));
-            userMenu.addItem("My Competitions", event -> getUI().ifPresent(ui -> ui.navigate(username + "/competitions")));
-            userMenu.addItem("Edit Profile", event -> getUI().ifPresent(ui -> ui.navigate("profile")));
-            userMenu.addItem("Sign Out", event -> handleLogout());
-        } else {
-            userMenu.addItem("Sign In", event -> getUI().ifPresent(ui -> ui.navigate("login")));
-            userMenu.addItem("Register", event -> getUI().ifPresent(ui -> ui.navigate("register")));
-        }
-
-        header.add(title, userAvatar);
+        header.add(title);
+        
         return header;
     }
 
@@ -115,7 +88,8 @@ public class MainView extends VerticalLayout {
             .set("display", "block")
             .set("margin-left", "auto")
             .set("margin-right", "auto")
-            .set("animation", "float 3s ease-in-out infinite");
+            .set("animation", "float 3s ease-in-out infinite")
+            .set("text-shadow", "0 1px 4px rgba(0,0,0,0.3)");
 
         H2 heading = new H2("Discover Competitions");
         heading.getStyle()
@@ -123,13 +97,15 @@ public class MainView extends VerticalLayout {
             .set("margin", "0 0 8px")
             .set("font-size", "2.5rem")
             .set("font-weight", "700")
-            .set("letter-spacing", "-0.5px");
+            .set("letter-spacing", "-0.5px")
+            .set("text-shadow", "0 2px 8px rgba(0,0,0,0.4)");
 
         Span subtitle = new Span("Find and vote for the best projects");
         subtitle.getStyle()
-            .set("color", "rgba(255, 255, 255, 0.9)")
+            .set("color", "rgba(255, 255, 255, 0.95)")
             .set("font-size", "1.1rem")
-            .set("font-weight", "400");
+            .set("font-weight", "400")
+            .set("text-shadow", "0 1px 4px rgba(0,0,0,0.3)");
 
         hero.add(ballotIcon, heading, subtitle);
         return hero;
@@ -236,11 +212,16 @@ public class MainView extends VerticalLayout {
         BallotLoadingComponent loading = new BallotLoadingComponent("Loading competitions...");
         cardsContainer.add(loading);
         
-        // Add cards but hidden
+        // Add cards with stagger animation - CSS handles timing
         Div cardsGrid = new Div();
         cardsGrid.getElement().setAttribute("id", "main-cards-grid");
         cardsGrid.setWidthFull();
-        cardsGrid.getStyle().set("display", "none");
+        cardsGrid.addClassName("animate-fade-in");
+        cardsGrid.getStyle()
+            .set("display", "flex")
+            .set("flex-wrap", "wrap")
+            .set("gap", "24px")
+            .set("justify-content", "center");
         
         for (int i = 0; i < competitions.size(); i++) {
             CompetitionCardComponent card = new CompetitionCardComponent(competitions.get(i));
@@ -250,14 +231,16 @@ public class MainView extends VerticalLayout {
         }
         cardsContainer.add(cardsGrid);
         
-        // After 800ms, hide loading and show cards
+        // Fade out loading and reveal grid
         getElement().executeJs(
             "setTimeout(function() {" +
             "  var loadings = document.querySelectorAll('.votify-loading');" +
-            "  loadings.forEach(function(l) { l.style.display = 'none'; });" +
-            "  var grid = document.getElementById('main-cards-grid');" +
-            "  if (grid) { grid.style.display = 'flex'; grid.style.flexWrap = 'wrap'; grid.style.gap = '24px'; grid.style.justifyContent = 'center'; }" +
-            "}, 800)");
+            "  loadings.forEach(function(l) { l.style.opacity = '0'; l.style.transition = 'opacity 0.15s ease'; });" +
+            "  setTimeout(function() {" +
+            "    var loadings = document.querySelectorAll('.votify-loading');" +
+            "    loadings.forEach(function(l) { l.style.display = 'none'; });" +
+            "  }, 150);" +
+            "}, 750)");
     }
 
     private void filterByName(String searchTerm) {
@@ -282,15 +265,6 @@ public class MainView extends VerticalLayout {
 
         emptyState.add(emptyIcon, title, message);
         cardsContainer.add(emptyState);
-    }
-
-    private void handleLogout() {
-        VaadinSession session = VaadinSession.getCurrent();
-        if (session != null) {
-            session.getSession().invalidate();
-        }
-        getUI().ifPresent(ui -> ui.navigate(""));
-        Notification.show("Logged out successfully");
     }
 
     private void showErrorNotification(String message) {

@@ -34,9 +34,17 @@ public class Voter {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    public Voter(User user, Competition competition, Category category) {
+    @Column(name = "votes_left")
+    private int votesLeft = 1;
+
+    public Voter(User user, Competition competition, Category category, int votesLeft) {
         this.user = user;
         this.competition = competition;
         this.category = category;
+        this.votesLeft = votesLeft;
+    }
+
+    public Voter(User user, Competition competition, Category category) {
+        this(user, competition, category, 1);
     }
 }

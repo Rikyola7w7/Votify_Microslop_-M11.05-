@@ -1,7 +1,6 @@
 package com.microslop.views.components;
 
 import com.microslop.entity.Project;
-import com.microslop.service.ProjectService;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
@@ -11,22 +10,9 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 
-import java.util.List;
-
 public class ProjectCardComponent extends Div {
 
-    private final Project project;
-    private final ProjectService projectService;
-    private final Runnable onCommentClick;
-
-    public ProjectCardComponent(Project project, String username, ProjectService projectService, Runnable onCommentClick) {
-        this.project = project;
-        this.projectService = projectService;
-        this.onCommentClick = onCommentClick;
-        buildCard();
-    }
-
-    private void buildCard() {
+    public ProjectCardComponent(Project project, String competitionName, long totalVotes, int position, Runnable onCommentClick) {
         setWidth("100%");
         setMaxWidth(300, Unit.PIXELS);
         addClassName("votify-card");
@@ -50,7 +36,9 @@ public class ProjectCardComponent extends Div {
 
         Icon projectIcon = VaadinIcon.CHART_3D.create();
         projectIcon.setSize("40px");
-        projectIcon.getStyle().set("color", "#ffffff");
+        projectIcon.getStyle()
+                .set("color", "white")
+                .set("text-shadow", "0 1px 4px rgba(0,0,0,0.2)");
         iconBlock.add(projectIcon);
 
         Div contentArea = new Div();
@@ -79,7 +67,7 @@ public class ProjectCardComponent extends Div {
             .set("overflow", "hidden")
             .set("flex", "1");
 
-        HorizontalLayout stats = createStatsLayout();
+        HorizontalLayout stats = createStatsLayout(competitionName, totalVotes, position);
 
         Div spacer = new Div();
         spacer.setHeight(8, Unit.PIXELS);
@@ -100,13 +88,13 @@ public class ProjectCardComponent extends Div {
         add(iconBlock, contentArea);
     }
 
-    private HorizontalLayout createStatsLayout() {
+    private HorizontalLayout createStatsLayout(String competitionName, long totalVotes, int position) {
         HorizontalLayout stats = new HorizontalLayout();
         stats.setSpacing(true);
         stats.setAlignItems(FlexComponent.Alignment.CENTER);
         stats.getStyle().set("margin-top", "12px");
 
-        Span competitionBadge = new Span("Competition: " + project.getCompetition().getName());
+        Span competitionBadge = new Span("Competition: " + competitionName);
         competitionBadge.getStyle()
             .set("color", "var(--text-muted)")
             .set("font-size", "12px")
@@ -114,7 +102,7 @@ public class ProjectCardComponent extends Div {
             .set("background", "var(--surface-hover)")
             .set("border-radius", "var(--radius-sm)");
 
-        Span votesBadge = new Span(project.getTotalVotes() + " vote" + (project.getTotalVotes() != 1 ? "s" : ""));
+        Span votesBadge = new Span(totalVotes + " vote" + (totalVotes != 1 ? "s" : ""));
         votesBadge.getStyle()
             .set("color", "var(--primary)")
             .set("font-size", "12px")
@@ -123,10 +111,9 @@ public class ProjectCardComponent extends Div {
             .set("background", "rgba(108, 92, 231, 0.08)")
             .set("border-radius", "var(--radius-sm)");
 
-        int position = getProjectPosition();
         Span positionBadge = new Span(" #" + position);
         positionBadge.getStyle()
-            .set("color", "#ffffff")
+            .set("color", "white")
             .set("font-size", "12px")
             .set("font-weight", "700")
             .set("padding", "3px 8px")
@@ -135,19 +122,5 @@ public class ProjectCardComponent extends Div {
 
         stats.add(competitionBadge, votesBadge, positionBadge);
         return stats;
-    }
-
-    private int getProjectPosition() {
-        try {
-            List<Project> ranking = projectService.getRanking(project.getCompetition().getId());
-            for (int i = 0; i < ranking.size(); i++) {
-                if (ranking.get(i).getId().equals(project.getId())) {
-                    return i + 1;
-                }
-            }
-        } catch (Exception e) {
-            return 0;
-        }
-        return 0;
     }
 }

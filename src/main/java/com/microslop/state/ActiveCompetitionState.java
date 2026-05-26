@@ -3,10 +3,6 @@ package com.microslop.state;
 import com.microslop.entity.Competition;
 import com.microslop.entity.CompetitionStatus;
 
-/**
- * ACTIVE state: competition is active but voting not yet open.
- * Can submit projects. Can open voting or deactivate.
- */
 public class ActiveCompetitionState implements CompetitionState {
 
     @Override
@@ -20,12 +16,22 @@ public class ActiveCompetitionState implements CompetitionState {
     }
 
     @Override
+    public void pauseVoting(Competition competition) {
+        competition.setStatus(CompetitionStatus.PAUSED);
+    }
+
+    @Override
     public void conclude(Competition competition) {
         competition.setStatus(CompetitionStatus.CONCLUDED);
     }
 
     @Override
     public boolean canSubmitProjects() {
+        return true;
+    }
+
+    @Override
+    public boolean canVote() {
         return true;
     }
 

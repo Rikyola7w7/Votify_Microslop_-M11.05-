@@ -20,10 +20,7 @@ public class AllVotingStrategy implements VotingStrategy {
         if (basePoints <= 0) {
             return 0;
         }
-        double multiplier = competition.getStandardUserWeightMultiplier() != null
-            ? competition.getStandardUserWeightMultiplier()
-            : 1.0;
-        return (int) Math.round(basePoints * multiplier);
+        return basePoints;
     }
 
     @Override

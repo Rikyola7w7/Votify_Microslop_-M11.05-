@@ -41,7 +41,8 @@ public class VoterServiceImpl implements VoterService {
 
         Category category = categoryService.getByIdOrFail(categoryId);
 
-        Voter voter = new Voter(user, competition, category);
+        int maxVotes = competition.getMaxVotesPerPerson() != null ? competition.getMaxVotesPerPerson() : 1;
+        Voter voter = new Voter(user, competition, category, maxVotes);
         return voterRepository.save(voter);
     }
 
@@ -55,5 +56,29 @@ public class VoterServiceImpl implements VoterService {
     @Transactional(readOnly = true)
     public boolean isRegisteredVoterInCompetition(Long userId, Long competitionId) {
         return voterRepository.existsByUserIdAndCompetitionId(userId, competitionId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getVotesLeft(Long userId, Long competitionId, Long categoryId) {
+        return voterRepository.findByUserIdAndCompetitionIdAndCategoryId(userId, competitionId, categoryId)
+                .map(Voter::getVotesLeft)
+                .orElse(0);
+    }
+
+    @Override
+    @Transactional
+    public void decrementVotesLeft(Long userId, Long competitionId, Long categoryId, int points) {
+        voterRepository.findByUserIdAndCompetitionIdAndCategoryId(userId, competitionId, categoryId)
+                .ifPresent(voter -> {
+                    voter.setVotesLeft(Math.max(0, voter.getVotesLeft() - points));
+                    voterRepository.save(voter);
+                });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.Optional<Voter> getVoter(Long userId, Long competitionId, Long categoryId) {
+        return voterRepository.findByUserIdAndCompetitionIdAndCategoryId(userId, competitionId, categoryId);
     }
 }

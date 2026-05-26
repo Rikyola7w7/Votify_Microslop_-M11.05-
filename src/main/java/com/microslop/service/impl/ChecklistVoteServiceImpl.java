@@ -1,5 +1,4 @@
 package com.microslop.service.impl;
-
 import com.microslop.entity.ChecklistItem;
 import com.microslop.entity.ChecklistVote;
 import com.microslop.entity.Project;
@@ -14,6 +13,7 @@ import com.microslop.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 @Service
 @Transactional
 public class ChecklistVoteServiceImpl implements ChecklistVoteService {
@@ -41,12 +41,15 @@ public class ChecklistVoteServiceImpl implements ChecklistVoteService {
 
     @Override
     public void submitChecklistVote(String username, Long projectId, Long checklistItemId) {
+        submitChecklistVotes(username, projectId, List.of(checklistItemId));
+    }
+
+    @Override
+    @Transactional
+    public void submitChecklistVotes(String username, Long projectId, List<Long> checklistItemIds) {
         User user = userService.searchByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new IllegalStateException("User not found."));
         Project project = projectService.getById(projectId);
-        ChecklistItem item = checklistItemRepository.findById(checklistItemId)
-                .orElseThrow(() -> new IllegalStateException("Checklist item not found."));
-
         var competition = project.getCompetition();
         if (!competition.isActive()) {
             throw new IllegalStateException("Competition is not active.");
@@ -56,13 +59,14 @@ public class ChecklistVoteServiceImpl implements ChecklistVoteService {
             throw new IllegalStateException("This competition does not use checklist voting.");
         }
 
-        if (checklistVoteRepository.existsByUserIdAndProjectIdAndChecklistItemId(
-                user.getId(), projectId, checklistItemId)) {
-            throw new IllegalStateException("You already checked this item for this project.");
+        List<ChecklistItem> items = checklistItemRepository.findAllById(checklistItemIds);
+        for (ChecklistItem item : items) {
+            if (!checklistVoteRepository.existsByUserIdAndProjectIdAndChecklistItemId(
+                    user.getId(), projectId, item.getId())) {
+                ChecklistVote vote = checklistVoteCreator.create(user, project, item);
+                checklistVoteRepository.save(vote);
+            }
         }
-
-        ChecklistVote vote = checklistVoteCreator.create(user, project, item);
-        checklistVoteRepository.save(vote);
     }
 
     @Override

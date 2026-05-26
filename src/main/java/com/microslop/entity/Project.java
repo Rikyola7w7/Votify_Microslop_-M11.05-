@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.BatchSize;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +13,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @ToString(exclude = {"participants", "votes", "comments", "categories"})
+@BatchSize(size = 50)
 public class Project {
 
     @Id 
@@ -24,7 +26,13 @@ public class Project {
     @Column(length = 2000, name = "description")
     private String description;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @Column(name = "custom_position")
+    private Integer customPosition;
+
+    @Column(name = "manual_vote_count")
+    private Integer manualVoteCount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "competition_id", nullable = false)
     private Competition competition;
 
@@ -34,20 +42,24 @@ public class Project {
         joinColumns = @JoinColumn(name = "project_id"),
         inverseJoinColumns = @JoinColumn(name = "user_id")
     )
+    @BatchSize(size = 50)
     private List<User> participants = new ArrayList<>();
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @BatchSize(size = 100)
     private List<Vote> votes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @BatchSize(size = 50)
     private List<ProjectComment> comments = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "project_category",
         joinColumns = @JoinColumn(name = "project_id"),
         inverseJoinColumns = @JoinColumn(name = "category_id")
     )
+    @BatchSize(size = 50)
     private List<Category> categories = new ArrayList<>();
 
     public Project(String name, String description, Competition competition) {

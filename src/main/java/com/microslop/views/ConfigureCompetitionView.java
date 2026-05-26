@@ -17,6 +17,7 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
@@ -31,6 +32,8 @@ import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
+import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -75,10 +78,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private java.util.Map<Long, Double> categoryWeightChanges;
     private java.util.Map<Long, Double> initialCategoryWeights;
 
-    private NumberField judgeWeightField;
-    private NumberField standardUserWeightField;
-
-// VOTE TYPE Section
+    // VOTE TYPE Section
     private ComboBox<String> voteTypeCombo;
 
     // CHECKLIST Section
@@ -89,8 +89,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
     // SCALE Section
     private VerticalLayout scaleConfigSection;
-
-    // COMENTARIOS Section
     private ComboBox<String> commentsEnabledCombo;
     private ComboBox<String> commentsRequiredCombo;
 
@@ -117,11 +115,11 @@ this.categoryWeightChanges = new java.util.HashMap<>();
         this.checklistItemsToAdd = new java.util.ArrayList<>();
 
         setSizeFull();
-        setPadding(true);
-        setSpacing(true);
+        setPadding(false);
+        setSpacing(false);
         getStyle()
             .set("background", "var(--background)")
-            .set("overflow", "auto");
+            .set("overflow-y", "auto");
     }
 
     @Override
@@ -159,8 +157,6 @@ this.categoryWeightChanges = new java.util.HashMap<>();
         originalCompetition.setVoterType(currentCompetition.getVoterType());
         originalCompetition.setAutoVote(currentCompetition.isAutoVote());
         originalCompetition.setMaxVotesPerPerson(currentCompetition.getMaxVotesPerPerson());
-        originalCompetition.setJudgeWeightMultiplier(currentCompetition.getJudgeWeightMultiplier());
-        originalCompetition.setStandardUserWeightMultiplier(currentCompetition.getStandardUserWeightMultiplier());
         originalCompetition.setVoteType(currentCompetition.getVoteType());
         originalCompetition.setScaleMin(currentCompetition.getScaleMin());
         originalCompetition.setScaleMax(currentCompetition.getScaleMax());
@@ -168,6 +164,12 @@ this.categoryWeightChanges = new java.util.HashMap<>();
 
     private void initializeView() {
         removeAll();
+
+        Div scrollContainer = new Div();
+        scrollContainer.setWidthFull();
+        scrollContainer.getStyle()
+            .set("overflow-y", "auto")
+            .set("height", "calc(100vh - 64px)");
 
         HorizontalLayout header = new HorizontalLayout();
         header.addClassName("votify-header");
@@ -188,25 +190,25 @@ this.categoryWeightChanges = new java.util.HashMap<>();
         contentCard.addClassName("votify-card-static");
         contentCard.addClassName("animate-fade-in");
         contentCard.setMaxWidth("800px");
-        contentCard.setWidth("100%");
+        contentCard.setWidthFull();
         contentCard.setPadding(true);
         contentCard.setSpacing(true);
-        contentCard.getStyle().set("margin", "20px auto 0 auto");
+        contentCard.getStyle()
+            .set("margin", "20px auto 40px auto")
+            .set("box-sizing", "border-box");
 
         VerticalLayout generalSection = buildGeneralSection();
         VerticalLayout participationSection = buildParticipationSection();
         VerticalLayout judgesSection = buildJudgesSection();
-VerticalLayout voteTypeSection = buildVoteTypeSection();
+        VerticalLayout voteTypeSection = buildVoteTypeSection();
         checklistSection = buildChecklistSection();
         scaleConfigSection = buildScaleConfigSection();
-
-        // ── VOTE WEIGHTING Section ────────────────────────────────────────
-        VerticalLayout votingWeightSection = buildVotingWeightSection();
         VerticalLayout commentsSection = buildCommentsSection();
         HorizontalLayout buttonsLayout = buildButtonsLayout();
 
-contentCard.add(generalSection, participationSection, judgesSection, voteTypeSection, checklistSection, scaleConfigSection, votingWeightSection, commentsSection, buttonsLayout);
-        add(header, contentCard);
+        contentCard.add(generalSection, participationSection, judgesSection, voteTypeSection, checklistSection, scaleConfigSection, commentsSection, buttonsLayout);
+        scrollContainer.add(header, contentCard);
+        add(scrollContainer);
 
         // Set initial visibility based on current vote type
         checklistSection.setVisible("CHECKLIST".equalsIgnoreCase(currentCompetition.getVoteType()));
@@ -271,6 +273,54 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
 
         dateTimeLayout.add(startDatePicker, startTimePicker, endDatePicker, endTimePicker);
 
+        // Cover image upload
+        H4 coverImageTitle = new H4("COVER IMAGE");
+        coverImageTitle.getStyle().set("margin", "16px 0 10px 0").set("color", "var(--dark)").set("font-weight", "700");
+
+        var compImageBuffer = new MemoryBuffer();
+        var compImageUpload = new Upload(compImageBuffer);
+        compImageUpload.setMaxFiles(1);
+        compImageUpload.setAcceptedFileTypes("image/png", "image/jpeg", "image/webp");
+        compImageUpload.setWidth("100%");
+        compImageUpload.getElement().getStyle()
+                .set("border", "2px dashed var(--border)")
+                .set("border-radius", "var(--radius-md)")
+                .set("padding", "1rem")
+                .set("text-align", "center");
+
+        var compImagePreview = new Div();
+        compImagePreview.setWidth("100%");
+        compImagePreview.getStyle().set("text-align", "center").set("margin-top", "8px");
+
+        // Show current cover image if exists
+        if (currentCompetition.getCoverImage() != null && currentCompetition.getCoverImage().length > 0) {
+            String base64 = java.util.Base64.getEncoder().encodeToString(currentCompetition.getCoverImage());
+            var preview = new com.vaadin.flow.component.html.Image("data:image/png;base64," + base64, "Current cover");
+            preview.setWidth("200px");
+            preview.setHeight("120px");
+            preview.getStyle().set("object-fit", "cover").set("border-radius", "var(--radius-md)");
+            compImagePreview.add(preview);
+        }
+
+        compImageUpload.addSucceededListener(event -> {
+            try {
+                var stream = compImageBuffer.getInputStream();
+                currentCompetition.setCoverImage(stream.readAllBytes());
+                stream.close();
+                markAsChanged();
+                compImagePreview.removeAll();
+                String base64 = java.util.Base64.getEncoder().encodeToString(currentCompetition.getCoverImage());
+                var preview = new com.vaadin.flow.component.html.Image("data:image/png;base64," + base64, "Cover preview");
+                preview.setWidth("200px");
+                preview.setHeight("120px");
+                preview.getStyle().set("object-fit", "cover").set("border-radius", "var(--radius-md)");
+                compImagePreview.add(preview);
+            } catch (Exception ex) {
+                Notification.show("Error reading image", 3000, Notification.Position.BOTTOM_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
         H4 categoriesTitle = new H4("CATEGORIES");
         categoriesTitle.getStyle().set("margin", "16px 0 10px 0").set("color", "var(--dark)").set("font-weight", "700");
 
@@ -289,7 +339,7 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
         addCategoryButton.setIcon(new Icon(VaadinIcon.PLUS));
         addCategoryButton.addClickListener(e -> showAddCategoryDialog());
 
-        section.add(sectionTitle, dateTimeLayout, categoriesTitle, categoriesContainer, addCategoryButton);
+        section.add(sectionTitle, dateTimeLayout, coverImageTitle, compImageUpload, compImagePreview, categoriesTitle, categoriesContainer, addCategoryButton);
         return section;
     }
 
@@ -306,6 +356,34 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
         Span categoryName = new Span(category.getName());
         categoryName.getStyle().set("flex", "1").set("font-weight", "500").set("color", "var(--text-primary)");
 
+        String voterType = category.getVoterType() != null ? category.getVoterType() : "NORMAL";
+        String label = "NORMAL".equals(voterType) ? "Normal" : "SCALE".equals(voterType) ? "Scale" : "Checklist";
+        Span typeBadge = new Span(label);
+        typeBadge.getStyle()
+                .set("font-size", "11px")
+                .set("font-weight", "600")
+                .set("padding", "2px 8px")
+                .set("border-radius", "10px")
+                .set("margin-right", "8px")
+                .set("text-transform", "uppercase")
+                .set("letter-spacing", "0.5px");
+        if ("NORMAL".equals(voterType)) {
+            typeBadge.getStyle()
+                    .set("background", "rgba(5, 150, 105, 0.15)")
+                    .set("color", "#059669")
+                    .set("border", "1px solid rgba(5, 150, 105, 0.3)");
+        } else if ("SCALE".equals(voterType)) {
+            typeBadge.getStyle()
+                    .set("background", "rgba(99, 102, 241, 0.15)")
+                    .set("color", "#6366f1")
+                    .set("border", "1px solid rgba(99, 102, 241, 0.3)");
+        } else {
+            typeBadge.getStyle()
+                    .set("background", "rgba(245, 158, 11, 0.15)")
+                    .set("color", "#d97706")
+                    .set("border", "1px solid rgba(245, 158, 11, 0.3)");
+        }
+
         Button deleteButton = new Button();
         deleteButton.setIcon(new Icon(VaadinIcon.TRASH));
         deleteButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
@@ -320,7 +398,7 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
             Notification.show("Category removed", 2000, Notification.Position.BOTTOM_CENTER);
         });
 
-        row.add(categoryName, deleteButton);
+        row.add(categoryName, typeBadge, deleteButton);
         return row;
     }
 
@@ -335,6 +413,12 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
         nameField.addClassName("votify-input");
         nameField.setWidth("100%");
 
+        ComboBox<String> voterTypeCombo = new ComboBox<>("Voting Type");
+        voterTypeCombo.setItems("Normal", "Scale", "Checklist");
+        voterTypeCombo.setValue("Normal");
+        voterTypeCombo.addClassName("votify-input");
+        voterTypeCombo.setWidth("100%");
+
         Button saveBtn = new Button("Save", e -> {
             if (nameField.getValue().isEmpty()) {
                 Notification.show("Category name is required");
@@ -344,6 +428,14 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
             Category newCategory = new Category();
             newCategory.setName(nameField.getValue());
             newCategory.setCompetition(currentCompetition);
+            String vtValue = voterTypeCombo.getValue();
+            if ("Scale".equals(vtValue)) {
+                newCategory.setVoterType("SCALE");
+            } else if ("Checklist".equals(vtValue)) {
+                newCategory.setVoterType("CHECKLIST");
+            } else {
+                newCategory.setVoterType("NORMAL");
+            }
 
             categoriesToAdd.add(newCategory);
             categoriesContainer.add(buildCategoryRow(newCategory));
@@ -356,7 +448,7 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
         Button cancelBtn = new Button("Cancel", e -> dialog.close());
         cancelBtn.addClassName("votify-btn-secondary");
 
-        content.add(nameField);
+        content.add(nameField, voterTypeCombo);
         dialog.add(content);
         dialog.getFooter().add(cancelBtn, saveBtn);
         dialog.open();
@@ -599,17 +691,18 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
         section.setSpacing(true);
         section.setWidth("100%");
         section.getStyle()
-            .set("background", "white")
-            .set("border-radius", "8px")
-            .set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
-            .set("margin-bottom", "20px");
+            .set("background", "var(--background)")
+            .set("border-radius", "var(--radius-sm)")
+            .set("padding", "20px")
+            .set("margin-bottom", "16px");
 
         Span sectionTitle = new Span("VOTE TYPE");
         sectionTitle.getStyle()
-            .set("font-weight", "bold")
-            .set("color", "#1a3a5c")
-            .set("font-size", "16px")
-            .set("margin-bottom", "15px");
+            .set("font-weight", "700")
+            .set("color", "var(--dark)")
+            .set("font-size", "14px")
+            .set("letter-spacing", "0.5px")
+            .set("margin-bottom", "12px");
 
         voteTypeCombo = new ComboBox<>("VOTING MODE");
         voteTypeCombo.setItems("Normal", "Checklist", "Scale (0-10)");
@@ -640,17 +733,18 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
         section.setSpacing(true);
         section.setWidth("100%");
         section.getStyle()
-            .set("background", "white")
-            .set("border-radius", "8px")
-            .set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
-            .set("margin-bottom", "20px");
+            .set("background", "var(--background)")
+            .set("border-radius", "var(--radius-sm)")
+            .set("padding", "20px")
+            .set("margin-bottom", "16px");
 
         Span sectionTitle = new Span("CHECKLIST ITEMS");
         sectionTitle.getStyle()
-            .set("font-weight", "bold")
-            .set("color", "#1a3a5c")
-            .set("font-size", "16px")
-            .set("margin-bottom", "15px");
+            .set("font-weight", "700")
+            .set("color", "var(--dark)")
+            .set("font-size", "14px")
+            .set("letter-spacing", "0.5px")
+            .set("margin-bottom", "12px");
 
         checklistItemsContainer = new VerticalLayout();
         checklistItemsContainer.setPadding(false);
@@ -676,10 +770,10 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
         row.setAlignItems(FlexComponent.Alignment.CENTER);
         row.setWidth("100%");
         row.getStyle()
-            .set("background", "#f9f9f9")
+            .set("background", "var(--surface)")
             .set("padding", "10px")
-            .set("border-radius", "4px")
-            .set("border-left", "3px solid #1e5ba8");
+            .set("border-radius", "var(--radius-sm)")
+            .set("border", "1px solid var(--border)");
 
         Span itemText = new Span(item.getText());
         itemText.getStyle().set("flex", "1").set("font-weight", "500");
@@ -741,19 +835,20 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
         section.setSpacing(true);
         section.setWidth("100%");
         section.getStyle()
-            .set("background", "white")
-            .set("border-radius", "8px")
-            .set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
-            .set("margin-bottom", "20px");
+            .set("background", "var(--background)")
+            .set("border-radius", "var(--radius-sm)")
+            .set("padding", "20px")
+            .set("margin-bottom", "16px");
 
         Span sectionTitle = new Span("SCALE CONFIGURATION");
         sectionTitle.getStyle()
-            .set("font-weight", "bold")
-            .set("color", "var(--text-primary)")
-            .set("font-size", "16px")
-            .set("margin-bottom", "15px");
+            .set("font-weight", "700")
+            .set("color", "var(--dark)")
+            .set("font-size", "14px")
+            .set("letter-spacing", "0.5px")
+            .set("margin-bottom", "12px");
 
-        Span scaleInfo = new Span("Scale range is fixed: 0 – 10");
+        Span scaleInfo = new Span("Scale range is fixed: 0 - 10");
         scaleInfo.getStyle()
             .set("font-size", "0.95rem")
             .set("color", "var(--text-muted)");
@@ -761,62 +856,6 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
         section.add(sectionTitle, scaleInfo);
         return section;
     }
-
-    private VerticalLayout buildVotingWeightSection() {
-        VerticalLayout section = new VerticalLayout();
-        section.setPadding(true);
-        section.setSpacing(true);
-        section.setWidth("100%");
-        section.getStyle()
-                .set("background", "var(--background)")
-                .set("border-radius", "var(--radius-sm)")
-                .set("padding", "20px")
-                .set("margin-bottom", "16px");
-
-        Span sectionTitle = new Span("VOTE WEIGHTING");
-        sectionTitle.getStyle()
-                .set("font-weight", "700")
-                .set("color", "var(--dark)")
-                .set("font-size", "14px")
-                .set("letter-spacing", "0.5px")
-                .set("margin-bottom", "12px");
-
-        Span rolWeightTitle = new Span("WEIGHT BY ROLE");
-        rolWeightTitle.getStyle()
-                .set("font-weight", "600")
-                .set("color", "var(--text-primary)")
-                .set("margin-top", "8px")
-                .set("margin-bottom", "10px");
-
-        FormLayout formLayout = new FormLayout();
-        formLayout.setResponsiveSteps(
-                new FormLayout.ResponsiveStep("0px", 2)
-        );
-
-        judgeWeightField = new NumberField("Senior Judge: x");
-        judgeWeightField.addClassName("votify-input");
-        judgeWeightField.setValue(currentCompetition.getJudgeWeightMultiplier() != null
-                ? currentCompetition.getJudgeWeightMultiplier()
-                : 2.0);
-        judgeWeightField.setMin(0);
-        judgeWeightField.setWidth("100%");
-        judgeWeightField.addValueChangeListener(e -> markAsChanged());
-
-        standardUserWeightField = new NumberField("Standard User: x");
-        standardUserWeightField.addClassName("votify-input");
-        standardUserWeightField.setValue(currentCompetition.getStandardUserWeightMultiplier() != null
-                ? currentCompetition.getStandardUserWeightMultiplier()
-                : 1.0);
-        standardUserWeightField.setMin(0);
-        standardUserWeightField.setWidth("100%");
-        standardUserWeightField.addValueChangeListener(e -> markAsChanged());
-
-        formLayout.add(judgeWeightField, standardUserWeightField);
-
-        section.add(sectionTitle, rolWeightTitle, formLayout);
-        return section;
-    }
-
     private VerticalLayout buildCommentsSection() {
         VerticalLayout section = new VerticalLayout();
         section.setPadding(true);
@@ -974,8 +1013,6 @@ categoryWeightChanges.clear();
         currentCompetition.setVoterType("Everyone".equals(voterTypeCombo.getValue()) ? "ALL" : "JUDGES");
         currentCompetition.setAutoVote("ON".equals(autoVoteCombo.getValue()));
         currentCompetition.setMaxVotesPerPerson(maxVotesPerPersonField.getValue());
-        currentCompetition.setJudgeWeightMultiplier(judgeWeightField.getValue());
-        currentCompetition.setStandardUserWeightMultiplier(standardUserWeightField.getValue());
         currentCompetition.setVoteType("Checklist".equals(voteTypeCombo.getValue()) ? "CHECKLIST" :
                 (voteTypeCombo.getValue() != null && voteTypeCombo.getValue().startsWith("Scale") ? "SCALE" : "NORMAL"));
 
@@ -1036,16 +1073,7 @@ categoryWeightChanges.clear();
             Notification notification = Notification.show("Configuration saved successfully");
             notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
-            getUI().ifPresent(ui -> {
-                ui.access(() -> {
-                    try {
-                        Thread.sleep(1500);
-                        navigateBack();
-                    } catch (InterruptedException e) {
-                        navigateBack();
-                    }
-                });
-            });
+            navigateBack();
         } catch (Exception e) {
             Notification notification = Notification.show("Error saving configuration: " + e.getMessage());
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);

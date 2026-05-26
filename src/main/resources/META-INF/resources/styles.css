@@ -39,6 +39,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body, html {
   font-family: var(--font-main) !important;
   background: var(--background);
@@ -51,6 +55,7 @@ body, html {
 
 body {
   overflow-y: auto;
+  scroll-behavior: smooth;
 }
 
 /* ── Glassmorphism Header ───────────────────────────────── */
@@ -107,6 +112,12 @@ body {
   border-color: var(--primary-light);
 }
 
+.votify-card:active {
+  transform: translateY(-1px) scale(0.98);
+  box-shadow: var(--shadow-rest);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
 .votify-card-static {
   background: var(--surface);
   border-radius: var(--radius-lg);
@@ -125,12 +136,14 @@ body {
   letter-spacing: 0.3px;
   transition: all var(--transition-base) !important;
   box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3) !important;
+  cursor: pointer !important;
 }
 
 .votify-btn-primary:hover {
   background: linear-gradient(135deg, var(--primary-dark), #4A3CC1) !important;
   box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4) !important;
   transform: translateY(-1px) !important;
+  cursor: pointer !important;
 }
 
 .votify-btn-primary:active {
@@ -152,11 +165,13 @@ body {
   border-radius: var(--radius-md) !important;
   font-weight: 600 !important;
   transition: all var(--transition-base) !important;
+  cursor: pointer !important;
 }
 
 .votify-btn-secondary:hover {
   background: rgba(108, 92, 231, 0.05) !important;
   border-color: var(--primary) !important;
+  cursor: pointer !important;
 }
 
 .votify-btn-danger {
@@ -166,11 +181,100 @@ body {
   border-radius: var(--radius-md) !important;
   font-weight: 600 !important;
   transition: all var(--transition-base) !important;
+  cursor: pointer !important;
 }
 
 .votify-btn-danger:hover {
   background: linear-gradient(135deg, #C0392B, #A93226) !important;
   transform: translateY(-1px) !important;
+  cursor: pointer !important;
+}
+
+.votify-btn-danger:active {
+  transform: scale(0.97) !important;
+}
+
+.votify-btn-danger:disabled {
+  background: rgba(231, 76, 60, 0.3) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
+/* ── Button Groups ──────────────────────────────────────── */
+.votify-button-group {
+  display: inline-flex;
+  gap: 8px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-hover);
+  padding: 4px;
+  border: 1px solid var(--border);
+}
+
+.votify-button-group button {
+  border-radius: var(--radius-md) !important;
+  border: 2px solid transparent !important;
+  transition: all var(--transition-base) !important;
+  flex: 1;
+  padding: 8px 16px !important;
+  cursor: pointer !important;
+}
+
+.votify-button-group button.active {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+  color: white !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3) !important;
+  cursor: pointer !important;
+}
+
+.votify-button-group button:not(.active) {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  border-color: transparent !important;
+}
+
+.votify-button-group button:not(.active):hover {
+  background: var(--surface) !important;
+  color: var(--primary) !important;
+  border-color: var(--primary-light) !important;
+  cursor: pointer !important;
+}
+
+/* ── Focus States ──────────────────────────────────────────── */
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+*:focus {
+  outline: none !important;
+}
+
+/* ── Links & Navigation ─────────────────────────────────── */
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: all var(--transition-base);
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+}
+
+a:hover {
+  color: var(--primary-dark);
+  border-bottom-color: var(--primary);
+}
+
+a:visited {
+  color: #7C3AED;
+}
+
+a:active {
+  color: var(--primary-dark);
+  border-bottom-color: var(--primary-dark);
 }
 
 /* ── Inputs ─────────────────────────────────────────────── */
@@ -186,6 +290,27 @@ body {
   border-color: var(--primary) !important;
   box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.15) !important;
   outline: none !important;
+}
+
+.votify-input:disabled {
+  background-color: var(--surface-hover) !important;
+  cursor: not-allowed !important;
+  color: var(--text-muted) !important;
+}
+
+.votify-input::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.7;
+}
+
+.votify-input:valid {
+  border-color: var(--success) !important;
+  box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.1) !important;
+}
+
+.votify-input:invalid:not(:placeholder-shown) {
+  border-color: var(--error) !important;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
 }
 
 /* ── Status Badges ──────────────────────────────────────── */
@@ -332,13 +457,13 @@ body {
 
 /* ── Ballot Loading Animation ────────────────────────────── */
 @keyframes ballot-loading {
-  0% { transform: translateY(-40px) rotate(0deg); opacity: 0; }
+  0% { transform: translateY(-60px) rotate(0deg); opacity: 0; }
   15% { opacity: 1; }
   40% { transform: translateY(0px) rotate(0deg); opacity: 1; }
   55% { transform: translateY(0px) rotate(0deg) scale(1); }
-  70% { transform: translateY(12px) rotate(-3deg) scale(0.9); opacity: 1; }
+  70% { transform: translateY(18px) rotate(-3deg) scale(0.9); opacity: 1; }
   85% { opacity: 0.4; }
-  100% { transform: translateY(20px) rotate(3deg) scale(0.7); opacity: 0; }
+  100% { transform: translateY(30px) rotate(3deg) scale(0.7); opacity: 0; }
 }
 
 @keyframes ballot-box-wait {
@@ -356,14 +481,14 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 48px 24px;
+  gap: 20px;
+  padding: 64px 32px;
 }
 
 .votify-loading-spinner {
   position: relative;
-  width: 64px;
-  height: 80px;
+  width: 96px;
+  height: 120px;
 }
 
 .votify-loading-ballot {
@@ -371,32 +496,32 @@ body {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 36px;
-  height: 44px;
+  width: 54px;
+  height: 66px;
   background: var(--surface);
   border: 2px solid var(--primary);
   border-radius: 4px 4px 2px 2px;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: ballot-loading 1.6s ease-in-out infinite;
+  animation: ballot-loading 1.2s ease-in-out infinite;
   z-index: 2;
 }
 
 .votify-loading-ballot::before {
   content: '✓';
   color: var(--primary);
-  font-size: 18px;
+  font-size: 26px;
   font-weight: 700;
 }
 
 .votify-loading-ballot::after {
   content: '';
   position: absolute;
-  top: 6px;
-  left: 6px;
-  right: 6px;
-  height: 2px;
+  top: 9px;
+  left: 9px;
+  right: 9px;
+  height: 3px;
   background: var(--primary-light);
   border-radius: 1px;
   opacity: 0.5;
@@ -407,60 +532,61 @@ body {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 48px;
-  height: 28px;
+  width: 72px;
+  height: 42px;
   background: linear-gradient(180deg, var(--primary-light), var(--primary));
   border-radius: 0 0 6px 6px;
-  animation: ballot-box-wait 1.6s ease-in-out infinite;
+  animation: ballot-box-wait 1.2s ease-in-out infinite;
   z-index: 1;
 }
 
 .votify-loading-box::before {
   content: '';
   position: absolute;
-  top: -4px;
-  left: -3px;
-  right: -3px;
-  height: 6px;
+  top: -6px;
+  left: -4px;
+  right: -4px;
+  height: 8px;
   background: var(--primary);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .votify-loading-box::after {
   content: '';
   position: absolute;
-  top: 4px;
+  top: 6px;
   left: 50%;
   transform: translateX(-50%);
-  width: 20px;
-  height: 3px;
+  width: 30px;
+  height: 4px;
   background: rgba(255,255,255,0.4);
   border-radius: 2px;
 }
 
 .votify-loading-text {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  letter-spacing: 0.3px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(108, 92, 231, 0.05);
 }
 
 .votify-loading-dots {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .votify-loading-dots span {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--primary);
-  animation: ballot-dot-bounce 1.4s ease-in-out infinite;
+  animation: ballot-dot-bounce 1.2s ease-in-out infinite;
 }
 
 .votify-loading-dots span:nth-child(1) { animation-delay: 0s; }
-.votify-loading-dots span:nth-child(2) { animation-delay: 0.16s; }
-.votify-loading-dots span:nth-child(3) { animation-delay: 0.32s; }
+.votify-loading-dots span:nth-child(2) { animation-delay: 0.3s; }
+.votify-loading-dots span:nth-child(3) { animation-delay: 0.6s; }
 
 /* ── Skeleton Shimmer ───────────────────────────────────── */
 @keyframes skeleton-shimmer {
@@ -485,8 +611,13 @@ body {
 .animate-fade-in { animation: fade-in 0.3s ease forwards; }
 .animate-fade-in-scale { animation: fade-in-scale 0.3s ease forwards; }
 .animate-slide-up { animation: slide-up 0.4s ease forwards; }
+.animate-slide-in-right { animation: slide-in-right 0.3s ease forwards; }
 .animate-float { animation: float 3s ease-in-out infinite; }
 .animate-card-flash { animation: card-flash-success 0.6s ease; }
+.animate-dialog-overlay { animation: fade-in 0.25s ease forwards; }
+.animate-dialog-content { animation: fade-in-scale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.animate-slide-up-stagger { animation: stagger-fade-in 0.4s ease forwards; }
+.animate-vote-success { animation: vote-success-pulse 0.5s ease; }
 
 .stagger-1 { animation-delay: 0ms; opacity: 0; }
 .stagger-2 { animation-delay: 50ms; opacity: 0; }
@@ -581,4 +712,154 @@ body {
 .empty-state-message {
   color: var(--text-muted);
   font-size: 0.95rem;
+}
+
+/* ── Modify Mode Action Buttons ────────────────────────── */
+.votify-modify-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  margin-top: -2px;
+}
+
+.votify-modify-actions .votify-btn-action {
+  font-size: 0.7rem !important;
+  padding: 4px 10px !important;
+  border-radius: var(--radius-sm) !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.votify-modify-actions .votify-btn-action:hover {
+  transform: translateY(-1px);
+}
+
+.votify-modify-actions .votify-btn-action:active {
+  transform: scale(0.97);
+}
+
+.votify-modify-actions .votify-btn-reclassify {
+  background: var(--primary-light) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.votify-modify-actions .votify-btn-reclassify:hover {
+  background: var(--primary) !important;
+}
+
+.votify-modify-actions .votify-btn-declassify {
+  background: var(--error) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.votify-modify-actions .votify-btn-declassify:hover {
+  background: #C0392B !important;
+}
+
+.votify-modify-actions .votify-btn-editvotes {
+  background: var(--secondary) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.votify-modify-actions .votify-btn-editvotes:hover {
+  background: #00B3B0 !important;
+}
+
+/* ── Tooltip Component ──────────────────────────────────── */
+.votify-tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+}
+
+.votify-tooltip-content {
+  position: absolute;
+  background: var(--dark) !important;
+  color: white !important;
+  padding: 8px 12px !important;
+  border-radius: var(--radius-md) !important;
+  font-size: 0.85rem !important;
+  white-space: nowrap !important;
+  z-index: 1000 !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  transition: opacity var(--transition-fast) !important;
+}
+
+.tooltip-top .votify-tooltip-content {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+}
+
+.tooltip-bottom .votify-tooltip-content {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+}
+
+.tooltip-left .votify-tooltip-content {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 8px;
+}
+
+.tooltip-right .votify-tooltip-content {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+}
+
+.votify-tooltip-wrapper::after {
+  content: '';
+  position: absolute;
+  z-index: 999;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.tooltip-top::after {
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--dark);
+}
+
+.tooltip-bottom::after {
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: var(--dark);
+}
+
+.tooltip-left::after {
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-left-color: var(--dark);
+}
+
+.tooltip-right::after {
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-right-color: var(--dark);
 }

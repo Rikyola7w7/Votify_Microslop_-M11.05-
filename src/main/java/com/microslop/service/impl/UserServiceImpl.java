@@ -7,6 +7,7 @@ import com.microslop.command.CommandExecutor;
 import com.microslop.command.user.UpdateUserProfileCommand;
 import com.vaadin.flow.server.VaadinSession;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.Optional;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,6 +26,7 @@ public class UserServiceImpl implements UserService {
         this.commandExecutor = commandExecutor;
     }
 
+    @Transactional
     public void registerUser(User newUser) {
         if (userRepository.existsByUsernameIgnoreCase(newUser.getUsername())) {
             throw new IllegalArgumentException("Username is already in use. Choose another one.");
@@ -116,7 +118,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void logout() {
-        VaadinSession.getCurrent().setAttribute(User.class, null);
+        VaadinSession session = VaadinSession.getCurrent();
+        if (session != null) {
+            session.getSession().invalidate();
+        }
     }
 
     @Override

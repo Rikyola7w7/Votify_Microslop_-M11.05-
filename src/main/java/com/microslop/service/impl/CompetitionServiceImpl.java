@@ -19,6 +19,7 @@ import com.microslop.observer.observer.CompetitionObserver;
 import com.microslop.observer.subject.CompetitionEventSubject;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.UserRepository;
+import com.microslop.service.CompetitionNotificationService;
 import com.microslop.service.CompetitionService;
 import com.microslop.specification.competition.CompetitionByCreatorSpecification;
 import com.microslop.specification.competition.CompetitionByNameSpecification;
@@ -28,6 +29,8 @@ import com.microslop.command.competition.CreateCompetitionCommand;
 import com.microslop.command.competition.ActivateCompetitionCommand;
 import com.microslop.command.competition.DeactivateCompetitionCommand;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +58,7 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
     private final CompetitionRepository competitionRepository;
     private final UserRepository userRepository;
     private final CommandExecutor commandExecutor;
+    private final CompetitionNotificationService competitionNotificationService;
     private final List<CompetitionObserver> competitionObservers;
 
     /**
@@ -64,15 +68,18 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
      * @param competitionRepository competition repository
      * @param userRepository user repository
      * @param commandExecutor command executor
+     * @param competitionNotificationService service for sending voter notifications
      * @param observers optional list of competition observers
      */
     public CompetitionServiceImpl(CompetitionRepository competitionRepository,
                                  UserRepository userRepository,
                                  CommandExecutor commandExecutor,
+                                 @Autowired(required = false) CompetitionNotificationService competitionNotificationService,
                                  @Autowired(required = false) List<CompetitionObserver> observers) {
         this.competitionRepository = competitionRepository;
         this.userRepository = userRepository;
         this.commandExecutor = commandExecutor;
+        this.competitionNotificationService = competitionNotificationService;
         this.competitionObservers = new CopyOnWriteArrayList<>(
             observers != null ? observers : new ArrayList<>()
         );
@@ -131,70 +138,126 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
     // ── Write Operations ────────────────────────────────────────────────────────
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"competitions", "competitionsAll"}, allEntries = true)
     public Competition save(Competition competition) {
         return competitionRepository.save(competition);
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"competitions", "competitionsAll"}, allEntries = true)
     public Competition createCompetition(String creatorUsername, CompetitionDTO competitionDTO) {
         // Validate creator user exists
         userRepository.findByUsernameIgnoreCase(creatorUsername)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + creatorUsername));
 
-        // Create new competition from DTO
-        Competition competition = new Competition();
-        competition.setName(competitionDTO.getName());
-        competition.setDescription(competitionDTO.getDescription());
-        competition.setStartDate(competitionDTO.getStartDate());
-        competition.setEndDate(competitionDTO.getEndDate());
-        competition.setEventType(competitionDTO.getEventType());
-        competition.setCreatedBy(creatorUsername);
-        competition.setActive(true);
-        competition.setVoteType(competitionDTO.getVoteType() != null ? competitionDTO.getVoteType() : "NORMAL");
-        competition.setVotingStrategyType(competitionDTO.getVoterType() != null ?
-                ("ALL".equalsIgnoreCase(competitionDTO.getVoterType()) ? "ALL" : "JUDGES_ONLY") : "ALL");
-
-        if ("SCALE".equalsIgnoreCase(competition.getVoteType())) {
-            competition.setScaleMin(competitionDTO.getScaleMin() != null ? competitionDTO.getScaleMin() : 0);
-            competition.setScaleMax(competitionDTO.getScaleMax() != null ? competitionDTO.getScaleMax() : 10);
-        }
-
-        // Save competition to get generated ID
-        Competition savedCompetition = competitionRepository.save(competition);
-
-        // Create and add categories
-        for (CategoryDTO categoryDTO : competitionDTO.getCategories()) {
-            Category category = new Category();
-            category.setName(categoryDTO.getName());
-            category.setWeight(categoryDTO.getWeight());
-            category.setCompetition(savedCompetition);
-            savedCompetition.addCategory(category);
-        }
-
-        // Create and add judges
-        for (String judgeUsername : competitionDTO.getJudgeUsernames()) {
-            User judge = userRepository.findByUsernameIgnoreCase(judgeUsername)
-                    .orElseThrow(() -> new IllegalArgumentException("Judge user not found: " + judgeUsername));
-            
-            Judge judgeEntity = new Judge(judge, savedCompetition);
-            savedCompetition.addJudge(judgeEntity);
-        }
-
-        // Create and add checklist items if vote type is CHECKLIST
-        if ("CHECKLIST".equalsIgnoreCase(savedCompetition.getVoteType())) {
-            for (var itemDTO : competitionDTO.getChecklistItems()) {
-                var item = new com.microslop.entity.ChecklistItem();
-                item.setText(itemDTO.getText());
-                item.setCompetition(savedCompetition);
-                savedCompetition.addChecklistItem(item);
+        // Execute command through command executor
+        CreateCompetitionCommand command = new CreateCompetitionCommand(
+            competitionDTO.getName(),
+            competitionDTO.getDescription(),
+            competitionDTO.getStartDate(),
+            competitionDTO.getEndDate(),
+            competitionDTO.getEventType(),
+            creatorUsername,
+            competitionDTO.getCoverImage(),
+            competitionRepository
+        );
+        
+        try {
+            Competition savedCompetition;
+            Competition executed = null;
+            if (commandExecutor != null) {
+                executed = commandExecutor.execute(command);
             }
-        }
+            savedCompetition = executed != null ? executed : command.getLastResult();
+            if (savedCompetition == null) {
+                savedCompetition = command.execute();
+            }
 
-        // Save competition with categories, judges and checklist items
-        return competitionRepository.save(savedCompetition);
+            if (savedCompetition == null) {
+                Competition fallback = new Competition(
+                    competitionDTO.getName(),
+                    competitionDTO.getDescription(),
+                    competitionDTO.getStartDate(),
+                    competitionDTO.getEndDate()
+                );
+                fallback.setEventType(competitionDTO.getEventType());
+                fallback.setCreatedBy(creatorUsername);
+                if (competitionDTO.getCoverImage() != null) {
+                    fallback.setCoverImage(competitionDTO.getCoverImage());
+                }
+                savedCompetition = competitionRepository.save(fallback);
+            }
+
+            savedCompetition.setVoteType(
+                competitionDTO.getVoteType() != null ? competitionDTO.getVoteType() : "NORMAL"
+            );
+            savedCompetition.setVotingStrategyType(competitionDTO.getVoterType() != null
+                ? ("ALL".equalsIgnoreCase(competitionDTO.getVoterType()) ? "ALL" : "JUDGES_ONLY")
+                : "ALL"
+            );
+
+            if ("SCALE".equalsIgnoreCase(savedCompetition.getVoteType())) {
+                savedCompetition.setScaleMin(competitionDTO.getScaleMin() != null
+                    ? competitionDTO.getScaleMin()
+                    : 0
+                );
+                savedCompetition.setScaleMax(competitionDTO.getScaleMax() != null
+                    ? competitionDTO.getScaleMax()
+                    : 10
+                );
+            }
+
+            // Create and add categories
+            for (CategoryDTO categoryDTO : competitionDTO.getCategories()) {
+                Category category = new Category();
+                category.setName(categoryDTO.getName());
+                category.setWeight(categoryDTO.getWeight());
+                category.setCompetition(savedCompetition);
+                if (categoryDTO.getVoterType() != null && !categoryDTO.getVoterType().isEmpty()) {
+                    category.setVoterType(categoryDTO.getVoterType());
+                }
+                if (categoryDTO.getVoteType() != null && !categoryDTO.getVoteType().isEmpty()) {
+                    category.setVoteType(categoryDTO.getVoteType());
+                }
+                if (categoryDTO.getImage() != null) {
+                    category.setImage(categoryDTO.getImage());
+                }
+                savedCompetition.addCategory(category);
+            }
+
+            // Create and add judges
+            for (String judgeUsername : competitionDTO.getJudgeUsernames()) {
+                User judge = userRepository.findByUsernameIgnoreCase(judgeUsername)
+                        .orElseThrow(() -> new IllegalArgumentException("Judge user not found: " + judgeUsername));
+
+                Judge judgeEntity = new Judge(judge, savedCompetition);
+                savedCompetition.addJudge(judgeEntity);
+            }
+
+            // Create and add checklist items if vote type is CHECKLIST
+            if ("CHECKLIST".equalsIgnoreCase(savedCompetition.getVoteType())) {
+                for (var itemDTO : competitionDTO.getChecklistItems()) {
+                    var item = new com.microslop.entity.ChecklistItem();
+                    item.setText(itemDTO.getText());
+                    item.setCompetition(savedCompetition);
+                    savedCompetition.addChecklistItem(item);
+                }
+            }
+
+            // Save competition with categories, judges and checklist items
+            return competitionRepository.save(savedCompetition);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create competition", e);
+        }
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"competitions", "competitionsAll"}, allEntries = true)
     public void delete(Long id) {
         competitionRepository.deleteById(id);
     }
@@ -242,6 +305,16 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
         competition.openVoting();
         competitionRepository.save(competition);
         notifyCompetitionObservers(new CompetitionVotingOpenedEvent(competition));
+        
+        // Notify all registered voters that competition has opened
+        if (competitionNotificationService != null) {
+            try {
+                competitionNotificationService.notifyCompetitionOpened(competition);
+            } catch (Exception e) {
+                log.error("Error notifying voters of competition opening for competition {}: {}", id, e.getMessage());
+            }
+        }
+        
         return competition;
     }
 
@@ -262,6 +335,16 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
         competition.conclude();
         competitionRepository.save(competition);
         notifyCompetitionObservers(new CompetitionConcludedEvent(competition));
+        
+        // Notify all registered voters that competition has concluded
+        if (competitionNotificationService != null) {
+            try {
+                competitionNotificationService.notifyCompetitionClosed(competition);
+            } catch (Exception e) {
+                log.error("Error notifying voters of competition closing for competition {}: {}", id, e.getMessage());
+            }
+        }
+        
         return competition;
     }
 
@@ -295,6 +378,7 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "competitions", key = "#id")
     public Competition getByIdOrFail(Long id) {
         return competitionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
@@ -302,6 +386,7 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "competitions", key = "#id")
     public Competition getByIdOrFailWithCategories(Long id) {
         return competitionRepository.findByIdWithCategories(id)
                 .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
@@ -310,12 +395,21 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
     @Override
     @Transactional(readOnly = true)
     public List<Competition> getActiveCompetitions() {
-        return competitionRepository.findActiveWithProjects();
+        return competitionRepository.findActiveWithCategories();
     }
 
     @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "competitionsAll")
     public List<Competition> findAll() {
         return competitionRepository.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "competitionsAll")
+    public List<Competition> findAllWithoutProjects() {
+        return competitionRepository.findAllBasic();
     }
 
     @Override

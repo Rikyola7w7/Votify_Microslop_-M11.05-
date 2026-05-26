@@ -30,10 +30,7 @@ public class JudgesOnlyVotingStrategy implements VotingStrategy {
         if (basePoints <= 0) {
             return 0;
         }
-        double multiplier = competition.getJudgeWeightMultiplier() != null
-            ? competition.getJudgeWeightMultiplier()
-            : 1.0;
-        return (int) Math.round(basePoints * multiplier);
+        return basePoints;
     }
 
     @Override

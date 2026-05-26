@@ -6,11 +6,13 @@ import com.microslop.entity.CompetitionStatus;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import java.time.LocalDateTime;
+import java.util.Base64;
 
 public class CategoryCard extends Div {
 
@@ -53,6 +55,34 @@ public class CategoryCard extends Div {
             .set("display", "block")
             .set("margin", "12px 16px 4px");
 
+        String vt = category.getVoteType() != null ? category.getVoteType() : "NORMAL";
+        String label = "NORMAL".equals(vt) ? "Normal" : "SCALE".equals(vt) ? "Scale" : "Checklist";
+        Span voterBadge = new Span(label);
+        voterBadge.getStyle()
+            .set("font-size", "11px")
+            .set("font-weight", "600")
+            .set("padding", "2px 8px")
+            .set("border-radius", "10px")
+            .set("text-transform", "uppercase")
+            .set("letter-spacing", "0.5px")
+            .set("align-self", "center");
+        if ("NORMAL".equals(vt)) {
+            voterBadge.getStyle()
+                .set("background", "rgba(16, 185, 129, 0.15)")
+                .set("color", "var(--success)")
+                .set("border", "1px solid rgba(16, 185, 129, 0.3)");
+        } else if ("SCALE".equals(vt)) {
+            voterBadge.getStyle()
+                .set("background", "rgba(59, 130, 246, 0.15)")
+                .set("color", "var(--primary)")
+                .set("border", "1px solid rgba(59, 130, 246, 0.3)");
+        } else {
+            voterBadge.getStyle()
+                .set("background", "rgba(245, 158, 11, 0.15)")
+                .set("color", "var(--warning)")
+                .set("border", "1px solid rgba(245, 158, 11, 0.3)");
+        }
+
         Span compName = new Span("Competition: " + competition.getName());
         compName.getStyle()
             .set("color", "var(--text-muted)")
@@ -68,7 +98,7 @@ public class CategoryCard extends Div {
 
         Button viewButton = createViewButton();
 
-        cardContent.add(ribbonStripe, iconBlock, statusBadge, categoryName, compName, spacer, viewButton);
+        cardContent.add(ribbonStripe, iconBlock, statusBadge, categoryName, voterBadge, compName, spacer, viewButton);
         add(cardContent);
     }
 
@@ -85,19 +115,32 @@ public class CategoryCard extends Div {
     private Div createIconBlock() {
         Div iconContainer = new Div();
         iconContainer.setWidthFull();
-        iconContainer.setHeight(70, Unit.PIXELS);
+        iconContainer.setHeight(140, Unit.PIXELS);
         iconContainer.getStyle()
-            .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))")
             .set("display", "flex")
             .set("align-items", "center")
             .set("justify-content", "center")
-            .set("flex-shrink", "0");
+            .set("flex-shrink", "0")
+            .set("overflow", "hidden");
 
-        Icon chartIcon = VaadinIcon.CHART_3D.create();
-        chartIcon.setSize("40px");
-        chartIcon.getElement().getStyle().set("color", "#ffffff");
-
-        iconContainer.add(chartIcon);
+        byte[] image = category.getImage();
+        if (image != null && image.length > 0) {
+            String base64 = Base64.getEncoder().encodeToString(image);
+            Image img = new Image("data:image/png;base64," + base64, category.getName());
+            img.setWidth("100%");
+            img.setHeight("100%");
+            img.getStyle().set("object-fit", "cover");
+            iconContainer.add(img);
+        } else {
+            iconContainer.getStyle()
+                .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))");
+            Icon chartIcon = VaadinIcon.CHART_3D.create();
+            chartIcon.setSize("40px");
+            chartIcon.getElement().getStyle()
+                .set("color", "white")
+                .set("text-shadow", "0 1px 4px rgba(0,0,0,0.2)");
+            iconContainer.add(chartIcon);
+        }
         return iconContainer;
     }
 
@@ -116,7 +159,7 @@ public class CategoryCard extends Div {
         boolean hasEnded = competition.getEndDate() != null
                 && LocalDateTime.now().isAfter(competition.getEndDate());
 
-        if (status == CompetitionStatus.VOTING_OPEN || status == CompetitionStatus.ACTIVE) {
+        if (status == CompetitionStatus.ACTIVE) {
             label = "OPEN";
             badgeClass = "votify-badge-active";
         } else if (status == CompetitionStatus.CONCLUDED || hasEnded) {
@@ -142,6 +185,7 @@ public class CategoryCard extends Div {
 
         viewButton.addClickListener(event -> {
             getStyle().set("animation", "category-select-flash 0.4s ease");
+            viewButton.setEnabled(false);
             if (navigationAction != null) {
                 navigationAction.run();
             }

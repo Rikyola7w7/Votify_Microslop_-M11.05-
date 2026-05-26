@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.BatchSize;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @ToString(exclude = {"projects", "categories", "judges"})
+@BatchSize(size = 50)
 public class Competition {
 
     @Id 
@@ -43,6 +45,10 @@ public class Competition {
     @Column(name = "event_type", length = 100)
     private String eventType;
 
+    @Lob
+    @Column(name = "cover_image")
+    private byte[] coverImage;
+
     @Column(name = "created_by", length = 255)
     private String createdBy;
 
@@ -57,13 +63,7 @@ public class Competition {
     @Min(value = 1, message = "Max votes per person must be at least 1")
     private Integer maxVotesPerPerson = 1;
 
-    @Column(name = "judge_weight_multiplier", columnDefinition = "double default 1.0")
-    private Double judgeWeightMultiplier = 1.0;
-
-    @Column(name = "standard_user_weight_multiplier", columnDefinition = "double default 1.0")
-    private Double standardUserWeightMultiplier = 1.0;
-
-@Column(name = "vote_type", length = 20)
+    @Column(name = "vote_type", length = 20)
     private String voteType = "NORMAL"; // NORMAL, CHECKLIST, SCALE
 
     @Column(name = "scale_min")
@@ -71,12 +71,11 @@ public class Competition {
 
     @Column(name = "scale_max")
     private Integer scaleMax = 10;
-
     @Column(name = "voting_strategy_type", length = 50)
     private String votingStrategyType = "ALL";
 
     @Column(name = "ranking_strategy_type", length = 50)
-    private String rankingStrategyType = "WEIGHTED";
+    private String rankingStrategyType = "AVERAGE";
 
     public static com.microslop.builder.CompetitionBuilder builder() {
         return com.microslop.builder.CompetitionBuilder.builder();
@@ -90,12 +89,15 @@ public class Competition {
     private Boolean commentsRequired = false;
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<Project> projects = new ArrayList<>();
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<Category> categories = new ArrayList<>();
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<Judge> judges = new ArrayList<>();
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -211,7 +213,7 @@ public void addChecklistItem(ChecklistItem item) {
             }
         } else {
             if (this.status == CompetitionStatus.ACTIVE
-                    || this.status == CompetitionStatus.VOTING_OPEN) {
+                    || this.status == CompetitionStatus.PAUSED) {
                 this.status = CompetitionStatus.DRAFT;
             }
         }
@@ -242,23 +244,7 @@ public void addChecklistItem(ChecklistItem item) {
         this.maxVotesPerPerson = maxVotesPerPerson;
     }
 
-    public Double getJudgeWeightMultiplier() {
-        return judgeWeightMultiplier;
-    }
-
-    public void setJudgeWeightMultiplier(Double judgeWeightMultiplier) {
-        this.judgeWeightMultiplier = judgeWeightMultiplier;
-    }
-
-    public Double getStandardUserWeightMultiplier() {
-        return standardUserWeightMultiplier;
-    }
-
-    public void setStandardUserWeightMultiplier(Double standardUserWeightMultiplier) {
-        this.standardUserWeightMultiplier = standardUserWeightMultiplier;
-    }
-
-public String getVoteType() {
+    public String getVoteType() {
         return voteType;
     }
 
@@ -281,7 +267,6 @@ public String getVoteType() {
     public void setScaleMax(Integer scaleMax) {
         this.scaleMax = scaleMax;
     }
-
     public String getVotingStrategyType() {
         return votingStrategyType;
     }

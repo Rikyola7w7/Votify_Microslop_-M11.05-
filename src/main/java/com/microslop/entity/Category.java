@@ -26,7 +26,17 @@ public class Category {
     @Column(nullable = false, name = "weight")
     private int weight = 1;
 
-    @ManyToOne
+    @Column(name = "voter_type", length = 50)
+    private String voterType = "NORMAL";
+
+    @Column(name = "vote_type", length = 50)
+    private String voteType = "NORMAL"; // NORMAL, CHECKLIST, SCALE
+
+    @Lob
+    @Column(name = "image")
+    private byte[] image;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "competition_id", nullable = false)
     private Competition competition;
 
@@ -35,4 +45,11 @@ public class Category {
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<ProjectComment> projectComments = new ArrayList<>();
+
+    /**
+     * Check if this category uses checklist-based voting.
+     */
+    public boolean isChecklistVoting() {
+        return "CHECKLIST".equalsIgnoreCase(voteType);
+    }
 }

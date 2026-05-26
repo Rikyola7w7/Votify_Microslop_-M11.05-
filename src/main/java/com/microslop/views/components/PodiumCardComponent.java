@@ -49,12 +49,17 @@ public class PodiumCardComponent extends Div {
         for (String cls : position.getCssClass().split(" ")) {
             addClassName(cls);
         }
+        int height = position == Position.FIRST ? 220 : 180;
         getStyle()
             .set("border-radius", "16px")
             .set("padding", position == Position.FIRST ? "2rem 1.5rem" : "1.5rem 1.2rem")
             .set("text-align", "center")
-            .set("min-width", position == Position.FIRST ? "200px" : "160px")
-            .set("max-width", position == Position.FIRST ? "200px" : "160px")
+            .set("width", position == Position.FIRST ? "200px" : "160px")
+            .set("height", height + "px")
+            .set("display", "flex")
+            .set("flex-direction", "column")
+            .set("align-items", "center")
+            .set("justify-content", position == Position.FIRST ? "flex-start" : "center")
             .set("flex", "0 0 auto")
             .set("transform", position == Position.FIRST ? "translateY(-20px)" : "none")
             .set("transition", "transform 0.2s ease, box-shadow 0.2s ease")
@@ -67,16 +72,16 @@ public class PodiumCardComponent extends Div {
         medalSpan.getStyle()
             .set("font-size", position == Position.FIRST ? "3rem" : "2.2rem")
             .set("display", "block")
-            .set("margin-bottom", "0.5rem");
+            .set("margin-bottom", "0.25rem");
 
         Span nameSpan = new Span(project.getName().toUpperCase());
         nameSpan.getStyle()
             .set("font-weight", "800")
             .set("font-size", position == Position.FIRST ? "16px" : "14px")
             .set("display", "block")
-            .set("color", "#1a1a2e");
+            .set("color", "var(--text-primary)");
 
-String votesLabel;
+        String votesLabel;
         String displayValue;
         if (isScaleMode) {
             votesLabel = position.isGold() ? "Avg. Score:" : "Score:";
