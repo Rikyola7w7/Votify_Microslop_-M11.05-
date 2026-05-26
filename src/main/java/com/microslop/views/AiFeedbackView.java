@@ -24,6 +24,8 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.AfterNavigationEvent;
+import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -35,7 +37,7 @@ import java.util.List;
 
 @PageTitle("AI Feedback | Votify")
 @Route(value = "ai-feedback", layout = MainLayout.class)
-public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserver {
+public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserver, AfterNavigationObserver {
 
     private final ProjectService projectService;
     private final CompetitionService competitionService;
@@ -81,6 +83,23 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
 
         loadSidebarProjects();
         loadCompetitions();
+    }
+
+    @Override
+    public void afterNavigation(AfterNavigationEvent event) {
+        String projectIdStr = event.getLocation().getQueryParameters()
+            .getParameters().getOrDefault("projectId", List.of()).stream().findFirst().orElse(null);
+
+        if (projectIdStr != null && loggedInUser != null) {
+            try {
+                Long projectId = Long.parseLong(projectIdStr);
+                Project project = projectService.getById(projectId);
+                if (project != null) {
+                    selectProject(project);
+                }
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     private void initializeView() {
@@ -216,7 +235,8 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         // Left sidebar - Project list
         sidebarPanel = new VerticalLayout();
         sidebarPanel.addClassName("votify-card-static");
-        sidebarPanel.setWidth("340px");
+        sidebarPanel.setMinWidth("320px");
+        sidebarPanel.setWidth("380px");
         sidebarPanel.setSpacing(true);
         sidebarPanel.setPadding(true);
         sidebarPanel.getStyle()
@@ -344,13 +364,12 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         card.getStyle()
             .set("padding", "0")
             .set("cursor", "pointer")
-            .set("margin-bottom", "12px")
-            .set("overflow", "hidden");
+            .set("margin-bottom", "8px");
 
         // Gradient stripe at top
         Div gradientStripe = new Div();
         gradientStripe.getStyle()
-            .set("height", "6px")
+            .set("height", "8px")
             .set("width", "100%")
             .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))");
         card.add(gradientStripe);
@@ -359,7 +378,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         VerticalLayout content = new VerticalLayout();
         content.setSpacing(false);
         content.setPadding(false);
-        content.getStyle().set("padding", "14px 16px 16px");
+        content.getStyle().set("padding", "24px 20px");
 
         HorizontalLayout top = new HorizontalLayout();
         top.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -369,8 +388,8 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         // Icon block
         Div iconBlock = new Div();
         iconBlock.getStyle()
-            .set("width", "44px")
-            .set("height", "44px")
+            .set("width", "52px")
+            .set("height", "52px")
             .set("border-radius", "var(--radius-md)")
             .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))")
             .set("display", "flex")
@@ -378,7 +397,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("justify-content", "center")
             .set("flex-shrink", "0");
         Icon projectIcon = new Icon(VaadinIcon.FOLDER);
-        projectIcon.setSize("22px");
+        projectIcon.setSize("26px");
         projectIcon.getStyle().set("color", "white");
         iconBlock.add(projectIcon);
 
@@ -389,13 +408,15 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         Span name = new Span(project.getName());
         name.getStyle()
             .set("font-weight", "700")
-            .set("font-size", "0.95rem")
-            .set("color", "var(--text-primary)");
+            .set("font-size", "1.05rem")
+            .set("color", "var(--text-primary)")
+            .set("word-break", "break-word");
 
         Span competition = new Span(project.getCompetition() != null ? project.getCompetition().getName() : "\u2014");
         competition.getStyle()
-            .set("font-size", "0.8rem")
-            .set("color", "var(--text-muted)");
+            .set("font-size", "0.85rem")
+            .set("color", "var(--text-muted)")
+            .set("word-break", "break-word");
 
         info.add(name, competition);
         top.add(iconBlock, info);
@@ -404,28 +425,32 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         // Stats row
         HorizontalLayout stats = new HorizontalLayout();
         stats.setWidthFull();
-        stats.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        stats.getStyle().set("margin-top", "10px");
+        stats.getStyle()
+            .set("margin-top", "14px")
+            .set("flex-wrap", "wrap")
+            .set("gap", "8px");
 
         long commentCount = commentService.countCommentsByProject(project.getId());
 
         Span commentsBadge = new Span("\ud83d\udcac " + commentCount);
         commentsBadge.getStyle()
-            .set("font-size", "0.75rem")
+            .set("font-size", "0.85rem")
             .set("font-weight", "600")
-            .set("color", "var(--secondary)")
-            .set("background", "rgba(0, 206, 201, 0.1)")
-            .set("padding", "2px 10px")
-            .set("border-radius", "var(--radius-sm)");
+            .set("color", commentCount > 0 ? "var(--secondary)" : "var(--text-muted)")
+            .set("background", commentCount > 0 ? "rgba(0, 206, 201, 0.1)" : "var(--surface-hover)")
+            .set("padding", "4px 12px")
+            .set("border-radius", "var(--radius-sm)")
+            .set("flex-shrink", "0");
 
-        Span votesBadge = new Span(project.getTotalVotes() + " votes");
+        Span votesBadge = new Span("\ud83d\udd4a " + project.getTotalVotes() + " vote" + (project.getTotalVotes() != 1 ? "s" : ""));
         votesBadge.getStyle()
-            .set("font-size", "0.75rem")
+            .set("font-size", "0.85rem")
             .set("font-weight", "600")
-            .set("color", "var(--primary)")
-            .set("background", "rgba(108, 92, 231, 0.08)")
-            .set("padding", "2px 10px")
-            .set("border-radius", "var(--radius-sm)");
+            .set("color", project.getTotalVotes() > 0 ? "var(--primary)" : "var(--text-muted)")
+            .set("background", project.getTotalVotes() > 0 ? "rgba(108, 92, 231, 0.08)" : "var(--surface-hover)")
+            .set("padding", "4px 12px")
+            .set("border-radius", "var(--radius-sm)")
+            .set("flex-shrink", "0");
 
         stats.add(commentsBadge, votesBadge);
 

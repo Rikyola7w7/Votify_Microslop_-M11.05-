@@ -2,6 +2,7 @@ package com.microslop.views;
 
 import com.microslop.entity.Project;
 import com.microslop.entity.User;
+import com.microslop.service.ProjectCommentService;
 import com.microslop.service.ProjectService;
 import com.microslop.views.components.ProjectCardComponent;
 import com.microslop.base.ui.MainLayout;
@@ -28,11 +29,13 @@ import java.util.List;
 public class UserProjectsView extends VerticalLayout implements BeforeEnterObserver {
 
     private final ProjectService projectService;
+    private final ProjectCommentService commentService;
     private String currentUsername;
     private Div projectsContainer;
 
-    public UserProjectsView(ProjectService projectService) {
+    public UserProjectsView(ProjectService projectService, ProjectCommentService commentService) {
         this.projectService = projectService;
+        this.commentService = commentService;
         initializeView();
     }
 
@@ -66,7 +69,9 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
         setSizeFull();
         setPadding(false);
         setSpacing(false);
-        getStyle().set("background", "var(--background)");
+        getStyle()
+            .set("background", "var(--background)")
+            .set("overflow-y", "auto");
 
         add(buildHeader());
 
@@ -90,6 +95,7 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setSpacing(true);
         header.addClassName("votify-header");
+        header.getStyle().set("flex-shrink", "0");
 
         Button backButton = new Button(new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
@@ -138,6 +144,7 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
             project,
             currentUsername,
             projectService,
+            commentService,
             () -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/projects/" + project.getId()))
         );
         card.setWidthFull();
@@ -147,7 +154,7 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
         aiFeedbackBtn.setHeight("36px");
         aiFeedbackBtn.getStyle().set("font-size", "0.8rem").set("padding", "0 14px");
         aiFeedbackBtn.addClickListener(e ->
-            getUI().ifPresent(ui -> ui.navigate("ai-feedback")));
+            getUI().ifPresent(ui -> ui.navigate("ai-feedback?projectId=" + project.getId())));
 
         wrapper.add(card, aiFeedbackBtn);
         return new Div(wrapper);

@@ -732,10 +732,6 @@ a:active {
 
 .sentiment-donut-chart {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
 }
 
 .sentiment-positive { color: var(--success); }

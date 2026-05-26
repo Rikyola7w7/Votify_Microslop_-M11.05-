@@ -1,8 +1,8 @@
 package com.microslop.views.components;
 
 import com.microslop.entity.Project;
+import com.microslop.service.ProjectCommentService;
 import com.microslop.service.ProjectService;
-import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
@@ -17,30 +17,30 @@ public class ProjectCardComponent extends Div {
 
     private final Project project;
     private final ProjectService projectService;
+    private final ProjectCommentService commentService;
     private final Runnable onCommentClick;
 
-    public ProjectCardComponent(Project project, String username, ProjectService projectService, Runnable onCommentClick) {
+    public ProjectCardComponent(Project project, String username, ProjectService projectService,
+                                ProjectCommentService commentService, Runnable onCommentClick) {
         this.project = project;
         this.projectService = projectService;
+        this.commentService = commentService;
         this.onCommentClick = onCommentClick;
         buildCard();
     }
 
     private void buildCard() {
         setWidth("100%");
-        setMaxWidth(300, Unit.PIXELS);
         addClassName("votify-card");
         getStyle()
             .set("padding", "0")
             .set("display", "flex")
             .set("flex-direction", "column")
-            .set("overflow", "hidden")
-            .set("min-height", "300px")
             .set("border-left", "4px solid var(--primary)");
 
         Div iconBlock = new Div();
         iconBlock.setWidthFull();
-        iconBlock.setHeight(80, Unit.PIXELS);
+        iconBlock.setHeight("80px");
         iconBlock.getStyle()
             .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))")
             .set("display", "flex")
@@ -78,27 +78,22 @@ public class ProjectCardComponent extends Div {
             .set("display", "-webkit-box")
             .set("-webkit-line-clamp", "3")
             .set("-webkit-box-orient", "vertical")
-            .set("overflow", "hidden")
-            .set("flex", "1");
+            .set("overflow", "hidden");
 
         HorizontalLayout stats = createStatsLayout();
-
-        Div spacer = new Div();
-        spacer.setHeight(8, Unit.PIXELS);
-        spacer.setWidthFull();
 
         Button commentsButton = new Button("See comments");
         commentsButton.addClassName("votify-btn-secondary");
         commentsButton.getStyle()
             .set("margin-top", "8px")
-            .set("width", "calc(100% - 32px)");
+            .set("width", "100%");
         commentsButton.addClickListener(e -> {
             if (onCommentClick != null) {
                 onCommentClick.run();
             }
         });
 
-        contentArea.add(projectName, description, stats, spacer, commentsButton);
+        contentArea.add(projectName, description, stats, commentsButton);
         add(iconBlock, contentArea);
     }
 
@@ -106,37 +101,71 @@ public class ProjectCardComponent extends Div {
         HorizontalLayout stats = new HorizontalLayout();
         stats.setSpacing(true);
         stats.setAlignItems(FlexComponent.Alignment.CENTER);
-        stats.getStyle().set("margin-top", "12px");
+        stats.getStyle()
+            .set("margin-top", "12px")
+            .set("flex-wrap", "wrap")
+            .set("gap", "6px");
 
-        Span competitionBadge = new Span("Competition: " + project.getCompetition().getName());
+        Span competitionBadge = new Span(project.getCompetition() != null ? project.getCompetition().getName() : "\u2014");
         competitionBadge.getStyle()
             .set("color", "var(--text-muted)")
             .set("font-size", "12px")
             .set("padding", "3px 8px")
             .set("background", "var(--surface-hover)")
-            .set("border-radius", "var(--radius-sm)");
+            .set("border-radius", "var(--radius-sm)")
+            .set("max-width", "140px")
+            .set("white-space", "nowrap")
+            .set("overflow", "hidden")
+            .set("text-overflow", "ellipsis")
+            .set("flex-shrink", "0");
 
-        Span votesBadge = new Span(project.getTotalVotes() + " vote" + (project.getTotalVotes() != 1 ? "s" : ""));
-        votesBadge.getStyle()
-            .set("color", "var(--primary)")
+        long commentCount = getCommentCount();
+        Span commentsBadge = new Span("\uD83D\uDCAC " + commentCount);
+        commentsBadge.getStyle()
             .set("font-size", "12px")
             .set("font-weight", "600")
             .set("padding", "3px 8px")
-            .set("background", "rgba(108, 92, 231, 0.08)")
-            .set("border-radius", "var(--radius-sm)");
+            .set("border-radius", "var(--radius-sm)")
+            .set("color", commentCount > 0 ? "var(--secondary)" : "var(--text-muted)")
+            .set("background", commentCount > 0 ? "rgba(0, 206, 201, 0.1)" : "var(--surface-hover)")
+            .set("flex-shrink", "0");
+
+        long totalVotes = project.getTotalVotes();
+        Span votesBadge = new Span("\uD83D\uDD4A " + totalVotes + " vote" + (totalVotes != 1 ? "s" : ""));
+        votesBadge.getStyle()
+            .set("font-size", "12px")
+            .set("font-weight", "600")
+            .set("padding", "3px 8px")
+            .set("border-radius", "var(--radius-sm)")
+            .set("color", totalVotes > 0 ? "var(--primary)" : "var(--text-muted)")
+            .set("background", totalVotes > 0 ? "rgba(108, 92, 231, 0.08)" : "var(--surface-hover)")
+            .set("flex-shrink", "0");
+
+        stats.add(competitionBadge, commentsBadge, votesBadge);
 
         int position = getProjectPosition();
-        Span positionBadge = new Span(" #" + position);
-        positionBadge.getStyle()
-            .set("color", "white")
-            .set("font-size", "12px")
-            .set("font-weight", "700")
-            .set("padding", "3px 8px")
-            .set("background", "linear-gradient(135deg, var(--primary), var(--primary-dark))")
-            .set("border-radius", "var(--radius-sm)");
+        if (position > 0) {
+            Span positionBadge = new Span("#" + position);
+            positionBadge.getStyle()
+                .set("color", "white")
+                .set("font-size", "12px")
+                .set("font-weight", "700")
+                .set("padding", "3px 8px")
+                .set("background", "linear-gradient(135deg, var(--primary), var(--primary-dark))")
+                .set("border-radius", "var(--radius-sm)")
+                .set("flex-shrink", "0");
+            stats.add(positionBadge);
+        }
 
-        stats.add(competitionBadge, votesBadge, positionBadge);
         return stats;
+    }
+
+    private long getCommentCount() {
+        try {
+            return commentService.countCommentsByProject(project.getId());
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private int getProjectPosition() {
