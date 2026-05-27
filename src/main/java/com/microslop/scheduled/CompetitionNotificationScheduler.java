@@ -94,12 +94,18 @@ public class CompetitionNotificationScheduler {
 
             for (Competition competition : openCompetitions) {
                 if (competition.getEndDate() != null && competition.getEndDate().isBefore(now)) {
+                    // Check if notification was already sent for this competition
+                    if (competition.isEndNotificationSent()) {
+                        log.debug("END_TIME_COMPETITION notification already sent for competition {}, skipping", 
+                                competition.getId());
+                        continue;
+                    }
+
                     log.info("Competition {} has ended (endDate: {}), notifying admin", 
                             competition.getId(), competition.getEndDate());
                     
                     // Update competition status to CONCLUDED
                     competition.conclude();
-                    competitionRepository.save(competition);
 
                     // Send END_TIME_COMPETITION notification to competition creator
                     try {
@@ -115,6 +121,9 @@ public class CompetitionNotificationScheduler {
                                     message,
                                     NotificationType.END_TIME_COMPETITION.getCode());
                             
+                            // Mark notification as sent to prevent duplicates
+                            competition.setEndNotificationSent(true);
+                            
                             log.info("Sent END_TIME_COMPETITION notification to admin for competition {}", 
                                     competition.getId());
                         }
@@ -122,6 +131,9 @@ public class CompetitionNotificationScheduler {
                         log.error("Error sending END_TIME_COMPETITION notification for competition {}: {}", 
                                 competition.getId(), e.getMessage());
                     }
+                    
+                    // Save competition with updated status and notification flag
+                    competitionRepository.save(competition);
                 }
             }
 
