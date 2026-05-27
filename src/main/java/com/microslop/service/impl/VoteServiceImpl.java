@@ -10,6 +10,7 @@ import com.microslop.observer.observer.VoteObserver;
 import com.microslop.observer.subject.VoteEventSubject;
 import com.microslop.repository.VoteRepository;
 import com.microslop.repository.CategoryRepository;
+import com.microslop.repository.VoterRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
 import com.microslop.service.VoteService;
@@ -41,43 +42,40 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
     private static final Logger log = LoggerFactory.getLogger(VoteServiceImpl.class);
     private static final int MAX_VOTES_PER_CATEGORY = 1;
 
-    private final VoteRepository voteRepository;
-    private final ProjectService projectService;
-    private final UserService userService;
-    private final VoteCreator voteCreator;
-    private final ScaleVoteCreator scaleVoteCreator;
-    private final CategoryRepository categoryRepository;
-    private final VoterRepository voterRepository;
-    private final CommandExecutor commandExecutor;
-    private final StrategyRegistry strategyRegistry;
-    private final com.microslop.repository.VoterRepository voterRepository;
-    private final List<VoteObserver> voteObservers;
+     private final VoteRepository voteRepository;
+     private final ProjectService projectService;
+     private final UserService userService;
+     private final VoteCreator voteCreator;
+     private final ScaleVoteCreator scaleVoteCreator;
+     private final CategoryRepository categoryRepository;
+     private final VoterRepository voterRepository;
+     private final CommandExecutor commandExecutor;
+     private final StrategyRegistry strategyRegistry;
+     private final List<VoteObserver> voteObservers;
 
-    public VoteServiceImpl(VoteRepository voteRepository,
-                           ProjectService projectService,
-                           UserService userService,
-                           VoteCreator voteCreator,
-                           ScaleVoteCreator scaleVoteCreator,
-                           CategoryRepository categoryRepository,
-                           VoterRepository voterRepository,
-                           CommandExecutor commandExecutor,
-                           StrategyRegistry strategyRegistry,
-                           com.microslop.repository.VoterRepository voterRepository,
-                           @Autowired(required = false) List<VoteObserver> observers) {
-        this.voteRepository = voteRepository;
-        this.projectService = projectService;
-        this.userService = userService;
-        this.voteCreator = voteCreator;
-        this.scaleVoteCreator = scaleVoteCreator;
-        this.categoryRepository = categoryRepository;
-        this.voterRepository = voterRepository;
-        this.commandExecutor = commandExecutor;
-        this.strategyRegistry = strategyRegistry;
-        this.voterRepository = voterRepository;
-        this.voteObservers = new CopyOnWriteArrayList<>(
-            observers != null ? observers : new ArrayList<>()
-        );
-    }
+     public VoteServiceImpl(VoteRepository voteRepository,
+                            ProjectService projectService,
+                            UserService userService,
+                            VoteCreator voteCreator,
+                            ScaleVoteCreator scaleVoteCreator,
+                            CategoryRepository categoryRepository,
+                            VoterRepository voterRepository,
+                            CommandExecutor commandExecutor,
+                            StrategyRegistry strategyRegistry,
+                            @Autowired(required = false) List<VoteObserver> observers) {
+         this.voteRepository = voteRepository;
+         this.projectService = projectService;
+         this.userService = userService;
+         this.voteCreator = voteCreator;
+         this.scaleVoteCreator = scaleVoteCreator;
+         this.categoryRepository = categoryRepository;
+         this.voterRepository = voterRepository;
+         this.commandExecutor = commandExecutor;
+         this.strategyRegistry = strategyRegistry;
+         this.voteObservers = new CopyOnWriteArrayList<>(
+             observers != null ? observers : new ArrayList<>()
+         );
+     }
 
     // ── Observer Management ────────────────────────────────────────────────
 
