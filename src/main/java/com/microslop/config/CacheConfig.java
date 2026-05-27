@@ -23,7 +23,9 @@ public class CacheConfig {
             "projectsByCompetition",
             "projectsByCompetitionAndCategory",
             "rankings",
-            "votes"
+            "votes",
+            "certificateTypes",
+            "rankingTypes"
         );
         cacheManager.setCaffeine(Caffeine.newBuilder()
             .maximumSize(500)
