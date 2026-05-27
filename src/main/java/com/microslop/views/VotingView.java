@@ -542,7 +542,14 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
     // ── Utilities ─────────────────────────────────────────────────────────
 
-    private void handleVoteWithPoints(Project project, int points, Category selectedCategory) {
+    /**
+     * Unified vote handling method for both points-based and single-vote scenarios.
+     * Encapsulates common validation, submission, and UI update logic.
+     *
+     * @param project the project to vote for
+     * @param points  the number of points to assign (1 for regular vote, or custom value for scale voting)
+     */
+    private void doHandleVote(Project project, int points) {
         String username = userService.getCurrentUsername();
         if (username == null || username.isEmpty()) {
             showNotification("You must be logged in to vote.", NotificationVariant.LUMO_CONTRAST);
@@ -613,62 +620,26 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
          }
      }
 
+    /**
+     * Handles voting with custom points value.
+     * Delegates to doHandleVote() with the specified points.
+     *
+     * @param project         the project to vote for
+     * @param points          the number of points to assign
+     * @param selectedCategory the category being voted in (for validation)
+     */
+    private void handleVoteWithPoints(Project project, int points, Category selectedCategory) {
+        doHandleVote(project, points);
+    }
+
+    /**
+     * Handles regular voting with default single point.
+     * Delegates to doHandleVote() with points=1.
+     *
+     * @param project the project to vote for
+     */
     private void handleVote(Project project) {
-        String username = userService.getCurrentUsername();
-        if (username == null || username.isEmpty()) {
-            showNotification("You must be logged in to vote.", NotificationVariant.LUMO_CONTRAST);
-            return;
-        }
-
-        if (selectedCategory == null) {
-            showNotification("Please select a category before voting.", NotificationVariant.LUMO_WARNING);
-            return;
-        }
-
-        if (!currentCompetition.canVote()) {
-            showNotification("This competition does not accept votes at this time.",
-                    NotificationVariant.LUMO_WARNING);
-            return;
-        }
-
-        try {
-            voteService.submitVote(username, project.getId(), selectedCategory.getId());
-
-            // Decrement votes left in the Voter record
-            voterService.decrementVotesLeft(currentUser.getId(), competitionId, selectedCategory.getId(), 1);
-
-            int remainingVotes = getAvailableVotes(selectedCategory);
-            boolean isLastVote = remainingVotes <= 0;
-
-            // Update label immediately
-            if (!isLastVote) {
-                if (remainingVotes <= 0) {
-                    maxVotesLabel.setText("No votes remaining");
-                } else {
-                    maxVotesLabel.setText("You have " + remainingVotes + " vote" + (remainingVotes != 1 ? "s" : "") + " left");
-                }
-                maxVotesLabel.getStyle().set("animation", "vote-success-pulse 0.4s ease");
-            }
-
-            Runnable afterAnimation = () -> {
-                if (isLastVote) {
-                    getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories/" + selectedCategory.getId() + "/ranking"));
-                } else {
-                    refreshProjectList();
-                }
-            };
-
-            if (isLastVote) {
-                VoteSuccessAnimation overlay = new VoteSuccessAnimation(afterAnimation);
-                getUI().ifPresent(ui -> ui.add(overlay));
-            } else {
-                updateMaxVotesLabel(selectedCategory);
-                VoteQuickAnimation quick = new VoteQuickAnimation(remainingVotes, afterAnimation);
-                getUI().ifPresent(ui -> ui.add(quick));
-            }
-        } catch (IllegalStateException ex) {
-            showNotification(ex.getMessage(), NotificationVariant.LUMO_CONTRAST);
-        }
+        doHandleVote(project, 1);
     }
 
     private void showNotification(String msg, NotificationVariant variant) {
