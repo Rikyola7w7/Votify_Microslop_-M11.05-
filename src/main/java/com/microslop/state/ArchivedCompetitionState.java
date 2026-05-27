@@ -9,6 +9,11 @@ import com.microslop.entity.Competition;
 public class ArchivedCompetitionState implements CompetitionState {
 
     @Override
+    public String name() {
+        return "ARCHIVED";
+    }
+
+    @Override
     public boolean isTerminal() {
         return true;
     }

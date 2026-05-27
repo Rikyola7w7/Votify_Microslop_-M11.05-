@@ -11,6 +11,11 @@ import com.microslop.entity.CompetitionStatus;
 public class PausedCompetitionState implements CompetitionState {
 
     @Override
+    public String name() {
+        return "PAUSED";
+    }
+
+    @Override
     public void openVoting(Competition competition) {
         competition.setStatus(CompetitionStatus.VOTING_OPEN);
     }

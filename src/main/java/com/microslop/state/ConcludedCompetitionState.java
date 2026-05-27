@@ -10,6 +10,11 @@ import com.microslop.entity.CompetitionStatus;
 public class ConcludedCompetitionState implements CompetitionState {
 
     @Override
+    public String name() {
+        return "CONCLUDED";
+    }
+
+    @Override
     public void archive(Competition competition) {
         competition.setStatus(CompetitionStatus.ARCHIVED);
     }

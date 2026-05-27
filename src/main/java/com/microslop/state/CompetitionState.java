@@ -8,39 +8,41 @@ import com.microslop.entity.Competition;
  */
 public interface CompetitionState {
 
+    String name();
+
     /** Activate the competition (DRAFT -> ACTIVE). */
     default void activate(Competition competition) {
-        throw new IllegalStateException("Cannot activate competition in current state");
+        throw new UnsupportedStateTransition(name(), "ACTIVE");
     }
 
     /** Deactivate/pause the competition. */
     default void deactivate(Competition competition) {
-        throw new IllegalStateException("Cannot deactivate competition in current state");
+        throw new UnsupportedStateTransition(name(), "DRAFT");
     }
 
     /** Open voting (no-op in ACTIVE, resumes from PAUSED). */
     default void openVoting(Competition competition) {
-        throw new IllegalStateException("Cannot open voting in current state");
+        throw new UnsupportedStateTransition(name(), "VOTING_OPEN");
     }
 
     /** Pause voting (ACTIVE -> PAUSED). */
     default void pauseVoting(Competition competition) {
-        throw new IllegalStateException("Cannot pause voting in current state");
+        throw new UnsupportedStateTransition(name(), "PAUSED");
     }
 
     /** Conclude the competition. */
     default void conclude(Competition competition) {
-        throw new IllegalStateException("Cannot conclude competition in current state");
+        throw new UnsupportedStateTransition(name(), "CONCLUDED");
     }
 
     /** Archive the competition. */
     default void archive(Competition competition) {
-        throw new IllegalStateException("Cannot archive competition in current state");
+        throw new UnsupportedStateTransition(name(), "ARCHIVED");
     }
 
     /** Reopen a concluded competition. */
     default void reopen(Competition competition) {
-        throw new IllegalStateException("Cannot reopen competition in current state");
+        throw new UnsupportedStateTransition(name(), "DRAFT");
     }
 
     /** Whether projects can be submitted. */
