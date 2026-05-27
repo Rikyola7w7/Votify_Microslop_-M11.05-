@@ -112,7 +112,13 @@ public class Competition {
     @Column(nullable = false, name = "max_votes")
     private int maxVotes = 1;
 
-    public Competition(String name, String description,
+     @Column(name = "end_notification_sent", columnDefinition = "boolean default false")
+     private boolean endNotificationSent = false;
+
+     @Column(name = "closing_soon_notification_sent", columnDefinition = "boolean default false")
+     private boolean closingSoonNotificationSent = false;
+
+     public Competition(String name, String description,
                        LocalDateTime startDate, LocalDateTime endDate) {
         this.name      = name;
         this.description = description;

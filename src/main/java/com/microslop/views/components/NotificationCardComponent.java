@@ -114,7 +114,8 @@ public class NotificationCardComponent extends Div {
     }
 
     private Span createTypeBadge() {
-        Span badge = new Span(notification.getType());
+        String displayType = notification.getType().replace("_HANDLED", "");
+        Span badge = new Span(displayType);
         badge.getStyle()
             .set("background", "var(--primary)")
             .set("color", "#ffffff")
@@ -221,6 +222,7 @@ public class NotificationCardComponent extends Div {
                 } finally {
                     yesBtn.setEnabled(false);
                     noBtn.setEnabled(false);
+                    notificationService.markAsHandled(notification.getId());
                     if (refreshCallback != null) {
                         refreshCallback.run();
                     }
@@ -230,6 +232,7 @@ public class NotificationCardComponent extends Div {
             noBtn.addClickListener(e -> {
                 yesBtn.setEnabled(false);
                 noBtn.setEnabled(false);
+                notificationService.markAsHandled(notification.getId());
                 if (refreshCallback != null) {
                     refreshCallback.run();
                 }

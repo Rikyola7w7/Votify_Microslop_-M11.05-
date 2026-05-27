@@ -149,7 +149,7 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
             projectTitleWrapper.add(projectTitle);
             commentsContainer.add(projectTitleWrapper);
 
-            List<Vote> votes = voteRepository.findByProjectId(projectId);
+            List<Vote> votes = voteRepository.findByProjectIdWithUserAndCategory(projectId);
             List<ProjectComment> comments = projectCommentRepository.findByProjectId(projectId);
 
             boolean hasComments = false;

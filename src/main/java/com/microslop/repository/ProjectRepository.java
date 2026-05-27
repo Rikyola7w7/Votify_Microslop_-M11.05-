@@ -27,10 +27,10 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
         """)
     List<Project> findProjectsByParticipantUsername(@Param("username") String username);
 
-    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.votes v WHERE p.competition.id = :competitionId GROUP BY p ORDER BY COUNT(v) DESC")
+    @Query("SELECT p FROM Project p LEFT JOIN p.votes v WHERE p.competition.id = :competitionId GROUP BY p ORDER BY COUNT(v) DESC")
     List<Project> findRankingByCompetition(@Param("competitionId") Long competitionId);
 
-    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.votes v LEFT JOIN FETCH p.categories c WHERE c.id = :categoryId GROUP BY p ORDER BY COUNT(v) DESC")
+    @Query("SELECT p FROM Project p LEFT JOIN p.votes v LEFT JOIN FETCH p.categories c WHERE c.id = :categoryId GROUP BY p ORDER BY COUNT(v) DESC")
     List<Project> findRankingByCategory(@Param("categoryId") Long categoryId);
 
     // Projects of a competition ordered by checklist vote count

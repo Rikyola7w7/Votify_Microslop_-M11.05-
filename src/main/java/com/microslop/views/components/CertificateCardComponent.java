@@ -19,12 +19,10 @@ public class CertificateCardComponent extends Div {
 
     private final Certificate certificate;
     private final CertificatePdfGenerator pdfGenerator;
-    private final Consumer<Certificate> downloadCallback;
 
-    public CertificateCardComponent(Certificate certificate, CertificatePdfGenerator pdfGenerator, Consumer<Certificate> downloadCallback) {
+    public CertificateCardComponent(Certificate certificate, CertificatePdfGenerator pdfGenerator) {
         this.certificate = certificate;
         this.pdfGenerator = pdfGenerator;
-        this.downloadCallback = downloadCallback;
         buildCard();
     }
 
@@ -127,8 +125,20 @@ public class CertificateCardComponent extends Div {
         Button downloadBtn = new Button("Download");
         downloadBtn.setIcon(new Icon(VaadinIcon.DOWNLOAD));
         downloadBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        downloadBtn.getStyle().set("flex", "1");
-        downloadBtn.addClickListener(e -> downloadCallback.accept(certificate));
+        downloadBtn.getStyle().set("width", "100%");
+
+        com.vaadin.flow.component.html.Anchor downloadAnchor = new com.vaadin.flow.component.html.Anchor(
+            new com.vaadin.flow.server.StreamResource(generateFilename(), () -> {
+                try {
+                    return new java.io.ByteArrayInputStream(pdfGenerator.generateCertificatePdf(certificate));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    return new java.io.ByteArrayInputStream(new byte[0]);
+                }
+            }), "");
+        downloadAnchor.getElement().setAttribute("download", true);
+        downloadAnchor.getStyle().set("flex", "1");
+        downloadAnchor.add(downloadBtn);
 
         Button viewBtn = new Button("View");
         viewBtn.setIcon(new Icon(VaadinIcon.EYE));
@@ -136,10 +146,22 @@ public class CertificateCardComponent extends Div {
         viewBtn.getStyle().set("flex", "1");
         viewBtn.addClickListener(e -> openPdfViewer());
 
-        actionsLayout.add(downloadBtn, viewBtn);
+        actionsLayout.add(downloadAnchor, viewBtn);
         content.add(actionsLayout);
 
         add(content);
+    }
+
+    private String generateFilename() {
+        String competitionName = certificate.getCompetition().getName()
+            .replaceAll("[^a-zA-Z0-9]", "_");
+        String certType = certificate.getCertificateType().getDisplayName()
+            .replaceAll("[^a-zA-Z0-9]", "_");
+        
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        String date = certificate.getGeneratedDate().format(formatter);
+        
+        return "Certificate_" + competitionName + "_" + certType + "_" + date + ".pdf";
     }
 
     private void openPdfViewer() {
