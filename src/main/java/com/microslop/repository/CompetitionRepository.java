@@ -19,6 +19,8 @@ public interface CompetitionRepository extends JpaRepository<Competition, Long>,
 
     List<Competition> findByStatus(CompetitionStatus status);
 
+    List<Competition> findByStatusIn(List<CompetitionStatus> statuses);
+
     Optional<Competition> findByNameIgnoreCase(String name);
 
     @Query("SELECT DISTINCT c FROM Competition c LEFT JOIN FETCH c.projects WHERE c.status = com.microslop.entity.CompetitionStatus.ACTIVE OR c.status = com.microslop.entity.CompetitionStatus.PAUSED")

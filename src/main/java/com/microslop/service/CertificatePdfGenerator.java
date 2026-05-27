@@ -113,7 +113,7 @@ public class CertificatePdfGenerator {
         currentY -= 100;
 
         // Seal (circular design in text)
-        drawCenteredText(contentStream, boldFont, 14, "●═══════════════════●", centerX, currentY, GOLD);
+        drawCenteredText(contentStream, boldFont, 14, "*===================*", centerX, currentY, GOLD);
         currentY -= 20;
         drawCenteredText(contentStream, boldFont, 12, "PARTICIPANTE", centerX, currentY, GOLD);
         currentY -= 18;
@@ -185,7 +185,7 @@ public class CertificatePdfGenerator {
         currentY -= 110;
 
         // Seal (larger, golden, detailed)
-        drawCenteredText(contentStream, boldFont, 16, "✦═════════════════════✦", centerX, currentY, GOLD);
+        drawCenteredText(contentStream, boldFont, 16, "+=====================+", centerX, currentY, GOLD);
         currentY -= 22;
         drawCenteredText(contentStream, boldFont, 13, "GANADOR - " + rankingText, centerX, currentY, GOLD);
         currentY -= 20;

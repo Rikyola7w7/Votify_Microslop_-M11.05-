@@ -1,6 +1,7 @@
 package com.microslop.base.ui;
 
 import com.microslop.service.CertificateService;
+import com.microslop.service.CompetitionCheckService;
 import com.microslop.service.InvitationService;
 import com.microslop.service.NotificationService;
 import com.microslop.service.UserService;
@@ -29,6 +30,9 @@ public final class MainLayout extends AppLayout {
 
     @Autowired(required = false)
     private UserService userService;
+
+    @Autowired(required = false)
+    private CompetitionCheckService competitionCheckService;
 
     @Autowired(required = false)
     private NotificationService notificationService;
@@ -96,11 +100,19 @@ public final class MainLayout extends AppLayout {
             userMenuContainer = new Div();
             rightActions.add(userMenuContainer);
             getUI().ifPresent(ui ->
-                ui.addAfterNavigationListener(e -> rebuildUserMenu())
+                ui.addAfterNavigationListener(e -> {
+                    rebuildUserMenu();
+                    if (competitionCheckService != null) {
+                        competitionCheckService.checkAndProcessCompetitions();
+                    }
+                })
             );
         }
 
         rebuildUserMenu();
+        if (competitionCheckService != null) {
+            competitionCheckService.checkAndProcessCompetitions();
+        }
 
         // Enable real-time badge polling (every 10 seconds)
         getUI().ifPresent(ui -> {
@@ -200,7 +212,12 @@ public final class MainLayout extends AppLayout {
         // Poll the badge on every server roundtrip (every 10s via setPollInterval)
         bellContainer.addAttachListener(event -> {
             getUI().ifPresent(ui -> {
-                ui.addPollListener(e -> updateUnreadBadge());
+                ui.addPollListener(e -> {
+                    updateUnreadBadge();
+                    if (competitionCheckService != null) {
+                        competitionCheckService.checkAndProcessCompetitions();
+                    }
+                });
             });
         });
 

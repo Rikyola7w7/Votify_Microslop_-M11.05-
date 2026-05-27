@@ -89,6 +89,9 @@ public class Competition {
      @Column(name = "end_notification_sent", columnDefinition = "boolean default false")
      private boolean endNotificationSent = false;
 
+     @Column(name = "closing_soon_notification_sent", columnDefinition = "boolean default false")
+     private boolean closingSoonNotificationSent = false;
+
      public Competition(String name, String description,
                        LocalDateTime startDate, LocalDateTime endDate) {
         this.name      = name;

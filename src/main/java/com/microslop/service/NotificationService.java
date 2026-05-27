@@ -81,6 +81,11 @@ public interface NotificationService {
     void markAsUnread(Long notificationId);
     
     /**
+     * Mark a notification as handled by changing its type
+     */
+    void markAsHandled(Long notificationId);
+    
+    /**
      * Delete multiple notifications at once
      */
     void bulkDeleteNotifications(List<Long> notificationIds);
