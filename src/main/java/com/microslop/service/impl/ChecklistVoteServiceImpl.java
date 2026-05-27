@@ -55,7 +55,6 @@ public class ChecklistVoteServiceImpl implements ChecklistVoteService {
         if (!"CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
             throw new IllegalStateException("This competition does not use checklist voting.");
         }
-
         if (checklistVoteRepository.existsByUserIdAndProjectIdAndChecklistItemId(
                 user.getId(), projectId, checklistItemId)) {
             throw new IllegalStateException("You already checked this item for this project.");

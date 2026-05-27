@@ -17,6 +17,7 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
@@ -78,7 +79,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private NumberField judgeWeightField;
     private NumberField standardUserWeightField;
 
-// VOTE TYPE Section
+    // VOTE TYPE Section
     private ComboBox<String> voteTypeCombo;
 
     // CHECKLIST Section
@@ -90,7 +91,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     // SCALE Section
     private VerticalLayout scaleConfigSection;
 
-    // COMENTARIOS Section
+    // COMMENTS Section
     private ComboBox<String> commentsEnabledCombo;
     private ComboBox<String> commentsRequiredCombo;
 
@@ -117,11 +118,11 @@ this.categoryWeightChanges = new java.util.HashMap<>();
         this.checklistItemsToAdd = new java.util.ArrayList<>();
 
         setSizeFull();
-        setPadding(true);
-        setSpacing(true);
+        setPadding(false);
+        setSpacing(false);
         getStyle()
             .set("background", "var(--background)")
-            .set("overflow", "auto");
+            .set("overflow-y", "auto");
     }
 
     @Override
@@ -169,6 +170,12 @@ this.categoryWeightChanges = new java.util.HashMap<>();
     private void initializeView() {
         removeAll();
 
+        Div scrollContainer = new Div();
+        scrollContainer.setWidthFull();
+        scrollContainer.getStyle()
+            .set("overflow-y", "auto")
+            .set("height", "calc(100vh - 64px)");
+
         HorizontalLayout header = new HorizontalLayout();
         header.addClassName("votify-header");
         header.setWidthFull();
@@ -188,24 +195,26 @@ this.categoryWeightChanges = new java.util.HashMap<>();
         contentCard.addClassName("votify-card-static");
         contentCard.addClassName("animate-fade-in");
         contentCard.setMaxWidth("800px");
-        contentCard.setWidth("100%");
+        contentCard.setWidthFull();
         contentCard.setPadding(true);
         contentCard.setSpacing(true);
-        contentCard.getStyle().set("margin", "20px auto 0 auto");
+        contentCard.getStyle()
+            .set("margin", "20px auto 40px auto")
+            .set("box-sizing", "border-box");
 
         VerticalLayout generalSection = buildGeneralSection();
         VerticalLayout participationSection = buildParticipationSection();
         VerticalLayout judgesSection = buildJudgesSection();
-VerticalLayout voteTypeSection = buildVoteTypeSection();
+        VerticalLayout voteTypeSection = buildVoteTypeSection();
         checklistSection = buildChecklistSection();
         scaleConfigSection = buildScaleConfigSection();
 
-        // ── VOTE WEIGHTING Section ────────────────────────────────────────
+        // VOTE WEIGHTING Section
         VerticalLayout votingWeightSection = buildVotingWeightSection();
         VerticalLayout commentsSection = buildCommentsSection();
         HorizontalLayout buttonsLayout = buildButtonsLayout();
 
-contentCard.add(generalSection, participationSection, judgesSection, voteTypeSection, checklistSection, scaleConfigSection, votingWeightSection, commentsSection, buttonsLayout);
+        contentCard.add(generalSection, participationSection, judgesSection, voteTypeSection, checklistSection, scaleConfigSection, votingWeightSection, commentsSection, buttonsLayout);
         add(header, contentCard);
 
         // Set initial visibility based on current vote type
@@ -306,6 +315,34 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
         Span categoryName = new Span(category.getName());
         categoryName.getStyle().set("flex", "1").set("font-weight", "500").set("color", "var(--text-primary)");
 
+        String voterType = category.getVoterType() != null ? category.getVoterType() : "NORMAL";
+        String label = "NORMAL".equals(voterType) ? "Normal" : "SCALE".equals(voterType) ? "Scale" : "Checklist";
+        Span typeBadge = new Span(label);
+        typeBadge.getStyle()
+                .set("font-size", "11px")
+                .set("font-weight", "600")
+                .set("padding", "2px 8px")
+                .set("border-radius", "10px")
+                .set("margin-right", "8px")
+                .set("text-transform", "uppercase")
+                .set("letter-spacing", "0.5px");
+        if ("NORMAL".equals(voterType)) {
+            typeBadge.getStyle()
+                    .set("background", "rgba(5, 150, 105, 0.15)")
+                    .set("color", "#059669")
+                    .set("border", "1px solid rgba(5, 150, 105, 0.3)");
+        } else if ("SCALE".equals(voterType)) {
+            typeBadge.getStyle()
+                    .set("background", "rgba(99, 102, 241, 0.15)")
+                    .set("color", "#6366f1")
+                    .set("border", "1px solid rgba(99, 102, 241, 0.3)");
+        } else {
+            typeBadge.getStyle()
+                    .set("background", "rgba(245, 158, 11, 0.15)")
+                    .set("color", "#d97706")
+                    .set("border", "1px solid rgba(245, 158, 11, 0.3)");
+        }
+
         Button deleteButton = new Button();
         deleteButton.setIcon(new Icon(VaadinIcon.TRASH));
         deleteButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
@@ -320,7 +357,7 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
             Notification.show("Category removed", 2000, Notification.Position.BOTTOM_CENTER);
         });
 
-        row.add(categoryName, deleteButton);
+        row.add(categoryName, typeBadge, deleteButton);
         return row;
     }
 
@@ -335,6 +372,12 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
         nameField.addClassName("votify-input");
         nameField.setWidth("100%");
 
+        ComboBox<String> voterTypeCombo = new ComboBox<>("Voting Type");
+        voterTypeCombo.setItems("Normal", "Scale", "Checklist");
+        voterTypeCombo.setValue("Normal");
+        voterTypeCombo.addClassName("votify-input");
+        voterTypeCombo.setWidth("100%");
+
         Button saveBtn = new Button("Save", e -> {
             if (nameField.getValue().isEmpty()) {
                 Notification.show("Category name is required");
@@ -344,6 +387,14 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
             Category newCategory = new Category();
             newCategory.setName(nameField.getValue());
             newCategory.setCompetition(currentCompetition);
+            String vtValue = voterTypeCombo.getValue();
+            if ("Scale".equals(vtValue)) {
+                newCategory.setVoterType("SCALE");
+            } else if ("Checklist".equals(vtValue)) {
+                newCategory.setVoterType("CHECKLIST");
+            } else {
+                newCategory.setVoterType("NORMAL");
+            }
 
             categoriesToAdd.add(newCategory);
             categoriesContainer.add(buildCategoryRow(newCategory));
@@ -356,7 +407,7 @@ contentCard.add(generalSection, participationSection, judgesSection, voteTypeSec
         Button cancelBtn = new Button("Cancel", e -> dialog.close());
         cancelBtn.addClassName("votify-btn-secondary");
 
-        content.add(nameField);
+        content.add(nameField, voterTypeCombo);
         dialog.add(content);
         dialog.getFooter().add(cancelBtn, saveBtn);
         dialog.open();
@@ -979,7 +1030,6 @@ categoryWeightChanges.clear();
         currentCompetition.setVoteType("Checklist".equals(voteTypeCombo.getValue()) ? "CHECKLIST" :
                 (voteTypeCombo.getValue() != null && voteTypeCombo.getValue().startsWith("Scale") ? "SCALE" : "NORMAL"));
 
-        // Update scale configuration
         if ("SCALE".equalsIgnoreCase(currentCompetition.getVoteType())) {
             currentCompetition.setScaleMin(0);
             currentCompetition.setScaleMax(10);

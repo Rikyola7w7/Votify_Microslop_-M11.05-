@@ -2,17 +2,18 @@ package com.microslop.views;
 
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
+import com.microslop.entity.Project;
+import com.microslop.repository.JudgeRepository;
 import com.microslop.service.CategoryService;
 import com.microslop.service.ChecklistVoteService;
 import com.microslop.service.CompetitionService;
+import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
 import com.microslop.service.VoterService;
 import com.microslop.service.VoteService;
-import com.microslop.views.components.PodiumCardComponent;
 import com.microslop.views.components.BallotLoadingComponent;
-import com.microslop.entity.Project;
-import com.microslop.service.ProjectService;
+import com.microslop.views.components.CelebrationAnimation;
+import com.microslop.views.components.PodiumCardComponent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -27,6 +28,7 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -44,9 +46,8 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     private final VoteService voteService;
     private final ProjectService projectService;
     private final UserService userService;
-    private final VoterService voterService;
     private final ChecklistVoteService checklistVoteService;
-
+    private final JudgeRepository judgeRepository;
     private Long competitionId;
     private Long categoryId;
     private Competition currentCompetition;
@@ -54,6 +55,8 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     private VerticalLayout rankingContainer;
     private boolean isChecklistMode = false;
     private boolean isScaleMode = false;
+    private boolean modifyMode;
+    private boolean isJudgesRanking;
 
     public RankingView(CompetitionService competitionService,
                        CategoryService categoryService,
@@ -61,7 +64,8 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                        ProjectService projectService,
                        UserService userService,
                        VoterService voterService,
-                       ChecklistVoteService checklistVoteService) {
+                       ChecklistVoteService checklistVoteService,
+                       JudgeRepository judgeRepository) {
         this.competitionService = competitionService;
         this.categoryService = categoryService;
         this.voteService = voteService;
@@ -69,6 +73,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         this.userService = userService;
         this.voterService = voterService;
         this.checklistVoteService = checklistVoteService;
+        this.judgeRepository = judgeRepository;
 
         setSizeFull();
         setPadding(false);
@@ -105,6 +110,7 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
             return;
         }
 
+        this.modifyMode = false;
         removeAll();
         buildUi();
     }
@@ -117,9 +123,19 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
         rankingContainer.setWidthFull();
         rankingContainer.setAlignItems(FlexComponent.Alignment.CENTER);
         rankingContainer.setPadding(false);
-        rankingContainer.getStyle().set("max-width", "760px");
+        rankingContainer.getStyle()
+            .set("max-width", "760px")
+            .set("margin", "0 auto");
         add(rankingContainer);
         loadRanking(true);
+    }
+
+    private boolean isUserOrganizerOrJudge() {
+        if (!userService.isLoggedIn()) return false;
+        String username = userService.getCurrentUsername();
+        if (currentCompetition.getCreatedBy().equals(username)) return true;
+        long userId = userService.getCurrentUserId();
+        return judgeRepository.existsByUserIdAndCompetitionId(userId, competitionId);
     }
 
     private HorizontalLayout buildHeader() {
@@ -155,6 +171,22 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
         rightSection.setSpacing(true);
         rightSection.setMargin(false);
         rightSection.setPadding(false);
+
+        if (isUserOrganizerOrJudge()) {
+            Button modifyEntriesButton = new Button("Modify entries");
+            modifyEntriesButton.addClassName("votify-btn-secondary");
+            modifyEntriesButton.getStyle()
+                .set("background", "white")
+                .set("color", "var(--primary)")
+                .set("border", "none")
+                .set("cursor", "pointer")
+                .set("font-weight", "600");
+            modifyEntriesButton.addClickListener(e -> {
+                modifyMode = !modifyMode;
+                loadRanking(isJudgesRanking);
+            });
+            rightSection.add(modifyEntriesButton);
+        }
 
         Button voteButton = new Button("Vote");
         voteButton.addClassName("votify-btn-secondary");
@@ -217,13 +249,29 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
         yesButton.addClickListener(e -> {
             try {
                 voterService.registerVoter(userId, competitionId, categoryId);
-                Notification.show("Successfully registered as a voter!", 3000,
-                    Notification.Position.BOTTOM_CENTER);
+                
                 dialog.close();
-                navigateToVoting();
+                
+                // Show epic celebration, then redirect to voting
+                CelebrationAnimation celebration = new CelebrationAnimation(
+                    "VOTER REGISTERED",
+                    "Welcome aboard — time to make your voice heard",
+                    () -> {
+                        String votingUrl = "/competition/" + competitionId + "/category/" + categoryId + "/vote";
+                        getUI().ifPresent(ui -> ui.getPage().executeJs(
+                            "window.location.href = '" + votingUrl + "'"));
+                    }
+                );
+                getUI().ifPresent(ui -> ui.add(celebration));
             } catch (IllegalStateException ex) {
-                Notification.show(ex.getMessage(), 3000,
+                Notification error = Notification.show("Error: " + ex.getMessage(), 3000,
                     Notification.Position.BOTTOM_CENTER);
+                error.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                dialog.close();
+            } catch (Exception ex) {
+                Notification error = Notification.show("Unexpected error: " + ex.getMessage(), 3000,
+                    Notification.Position.BOTTOM_CENTER);
+                error.addThemeVariants(NotificationVariant.LUMO_ERROR);
                 dialog.close();
             }
         });
@@ -246,7 +294,7 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
 
     private void navigateToVoting() {
         getUI().ifPresent(ui ->
-            ui.navigate("competition/" + competitionId + "/vote"));
+            ui.navigate("competition/" + competitionId + "/category/" + categoryId + "/vote"));
     }
 
     private Div buildSummaryCard() {
@@ -348,7 +396,7 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
         rankingComboBox.addValueChangeListener(event -> {
             String selectedValue = event.getValue();
             if (selectedValue != null) {
-                boolean isJudgesRanking = "Judges' Ranking".equals(selectedValue);
+                isJudgesRanking = "Judges' Ranking".equals(selectedValue);
                 loadRanking(isJudgesRanking);
             }
         });
@@ -362,27 +410,18 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
 
         rankingContainer.removeAll();
 
-        // Show loading animation
         BallotLoadingComponent loading = new BallotLoadingComponent("Calculating rankings...");
         rankingContainer.add(loading);
 
-        // Fetch data
-        List<Project> ranking;
-        if (isChecklistMode) {
-            ranking = projectService.getChecklistRankingByCategory(categoryId);
-        } else if (isJudgesRanking) {
-            ranking = projectService.getJudgeRankingByCategory(categoryId);
-        } else if (isScaleMode) {
-            ranking = projectService.getRankingByCategory(categoryId);
-        } else {
-            ranking = projectService.getPopularRankingByCategory(categoryId);
-        }
+        List<Project> ranking = projectService.getRankingForCategory(categoryId, isJudgesRanking);
 
-        // Build content but hidden
         var content = new Div();
         content.getElement().setAttribute("id", "ranking-content");
         content.setWidthFull();
-        content.getStyle().set("display", "none");
+        content.getStyle()
+            .set("display", "none")
+            .set("max-width", "760px")
+            .set("margin", "0 auto");
 
         var title = new H3(isJudgesRanking ? "Judges' Ranking" : "Popular Ranking");
         title.getStyle()
@@ -406,7 +445,6 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
             var podiumSection = new Div();
             podiumSection.setWidthFull();
             podiumSection.getStyle()
-                .set("max-width", "760px")
                 .set("display", "flex")
                 .set("justify-content", "center")
                 .set("align-items", "flex-end")
@@ -424,25 +462,21 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
                 int idx = order[slot];
                 if (idx >= ranking.size()) continue;
                 Project p = ranking.get(idx);
-                long totalVotes = 0;
-                double avgScore = 0;
-                if (isChecklistMode) {
-                    totalVotes = checklistVoteService.countChecklistVotesByProject(p.getId());
-                } else if (isScaleMode) {
-                    avgScore = voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
-                    totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+                long votes = p.getManualVoteCount() != null
+                    ? p.getManualVoteCount()
+                    : p.getVotes().size();
+                if (modifyMode) {
+                    podiumSection.add(buildModifiablePodiumWrapper(p, positions[slot], votes));
                 } else {
-                    totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+                    var podiumCard = new PodiumCardComponent(p, positions[slot], votes);
+                    podiumSection.add(podiumCard);
                 }
-                var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, isChecklistMode, isScaleMode, avgScore);
-                podiumSection.add(podiumCard);
             }
             content.add(podiumSection);
 
             if (ranking.size() > 3) {
                 var listSection = new VerticalLayout();
                 listSection.setWidthFull();
-                listSection.getStyle().set("max-width", "760px");
                 listSection.setPadding(false);
                 listSection.setSpacing(false);
 
@@ -466,7 +500,6 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
         }
         rankingContainer.add(content);
 
-        // After 900ms, hide loading and show content
         getElement().executeJs(
             "setTimeout(function() {" +
             "  var loadings = document.querySelectorAll('.votify-loading');" +
@@ -476,7 +509,63 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
             "}, 900)");
     }
 
-    private HorizontalLayout buildListRow(Project p, int position, int staggerIndex, long totalVotes, double avgScore) {
+    private Div buildModifiablePodiumWrapper(Project project, PodiumCardComponent.Position position, long votes) {
+        var wrapper = new Div();
+        wrapper.getStyle()
+            .set("display", "flex")
+            .set("flex-direction", "column")
+            .set("align-items", "center")
+            .set("position", "relative");
+
+        var podiumCard = new PodiumCardComponent(project, position, votes);
+        wrapper.add(podiumCard);
+        wrapper.add(buildActionButtons(project));
+
+        return wrapper;
+    }
+
+    private Div buildActionButtons(Project project) {
+        var container = new Div();
+        container.getStyle()
+            .set("display", "flex")
+            .set("gap", "0.25rem")
+            .set("margin-top", "0.25rem")
+            .set("justify-content", "center");
+
+        Button reclassifyBtn = new Button("Reclassify");
+        reclassifyBtn.addClassName("votify-btn-secondary");
+        reclassifyBtn.getStyle()
+            .set("font-size", "0.7rem")
+            .set("padding", "0.2rem 0.5rem")
+            .set("cursor", "pointer");
+        reclassifyBtn.addClickListener(e -> showReclassifyDialog(project));
+
+        Button declassifyBtn = new Button("Declassify");
+        declassifyBtn.addClassName("votify-btn-danger");
+        declassifyBtn.getStyle()
+            .set("font-size", "0.7rem")
+            .set("padding", "0.2rem 0.5rem")
+            .set("cursor", "pointer");
+        declassifyBtn.addClickListener(e -> showDeclassifyConfirmDialog(project));
+
+        Button editVotesBtn = new Button("Edit Votes");
+        editVotesBtn.addClassName("votify-btn-secondary");
+        editVotesBtn.getStyle()
+            .set("font-size", "0.7rem")
+            .set("padding", "0.2rem 0.5rem")
+            .set("cursor", "pointer");
+        editVotesBtn.addClickListener(e -> showEditVotesDialog(project));
+
+        container.add(reclassifyBtn, declassifyBtn, editVotesBtn);
+        return container;
+    }
+
+    private HorizontalLayout buildListRow(Project p, int position, int staggerIndex) {
+        var wrapper = new VerticalLayout();
+        wrapper.setPadding(false);
+        wrapper.setSpacing(false);
+        wrapper.setWidthFull();
+
         var row = new HorizontalLayout();
         row.addClassName("votify-card-static");
         row.addClassName("animate-fade-in");
@@ -485,7 +574,7 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
         row.setAlignItems(FlexComponent.Alignment.CENTER);
         row.getStyle()
             .set("padding", "1rem 1.5rem")
-            .set("margin-bottom", "0.75rem");
+            .set("margin-bottom", "0");
 
         var numBadge = new Div();
         numBadge.getStyle()
@@ -513,27 +602,188 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
             .set("font-size", "0.95rem")
             .set("color", "var(--text-primary)");
 
-        String voteText;
-        if (isChecklistMode) {
-            voteText = totalVotes + " checks";
-        } else if (isScaleMode) {
-            voteText = String.format("Score: %.1f", avgScore);
-        } else {
-            voteText = totalVotes + " votes";
+        long votes = p.getManualVoteCount() != null
+            ? p.getManualVoteCount()
+            : p.getVotes().size();
+
+        var votesSpan = new Span(votes + " vote" + (votes != 1 ? "s" : ""));
+        votesSpan.getStyle()
+            .set("font-size", "0.8rem")
+            .set("color", "var(--text-muted)")
+            .set("margin-top", "0.15rem");
+
+        info.add(name, votesSpan);
+        row.add(numBadge, info);
+        wrapper.add(row);
+
+        if (modifyMode) {
+            wrapper.add(buildActionButtons(p));
         }
 
-        var votesLabel = new Span(voteText);
-        votesLabel.getStyle()
-            .set("font-size", "0.85rem")
-            .set("font-weight", "600")
-            .set("color", "var(--secondary)")
-            .set("background", "rgba(0, 206, 201, 0.1)")
-            .set("padding", "2px 10px")
-            .set("border-radius", "var(--radius-pill)");
+        // Cast to HorizontalLayout for compatibility - wrapper is returned as HorizontalLayout-like
+        var result = new HorizontalLayout();
+        result.setWidthFull();
+        result.setPadding(false);
+        result.setSpacing(false);
+        result.add(wrapper);
+        return result;
+    }
 
-        info.add(name, votesLabel);
-        row.add(numBadge, info);
+    private void showReclassifyDialog(Project project) {
+        var dialog = new Dialog();
+        dialog.setHeaderTitle("Reclassify: " + project.getName());
 
-        return row;
+        var content = new VerticalLayout();
+        content.setPadding(false);
+        content.setSpacing(true);
+        content.setWidth("350px");
+
+        var message = new Paragraph("Enter the new position for this project:");
+        message.getStyle()
+            .set("color", "var(--text-primary)")
+            .set("font-size", "1rem");
+
+        var positionField = new IntegerField("New position");
+        positionField.setMin(1);
+        positionField.setValue(1);
+        positionField.setStepButtonsVisible(true);
+        positionField.setWidthFull();
+
+        content.add(message, positionField);
+
+        var cancelButton = new Button("Cancel");
+        cancelButton.addClassName("votify-btn-secondary");
+        cancelButton.addClickListener(e -> dialog.close());
+
+        var acceptButton = new Button("Accept");
+        acceptButton.addClassName("votify-btn-primary");
+        acceptButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        acceptButton.addClickListener(e -> {
+            try {
+                int newPosition = positionField.getValue();
+                projectService.reclassifyProject(project.getId(), newPosition);
+                dialog.close();
+                Notification.show("Project reclassified to position " + newPosition, 3000,
+                    Notification.Position.BOTTOM_CENTER);
+                loadRanking(isJudgesRanking);
+            } catch (Exception ex) {
+                Notification.show("Error: " + ex.getMessage(), 3000,
+                    Notification.Position.BOTTOM_CENTER);
+            }
+        });
+
+        var buttonLayout = new HorizontalLayout(cancelButton, acceptButton);
+        buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        buttonLayout.setSpacing(true);
+        buttonLayout.setWidthFull();
+
+        content.add(buttonLayout);
+        dialog.add(content);
+        dialog.open();
+    }
+
+    private void showDeclassifyConfirmDialog(Project project) {
+        var dialog = new Dialog();
+        dialog.setHeaderTitle("Declassify: " + project.getName());
+
+        var content = new VerticalLayout();
+        content.setPadding(false);
+        content.setSpacing(true);
+        content.setWidth("400px");
+
+        var message = new Paragraph(
+            "Are you sure you want to remove this project from the competition? "
+            + "This action cannot be undone. All votes and comments will be permanently deleted.");
+        message.getStyle()
+            .set("color", "var(--text-primary)")
+            .set("font-size", "1rem")
+            .set("line-height", "1.5");
+
+        content.add(message);
+
+        var cancelButton = new Button("Cancel");
+        cancelButton.addClassName("votify-btn-secondary");
+        cancelButton.addClickListener(e -> dialog.close());
+
+        var deleteButton = new Button("Delete permanently");
+        deleteButton.addClassName("votify-btn-danger");
+        deleteButton.addClickListener(e -> {
+            try {
+                projectService.declassifyProject(project.getId());
+                dialog.close();
+                Notification.show("Project declassified successfully", 3000,
+                    Notification.Position.BOTTOM_CENTER);
+                loadRanking(isJudgesRanking);
+            } catch (Exception ex) {
+                Notification.show("Error: " + ex.getMessage(), 3000,
+                    Notification.Position.BOTTOM_CENTER);
+            }
+        });
+
+        var buttonLayout = new HorizontalLayout(cancelButton, deleteButton);
+        buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        buttonLayout.setSpacing(true);
+        buttonLayout.setWidthFull();
+
+        content.add(buttonLayout);
+        dialog.add(content);
+        dialog.open();
+    }
+
+    private void showEditVotesDialog(Project project) {
+        var dialog = new Dialog();
+        dialog.setHeaderTitle("Edit Votes: " + project.getName());
+
+        var content = new VerticalLayout();
+        content.setPadding(false);
+        content.setSpacing(true);
+        content.setWidth("350px");
+
+        var message = new Paragraph("Enter the new amount of votes:");
+        message.getStyle()
+            .set("color", "var(--text-primary)")
+            .set("font-size", "1rem");
+
+        int currentVotes = project.getManualVoteCount() != null
+            ? project.getManualVoteCount()
+            : project.getVotes().size();
+
+        var votesField = new IntegerField("Votes");
+        votesField.setMin(0);
+        votesField.setValue(currentVotes);
+        votesField.setStepButtonsVisible(true);
+        votesField.setWidthFull();
+
+        content.add(message, votesField);
+
+        var cancelButton = new Button("Cancel");
+        cancelButton.addClassName("votify-btn-secondary");
+        cancelButton.addClickListener(e -> dialog.close());
+
+        var acceptButton = new Button("Accept");
+        acceptButton.addClassName("votify-btn-primary");
+        acceptButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        acceptButton.addClickListener(e -> {
+            try {
+                int newVotes = votesField.getValue();
+                projectService.editProjectVotes(project.getId(), newVotes);
+                dialog.close();
+                Notification.show("Votes updated to " + newVotes, 3000,
+                    Notification.Position.BOTTOM_CENTER);
+                loadRanking(isJudgesRanking);
+            } catch (Exception ex) {
+                Notification.show("Error: " + ex.getMessage(), 3000,
+                    Notification.Position.BOTTOM_CENTER);
+            }
+        });
+
+        var buttonLayout = new HorizontalLayout(cancelButton, acceptButton);
+        buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        buttonLayout.setSpacing(true);
+        buttonLayout.setWidthFull();
+
+        content.add(buttonLayout);
+        dialog.add(content);
+        dialog.open();
     }
 }

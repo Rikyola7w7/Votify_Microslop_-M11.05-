@@ -63,7 +63,7 @@ public class Competition {
     @Column(name = "standard_user_weight_multiplier", columnDefinition = "double default 1.0")
     private Double standardUserWeightMultiplier = 1.0;
 
-@Column(name = "vote_type", length = 20)
+    @Column(name = "vote_type", length = 20)
     private String voteType = "NORMAL"; // NORMAL, CHECKLIST, SCALE
 
     @Column(name = "scale_min")
@@ -76,7 +76,7 @@ public class Competition {
     private String votingStrategyType = "ALL";
 
     @Column(name = "ranking_strategy_type", length = 50)
-    private String rankingStrategyType = "WEIGHTED";
+    private String rankingStrategyType = "AVERAGE";
 
     public static com.microslop.builder.CompetitionBuilder builder() {
         return com.microslop.builder.CompetitionBuilder.builder();
@@ -211,7 +211,7 @@ public void addChecklistItem(ChecklistItem item) {
             }
         } else {
             if (this.status == CompetitionStatus.ACTIVE
-                    || this.status == CompetitionStatus.VOTING_OPEN) {
+                    || this.status == CompetitionStatus.PAUSED) {
                 this.status = CompetitionStatus.DRAFT;
             }
         }
@@ -258,7 +258,7 @@ public void addChecklistItem(ChecklistItem item) {
         this.standardUserWeightMultiplier = standardUserWeightMultiplier;
     }
 
-public String getVoteType() {
+    public String getVoteType() {
         return voteType;
     }
 

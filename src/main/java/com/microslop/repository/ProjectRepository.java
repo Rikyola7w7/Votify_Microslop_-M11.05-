@@ -93,7 +93,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
     @Query("SELECT p FROM Project p LEFT JOIN FETCH p.votes v LEFT JOIN FETCH v.user WHERE p.id = :projectId")
     Optional<Project> findByIdWithVotesAndUsers(@Param("projectId") Long projectId);
 
-    // Projects of a competition ordered by average scale score (descending)
     @Query("""
         SELECT p FROM Project p
         LEFT JOIN p.votes v
@@ -103,7 +102,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
         """)
     List<Project> findRankingByScaleCompetition(@Param("competitionId") Long competitionId);
 
-    // Projects with a specific category ordered by average scale score (descending)
     @Query("""
         SELECT p FROM Project p
         LEFT JOIN p.votes v
@@ -113,4 +111,12 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
         ORDER BY COALESCE(AVG(v.points), 0) DESC
         """)
     List<Project> findRankingByScaleCategory(@Param("categoryId") Long categoryId);
+
+    @Query("""
+        SELECT p FROM Project p
+        LEFT JOIN FETCH p.votes
+        LEFT JOIN p.categories c
+        WHERE c.id = :categoryId
+        """)
+    List<Project> findAllByCategoryId(@Param("categoryId") Long categoryId);
 }

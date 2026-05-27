@@ -18,12 +18,12 @@ public interface CompetitionState {
         throw new IllegalStateException("Cannot deactivate competition in current state");
     }
 
-    /** Open voting (ACTIVE -> VOTING_OPEN). */
+    /** Open voting (no-op in ACTIVE, resumes from PAUSED). */
     default void openVoting(Competition competition) {
         throw new IllegalStateException("Cannot open voting in current state");
     }
 
-    /** Pause voting (VOTING_OPEN -> ACTIVE). */
+    /** Pause voting (ACTIVE -> PAUSED). */
     default void pauseVoting(Competition competition) {
         throw new IllegalStateException("Cannot pause voting in current state");
     }

@@ -18,11 +18,6 @@ class CompetitionStatusTest {
     }
 
     @Test
-    void votingOpen_hasVotingOpenState() {
-        assertInstanceOf(VotingOpenCompetitionState.class, CompetitionStatus.VOTING_OPEN.getState());
-    }
-
-    @Test
     void concluded_hasConcludedState() {
         assertInstanceOf(ConcludedCompetitionState.class, CompetitionStatus.CONCLUDED.getState());
     }
@@ -33,9 +28,14 @@ class CompetitionStatusTest {
     }
 
     @Test
-    void enum_values_returnsAllFiveStates() {
+    void enum_values_returnsAllStates() {
         CompetitionStatus[] values = CompetitionStatus.values();
-        assertEquals(5, values.length);
+        assertEquals(6, values.length);
+    }
+
+    @Test
+    void paused_hasPausedState() {
+        assertInstanceOf(PausedCompetitionState.class, CompetitionStatus.PAUSED.getState());
     }
 
     @Test
@@ -43,7 +43,13 @@ class CompetitionStatusTest {
         assertEquals(CompetitionStatus.DRAFT, CompetitionStatus.valueOf("DRAFT"));
         assertEquals(CompetitionStatus.ACTIVE, CompetitionStatus.valueOf("ACTIVE"));
         assertEquals(CompetitionStatus.VOTING_OPEN, CompetitionStatus.valueOf("VOTING_OPEN"));
+        assertEquals(CompetitionStatus.PAUSED, CompetitionStatus.valueOf("PAUSED"));
         assertEquals(CompetitionStatus.CONCLUDED, CompetitionStatus.valueOf("CONCLUDED"));
         assertEquals(CompetitionStatus.ARCHIVED, CompetitionStatus.valueOf("ARCHIVED"));
+    }
+
+    @Test
+    void votingOpen_hasVotingOpenState() {
+        assertInstanceOf(VotingOpenCompetitionState.class, CompetitionStatus.VOTING_OPEN.getState());
     }
 }

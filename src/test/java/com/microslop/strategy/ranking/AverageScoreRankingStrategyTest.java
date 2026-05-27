@@ -1,32 +1,26 @@
 package com.microslop.strategy.ranking;
 
 import com.microslop.entity.*;
-import com.microslop.repository.JudgeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AverageScoreRankingStrategyTest {
 
     private AverageScoreRankingStrategy strategy;
 
-    @Mock
-    private JudgeRepository judgeRepository;
-
     private Competition competition;
     private Project project;
 
     @BeforeEach
     void setUp() {
-        strategy = new AverageScoreRankingStrategy(judgeRepository);
+        strategy = new AverageScoreRankingStrategy();
         competition = createCompetition();
         project = createProject(1L);
     }
@@ -54,18 +48,6 @@ class AverageScoreRankingStrategyTest {
     }
 
     @Test
-    void calculateScore_appliesMultipliersCorrectly() {
-        when(judgeRepository.existsByUserIdAndCompetitionId(1L, 1L)).thenReturn(true);
-        List<Vote> votes = List.of(
-            createVote(project, 5)
-        );
-
-        double score = strategy.calculateScore(project, votes, competition);
-
-        assertEquals(10.0, score);
-    }
-
-    @Test
     void rankProjects_ordersByScoreDescending() {
         Project project2 = createProject(2L);
         List<Project> projects = List.of(project, project2);
@@ -89,8 +71,6 @@ class AverageScoreRankingStrategyTest {
     private Competition createCompetition() {
         Competition c = new Competition();
         c.setId(1L);
-        c.setJudgeWeightMultiplier(2.0);
-        c.setStandardUserWeightMultiplier(1.0);
         return c;
     }
 

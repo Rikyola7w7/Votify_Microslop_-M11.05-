@@ -34,4 +34,19 @@ public interface VoterService {
      * @return true if registered in any category, false otherwise
      */
     boolean isRegisteredVoterInCompetition(Long userId, Long competitionId);
+
+    /**
+     * Get remaining votes for a voter in a specific category.
+     */
+    int getVotesLeft(Long userId, Long competitionId, Long categoryId);
+
+    /**
+     * Decrement votes left after a vote is cast.
+     */
+    void decrementVotesLeft(Long userId, Long competitionId, Long categoryId, int points);
+
+    /**
+     * Get the Voter entity for a user in a specific category.
+     */
+    java.util.Optional<Voter> getVoter(Long userId, Long competitionId, Long categoryId);
 }
