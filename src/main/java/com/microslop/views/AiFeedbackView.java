@@ -243,7 +243,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("padding", "20px")
             .set("border-radius", "var(--radius-lg)")
             .set("overflow-y", "auto")
-            .set("max-height", "800px");
+            .set("max-height", "calc(100vh - 220px)");
 
         H3 sidebarTitle = new H3("Projects");
         sidebarTitle.getStyle()
@@ -364,12 +364,14 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         card.getStyle()
             .set("padding", "0")
             .set("cursor", "pointer")
-            .set("margin-bottom", "8px");
+            .set("margin-bottom", "6px")
+            .set("flex-shrink", "0")
+            .set("min-height", "110px");
 
         // Gradient stripe at top
         Div gradientStripe = new Div();
         gradientStripe.getStyle()
-            .set("height", "8px")
+            .set("height", "6px")
             .set("width", "100%")
             .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))");
         card.add(gradientStripe);
@@ -378,7 +380,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         VerticalLayout content = new VerticalLayout();
         content.setSpacing(false);
         content.setPadding(false);
-        content.getStyle().set("padding", "24px 20px");
+        content.getStyle().set("padding", "16px 18px");
 
         HorizontalLayout top = new HorizontalLayout();
         top.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -388,8 +390,8 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         // Icon block
         Div iconBlock = new Div();
         iconBlock.getStyle()
-            .set("width", "52px")
-            .set("height", "52px")
+            .set("width", "44px")
+            .set("height", "44px")
             .set("border-radius", "var(--radius-md)")
             .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))")
             .set("display", "flex")
@@ -397,7 +399,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("justify-content", "center")
             .set("flex-shrink", "0");
         Icon projectIcon = new Icon(VaadinIcon.FOLDER);
-        projectIcon.setSize("26px");
+        projectIcon.setSize("22px");
         projectIcon.getStyle().set("color", "white");
         iconBlock.add(projectIcon);
 
@@ -408,13 +410,13 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         Span name = new Span(project.getName());
         name.getStyle()
             .set("font-weight", "700")
-            .set("font-size", "1.05rem")
+            .set("font-size", "0.95rem")
             .set("color", "var(--text-primary)")
             .set("word-break", "break-word");
 
         Span competition = new Span(project.getCompetition() != null ? project.getCompetition().getName() : "\u2014");
         competition.getStyle()
-            .set("font-size", "0.85rem")
+            .set("font-size", "0.8rem")
             .set("color", "var(--text-muted)")
             .set("word-break", "break-word");
 
@@ -426,7 +428,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         HorizontalLayout stats = new HorizontalLayout();
         stats.setWidthFull();
         stats.getStyle()
-            .set("margin-top", "14px")
+            .set("margin-top", "10px")
             .set("flex-wrap", "wrap")
             .set("gap", "8px");
 
@@ -434,21 +436,21 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
 
         Span commentsBadge = new Span("\ud83d\udcac " + commentCount);
         commentsBadge.getStyle()
-            .set("font-size", "0.85rem")
+            .set("font-size", "0.8rem")
             .set("font-weight", "600")
             .set("color", commentCount > 0 ? "var(--secondary)" : "var(--text-muted)")
             .set("background", commentCount > 0 ? "rgba(0, 206, 201, 0.1)" : "var(--surface-hover)")
-            .set("padding", "4px 12px")
+            .set("padding", "3px 10px")
             .set("border-radius", "var(--radius-sm)")
             .set("flex-shrink", "0");
 
         Span votesBadge = new Span("\ud83d\udd4a " + project.getTotalVotes() + " vote" + (project.getTotalVotes() != 1 ? "s" : ""));
         votesBadge.getStyle()
-            .set("font-size", "0.85rem")
+            .set("font-size", "0.8rem")
             .set("font-weight", "600")
             .set("color", project.getTotalVotes() > 0 ? "var(--primary)" : "var(--text-muted)")
             .set("background", project.getTotalVotes() > 0 ? "rgba(108, 92, 231, 0.08)" : "var(--surface-hover)")
-            .set("padding", "4px 12px")
+            .set("padding", "3px 10px")
             .set("border-radius", "var(--radius-sm)")
             .set("flex-shrink", "0");
 
