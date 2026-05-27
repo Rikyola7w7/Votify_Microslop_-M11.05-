@@ -108,8 +108,18 @@ public class CertificateServiceImpl implements CertificateService {
 
             // Generate participant certificates for all project owners/participants
             for (Project project : projects) {
-                // Use participants from the project
-                for (User participant : project.getParticipants()) {
+                List<User> participants = project.getParticipants();
+                if (participants.isEmpty()) {
+                    log.warn("Project {} has no participants, falling back to competition creator", project.getId());
+                    String creatorUsername = competition.getCreatedBy();
+                    if (creatorUsername != null && !creatorUsername.isEmpty()) {
+                        participants = userService.searchByUsernameIgnoreCase(creatorUsername)
+                                .map(List::of)
+                                .orElse(List.of());
+                    }
+                }
+
+                for (User participant : participants) {
                     for (Category category : project.getCategories()) {
                         try {
                             // Check if participant certificate already exists

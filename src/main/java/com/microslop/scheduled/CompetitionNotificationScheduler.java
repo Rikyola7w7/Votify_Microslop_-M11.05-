@@ -1,7 +1,6 @@
 package com.microslop.scheduled;
 
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
 import com.microslop.enums.NotificationType;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.UserRepository;
@@ -52,11 +51,11 @@ public class CompetitionNotificationScheduler {
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime oneHourFromNow = now.plusHours(1);
 
-            // Find all competitions in VOTING_OPEN status
-            List<Competition> openCompetitions = competitionRepository.findByStatus(CompetitionStatus.VOTING_OPEN);
+            // Find all competitions that can be concluded (ACTIVE, VOTING_OPEN, or PAUSED)
+            List<Competition> openCompetitions = competitionRepository.findActiveAndVotingOpen();
 
             if (openCompetitions.isEmpty()) {
-                log.debug("No competitions in VOTING_OPEN status");
+                log.debug("No active or voting-open competitions found");
                 return;
             }
 
@@ -89,8 +88,8 @@ public class CompetitionNotificationScheduler {
 
             LocalDateTime now = LocalDateTime.now();
 
-            // Find all competitions in VOTING_OPEN status that have passed their end date
-            List<Competition> openCompetitions = competitionRepository.findByStatus(CompetitionStatus.VOTING_OPEN);
+            // Find all competitions that can be concluded (ACTIVE, VOTING_OPEN, or PAUSED)
+            List<Competition> openCompetitions = competitionRepository.findActiveAndVotingOpen();
 
             for (Competition competition : openCompetitions) {
                 if (competition.getEndDate() != null && competition.getEndDate().isBefore(now)) {
