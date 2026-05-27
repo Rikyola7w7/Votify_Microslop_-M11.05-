@@ -17,98 +17,53 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 public class NotificationServiceImpl implements NotificationService, NotificationEventSubject {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationServiceImpl.class);
-    
+
     private final NotificationRepository notificationRepository;
     private final UserService userService;
-    private final List<NotificationEventObserver> notificationObservers;
-    
+    private final NotificationEventSubject observerService;
+
     public NotificationServiceImpl(NotificationRepository notificationRepository,
                                   UserService userService,
-                                  @Autowired(required = false) List<NotificationEventObserver> observers) {
+                                  NotificationEventSubject observerService) {
         this.notificationRepository = notificationRepository;
         this.userService = userService;
-        this.notificationObservers = new CopyOnWriteArrayList<>(
-            observers != null ? observers : new ArrayList<>()
-        );
+        this.observerService = observerService;
     }
-    
-    // ── Observer Management ────────────────────────────────────────────────
-    
+
+    // ── Observer Management (Delegated) ────────────────────────────────────
+
     @Override
     public void registerNotificationObserver(NotificationEventObserver observer) {
-        if (observer == null) {
-            throw new IllegalArgumentException("Observer cannot be null");
-        }
-        if (!notificationObservers.contains(observer)) {
-            notificationObservers.add(observer);
-            log.debug("Registered observer: {}", observer.getObserverName());
-        }
+        observerService.registerNotificationObserver(observer);
     }
-    
+
     @Override
     public void unregisterNotificationObserver(NotificationEventObserver observer) {
-        if (observer != null && notificationObservers.remove(observer)) {
-            log.debug("Unregistered observer: {}", observer.getObserverName());
-        }
+        observerService.unregisterNotificationObserver(observer);
     }
-    
+
     @Override
     public void notifyNotificationCreated(NotificationCreatedEvent event) {
-        if (event == null) {
-            log.warn("Cannot notify observers: event is null");
-            return;
-        }
-        for (NotificationEventObserver observer : notificationObservers) {
-            try {
-                observer.onNotificationCreated(event);
-            } catch (Exception e) {
-                log.error("Error notifying observer {} of notification created event: {}",
-                    observer.getObserverName(), e.getMessage(), e);
-            }
-        }
+        observerService.notifyNotificationCreated(event);
     }
-    
+
     @Override
     public void notifyNotificationRead(NotificationReadEvent event) {
-        if (event == null) {
-            log.warn("Cannot notify observers: event is null");
-            return;
-        }
-        for (NotificationEventObserver observer : notificationObservers) {
-            try {
-                observer.onNotificationRead(event);
-            } catch (Exception e) {
-                log.error("Error notifying observer {} of notification read event: {}",
-                    observer.getObserverName(), e.getMessage(), e);
-            }
-        }
+        observerService.notifyNotificationRead(event);
     }
-    
+
     @Override
     public void notifyNotificationDeleted(NotificationDeletedEvent event) {
-        if (event == null) {
-            log.warn("Cannot notify observers: event is null");
-            return;
-        }
-        for (NotificationEventObserver observer : notificationObservers) {
-            try {
-                observer.onNotificationDeleted(event);
-            } catch (Exception e) {
-                log.error("Error notifying observer {} of notification deleted event: {}",
-                    observer.getObserverName(), e.getMessage(), e);
-            }
-        }
+        observerService.notifyNotificationDeleted(event);
     }
-    
+
     // ── Notification CRUD Operations ────────────────────────────────────────
     
     @Override

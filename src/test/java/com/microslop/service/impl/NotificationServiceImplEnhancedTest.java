@@ -6,6 +6,7 @@ import com.microslop.event.NotificationCreatedEvent;
 import com.microslop.event.NotificationDeletedEvent;
 import com.microslop.event.NotificationReadEvent;
 import com.microslop.observer.observer.NotificationEventObserver;
+import com.microslop.observer.subject.NotificationEventSubject;
 import com.microslop.repository.NotificationRepository;
 import com.microslop.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,21 +41,25 @@ class NotificationServiceImplEnhancedTest {
     
     @Mock
     private NotificationRepository notificationRepository;
-    
+
     @Mock
     private UserService userService;
-    
+
+    private NotificationObserverService observerService;
+
     @Mock
     private NotificationEventObserver mockObserver;
-    
-    @InjectMocks
+
     private NotificationServiceImpl notificationService;
-    
+
     private User testUser;
     private List<Notification> testNotifications;
-    
+
     @BeforeEach
     void setUp() {
+        observerService = new NotificationObserverService();
+        notificationService = new NotificationServiceImpl(notificationRepository, userService, observerService);
+
         testUser = new User();
         testUser.setId(1L);
         testUser.setUsername("testuser");

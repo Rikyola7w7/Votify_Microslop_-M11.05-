@@ -2,7 +2,6 @@ package com.microslop.entity;
 
 import com.microslop.state.CompetitionState;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -55,30 +54,14 @@ public class Competition {
     @Column(name = "auto_vote", columnDefinition = "boolean default false")
     private Boolean autoVote = false;
 
-    @Column(name = "max_votes_per_person", columnDefinition = "integer default 1")
-    @Min(value = 1, message = "Max votes per person must be at least 1")
-    private Integer maxVotesPerPerson = 1;
-
     @Column(name = "judge_weight_multiplier", columnDefinition = "double default 1.0")
     private Double judgeWeightMultiplier = 1.0;
 
     @Column(name = "standard_user_weight_multiplier", columnDefinition = "double default 1.0")
     private Double standardUserWeightMultiplier = 1.0;
 
-    @Column(name = "vote_type", length = 20)
-    private String voteType = "NORMAL"; // NORMAL, CHECKLIST, SCALE
-
-    @Column(name = "scale_min")
-    private Integer scaleMin = 0;
-
-    @Column(name = "scale_max")
-    private Integer scaleMax = 10;
-
-    @Column(name = "voting_strategy_type", length = 50)
-    private String votingStrategyType = "ALL";
-
-    @Column(name = "ranking_strategy_type", length = 50)
-    private String rankingStrategyType = "WEIGHTED";
+    @Embedded
+    private VotingConfiguration votingConfiguration = new VotingConfiguration();
 
     public static com.microslop.builder.CompetitionBuilder builder() {
         return com.microslop.builder.CompetitionBuilder.builder();
@@ -248,12 +231,20 @@ public void addChecklistItem(ChecklistItem item) {
         this.autoVote = autoVote;
     }
 
+    public VotingConfiguration getVotingConfiguration() {
+        return votingConfiguration;
+    }
+
+    public void setVotingConfiguration(VotingConfiguration votingConfiguration) {
+        this.votingConfiguration = votingConfiguration;
+    }
+
     public Integer getMaxVotesPerPerson() {
-        return maxVotesPerPerson;
+        return votingConfiguration.getMaxVotesPerPerson();
     }
 
     public void setMaxVotesPerPerson(Integer maxVotesPerPerson) {
-        this.maxVotesPerPerson = maxVotesPerPerson;
+        this.votingConfiguration.setMaxVotesPerPerson(maxVotesPerPerson);
     }
 
     public Double getJudgeWeightMultiplier() {
@@ -273,42 +264,42 @@ public void addChecklistItem(ChecklistItem item) {
     }
 
     public String getVoteType() {
-        return voteType;
+        return votingConfiguration.getVoteType();
     }
 
     public void setVoteType(String voteType) {
-        this.voteType = voteType;
+        this.votingConfiguration.setVoteType(voteType);
     }
 
     public Integer getScaleMin() {
-        return scaleMin;
+        return votingConfiguration.getScaleMin();
     }
 
     public void setScaleMin(Integer scaleMin) {
-        this.scaleMin = scaleMin;
+        this.votingConfiguration.setScaleMin(scaleMin);
     }
 
     public Integer getScaleMax() {
-        return scaleMax;
+        return votingConfiguration.getScaleMax();
     }
 
     public void setScaleMax(Integer scaleMax) {
-        this.scaleMax = scaleMax;
+        this.votingConfiguration.setScaleMax(scaleMax);
     }
 
     public String getVotingStrategyType() {
-        return votingStrategyType;
+        return votingConfiguration.getVotingStrategyType();
     }
 
     public void setVotingStrategyType(String votingStrategyType) {
-        this.votingStrategyType = votingStrategyType;
+        this.votingConfiguration.setVotingStrategyType(votingStrategyType);
     }
 
     public String getRankingStrategyType() {
-        return rankingStrategyType;
+        return votingConfiguration.getRankingStrategyType();
     }
 
     public void setRankingStrategyType(String rankingStrategyType) {
-        this.rankingStrategyType = rankingStrategyType;
+        this.votingConfiguration.setRankingStrategyType(rankingStrategyType);
     }
 }
