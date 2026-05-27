@@ -32,4 +32,6 @@ public interface UserService {
     String getCurrentUsername();
 
     long getCurrentUserId();
+
+    boolean verifyCurrentPassword(String password);
 }
