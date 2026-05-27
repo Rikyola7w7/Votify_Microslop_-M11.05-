@@ -629,76 +629,16 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         return container;
     }
 
-    private HorizontalLayout buildListRow(Project p, int position, int staggerIndex, long voteCount) {
-         var wrapper = new VerticalLayout();
-         wrapper.setPadding(false);
-         wrapper.setSpacing(false);
-         wrapper.setWidthFull();
-
-         var row = new HorizontalLayout();
-        row.addClassName("votify-card-static");
-        row.addClassName("animate-fade-in");
-        row.addClassName("stagger-" + staggerIndex);
-        row.setWidthFull();
-        row.setAlignItems(FlexComponent.Alignment.CENTER);
-        row.getStyle()
-            .set("padding", "1rem 1.5rem")
-            .set("margin-bottom", "0");
-
-        var numBadge = new Div();
-        numBadge.getStyle()
-            .set("background", "var(--primary)")
-            .set("border-radius", "50%")
-            .set("width", "40px")
-            .set("height", "40px")
-            .set("display", "flex")
-            .set("align-items", "center")
-            .set("justify-content", "center")
-            .set("font-weight", "700")
-            .set("font-size", "1rem")
-            .set("color", "white")
-            .set("flex-shrink", "0");
-        numBadge.add(new Span(String.valueOf(position)));
-
-        var info = new VerticalLayout();
-        info.setPadding(false);
-        info.setSpacing(false);
-        info.getStyle().set("flex", "1");
-
-        var name = new Span(p.getName().toUpperCase());
-        name.getStyle()
-            .set("font-weight", "700")
-            .set("font-size", "0.95rem")
-            .set("color", "var(--text-primary)");
-
-         long votes = p.getManualVoteCount() != null
-             ? p.getManualVoteCount()
-             : voteCount;
-
-        var votesSpan = new Span(votes + " vote" + (votes != 1 ? "s" : ""));
-        votesSpan.getStyle()
-            .set("font-size", "0.8rem")
-            .set("color", "var(--text-muted)")
-            .set("margin-top", "0.15rem");
-
-        info.add(name, votesSpan);
-        row.add(numBadge, info);
-        wrapper.add(row);
-
-        if (modifyMode) {
-            wrapper.add(buildActionButtons(p));
-        }
-
-        // Cast to HorizontalLayout for compatibility - wrapper is returned as HorizontalLayout-like
-        var result = new HorizontalLayout();
-        result.setWidthFull();
-        result.setPadding(false);
-        result.setSpacing(false);
-        result.add(wrapper);
-        return result;
-    }
-
-    private HorizontalLayout buildListRow(Project p, int position, int staggerIndex, long totalVotes, double avgScore) {
+    /**
+     * Builds the base structure of a ranking list row (position badge + project info).
+     * Common layout for both vote-based and score-based ranking displays.
+     *
+     * @param project   the project to display
+     * @param position  the ranking position number
+     * @param staggerIndex the animation stagger index
+     * @return HorizontalLayout containing the position badge and project info
+     */
+    private HorizontalLayout buildListRowBase(Project project, int position, int staggerIndex) {
         var row = new HorizontalLayout();
         row.addClassName("votify-card-static");
         row.addClassName("animate-fade-in");
@@ -729,34 +669,83 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         info.setSpacing(false);
         info.getStyle().set("flex", "1");
 
-        var name = new Span(p.getName().toUpperCase());
+        var name = new Span(project.getName().toUpperCase());
         name.getStyle()
             .set("font-weight", "700")
             .set("font-size", "0.95rem")
             .set("color", "var(--text-primary)");
 
-        String voteText;
-        if (isChecklistMode) {
-            voteText = totalVotes + " checks";
-        } else if (isScaleMode) {
-            voteText = String.format("Score: %.1f", avgScore);
-        } else {
-            voteText = totalVotes + " votes";
-        }
-
-        var votesLabel = new Span(voteText);
-        votesLabel.getStyle()
-            .set("font-size", "0.85rem")
-            .set("font-weight", "600")
-            .set("color", "var(--secondary)")
-            .set("background", "rgba(0, 206, 201, 0.1)")
-            .set("padding", "2px 10px")
-            .set("border-radius", "var(--radius-pill)");
-
-        info.add(name, votesLabel);
+        info.add(name);
         row.add(numBadge, info);
         return row;
     }
+
+    private HorizontalLayout buildListRow(Project p, int position, int staggerIndex, long voteCount) {
+         var wrapper = new VerticalLayout();
+         wrapper.setPadding(false);
+         wrapper.setSpacing(false);
+         wrapper.setWidthFull();
+
+         var row = buildListRowBase(p, position, staggerIndex);
+
+          long votes = p.getManualVoteCount() != null
+              ? p.getManualVoteCount()
+              : voteCount;
+
+         var votesSpan = new Span(votes + " vote" + (votes != 1 ? "s" : ""));
+         votesSpan.getStyle()
+             .set("font-size", "0.8rem")
+             .set("color", "var(--text-muted)")
+             .set("margin-top", "0.15rem");
+
+         row.getChildren()
+             .filter(c -> c instanceof VerticalLayout)
+             .findFirst()
+             .ifPresent(info -> ((VerticalLayout) info).add(votesSpan));
+
+         wrapper.add(row);
+
+         if (modifyMode) {
+             wrapper.add(buildActionButtons(p));
+         }
+
+         // Cast to HorizontalLayout for compatibility - wrapper is returned as HorizontalLayout-like
+         var result = new HorizontalLayout();
+         result.setWidthFull();
+         result.setPadding(false);
+         result.setSpacing(false);
+         result.add(wrapper);
+         return result;
+     }
+
+     private HorizontalLayout buildListRow(Project p, int position, int staggerIndex, long totalVotes, double avgScore) {
+         var row = buildListRowBase(p, position, staggerIndex);
+
+         String voteText;
+         if (isChecklistMode) {
+             voteText = totalVotes + " checks";
+         } else if (isScaleMode) {
+             voteText = String.format("Score: %.1f", avgScore);
+         } else {
+             voteText = totalVotes + " votes";
+         }
+
+         var votesLabel = new Span(voteText);
+         votesLabel.getStyle()
+             .set("font-size", "0.85rem")
+             .set("font-weight", "600")
+             .set("color", "var(--secondary)")
+             .set("background", "rgba(0, 206, 201, 0.1)")
+             .set("padding", "2px 10px")
+             .set("border-radius", "var(--radius-pill)");
+
+         row.getChildren()
+             .filter(c -> c instanceof VerticalLayout)
+             .findFirst()
+             .ifPresent(info -> ((VerticalLayout) info).add(votesLabel));
+
+         return row;
+     }
 
     private void showReclassifyDialog(Project project) {
         var dialog = new Dialog();
