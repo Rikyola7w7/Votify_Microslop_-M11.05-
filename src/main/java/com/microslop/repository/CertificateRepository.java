@@ -45,10 +45,10 @@ public interface CertificateRepository extends JpaRepository<Certificate, Long> 
     List<Certificate> findByUserIdAndCertificateTypeIn(Long userId, List<CertificateTypeEntity> types);
 
     /**
-     * Check if a certificate already exists with the given criteria
+     * Check if a certificate already exists with the given criteria, including category
      */
-    Optional<Certificate> findByUserIdAndCompetitionIdAndProjectIdAndCertificateTypeAndRankingType(
-            Long userId, Long competitionId, Long projectId, CertificateTypeEntity certificateType, RankingTypeEntity rankingType);
+    Optional<Certificate> findByUserIdAndCompetitionIdAndProjectIdAndCategoryIdAndCertificateTypeAndRankingType(
+            Long userId, Long competitionId, Long projectId, Long categoryId, CertificateTypeEntity certificateType, RankingTypeEntity rankingType);
 
     /**
      * Find all winner certificates for a competition and ranking type

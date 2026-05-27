@@ -101,7 +101,7 @@ public class CertificatesView extends VerticalLayout implements BeforeEnterObser
             .set("border-bottom", "1px solid var(--border-color)");
 
         typeFilter = new ComboBox<>("Certificate Type");
-        typeFilter.setItems("All", "Participant", "Judge Winner", "Popular Winner");
+        typeFilter.setItems("All", "Participant", "Winner");
         typeFilter.setValue("All");
         typeFilter.setWidth("200px");
         typeFilter.addValueChangeListener(e -> filterAndDisplayCertificates());
@@ -175,8 +175,12 @@ public class CertificatesView extends VerticalLayout implements BeforeEnterObser
             .filter(cert -> {
                 // Type filter
                 if (typeValue != null && !typeValue.equals("All")) {
-                    String typeDisplay = cert.getCertificateType().getDisplayName();
-                    if (!typeDisplay.equals(typeValue)) {
+                    boolean isWinnerFilter = typeValue.equals("Winner");
+                    boolean isParticipantFilter = typeValue.equals("Participant");
+                    
+                    if (isWinnerFilter && !cert.isWinnerCertificate()) {
+                        return false;
+                    } else if (isParticipantFilter && !cert.isParticipantCertificate()) {
                         return false;
                     }
                 }
@@ -226,46 +230,10 @@ public class CertificatesView extends VerticalLayout implements BeforeEnterObser
             for (Certificate certificate : certificates) {
                 CertificateCardComponent card = new CertificateCardComponent(
                     certificate,
-                    pdfGenerator,
-                    this::downloadCertificate
+                    pdfGenerator
                 );
                 certificatesContainer.add(card);
             }
-        }
-    }
-
-    private void downloadCertificate(Certificate certificate) {
-        try {
-            byte[] pdfBytes = pdfGenerator.generateCertificatePdf(certificate);
-            String filename = generateFilename(certificate);
-            
-            StreamResource resource = new StreamResource(filename, 
-                () -> new ByteArrayInputStream(pdfBytes));
-            resource.setContentType("application/pdf");
-            
-            // Create a hidden download button and trigger download
-            Button downloadButton = new Button();
-            downloadButton.getElement().setAttribute("download", filename);
-            getElement().appendChild(downloadButton.getElement());
-            
-            // Use Vaadin's built-in download mechanism
-            com.vaadin.flow.server.VaadinSession.getCurrent()
-                .getResourceRegistry()
-                .registerResource(resource);
-            
-            downloadButton.getElement().executeJs(
-                "const a = document.createElement('a'); " +
-                "a.href = $0; " +
-                "a.download = $1; " +
-                "document.body.appendChild(a); " +
-                "a.click(); " +
-                "document.body.removeChild(a);",
-                resource, filename
-            );
-            
-            showSuccess("Certificate downloaded successfully");
-        } catch (Exception e) {
-            showError("Error downloading certificate: " + e.getMessage());
         }
     }
 

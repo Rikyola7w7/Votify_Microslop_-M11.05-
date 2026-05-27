@@ -106,7 +106,31 @@ public class CertificateServiceImpl implements CertificateService {
                 return;
             }
 
-            // Generate participant certificates for all project owners/participants
+            // Track winning categories per project to avoid giving participant certs for those categories
+            Set<String> winningProjectCategories = new HashSet<>();
+
+            // Generate winner certificates for each category and ranking type FIRST
+            for (Category category : categories) {
+                // Find judge ranking winner for this category
+                List<Project> judgeRanking = projectRepository.findJudgeRankingByCategory(category.getId());
+                if (!judgeRanking.isEmpty()) {
+                    Project judgesWinner = judgeRanking.get(0);
+                    winningProjectCategories.add(judgesWinner.getId() + "-" + category.getId());
+                    certificatesGenerated += createWinnerCertificate(judgesWinner, competition, category,
+                            judgeWinnerType, judgesRanking);
+                }
+
+                // Find popular ranking winner for this category
+                List<Project> popularRankingList = projectRepository.findPopularRankingByCategory(category.getId());
+                if (!popularRankingList.isEmpty()) {
+                    Project popularWinner = popularRankingList.get(0);
+                    winningProjectCategories.add(popularWinner.getId() + "-" + category.getId());
+                    certificatesGenerated += createWinnerCertificate(popularWinner, competition, category,
+                            popularWinnerType, popularRanking);
+                }
+            }
+
+            // Generate participant certificates for all project owners/participants in categories they DID NOT win
             for (Project project : projects) {
                 List<User> participants = project.getParticipants();
                 if (participants.isEmpty()) {
@@ -121,11 +145,16 @@ public class CertificateServiceImpl implements CertificateService {
 
                 for (User participant : participants) {
                     for (Category category : project.getCategories()) {
+                        // Skip if they won in this specific category for this project
+                        if (winningProjectCategories.contains(project.getId() + "-" + category.getId())) {
+                            continue;
+                        }
+                        
                         try {
                             // Check if participant certificate already exists
                             Optional<Certificate> existing = certificateRepository
-                                    .findByUserIdAndCompetitionIdAndProjectIdAndCertificateTypeAndRankingType(
-                                            participant.getId(), competitionId, project.getId(),
+                                    .findByUserIdAndCompetitionIdAndProjectIdAndCategoryIdAndCertificateTypeAndRankingType(
+                                            participant.getId(), competitionId, project.getId(), category.getId(),
                                             participantType, judgesRanking);
 
                             if (!existing.isPresent()) {
@@ -134,8 +163,9 @@ public class CertificateServiceImpl implements CertificateService {
                                 cert.setCertificateType(participantType);
                                 certificateRepository.save(cert);
                                 certificatesGenerated++;
-                                log.debug("Created participant certificate for user {} in project {}", 
-                                        participant.getId(), project.getId());
+                                sendCertificateNotification(participant, competition, category, participantType, judgesRanking);
+                                log.debug("Created participant certificate for user {} in project {} category {}", 
+                                        participant.getId(), project.getId(), category.getName());
                             }
                         } catch (Exception e) {
                             log.error("Error creating participant certificate for project {}: {}", 
@@ -145,24 +175,7 @@ public class CertificateServiceImpl implements CertificateService {
                 }
             }
 
-            // Generate winner certificates for each category and ranking type
-            for (Category category : categories) {
-                // Find judge ranking winner for this category
-                List<Project> judgeRanking = projectRepository.findJudgeRankingByCategory(category.getId());
-                if (!judgeRanking.isEmpty()) {
-                    Project judgesWinner = judgeRanking.get(0);
-                    certificatesGenerated += createWinnerCertificate(judgesWinner, competition, category,
-                            judgeWinnerType, judgesRanking);
-                }
 
-                // Find popular ranking winner for this category
-                List<Project> popularRankingList = projectRepository.findPopularRankingByCategory(category.getId());
-                if (!popularRankingList.isEmpty()) {
-                    Project popularWinner = popularRankingList.get(0);
-                    certificatesGenerated += createWinnerCertificate(popularWinner, competition, category,
-                            popularWinnerType, popularRanking);
-                }
-            }
 
             log.info("Successfully generated {} certificates for competition {}", certificatesGenerated, competitionId);
 
@@ -174,49 +187,51 @@ public class CertificateServiceImpl implements CertificateService {
 
     /**
      * Create a winner certificate and send notification
+     * Notifications are sent only to participants who are part of the winning project
+     * (including admin if they are a project participant)
      */
-    private int createWinnerCertificate(Project project, Competition competition, Category category,
-                                       CertificateTypeEntity certificateType, RankingTypeEntity rankingType) {
-        // For winner certificates, create one for each participant/owner of the project
-        int created = 0;
+     private int createWinnerCertificate(Project project, Competition competition, Category category,
+                                        CertificateTypeEntity certificateType, RankingTypeEntity rankingType) {
+         // For winner certificates, create one for each participant/owner of the project
+         int created = 0;
 
-        try {
-            for (User participant : project.getParticipants()) {
-                // Check if certificate already exists
-                Optional<Certificate> existing = certificateRepository
-                        .findByUserIdAndCompetitionIdAndProjectIdAndCertificateTypeAndRankingType(
-                                participant.getId(), competition.getId(), project.getId(),
-                                certificateType, rankingType);
+         try {
+             for (User participant : project.getParticipants()) {
+                 // Check if certificate already exists
+                 Optional<Certificate> existing = certificateRepository
+                         .findByUserIdAndCompetitionIdAndProjectIdAndCategoryIdAndCertificateTypeAndRankingType(
+                                 participant.getId(), competition.getId(), project.getId(), category.getId(),
+                                 certificateType, rankingType);
 
-                if (!existing.isPresent()) {
-                    Certificate cert = new Certificate(
-                            participant, competition, project, category, certificateType, rankingType, 1);
-                    certificateRepository.save(cert);
+                 if (!existing.isPresent()) {
+                     Certificate cert = new Certificate(
+                             participant, competition, project, category, certificateType, rankingType, 1);
+                     certificateRepository.save(cert);
 
-                    // Send CERTIFICATE_SENT notification
-                    sendCertificateNotification(participant, competition, certificateType, rankingType);
+                     // Send CERTIFICATE_SENT notification
+                     sendCertificateNotification(participant, competition, category, certificateType, rankingType);
 
-                    log.debug("Created winner certificate for user {} in project {} ({})",
-                            participant.getId(), project.getId(), certificateType.getDisplayName());
-                    created++;
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error creating winner certificate for project {}: {}", project.getId(), e.getMessage());
-        }
+                     log.debug("Created winner certificate for user {} in project {} ({})",
+                             participant.getId(), project.getId(), certificateType.getDisplayName());
+                     created++;
+                 }
+             }
+         } catch (Exception e) {
+             log.error("Error creating winner certificate for project {}: {}", project.getId(), e.getMessage());
+         }
 
-        return created;
-    }
+         return created;
+     }
 
     /**
      * Send certificate notification to user
      */
-    private void sendCertificateNotification(User user, Competition competition,
+    private void sendCertificateNotification(User user, Competition competition, Category category,
                                             CertificateTypeEntity certificateType, RankingTypeEntity rankingType) {
         try {
             String title = "Certificate Received";
             String message = "You have received a " + certificateType.getDisplayName() +
-                           " from the competition '" + competition.getName() + "'";
+                           " for category '" + category.getName() + "' from the competition '" + competition.getName() + "'";
 
             notificationService.createNotification(user, title, message, NotificationType.CERTIFICATE_SENT.getCode());
             log.debug("Sent CERTIFICATE_SENT notification to user {} for competition {}", user.getId(), competition.getId());

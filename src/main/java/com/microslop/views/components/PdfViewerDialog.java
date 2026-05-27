@@ -73,12 +73,12 @@ public class PdfViewerDialog extends Dialog {
             .set("overflow", "auto");
 
         try {
-            StreamResource pdfResource = new StreamResource("certificate.pdf",
-                () -> new ByteArrayInputStream(pdfBytes));
+            com.vaadin.flow.server.StreamResource pdfResource = new com.vaadin.flow.server.StreamResource("certificate.pdf",
+                () -> new java.io.ByteArrayInputStream(pdfBytes));
             pdfResource.setContentType("application/pdf");
 
             IFrame pdfFrame = new IFrame();
-            pdfFrame.setSrc(pdfResource);
+            pdfFrame.getElement().setAttribute("src", pdfResource);
             pdfFrame.setSizeFull();
             pdfFrame.getStyle()
                 .set("border", "none")
@@ -116,32 +116,16 @@ public class PdfViewerDialog extends Dialog {
         Button downloadBtn = new Button("Download PDF");
         downloadBtn.setIcon(new Icon(VaadinIcon.DOWNLOAD));
         downloadBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        downloadBtn.addClickListener(e -> downloadPdf());
+        
+        com.vaadin.flow.component.html.Anchor downloadAnchor = new com.vaadin.flow.component.html.Anchor(
+            new StreamResource(generateFilename(), () -> new ByteArrayInputStream(pdfBytes)), "");
+        downloadAnchor.getElement().setAttribute("download", true);
+        downloadAnchor.add(downloadBtn);
 
-        footerLayout.add(downloadBtn, closeBtn);
+        footerLayout.add(downloadAnchor, closeBtn);
         content.add(footerLayout);
 
         add(content);
-    }
-
-    private void downloadPdf() {
-        try {
-            String filename = generateFilename();
-            
-            StreamResource resource = new StreamResource(filename,
-                () -> new ByteArrayInputStream(pdfBytes));
-            resource.setContentType("application/pdf");
-            
-            Button hiddenDownloadBtn = new Button();
-            hiddenDownloadBtn.getElement().setAttribute("download", filename);
-            getElement().appendChild(hiddenDownloadBtn.getElement());
-            
-            com.vaadin.flow.component.notification.Notification.show("Certificate downloaded successfully")
-                .addThemeVariants(com.vaadin.flow.component.notification.NotificationVariant.LUMO_SUCCESS);
-        } catch (Exception e) {
-            com.vaadin.flow.component.notification.Notification.show("Error downloading certificate: " + e.getMessage())
-                .addThemeVariants(com.vaadin.flow.component.notification.NotificationVariant.LUMO_ERROR);
-        }
     }
 
     private String generateFilename() {

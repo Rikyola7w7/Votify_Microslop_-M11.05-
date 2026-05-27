@@ -247,6 +247,24 @@ public class NotificationServiceImpl implements NotificationService, Notificatio
     }
     
     @Override
+    public void markAsHandled(Long notificationId) {
+        Optional<Notification> notification = notificationRepository.findById(notificationId);
+        if (notification.isPresent()) {
+            Notification notif = notification.get();
+            if (!notif.getType().endsWith("_HANDLED")) {
+                notif.setType(notif.getType() + "_HANDLED");
+                notif.setIsRead(true);
+                Notification updatedNotification = notificationRepository.save(notif);
+                
+                NotificationReadEvent event = new NotificationReadEvent(updatedNotification, notif.getUser().getUsername());
+                notifyNotificationRead(event);
+                
+                log.info("Notification {} marked as handled for user {}", notificationId, notif.getUser().getUsername());
+            }
+        }
+    }
+    
+    @Override
     public void bulkDeleteNotifications(List<Long> notificationIds) {
         if (notificationIds == null || notificationIds.isEmpty()) {
             return;
