@@ -863,3 +863,27 @@ a:active {
   border: 6px solid transparent;
   border-right-color: var(--dark);
 }
+
+/* ── Inline Spinner for Dialogs ──────────────────────────── */
+@keyframes votify-wheel-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.votify-wheel-spinner-inline {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
+  border-right-color: var(--primary-light);
+  animation: votify-wheel-spin 0.8s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.votify-loading-dialog {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

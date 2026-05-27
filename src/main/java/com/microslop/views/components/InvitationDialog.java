@@ -17,6 +17,9 @@ public class InvitationDialog extends Dialog {
     private final InvitationService invitationService;
     private final Long invitationId;
     private final Runnable onComplete;
+    private Button acceptBtn;
+    private Button refuseBtn;
+    private Span actionSpinner;
 
     public InvitationDialog(InvitationService invitationService, Long invitationId, Runnable onComplete) {
         this.invitationService = invitationService;
@@ -108,15 +111,19 @@ public class InvitationDialog extends Dialog {
         closeBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         if (invitation.isPending()) {
-            Button acceptBtn = new Button("Accept", e -> handleAction(true));
+            acceptBtn = new Button("Accept", e -> handleAction(true));
             acceptBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
             acceptBtn.getStyle().set("cursor", "pointer");
 
-            Button refuseBtn = new Button("Refuse", e -> handleAction(false));
+            refuseBtn = new Button("Refuse", e -> handleAction(false));
             refuseBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
             refuseBtn.getStyle().set("cursor", "pointer");
 
-            footer.add(closeBtn, refuseBtn, acceptBtn);
+            actionSpinner = new Span();
+            actionSpinner.addClassName("votify-wheel-spinner-inline");
+            actionSpinner.getStyle().set("display", "none");
+
+            footer.add(closeBtn, actionSpinner, refuseBtn, acceptBtn);
         } else {
             footer.add(closeBtn);
         }
@@ -125,6 +132,10 @@ public class InvitationDialog extends Dialog {
     }
 
     private void handleAction(boolean accept) {
+        acceptBtn.setEnabled(false);
+        refuseBtn.setEnabled(false);
+        actionSpinner.getStyle().remove("display");
+
         try {
             if (accept) {
                 invitationService.acceptInvitation(invitationId);
@@ -142,6 +153,10 @@ public class InvitationDialog extends Dialog {
         } catch (Exception e) {
             Notification.show("Error: " + e.getMessage(), 4000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        } finally {
+            acceptBtn.setEnabled(true);
+            refuseBtn.setEnabled(true);
+            actionSpinner.getStyle().set("display", "none");
         }
     }
 }

@@ -4,8 +4,10 @@ import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Competition;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.UserService;
+import com.microslop.views.components.SpinnerLoadingComponent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
@@ -124,10 +126,35 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
             return;
         }
 
+        SpinnerLoadingComponent loading = new SpinnerLoadingComponent("Loading competitions...");
+        competitionsContainer.add(loading);
+
+        Div cardsGrid = new Div();
+        cardsGrid.getElement().setAttribute("id", "admin-cards-grid");
+        cardsGrid.setWidthFull();
+        cardsGrid.getStyle()
+            .set("display", "none")
+            .set("flex-wrap", "wrap")
+            .set("gap", "24px")
+            .set("justify-content", "center");
+
         int index = 1;
         for (Competition competition : competitions) {
-            buildCompetitionCard(competition, index++);
+            buildCompetitionCard(competition, index++, cardsGrid);
         }
+        competitionsContainer.add(cardsGrid);
+
+        getElement().executeJs(
+            "setTimeout(function() {" +
+            "  var loadings = document.querySelectorAll('.votify-loading');" +
+            "  loadings.forEach(function(l) { l.style.opacity = '0'; l.style.transition = 'opacity 0.15s ease'; });" +
+            "  setTimeout(function() {" +
+            "    var loadings = document.querySelectorAll('.votify-loading');" +
+            "    loadings.forEach(function(l) { l.style.display = 'none'; });" +
+            "    var grid = document.getElementById('admin-cards-grid');" +
+            "    if (grid) { grid.style.display = 'flex'; }" +
+            "  }, 150);" +
+            "}, 750)");
     }
 
     private VerticalLayout buildEmptyState() {
@@ -148,7 +175,7 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         return emptyLayout;
     }
 
-    private void buildCompetitionCard(Competition competition, int index) {
+    private void buildCompetitionCard(Competition competition, int index, Div container) {
         VerticalLayout cardLayout = new VerticalLayout();
         cardLayout.addClassName("votify-card-static");
         cardLayout.addClassName("animate-fade-in");
@@ -231,7 +258,7 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         actionsLayout.add(configureButton, manageButton);
 
         cardLayout.add(titleRow, detailsLayout, actionsLayout);
-        competitionsContainer.add(cardLayout);
+        container.add(cardLayout);
     }
 
     private String getLoggedInUsername() {

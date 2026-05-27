@@ -8,7 +8,7 @@ import com.microslop.service.CompetitionService;
 import com.microslop.service.NotificationService;
 import com.microslop.service.PendingProjectSubmissionService;
 import com.microslop.service.UserService;
-import com.microslop.views.components.BallotLoadingComponent;
+import com.microslop.views.components.SpinnerLoadingComponent;
 import com.microslop.views.components.CategoryCard;
 import com.microslop.views.components.CreateProjectDialog;
 import com.vaadin.flow.component.Unit;
@@ -367,7 +367,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         gridContainer.setSpacing(false);
 
         // Show loading
-        BallotLoadingComponent loading = new BallotLoadingComponent("Loading categories...");
+        SpinnerLoadingComponent loading = new SpinnerLoadingComponent("Loading categories...");
         gridContainer.add(loading);
 
         // Build grid but hidden

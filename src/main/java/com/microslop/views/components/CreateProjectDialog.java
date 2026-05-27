@@ -40,6 +40,8 @@ public class CreateProjectDialog extends Dialog {
     private TextField inviteField;
     private VerticalLayout invitedParticipantsContainer;
     private Map<Long, User> invitedParticipants; // userId -> User mapping
+    private Button submitBtn;
+    private Span submitSpinner;
 
     public CreateProjectDialog(PendingProjectSubmissionService pendingProjectSubmissionService,
                                 UserService userService,
@@ -209,11 +211,15 @@ public class CreateProjectDialog extends Dialog {
         Button cancelBtn = new Button("Cancel", e -> close());
         cancelBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        Button submitBtn = new Button("Submit", e -> handleSubmit());
+        submitBtn = new Button("Submit", e -> handleSubmit());
         submitBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         submitBtn.addClassName("votify-btn-primary");
 
-        footer.add(cancelBtn, submitBtn);
+        submitSpinner = new Span();
+        submitSpinner.addClassName("votify-wheel-spinner-inline");
+        submitSpinner.getStyle().set("display", "none");
+
+        footer.add(cancelBtn, submitSpinner, submitBtn);
         return footer;
     }
 
@@ -248,6 +254,9 @@ public class CreateProjectDialog extends Dialog {
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
+
+        submitBtn.setEnabled(false);
+        submitSpinner.getStyle().remove("display");
 
         try {
             String categoryIds = selectedCategories.stream()
@@ -290,6 +299,9 @@ public class CreateProjectDialog extends Dialog {
         } catch (Exception e) {
             Notification.show("Error submitting project: " + e.getMessage(), 4000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        } finally {
+            submitBtn.setEnabled(true);
+            submitSpinner.getStyle().set("display", "none");
         }
     }
 }

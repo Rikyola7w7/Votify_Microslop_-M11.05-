@@ -27,6 +27,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import com.microslop.service.UserService;
+import com.microslop.views.components.SpinnerLoadingComponent;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
@@ -55,6 +56,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     private Long competitionId;
     private Long selectedCategoryId;  // null means "General" (all projects)
     private VerticalLayout bodyContainer;  // Reference to the body for easy updates
+    private Div bodyWrapper;
     private boolean isChecklistMode = false;
     private boolean isScaleMode = false;
 
@@ -175,21 +177,39 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     private void updateRanking() {
         List<Project> ranking;
         if (selectedCategoryId == null) {
-            // Get general ranking
             ranking = projectService.getRanking(competitionId);
         } else {
-            // Get ranking by category
             ranking = projectService.getRankingByCategory(selectedCategoryId);
         }
-        
-        // Remove old body if present
-        if (bodyContainer != null) {
-            remove(bodyContainer);
+
+        if (bodyWrapper != null) {
+            remove(bodyWrapper);
         }
-        
-        // Create and add new body
+
+        bodyWrapper = new Div();
+        bodyWrapper.setWidthFull();
+
+        SpinnerLoadingComponent loading = new SpinnerLoadingComponent("Loading ranking...");
+        bodyWrapper.add(loading);
+
         bodyContainer = buildBody(ranking);
-        add(bodyContainer);
+        bodyContainer.getElement().setAttribute("id", "comp-body");
+        bodyContainer.getStyle().set("display", "none");
+        bodyWrapper.add(bodyContainer);
+
+        add(bodyWrapper);
+
+        getElement().executeJs(
+            "setTimeout(function() {" +
+            "  var loadings = document.querySelectorAll('.votify-loading');" +
+            "  loadings.forEach(function(l) { l.style.opacity = '0'; l.style.transition = 'opacity 0.15s ease'; });" +
+            "  setTimeout(function() {" +
+            "    var loadings = document.querySelectorAll('.votify-loading');" +
+            "    loadings.forEach(function(l) { l.style.display = 'none'; });" +
+            "    var body = document.getElementById('comp-body');" +
+            "    if (body) { body.style.display = 'flex'; }" +
+            "  }, 150);" +
+            "}, 750)");
     }
 
     // ── Header ────────────────────────────────────────────────────────────────

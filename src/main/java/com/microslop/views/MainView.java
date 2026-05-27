@@ -3,7 +3,7 @@ package com.microslop.views;
 import com.microslop.entity.Competition;
 import com.microslop.service.CompetitionService;
 import com.microslop.views.components.CompetitionCardComponent;
-import com.microslop.views.components.BallotLoadingComponent;
+import com.microslop.views.components.SpinnerLoadingComponent;
 import com.microslop.base.ui.MainLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
@@ -209,7 +209,7 @@ public class MainView extends VerticalLayout {
         }
         
         // Show loading animation
-        BallotLoadingComponent loading = new BallotLoadingComponent("Loading competitions...");
+        SpinnerLoadingComponent loading = new SpinnerLoadingComponent("Loading competitions...");
         cardsContainer.add(loading);
         
         // Add cards with stagger animation - CSS handles timing

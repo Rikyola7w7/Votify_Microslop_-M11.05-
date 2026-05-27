@@ -18,6 +18,7 @@ import com.microslop.service.VoterService;
 import com.microslop.views.components.ChecklistVotingDialog;
 import com.microslop.views.components.CelebrationAnimation;
 import com.microslop.views.components.CommentAnimation;
+import com.microslop.views.components.SpinnerLoadingComponent;
 import com.microslop.views.components.ViewHeader;
 import com.microslop.views.components.VoteSuccessAnimation;
 import com.microslop.views.components.VoteQuickAnimation;
@@ -195,8 +196,23 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private void buildUi() {
         this.currentUser = userService.getCurrentUser();
         var projects = projectService.listByCompetition(competitionId);
-        add(new ViewHeader("VOTING", userService, "competition/" + competitionId + "/categories"));
-        add(buildBody(projects, currentCompetition.getName()));
+
+        add(new SpinnerLoadingComponent("Loading voting page..."));
+
+        Div contentWrapper = new Div();
+        contentWrapper.setId("voting-content");
+        contentWrapper.getStyle().set("display", "none");
+        contentWrapper.add(new ViewHeader("VOTING", userService, "competition/" + competitionId + "/categories"));
+        contentWrapper.add(buildBody(projects, currentCompetition.getName()));
+        add(contentWrapper);
+
+        getElement().executeJs(
+            "setTimeout(function() {" +
+            "  var loadings = document.querySelectorAll('.votify-loading');" +
+            "  loadings.forEach(function(l) { l.style.display = 'none'; });" +
+            "  var content = document.getElementById('voting-content');" +
+            "  if (content) { content.style.display = 'block'; }" +
+            "}, 750)");
     }
 
     // ── Utility Methods ────────────────────────────────────────────────────

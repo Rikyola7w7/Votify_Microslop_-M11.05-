@@ -8,6 +8,7 @@ import com.microslop.repository.ProjectCommentRepository;
 import com.microslop.repository.VoteRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.views.components.CommentCardComponent;
+import com.microslop.views.components.SpinnerLoadingComponent;
 import com.microslop.base.ui.MainLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
@@ -129,6 +130,14 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
 
             commentsContainer.removeAll();
 
+            SpinnerLoadingComponent loading = new SpinnerLoadingComponent("Loading project...");
+            commentsContainer.add(loading);
+
+            Div content = new Div();
+            content.getElement().setAttribute("id", "project-content");
+            content.getStyle().set("display", "none");
+            content.setWidthFull();
+
             Div projectTitleWrapper = new Div();
             projectTitleWrapper.addClassName("animate-slide-up");
             projectTitleWrapper.setWidthFull();
@@ -142,7 +151,7 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
                 .set("display", "block");
 
             projectTitleWrapper.add(projectTitle);
-            commentsContainer.add(projectTitleWrapper);
+            content.add(projectTitleWrapper);
 
             List<Vote> votes = voteRepository.findByProjectId(projectId);
             List<ProjectComment> comments = projectCommentRepository.findByProjectId(projectId);
@@ -157,7 +166,7 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
                         wrapper.addClassName("animate-fade-in");
                         wrapper.addClassName("stagger-" + Math.min(staggerIndex++, 8));
                         wrapper.setWidthFull();
-                        commentsContainer.add(wrapper);
+                        content.add(wrapper);
                         hasComments = true;
                     }
                 }
@@ -169,14 +178,40 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
                     wrapper.addClassName("animate-fade-in");
                     wrapper.addClassName("stagger-" + Math.min(staggerIndex++, 8));
                     wrapper.setWidthFull();
-                    commentsContainer.add(wrapper);
+                    content.add(wrapper);
                     hasComments = true;
                 }
             }
 
             if (!hasComments) {
-                showNoCommentsMessage();
+                Div emptyState = new Div();
+                emptyState.addClassName("empty-state");
+                emptyState.addClassName("animate-fade-in");
+
+                Span icon = new Span();
+                icon.addClassName("empty-state-icon");
+                icon.addClassName("animate-float");
+                icon.setText("\uD83D\uDCAC");
+
+                Span title = new Span("No comments yet");
+                title.addClassName("empty-state-title");
+
+                Span message = new Span("Start the discussion by leaving a comment.");
+                message.addClassName("empty-state-message");
+
+                emptyState.add(icon, title, message);
+                content.add(emptyState);
             }
+
+            commentsContainer.add(content);
+
+            getElement().executeJs(
+                "setTimeout(function() {" +
+                "  var loadings = document.querySelectorAll('.votify-loading');" +
+                "  loadings.forEach(function(l) { l.style.display = 'none'; });" +
+                "  var content = document.getElementById('project-content');" +
+                "  if (content) { content.style.display = 'block'; }" +
+                "}, 750)");
         } catch (Exception e) {
             showErrorNotification("Error loading project: " + e.getMessage());
         }

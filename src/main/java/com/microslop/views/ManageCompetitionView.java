@@ -15,6 +15,7 @@ import com.microslop.service.InvitationService;
 import com.microslop.service.NotificationService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
+import com.microslop.views.components.SpinnerLoadingComponent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
@@ -126,6 +127,8 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     private void buildUI() {
         removeAll();
         setAlignItems(FlexComponent.Alignment.CENTER);
+
+        add(new SpinnerLoadingComponent("Loading..."));
 
         Div scrollContainer = new Div();
         scrollContainer.setWidthFull();
@@ -266,7 +269,19 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         }
 
         scrollContainer.add(header, mainContent);
-        add(scrollContainer);
+
+        Div contentWrapper = new Div(scrollContainer);
+        contentWrapper.setId("manage-content");
+        contentWrapper.getStyle().set("display", "none");
+        add(contentWrapper);
+
+        getElement().executeJs(
+            "setTimeout(function() {" +
+            "  var loadings = document.querySelectorAll('.votify-loading');" +
+            "  loadings.forEach(function(l) { l.style.display = 'none'; });" +
+            "  var content = document.getElementById('manage-content');" +
+            "  if (content) { content.style.display = 'block'; }" +
+            "}, 750)");
     }
 
     private void updateUIState() {

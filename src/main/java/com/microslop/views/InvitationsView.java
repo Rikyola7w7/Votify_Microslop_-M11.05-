@@ -4,6 +4,7 @@ import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Invitation;
 import com.microslop.service.InvitationService;
 import com.microslop.service.NotificationService;
+import com.microslop.views.components.SpinnerLoadingComponent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
@@ -104,9 +105,27 @@ public class InvitationsView extends VerticalLayout implements BeforeEnterObserv
             return;
         }
 
+        SpinnerLoadingComponent loading = new SpinnerLoadingComponent("Loading invitations...");
+        invitationsContainer.add(loading);
+
+        Div content = new Div();
+        content.getElement().setAttribute("id", "invitations-content");
+        content.getStyle().set("display", "none");
+        content.setWidthFull();
+
         for (Invitation invitation : allInvitations) {
-            invitationsContainer.add(buildInvitationCard(invitation));
+            content.add(buildInvitationCard(invitation));
         }
+
+        invitationsContainer.add(content);
+
+        getElement().executeJs(
+            "setTimeout(function() {" +
+            "  var loadings = document.querySelectorAll('.votify-loading');" +
+            "  loadings.forEach(function(l) { l.style.display = 'none'; });" +
+            "  var content = document.getElementById('invitations-content');" +
+            "  if (content) { content.style.display = 'flex'; content.style.flexDirection = 'column'; }" +
+            "}, 750)");
     }
 
     private Div buildInvitationCard(Invitation invitation) {

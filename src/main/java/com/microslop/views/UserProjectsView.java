@@ -6,6 +6,7 @@ import com.microslop.entity.User;
 import com.microslop.service.ProjectService;
 import com.microslop.service.VoteService;
 import com.microslop.views.components.ProjectCardComponent;
+import com.microslop.views.components.SpinnerLoadingComponent;
 import com.microslop.base.ui.MainLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
@@ -118,10 +119,15 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
 
     private void loadUserProjects() {
         try {
-            List<Project> projects = projectService.getUserProjects(currentUsername);
             projectsContainer.removeAll();
 
+            SpinnerLoadingComponent loading = new SpinnerLoadingComponent("Loading projects...");
+            projectsContainer.add(loading);
+
+            List<Project> projects = projectService.getUserProjects(currentUsername);
+
             if (projects.isEmpty()) {
+                projectsContainer.removeAll();
                 showNoProjectsMessage();
                 return;
             }
@@ -148,6 +154,14 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
                 positionsByCompetition.put(compId, positions);
             }
 
+            Div content = new Div();
+            content.getElement().setAttribute("id", "user-projects-content");
+            content.getStyle().set("display", "none");
+            content.setWidthFull();
+            content.getStyle()
+                .set("grid-template-columns", "repeat(auto-fill, minmax(300px, 1fr))")
+                .set("gap", "24px");
+
             int[] index = {0};
             for (Project project : projects) {
                 Long compId = project.getCompetition() != null ? project.getCompetition().getId() : null;
@@ -166,8 +180,18 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
                 ));
                 cardWrapper.addClassName("animate-fade-in");
                 cardWrapper.addClassName("stagger-" + Math.min(++index[0], 8));
-                projectsContainer.add(cardWrapper);
+                content.add(cardWrapper);
             }
+
+            projectsContainer.add(content);
+
+            getElement().executeJs(
+                "setTimeout(function() {" +
+                "  var loadings = document.querySelectorAll('.votify-loading');" +
+                "  loadings.forEach(function(l) { l.style.display = 'none'; });" +
+                "  var content = document.getElementById('user-projects-content');" +
+                "  if (content) { content.style.display = 'grid'; }" +
+                "}, 750)");
         } catch (Exception e) {
             showErrorNotification("Error loading projects: " + e.getMessage());
         }

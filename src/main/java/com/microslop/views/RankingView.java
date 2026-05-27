@@ -11,7 +11,7 @@ import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
 import com.microslop.service.VoterService;
 import com.microslop.service.VoteService;
-import com.microslop.views.components.BallotLoadingComponent;
+import com.microslop.views.components.SpinnerLoadingComponent;
 import com.microslop.views.components.VoterRegisteredAnimation;
 import com.microslop.views.components.PodiumCardComponent;
 import com.vaadin.flow.component.button.Button;
@@ -451,7 +451,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         rankingContainer.removeAll();
 
-        BallotLoadingComponent loading = new BallotLoadingComponent("Calculating rankings...");
+        SpinnerLoadingComponent loading = new SpinnerLoadingComponent("Calculating rankings...");
         rankingContainer.add(loading);
 
         List<Project> ranking;

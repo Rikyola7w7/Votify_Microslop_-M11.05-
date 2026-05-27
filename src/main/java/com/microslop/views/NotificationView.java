@@ -5,6 +5,7 @@ import com.microslop.entity.Notification;
 import com.microslop.service.InvitationService;
 import com.microslop.service.NotificationService;
 import com.microslop.views.components.NotificationCardComponent;
+import com.microslop.views.components.SpinnerLoadingComponent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
@@ -158,18 +159,37 @@ public class NotificationView extends VerticalLayout {
         if (notifications.isEmpty()) {
             Div emptyState = createEmptyState();
             notificationsContainer.add(emptyState);
-        } else {
-            for (Notification notification : notifications) {
-                NotificationCardComponent card = new NotificationCardComponent(
-                    notification,
-                    notificationService,
-                    invitationService,
-                    this::refreshNotifications,
-                    notification.getCompetition()
-                );
-                notificationsContainer.add(card);
-            }
+            return;
         }
+
+        SpinnerLoadingComponent loading = new SpinnerLoadingComponent("Loading notifications...");
+        notificationsContainer.add(loading);
+
+        Div content = new Div();
+        content.getElement().setAttribute("id", "notifications-content");
+        content.getStyle().set("display", "none");
+        content.setWidthFull();
+
+        for (Notification notification : notifications) {
+            NotificationCardComponent card = new NotificationCardComponent(
+                notification,
+                notificationService,
+                invitationService,
+                this::refreshNotifications,
+                notification.getCompetition()
+            );
+            content.add(card);
+        }
+
+        notificationsContainer.add(content);
+
+        getElement().executeJs(
+            "setTimeout(function() {" +
+            "  var loadings = document.querySelectorAll('.votify-loading');" +
+            "  loadings.forEach(function(l) { l.style.display = 'none'; });" +
+            "  var content = document.getElementById('notifications-content');" +
+            "  if (content) { content.style.display = 'flex'; content.style.flexDirection = 'column'; }" +
+            "}, 750)");
     }
 
     private Div createEmptyState() {

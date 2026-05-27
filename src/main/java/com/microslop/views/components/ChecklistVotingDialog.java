@@ -9,6 +9,7 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
@@ -32,6 +33,8 @@ public class ChecklistVotingDialog extends Dialog {
     private final String username;
     private final Runnable onVoteSuccess;
     private final Map<Long, Checkbox> checkboxes = new HashMap<>();
+    private Button submitBtn;
+    private Span submitSpinner;
 
     public ChecklistVotingDialog(Long projectId, String projectName,
                                  List<ChecklistItem> checklistItems,
@@ -88,7 +91,7 @@ public class ChecklistVotingDialog extends Dialog {
         content.add(itemsLayout);
 
         // Buttons
-        var submitBtn = new Button("Submit Votes", e -> handleSubmitVotes());
+        submitBtn = new Button("Submit Votes", e -> handleSubmitVotes());
         submitBtn.addClassName("votify-btn-primary");
         submitBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         submitBtn.setWidth("auto");
@@ -97,7 +100,11 @@ public class ChecklistVotingDialog extends Dialog {
         cancelBtn.addClassName("votify-btn-secondary");
         cancelBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
-        var footer = new HorizontalLayout(submitBtn, cancelBtn);
+        submitSpinner = new Span();
+        submitSpinner.addClassName("votify-wheel-spinner-inline");
+        submitSpinner.getStyle().set("display", "none");
+
+        var footer = new HorizontalLayout(submitBtn, submitSpinner, cancelBtn);
         footer.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
         footer.setSpacing(true);
 
@@ -112,6 +119,9 @@ public class ChecklistVotingDialog extends Dialog {
                     .addThemeVariants(NotificationVariant.LUMO_WARNING);
             return;
         }
+
+        submitBtn.setEnabled(false);
+        submitSpinner.getStyle().remove("display");
 
         try {
             List<Long> selectedIds = new ArrayList<>();
@@ -144,6 +154,9 @@ public class ChecklistVotingDialog extends Dialog {
         } catch (Exception ex) {
             Notification error = Notification.show("Error submitting votes: " + ex.getMessage(), 3000, Notification.Position.TOP_CENTER);
             error.addThemeVariants(NotificationVariant.LUMO_ERROR);
+        } finally {
+            submitBtn.setEnabled(true);
+            submitSpinner.getStyle().set("display", "none");
         }
     }
 }
