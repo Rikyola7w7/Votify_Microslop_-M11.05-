@@ -9,13 +9,17 @@ import com.microslop.specification.project.ProjectsByCompetitionSpecification;
 import com.microslop.specification.project.ProjectsByCreatorSpecification;
 import com.microslop.command.CommandExecutor;
 import com.microslop.command.project.CreateProjectCommand;
+import com.microslop.utility.ProjectRankingSorter;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -140,26 +144,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         List<Project> sorted = new ArrayList<>(baseRanking);
-        sorted.sort((a, b) -> {
-            Integer posA = a.getCustomPosition();
-            Integer posB = b.getCustomPosition();
-            if (posA != null && posB != null) {
-                if (!posA.equals(posB)) return Integer.compare(posA, posB);
-            } else if (posA != null) {
-                return -1;
-            } else if (posB != null) {
-                return 1;
-            }
-
-            int votesA = effectiveVoteCounts.getOrDefault(a.getId(), 0);
-            int votesB = effectiveVoteCounts.getOrDefault(b.getId(), 0);
-            if (votesA != votesB) return Integer.compare(votesB, votesA);
-
-            return Integer.compare(
-                    baseOrder.getOrDefault(a.getId(), Integer.MAX_VALUE),
-                    baseOrder.getOrDefault(b.getId(), Integer.MAX_VALUE)
-            );
-        });
+        sorted.sort(new ProjectRankingSorter(baseOrder, effectiveVoteCounts));
 
         return sorted;
     }

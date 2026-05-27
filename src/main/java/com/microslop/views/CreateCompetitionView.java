@@ -58,15 +58,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
     private final VerticalLayout judgesContainer;
     private final List<String> selectedJudges;
 
-    // Checklist items
-    private final TextField checklistItemField;
-    private final VerticalLayout checklistItemsContainer;
-    private final List<String> selectedChecklistItems;
-    private final VerticalLayout checklistSection;
-
-    // Scale configuration
-    private final VerticalLayout scaleSection;
-
     private byte[] competitionCoverImage;
     private byte[] categoryImage;
 
@@ -528,6 +519,7 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
                     eventType
             );
             dto.setCoverImage(competitionCoverImage);
+            String voteType = "NORMAL";  // Default to normal voting
             dto.setVoteType(voteType);
             if ("SCALE".equals(voteType)) {
                 dto.setScaleMin(0);

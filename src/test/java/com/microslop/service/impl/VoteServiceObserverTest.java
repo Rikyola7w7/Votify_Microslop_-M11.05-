@@ -43,7 +43,7 @@ class VoteServiceObserverTest {
         voteService = new VoteServiceImpl(
             null, null, null, null, null, null, null, null,
             strategyRegistry,
-            null, observers
+            observers
         );
     }
 

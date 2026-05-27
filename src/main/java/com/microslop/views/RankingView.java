@@ -5,6 +5,7 @@ import com.microslop.entity.Competition;
 import com.microslop.entity.Project;
 import com.microslop.repository.JudgeRepository;
 import com.microslop.service.CategoryService;
+import com.microslop.service.ChecklistVoteService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
@@ -519,7 +520,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                     podiumSection.add(buildModifiablePodiumWrapper(p, positions[slot], votes));
                 } else if (isChecklistMode) {
                     long totalVotes = checklistVoteService.countChecklistVotesByProject(p.getId());
-                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, true);
+                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, true, false, 0.0);
                     podiumSection.add(podiumCard);
                 } else if (isScaleMode) {
                     long totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
@@ -540,20 +541,26 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 listSection.setPadding(false);
                 listSection.setSpacing(false);
 
-                 for (int i = 3; i < ranking.size(); i++) {
-                     Project p = ranking.get(i);
-                     int staggerIndex = Math.min(i - 2, 8);
-                     if (modifyMode) {
-                         long votes = p.getManualVoteCount() != null
-                             ? p.getManualVoteCount()
-                             : voteCounts.getOrDefault(p.getId(), 0L);
-                         listSection.add(buildListRow(p, i + 1, staggerIndex, votes));
-                     } else if (isChecklistMode || isScaleMode) {
-                         listSection.add(buildListRow(p, i + 1, staggerIndex, totalVotes, avgScore));
-                     } else {
-                         listSection.add(buildListRow(p, i + 1, staggerIndex, totalVotes));
-                     }
-                 }
+                  for (int i = 3; i < ranking.size(); i++) {
+                      Project p = ranking.get(i);
+                      int staggerIndex = Math.min(i - 2, 8);
+                      if (modifyMode) {
+                          long votes = p.getManualVoteCount() != null
+                              ? p.getManualVoteCount()
+                              : voteCounts.getOrDefault(p.getId(), 0L);
+                          listSection.add(buildListRow(p, i + 1, staggerIndex, votes));
+                      } else if (isChecklistMode) {
+                          long checklistVotes = checklistVoteService.countChecklistVotesByProject(p.getId());
+                          listSection.add(buildListRow(p, i + 1, staggerIndex, checklistVotes, 0.0));
+                      } else if (isScaleMode) {
+                          long scaleVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+                          double scaleAvg = voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
+                          listSection.add(buildListRow(p, i + 1, staggerIndex, scaleVotes, scaleAvg));
+                      } else {
+                          long normalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+                          listSection.add(buildListRow(p, i + 1, staggerIndex, normalVotes));
+                      }
+                  }
                 content.add(listSection);
             }
         }
