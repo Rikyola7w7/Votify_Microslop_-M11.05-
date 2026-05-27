@@ -1,6 +1,8 @@
 package com.microslop.service.impl;
 
+import com.microslop.entity.Judge;
 import com.microslop.entity.Project;
+import com.microslop.repository.JudgeRepository;
 import com.microslop.repository.ProjectRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.specification.project.ProjectsByCompetitionSpecification;
@@ -10,6 +12,7 @@ import com.microslop.command.project.CreateProjectCommand;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -17,11 +20,14 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
     private final CommandExecutor commandExecutor;
+    private final JudgeRepository judgeRepository;
 
     public ProjectServiceImpl(ProjectRepository projectRepository,
-                            CommandExecutor commandExecutor) {
+                            CommandExecutor commandExecutor,
+                            JudgeRepository judgeRepository) {
         this.projectRepository = projectRepository;
         this.commandExecutor = commandExecutor;
+        this.judgeRepository = judgeRepository;
     }
 
     // ── Write Operations ────────────────────────────────────────────────────────────
@@ -78,56 +84,70 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public List<Project> getRankingForCategory(Long categoryId, boolean isJudgesRanking) {
-        List<Project> baseRanking = isJudgesRanking
-                ? projectRepository.findJudgeRankingByCategory(categoryId)
-                : projectRepository.findPopularRankingByCategory(categoryId);
+        // Get ALL projects in this category (including zero-vote projects)
+        List<Project> allProjects = projectRepository.findAllByCategoryId(categoryId);
 
-        boolean anyCustomPosition = baseRanking.stream().anyMatch(p -> p.getCustomPosition() != null);
-        boolean anyManualVoteCount = baseRanking.stream().anyMatch(p -> p.getManualVoteCount() != null);
-
-        if (!anyCustomPosition && !anyManualVoteCount) {
-            return baseRanking;
+        if (allProjects.isEmpty()) {
+            return allProjects;
         }
 
-        Map<Long, Integer> baseOrder = new HashMap<>();
-        for (int i = 0; i < baseRanking.size(); i++) {
-            baseOrder.put(baseRanking.get(i).getId(), i);
-        }
+        // Get judge user IDs for the competition to determine vote type classification
+        Long competitionId = allProjects.get(0).getCompetition().getId();
+        Set<Long> judgeUserIds = judgeRepository.findByCompetitionId(competitionId)
+                .stream()
+                .map(j -> j.getUser().getId())
+                .collect(Collectors.toSet());
 
-        Map<Long, Integer> effectiveVoteCounts = new HashMap<>();
-        for (Project p : baseRanking) {
-            int count = p.getManualVoteCount() != null
-                    ? p.getManualVoteCount()
-                    : p.getVotes().size();
-            effectiveVoteCounts.put(p.getId(), count);
-        }
-
-        List<Project> sorted = new ArrayList<>(baseRanking);
-        sorted.sort((a, b) -> {
-            // First, sort by custom position
-            Integer posA = a.getCustomPosition();
-            Integer posB = b.getCustomPosition();
-            if (posA != null && posB != null) {
-                if (!posA.equals(posB)) return Integer.compare(posA, posB);
-            } else if (posA != null) {
-                return -1;
-            } else if (posB != null) {
-                return 1;
+        // Count relevant votes per project (judge or popular votes)
+        Map<Long, Long> relevantVoteCounts = new HashMap<>();
+        for (Project p : allProjects) {
+            long count = 0;
+            if (p.getVotes() != null) {
+                count = p.getVotes().stream()
+                        .filter(v -> v != null && v.getUser() != null)
+                        .filter(v -> isJudgesRanking == judgeUserIds.contains(v.getUser().getId()))
+                        .count();
             }
+            relevantVoteCounts.put(p.getId(), count);
+        }
 
-            // Then, sort by effective vote count (manual override or actual count), descending
-            int votesA = effectiveVoteCounts.getOrDefault(a.getId(), 0);
-            int votesB = effectiveVoteCounts.getOrDefault(b.getId(), 0);
-            if (votesA != votesB) return Integer.compare(votesB, votesA);
+        // Separate projects with and without custom position
+        List<Project> withPosition = new ArrayList<>();
+        List<Project> withoutPosition = new ArrayList<>();
+        for (Project p : allProjects) {
+            if (p.getCustomPosition() != null) {
+                withPosition.add(p);
+            } else {
+                withoutPosition.add(p);
+            }
+        }
 
-            // Finally, tiebreak by base query order
-            return Integer.compare(
-                    baseOrder.getOrDefault(a.getId(), Integer.MAX_VALUE),
-                    baseOrder.getOrDefault(b.getId(), Integer.MAX_VALUE)
-            );
+        // Sort projects with custom position by their position (ascending)
+        withPosition.sort((a, b) -> {
+            int cmp = Integer.compare(a.getCustomPosition(), b.getCustomPosition());
+            if (cmp != 0) return cmp;
+            return Long.compare(a.getId(), b.getId());
         });
 
-        return sorted;
+        // Sort projects without custom position by votes (manual override else relevant), descending
+        withoutPosition.sort((a, b) -> {
+            long votesA = a.getManualVoteCount() != null
+                    ? a.getManualVoteCount()
+                    : relevantVoteCounts.getOrDefault(a.getId(), 0L);
+            long votesB = b.getManualVoteCount() != null
+                    ? b.getManualVoteCount()
+                    : relevantVoteCounts.getOrDefault(b.getId(), 0L);
+            if (votesA != votesB) return Long.compare(votesB, votesA);
+            return Long.compare(a.getId(), b.getId());
+        });
+
+        // Insert projects with custom position at their positions (insert semantics)
+        List<Project> result = new ArrayList<>(withoutPosition);
+        for (Project p : withPosition) {
+            int pos = Math.min(p.getCustomPosition() - 1, result.size());
+            result.add(pos, p);
+        }
+        return result;
     }
 
     @Override
@@ -176,5 +196,10 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional(readOnly = true)
     public List<Project> getUserProjectsByUserId(Long userId) {
         return projectRepository.findAll(new ProjectsByCreatorSpecification(userId));
+    }
+
+    @Override
+    public void clearAllModifications(Long categoryId) {
+        projectRepository.clearModificationsByCategoryId(categoryId);
     }
 }

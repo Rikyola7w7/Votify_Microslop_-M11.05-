@@ -34,7 +34,12 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @PageTitle("Ranking")
 @Route("competition/:competitionId/categories/:categoryId/ranking")
@@ -54,6 +59,14 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     private VerticalLayout rankingContainer;
     private boolean modifyMode;
     private boolean isJudgesRanking;
+
+    // Pending modify changes
+    private Map<Long, Integer> pendingReclassifications;
+    private Map<Long, Integer> pendingVoteEdits;
+    private Set<Long> pendingDeclassifications;
+    private Button modifyEntriesButton;
+    private Button discardChangesButton;
+    private Button deleteAllModificationsButton;
 
     public RankingView(CompetitionService competitionService,
                        CategoryService categoryService,
@@ -103,11 +116,15 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         }
 
         this.modifyMode = false;
+        this.pendingReclassifications = new HashMap<>();
+        this.pendingVoteEdits = new HashMap<>();
+        this.pendingDeclassifications = new HashSet<>();
         removeAll();
         buildUi();
     }
 
     private void buildUi() {
+        initDiscardChangesButton();
         add(buildHeader());
         add(buildSummaryCard());
         add(buildRankingFilter());
@@ -119,7 +136,157 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("max-width", "760px")
             .set("margin", "0 auto");
         add(rankingContainer);
+        add(buildDiscardChangesButtonWrapper());
         loadRanking(true);
+    }
+
+    private void initDiscardChangesButton() {
+        discardChangesButton = new Button("Discard changes");
+        discardChangesButton.addClassName("votify-btn-secondary");
+        discardChangesButton.getStyle()
+            .set("background", "transparent")
+            .set("color", "var(--error)")
+            .set("border", "2px solid var(--error)")
+            .set("font-weight", "600")
+            .set("margin", "1rem auto 0.5rem 2rem")
+            .set("display", "none");
+        discardChangesButton.addClickListener(e -> discardModifyChanges());
+
+        deleteAllModificationsButton = new Button("Delete all modifications");
+        deleteAllModificationsButton.addClassName("votify-btn-danger");
+        deleteAllModificationsButton.getStyle()
+            .set("font-weight", "600")
+            .set("margin", "1rem 2rem 0.5rem auto")
+            .set("display", "none");
+        deleteAllModificationsButton.addClickListener(e -> showDeleteAllModificationsDialog());
+    }
+
+    private HorizontalLayout buildDiscardChangesButtonWrapper() {
+        var wrapper = new HorizontalLayout(discardChangesButton, deleteAllModificationsButton);
+        wrapper.setWidthFull();
+        wrapper.setPadding(false);
+        wrapper.setSpacing(false);
+        wrapper.setAlignItems(FlexComponent.Alignment.CENTER);
+        wrapper.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        return wrapper;
+    }
+
+    private void showDeleteAllModificationsDialog() {
+        var dialog = new Dialog();
+        dialog.setHeaderTitle("Delete all modifications");
+
+        var content = new VerticalLayout();
+        content.setPadding(false);
+        content.setSpacing(true);
+        content.setWidth("400px");
+
+        var message = new Paragraph(
+            "This will permanently delete all custom positions and manual vote counts "
+            + "for all projects in this category. Projects will return to their original "
+            + "ranking based on actual votes. This action cannot be undone.");
+        message.getStyle()
+            .set("color", "var(--text-primary)")
+            .set("font-size", "1rem")
+            .set("line-height", "1.5");
+
+        content.add(message);
+
+        var cancelButton = new Button("Cancel");
+        cancelButton.addClassName("votify-btn-secondary");
+        cancelButton.addClickListener(e -> dialog.close());
+
+        var deleteButton = new Button("Delete all modifications");
+        deleteButton.addClassName("votify-btn-danger");
+        deleteButton.addClickListener(e -> {
+            try {
+                dialog.close();
+                projectService.clearAllModifications(categoryId);
+                pendingReclassifications.clear();
+                pendingVoteEdits.clear();
+                pendingDeclassifications.clear();
+                modifyMode = false;
+                modifyEntriesButton.setText("Modify entries");
+                discardChangesButton.getStyle().set("display", "none");
+                deleteAllModificationsButton.getStyle().set("display", "none");
+                Notification.show("All modifications deleted successfully", 3000,
+                    Notification.Position.BOTTOM_CENTER);
+                loadRanking(isJudgesRanking);
+            } catch (Exception ex) {
+                Notification.show("Error: " + ex.getMessage(), 3000,
+                    Notification.Position.BOTTOM_CENTER);
+            }
+        });
+
+        var buttonLayout = new HorizontalLayout(cancelButton, deleteButton);
+        buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        buttonLayout.setSpacing(true);
+        buttonLayout.setWidthFull();
+
+        content.add(buttonLayout);
+        dialog.add(content);
+        dialog.open();
+    }
+
+    private void discardModifyChanges() {
+        pendingReclassifications.clear();
+        pendingVoteEdits.clear();
+        pendingDeclassifications.clear();
+        modifyMode = false;
+        modifyEntriesButton.setText("Modify entries");
+        discardChangesButton.getStyle().set("display", "none");
+        deleteAllModificationsButton.getStyle().set("display", "none");
+        loadRanking(isJudgesRanking);
+    }
+
+    private void enterModifyMode() {
+        pendingReclassifications.clear();
+        pendingVoteEdits.clear();
+        pendingDeclassifications.clear();
+        modifyMode = true;
+        modifyEntriesButton.setText("Save changes");
+        discardChangesButton.getStyle().set("display", "inline-flex");
+        deleteAllModificationsButton.getStyle().set("display", "inline-flex");
+        loadRanking(isJudgesRanking);
+    }
+
+    private void saveModifyChanges() {
+        try {
+            // Apply declassifications first (removes projects before reordering)
+            for (Long projectId : pendingDeclassifications) {
+                projectService.declassifyProject(projectId);
+            }
+
+            // Apply vote edits
+            for (Map.Entry<Long, Integer> entry : pendingVoteEdits.entrySet()) {
+                projectService.editProjectVotes(entry.getKey(), entry.getValue());
+            }
+
+            // Apply reclassifications
+            for (Map.Entry<Long, Integer> entry : pendingReclassifications.entrySet()) {
+                projectService.reclassifyProject(entry.getKey(), entry.getValue());
+            }
+
+            int totalChanges = pendingDeclassifications.size()
+                    + pendingVoteEdits.size()
+                    + pendingReclassifications.size();
+
+            pendingReclassifications.clear();
+            pendingVoteEdits.clear();
+            pendingDeclassifications.clear();
+
+            modifyMode = false;
+            modifyEntriesButton.setText("Modify entries");
+            discardChangesButton.getStyle().set("display", "none");
+            deleteAllModificationsButton.getStyle().set("display", "none");
+
+            Notification.show(totalChanges + " change" + (totalChanges != 1 ? "s" : "") + " saved", 3000,
+                    Notification.Position.BOTTOM_CENTER);
+
+            loadRanking(isJudgesRanking);
+        } catch (Exception ex) {
+            Notification.show("Error saving changes: " + ex.getMessage(), 3000,
+                    Notification.Position.BOTTOM_CENTER);
+        }
     }
 
     private boolean isUserOrganizerOrJudge() {
@@ -165,7 +332,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         rightSection.setPadding(false);
 
         if (isUserOrganizerOrJudge()) {
-            Button modifyEntriesButton = new Button("Modify entries");
+            modifyEntriesButton = new Button("Modify entries");
             modifyEntriesButton.addClassName("votify-btn-secondary");
             modifyEntriesButton.getStyle()
                 .set("background", "white")
@@ -174,8 +341,11 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("cursor", "pointer")
                 .set("font-weight", "600");
             modifyEntriesButton.addClickListener(e -> {
-                modifyMode = !modifyMode;
-                loadRanking(isJudgesRanking);
+                if (modifyMode) {
+                    saveModifyChanges();
+                } else {
+                    enterModifyMode();
+                }
             });
             rightSection.add(modifyEntriesButton);
         }
@@ -397,6 +567,53 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         return filterContainer;
     }
 
+    private List<Project> applyPendingChanges(List<Project> ranking) {
+        List<Project> modified = new ArrayList<>();
+        for (Project p : ranking) {
+            if (pendingDeclassifications.contains(p.getId())) {
+                continue;
+            }
+            Long pid = p.getId();
+            if (pendingReclassifications.containsKey(pid)) {
+                p.setCustomPosition(pendingReclassifications.get(pid));
+            }
+            if (pendingVoteEdits.containsKey(pid)) {
+                p.setManualVoteCount(pendingVoteEdits.get(pid));
+            }
+            modified.add(p);
+        }
+
+        List<Project> withPosition = new ArrayList<>();
+        List<Project> withoutPosition = new ArrayList<>();
+        for (Project p : modified) {
+            if (p.getCustomPosition() != null) {
+                withPosition.add(p);
+            } else {
+                withoutPosition.add(p);
+            }
+        }
+
+        withPosition.sort((a, b) -> {
+            int cmp = Integer.compare(a.getCustomPosition(), b.getCustomPosition());
+            if (cmp != 0) return cmp;
+            return Long.compare(a.getId(), b.getId());
+        });
+
+        withoutPosition.sort((a, b) -> {
+            long votesA = a.getManualVoteCount() != null ? a.getManualVoteCount() : a.getVotes().size();
+            long votesB = b.getManualVoteCount() != null ? b.getManualVoteCount() : b.getVotes().size();
+            if (votesA != votesB) return Long.compare(votesB, votesA);
+            return Long.compare(a.getId(), b.getId());
+        });
+
+        List<Project> result = new ArrayList<>(withoutPosition);
+        for (Project p : withPosition) {
+            int pos = Math.min(p.getCustomPosition() - 1, result.size());
+            result.add(pos, p);
+        }
+        return result;
+    }
+
     private void loadRanking(boolean isJudgesRanking) {
         if (rankingContainer == null) return;
 
@@ -406,6 +623,9 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         rankingContainer.add(loading);
 
         List<Project> ranking = projectService.getRankingForCategory(categoryId, isJudgesRanking);
+        if (modifyMode) {
+            ranking = applyPendingChanges(ranking);
+        }
 
         var content = new Div();
         content.getElement().setAttribute("id", "ranking-content");
@@ -491,6 +711,18 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             "}, 900)");
     }
 
+    private String getPendingLabel(Project project) {
+        Long pid = project.getId();
+        StringBuilder label = new StringBuilder();
+        if (pendingReclassifications.containsKey(pid)) {
+            label.append("Pos: ").append(pendingReclassifications.get(pid)).append(" ");
+        }
+        if (pendingVoteEdits.containsKey(pid)) {
+            label.append("Votes: ").append(pendingVoteEdits.get(pid)).append(" ");
+        }
+        return label.toString().trim();
+    }
+
     private Div buildModifiablePodiumWrapper(Project project, PodiumCardComponent.Position position, long votes) {
         var wrapper = new Div();
         wrapper.getStyle()
@@ -501,9 +733,39 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         var podiumCard = new PodiumCardComponent(project, position, votes);
         wrapper.add(podiumCard);
+
+        String pendingLabel = getPendingLabel(project);
+        if (!pendingLabel.isEmpty()) {
+            var pendingBadge = new Span(pendingLabel);
+            pendingBadge.getStyle()
+                .set("font-size", "0.7rem")
+                .set("color", "var(--warning)")
+                .set("font-weight", "600")
+                .set("margin-top", "0.15rem")
+                .set("background", "rgba(243, 156, 18, 0.12)")
+                .set("padding", "0.15rem 0.5rem")
+                .set("border-radius", "4px");
+            wrapper.add(pendingBadge);
+        }
+
         wrapper.add(buildActionButtons(project));
 
         return wrapper;
+    }
+
+    private Span buildListRowPendingBadge(Project project) {
+        String pendingLabel = getPendingLabel(project);
+        if (pendingLabel.isEmpty()) return null;
+        var badge = new Span("Pending: " + pendingLabel);
+        badge.getStyle()
+            .set("font-size", "0.7rem")
+            .set("color", "var(--warning)")
+            .set("font-weight", "600")
+            .set("background", "rgba(243, 156, 18, 0.12)")
+            .set("padding", "0.15rem 0.5rem")
+            .set("border-radius", "4px")
+            .set("margin-left", "0.5rem");
+        return badge;
     }
 
     private Div buildActionButtons(Project project) {
@@ -578,11 +840,24 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         info.setSpacing(false);
         info.getStyle().set("flex", "1");
 
+        var nameRow = new HorizontalLayout();
+        nameRow.setPadding(false);
+        nameRow.setSpacing(false);
+        nameRow.setAlignItems(FlexComponent.Alignment.CENTER);
+
         var name = new Span(p.getName().toUpperCase());
         name.getStyle()
             .set("font-weight", "700")
             .set("font-size", "0.95rem")
             .set("color", "var(--text-primary)");
+        nameRow.add(name);
+
+        if (modifyMode) {
+            var pendingBadge = buildListRowPendingBadge(p);
+            if (pendingBadge != null) {
+                nameRow.add(pendingBadge);
+            }
+        }
 
         long votes = p.getManualVoteCount() != null
             ? p.getManualVoteCount()
@@ -594,7 +869,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("color", "var(--text-muted)")
             .set("margin-top", "0.15rem");
 
-        info.add(name, votesSpan);
+        info.add(nameRow, votesSpan);
         row.add(numBadge, info);
         wrapper.add(row);
 
@@ -641,17 +916,19 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         acceptButton.addClassName("votify-btn-primary");
         acceptButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         acceptButton.addClickListener(e -> {
-            try {
-                int newPosition = positionField.getValue();
-                projectService.reclassifyProject(project.getId(), newPosition);
-                dialog.close();
-                Notification.show("Project reclassified to position " + newPosition, 3000,
+            int newPosition = positionField.getValue();
+            if (newPosition < 1) {
+                Notification.show("Position must be at least 1", 3000,
                     Notification.Position.BOTTOM_CENTER);
-                loadRanking(isJudgesRanking);
-            } catch (Exception ex) {
-                Notification.show("Error: " + ex.getMessage(), 3000,
-                    Notification.Position.BOTTOM_CENTER);
+                return;
             }
+            pendingReclassifications.put(project.getId(), newPosition);
+            // If this project was pending declassification, remove that
+            pendingDeclassifications.remove(project.getId());
+            dialog.close();
+            Notification.show("Project will be reclassified to position " + newPosition, 3000,
+                Notification.Position.BOTTOM_CENTER);
+            loadRanking(isJudgesRanking);
         });
 
         var buttonLayout = new HorizontalLayout(cancelButton, acceptButton);
@@ -687,19 +964,18 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         cancelButton.addClassName("votify-btn-secondary");
         cancelButton.addClickListener(e -> dialog.close());
 
-        var deleteButton = new Button("Delete permanently");
+        var deleteButton = new Button("Mark for deletion");
         deleteButton.addClassName("votify-btn-danger");
         deleteButton.addClickListener(e -> {
-            try {
-                projectService.declassifyProject(project.getId());
-                dialog.close();
-                Notification.show("Project declassified successfully", 3000,
-                    Notification.Position.BOTTOM_CENTER);
-                loadRanking(isJudgesRanking);
-            } catch (Exception ex) {
-                Notification.show("Error: " + ex.getMessage(), 3000,
-                    Notification.Position.BOTTOM_CENTER);
-            }
+            pendingDeclassifications.add(project.getId());
+            // Remove any pending reclassification for this project
+            pendingReclassifications.remove(project.getId());
+            // Remove any pending vote edits for this project
+            pendingVoteEdits.remove(project.getId());
+            dialog.close();
+            Notification.show("Project marked for deletion — save to confirm", 3000,
+                Notification.Position.BOTTOM_CENTER);
+            loadRanking(isJudgesRanking);
         });
 
         var buttonLayout = new HorizontalLayout(cancelButton, deleteButton);
@@ -746,17 +1022,19 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         acceptButton.addClassName("votify-btn-primary");
         acceptButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         acceptButton.addClickListener(e -> {
-            try {
-                int newVotes = votesField.getValue();
-                projectService.editProjectVotes(project.getId(), newVotes);
-                dialog.close();
-                Notification.show("Votes updated to " + newVotes, 3000,
+            int newVotes = votesField.getValue();
+            if (newVotes < 0) {
+                Notification.show("Vote count cannot be negative", 3000,
                     Notification.Position.BOTTOM_CENTER);
-                loadRanking(isJudgesRanking);
-            } catch (Exception ex) {
-                Notification.show("Error: " + ex.getMessage(), 3000,
-                    Notification.Position.BOTTOM_CENTER);
+                return;
             }
+            pendingVoteEdits.put(project.getId(), newVotes);
+            // If this project was pending declassification, remove that
+            pendingDeclassifications.remove(project.getId());
+            dialog.close();
+            Notification.show("Votes will be updated to " + newVotes + " on save", 3000,
+                Notification.Position.BOTTOM_CENTER);
+            loadRanking(isJudgesRanking);
         });
 
         var buttonLayout = new HorizontalLayout(cancelButton, acceptButton);

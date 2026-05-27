@@ -56,4 +56,10 @@ public interface ProjectService {
      * @param newVoteCount the new vote count
      */
     void editProjectVotes(Long projectId, int newVoteCount);
+
+    /**
+     * Clear all modifications (custom position and manual vote count) for all projects in a category.
+     * @param categoryId the category ID
+     */
+    void clearAllModifications(Long categoryId);
 }
