@@ -113,5 +113,4 @@ public class PodiumCardComponent extends Div {
     private static String formatNumber(long num) {
         return NumberFormat.getNumberInstance(Locale.US).format(num);
     }
-    }
 }

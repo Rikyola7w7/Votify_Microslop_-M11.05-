@@ -88,6 +88,12 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Project> getChecklistRankingByCategory(Long categoryId) {
+        return projectRepository.findChecklistRankingByCategory(categoryId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Project> getRankingForCategory(Long categoryId, boolean isJudgesRanking) {
         List<Project> baseRanking = isJudgesRanking
                 ? projectRepository.findJudgeRankingByCategory(categoryId)

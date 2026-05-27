@@ -73,8 +73,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
     private List<Category> categoriesToRemove;
     private List<Category> categoriesToAdd;
-    private java.util.Map<Long, Double> categoryWeightChanges;
-    private java.util.Map<Long, Double> initialCategoryWeights;
 
     private NumberField judgeWeightField;
     private NumberField standardUserWeightField;
@@ -112,8 +110,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         this.judgesToAdd = new java.util.ArrayList<>();
         this.categoriesToRemove = new java.util.ArrayList<>();
         this.categoriesToAdd = new java.util.ArrayList<>();
-this.categoryWeightChanges = new java.util.HashMap<>();
-        this.initialCategoryWeights = new java.util.HashMap<>();
         this.checklistItemsToRemove = new java.util.ArrayList<>();
         this.checklistItemsToAdd = new java.util.ArrayList<>();
 
@@ -962,7 +958,6 @@ this.categoryWeightChanges = new java.util.HashMap<>();
                 judgesToAdd.clear();
                 categoriesToRemove.clear();
                 categoriesToAdd.clear();
-categoryWeightChanges.clear();
                 checklistItemsToRemove.clear();
                 checklistItemsToAdd.clear();
                 navigateBack();

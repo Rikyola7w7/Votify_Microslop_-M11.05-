@@ -48,6 +48,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     private final UserService userService;
     private final ChecklistVoteService checklistVoteService;
     private final JudgeRepository judgeRepository;
+    private final VoterService voterService;
     private Long competitionId;
     private Long categoryId;
     private Competition currentCompetition;
@@ -493,7 +494,7 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
                         totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
                     }
                     int staggerIndex = Math.min(i - 2, 8);
-                    listSection.add(buildListRow(p, i + 1, staggerIndex, totalVotes, avgScore));
+                    listSection.add(buildListRow(p, i + 1, staggerIndex));
                 }
                 content.add(listSection);
             }

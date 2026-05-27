@@ -672,7 +672,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("font-weight", "600")
                 .set("color", "var(--text-primary)");
 
-        categoryDropdown = new ComboBox<Category>();
+        ComboBox<Category> categoryDropdown = new ComboBox<>();
         categoryDropdown.setItems(categoryService.getCategoriesByCompetition(competitionId));
         categoryDropdown.setItemLabelGenerator(Category::getName);
         categoryDropdown.setPlaceholder("Filter by category...");
