@@ -3,9 +3,11 @@ package com.microslop.repository;
 import com.microslop.entity.Project;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.List;
@@ -119,4 +121,17 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
         WHERE c.id = :categoryId
         """)
     List<Project> findAllByCategoryId(@Param("categoryId") Long categoryId);
+
+    @Query("""
+        SELECT p FROM Project p
+        LEFT JOIN p.categories c
+        WHERE c.id = :categoryId
+        ORDER BY p.id ASC
+        """)
+    List<Project> findAllProjectsByCategoryId(@Param("categoryId") Long categoryId);
+
+    @Modifying
+    @Query("UPDATE Project p SET p.customPosition = NULL, p.manualVoteCount = NULL " +
+           "WHERE p.id IN (SELECT p2.id FROM Project p2 JOIN p2.categories c WHERE c.id = :categoryId)")
+    void clearModificationsByCategoryId(@Param("categoryId") Long categoryId);
 }
