@@ -1,11 +1,11 @@
 package com.microslop.service.impl;
 
+import com.microslop.context.VaadinSessionContext;
 import com.microslop.entity.User;
 import com.microslop.repository.UserRepository;
 import com.microslop.service.UserService;
 import com.microslop.command.CommandExecutor;
 import com.microslop.command.user.UpdateUserProfileCommand;
-import com.vaadin.flow.server.VaadinSession;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
@@ -81,7 +81,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User updateProfile(String currentUsername, String newUsername, String email) {
-        // Execute command through command executor
         UpdateUserProfileCommand command = new UpdateUserProfileCommand(
             currentUsername, newUsername, email,
             userRepository
@@ -89,7 +88,7 @@ public class UserServiceImpl implements UserService {
         try {
             commandExecutor.execute(command);
             User updatedUser = command.getLastResult();
-            VaadinSession.getCurrent().setAttribute(User.class, updatedUser);
+            VaadinSessionContext.setCurrentUser(updatedUser);
             return updatedUser;
         } catch (RuntimeException e) {
             throw e;
@@ -107,46 +106,27 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getCurrentUser() {
-        VaadinSession session = VaadinSession.getCurrent();
-
-        if (session == null) {
-            return null;
-        }
-
-        return session.getAttribute(User.class);
+        return VaadinSessionContext.getCurrentUser();
     }
 
     @Override
     public void logout() {
-        VaadinSession session = VaadinSession.getCurrent();
-        if (session != null) {
-            session.getSession().invalidate();
-        }
+        VaadinSessionContext.logout();
     }
 
     @Override
     public String getUserDisplayName() {
-        VaadinSession session = VaadinSession.getCurrent();
-        if (session != null && session.getAttribute("username") != null) {
-            String user = session.getAttribute("username").toString();
-            return user.substring(0, 1).toUpperCase();
-        }
-        return "G";
+        return VaadinSessionContext.getUserDisplayName();
     }
 
     @Override
     public boolean isLoggedIn() {
-        VaadinSession session = VaadinSession.getCurrent();
-        return session != null && (session.getAttribute("userId") != null || session.getAttribute("username") != null);
+        return VaadinSessionContext.isLoggedIn();
     }
 
     @Override
     public String getCurrentUsername() {
-        VaadinSession session = VaadinSession.getCurrent();
-        if (session != null && session.getAttribute("username") != null) {
-            return session.getAttribute("username").toString();
-        }
-        return "";
+        return VaadinSessionContext.getCurrentUsername();
     }
 
     @Override
