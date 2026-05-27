@@ -12,7 +12,11 @@ public enum NotificationType {
     // Competition-related notifications
     COMPETITION_OPENED("COMPETITION_OPENED", "Competition Opened"),
     COMPETITION_CLOSING_SOON("COMPETITION_CLOSING_SOON", "Competition Closing Soon"),
-    COMPETITION_CLOSED("COMPETITION_CLOSED", "Competition Closed");
+    COMPETITION_CLOSED("COMPETITION_CLOSED", "Competition Closed"),
+    
+    // Certificate-related notifications
+    END_TIME_COMPETITION("END_TIME_COMPETITION", "Competition Time Ended"),
+    CERTIFICATE_SENT("CERTIFICATE_SENT", "Certificate Sent");
 
     private final String code;
     private final String displayName;

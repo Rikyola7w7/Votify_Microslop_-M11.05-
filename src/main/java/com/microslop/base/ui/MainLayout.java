@@ -1,5 +1,6 @@
 package com.microslop.base.ui;
 
+import com.microslop.service.CertificateService;
 import com.microslop.service.InvitationService;
 import com.microslop.service.NotificationService;
 import com.microslop.service.UserService;
@@ -32,6 +33,9 @@ public final class MainLayout extends AppLayout {
 
     @Autowired(required = false)
     private InvitationService invitationService;
+
+    @Autowired(required = false)
+    private CertificateService certificateService;
 
     private HorizontalLayout rightActions;
     private Div userMenuContainer;
@@ -125,6 +129,7 @@ public final class MainLayout extends AppLayout {
             String username = userService.getCurrentUsername();
             subMenu.addItem("My Projects", event -> getUI().ifPresent(ui -> ui.navigate(username + "/projects")));
             subMenu.addItem("My Competitions", event -> getUI().ifPresent(ui -> ui.navigate(username + "/competitions")));
+            subMenu.addItem("My Certificates", event -> getUI().ifPresent(ui -> ui.navigate("certificates")));
             subMenu.addItem("Invitations", event -> getUI().ifPresent(ui -> ui.navigate("invitations")));
             subMenu.addItem("Edit Profile", event -> getUI().ifPresent(ui -> ui.navigate("profile")));
             subMenu.addItem("Sign Out", event -> handleLogout());
@@ -251,6 +256,7 @@ public final class MainLayout extends AppLayout {
                             notification,
                             notificationService,
                             invitationService,
+                            certificateService,
                             this::rebuildNotificationDialog,
                             notification.getCompetition()
                         );

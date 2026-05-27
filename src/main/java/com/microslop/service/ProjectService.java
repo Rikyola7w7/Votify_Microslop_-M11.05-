@@ -68,6 +68,12 @@ public interface ProjectService {
     void editProjectVotes(Long projectId, int newVoteCount);
 
     /**
+     * Clear all modifications (custom position and manual vote count) for all projects in a category.
+     * @param categoryId the category ID
+     */
+    void clearAllModifications(Long categoryId);
+
+    /**
      * Reset all custom positions and manual vote counts for projects in a competition,
      * restoring the natural ranking order.
      * @param competitionId the competition ID

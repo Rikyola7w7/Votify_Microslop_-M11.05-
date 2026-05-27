@@ -2,6 +2,7 @@ package com.microslop.service.impl;
 
 import com.microslop.entity.Project;
 import com.microslop.repository.CompetitionRepository;
+import com.microslop.repository.JudgeRepository;
 import com.microslop.repository.ProjectRepository;
 import com.microslop.repository.VoteRepository;
 import com.microslop.service.ProjectService;
@@ -29,6 +30,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final CompetitionRepository competitionRepository;
     private final VoteRepository voteRepository;
     private final CommandExecutor commandExecutor;
+    private final JudgeRepository judgeRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -36,11 +38,13 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectServiceImpl(ProjectRepository projectRepository,
                               CompetitionRepository competitionRepository,
                               VoteRepository voteRepository,
-                              CommandExecutor commandExecutor) {
+                              CommandExecutor commandExecutor,
+                              JudgeRepository judgeRepository) {
         this.projectRepository = projectRepository;
         this.competitionRepository = competitionRepository;
         this.voteRepository = voteRepository;
         this.commandExecutor = commandExecutor;
+        this.judgeRepository = judgeRepository;
     }
 
     // ── Write Operations ────────────────────────────────────────────────────────────
@@ -220,6 +224,13 @@ public class ProjectServiceImpl implements ProjectService {
             p.setManualVoteCount(null);
         }
         projectRepository.saveAll(projects);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = {"projects", "projectsAll", "projectsByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
+    public void clearAllModifications(Long categoryId) {
+        projectRepository.clearModificationsByCategoryId(categoryId);
     }
 
     @Override

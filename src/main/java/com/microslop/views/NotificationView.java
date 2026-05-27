@@ -2,6 +2,7 @@ package com.microslop.views;
 
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Notification;
+import com.microslop.service.CertificateService;
 import com.microslop.service.InvitationService;
 import com.microslop.service.NotificationService;
 import com.microslop.views.components.NotificationCardComponent;
@@ -26,11 +27,13 @@ public class NotificationView extends VerticalLayout {
 
     private final NotificationService notificationService;
     private final InvitationService invitationService;
+    private final CertificateService certificateService;
     private Div notificationsContainer;
 
-    public NotificationView(NotificationService notificationService, InvitationService invitationService) {
+    public NotificationView(NotificationService notificationService, InvitationService invitationService, CertificateService certificateService) {
         this.notificationService = notificationService;
         this.invitationService = invitationService;
+        this.certificateService = certificateService;
         initializeView();
         refreshNotifications();
     }
@@ -164,6 +167,7 @@ public class NotificationView extends VerticalLayout {
                     notification,
                     notificationService,
                     invitationService,
+                    certificateService,
                     this::refreshNotifications,
                     notification.getCompetition()
                 );

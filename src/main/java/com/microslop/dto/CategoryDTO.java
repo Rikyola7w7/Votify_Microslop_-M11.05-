@@ -12,10 +12,8 @@ public class CategoryDTO {
     private Long id;
     private Long competitionId;
     private String name;
-    private int weight = 1;
     private String voterType = "NORMAL";
     private String voteType = "NORMAL";
-    private byte[] image;
 
     public CategoryDTO(String name) {
         this.name = name;
@@ -34,6 +32,5 @@ public class CategoryDTO {
 
     public CategoryDTO(String name, int weight) {
         this.name = name;
-        this.weight = weight;
     }
 }

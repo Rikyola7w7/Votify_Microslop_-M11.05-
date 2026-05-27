@@ -246,53 +246,53 @@ public void addChecklistItem(ChecklistItem item) {
         return maxVotesPerPerson;
     }
 
-     public void setMaxVotesPerPerson(Integer maxVotesPerPerson) {
-         this.maxVotesPerPerson = maxVotesPerPerson;
-     }
- 
-     public Double getJudgeWeightMultiplier() {
-         return judgeWeightMultiplier;
-     }
- 
-     public void setJudgeWeightMultiplier(Double judgeWeightMultiplier) {
-         this.judgeWeightMultiplier = judgeWeightMultiplier;
-     }
- 
-     public Double getStandardUserWeightMultiplier() {
-         return standardUserWeightMultiplier;
-     }
- 
-     public void setStandardUserWeightMultiplier(Double standardUserWeightMultiplier) {
-         this.standardUserWeightMultiplier = standardUserWeightMultiplier;
-     }
- 
-     public String getVoteType() {
-         return voteType;
-     }
- 
-     public void setVoteType(String voteType) {
-         this.voteType = voteType;
-     }
- 
-     public Integer getScaleMin() {
-         return scaleMin;
-     }
- 
-     public void setScaleMin(Integer scaleMin) {
-         this.scaleMin = scaleMin;
-     }
- 
-     public Integer getScaleMax() {
-         return scaleMax;
-     }
- 
-     public void setScaleMax(Integer scaleMax) {
-         this.scaleMax = scaleMax;
-     }
- 
-     public String getVotingStrategyType() {
-         return votingStrategyType;
-     }
+    public void setMaxVotesPerPerson(Integer maxVotesPerPerson) {
+        this.maxVotesPerPerson = maxVotesPerPerson;
+    }
+
+    public Double getJudgeWeightMultiplier() {
+        return judgeWeightMultiplier;
+    }
+
+    public void setJudgeWeightMultiplier(Double judgeWeightMultiplier) {
+        this.judgeWeightMultiplier = judgeWeightMultiplier;
+    }
+
+    public Double getStandardUserWeightMultiplier() {
+        return standardUserWeightMultiplier;
+    }
+
+    public void setStandardUserWeightMultiplier(Double standardUserWeightMultiplier) {
+        this.standardUserWeightMultiplier = standardUserWeightMultiplier;
+    }
+
+    public String getVoteType() {
+        return voteType;
+    }
+
+    public void setVoteType(String voteType) {
+        this.voteType = voteType;
+    }
+
+    public Integer getScaleMin() {
+        return scaleMin;
+    }
+
+    public void setScaleMin(Integer scaleMin) {
+        this.scaleMin = scaleMin;
+    }
+
+    public Integer getScaleMax() {
+        return scaleMax;
+    }
+
+    public void setScaleMax(Integer scaleMax) {
+        this.scaleMax = scaleMax;
+    }
+
+    public String getVotingStrategyType() {
+        return votingStrategyType;
+    }
 
     public void setVotingStrategyType(String votingStrategyType) {
         this.votingStrategyType = votingStrategyType;
