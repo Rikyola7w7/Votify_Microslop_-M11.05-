@@ -6,7 +6,6 @@ import com.microslop.entity.ChecklistItem;
 import com.microslop.entity.Competition;
 import com.microslop.entity.Judge;
 import com.microslop.repository.ChecklistItemRepository;
-import com.microslop.repository.ChecklistVoteRepository;
 import com.microslop.service.CategoryService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.JudgeService;
@@ -32,6 +31,8 @@ import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
+import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -52,7 +53,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private final CategoryService categoryService;
     private final JudgeService judgeService;
     private final ChecklistItemRepository checklistItemRepository;
-    private final ChecklistVoteRepository checklistVoteRepository;
 
     private Competition currentCompetition;
     private Competition originalCompetition;
@@ -74,9 +74,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private List<Category> categoriesToRemove;
     private List<Category> categoriesToAdd;
 
-    private NumberField judgeWeightField;
-    private NumberField standardUserWeightField;
-
     // VOTE TYPE Section
     private ComboBox<String> voteTypeCombo;
 
@@ -88,8 +85,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
     // SCALE Section
     private VerticalLayout scaleConfigSection;
-
-    // COMMENTS Section
     private ComboBox<String> commentsEnabledCombo;
     private ComboBox<String> commentsRequiredCombo;
 
@@ -98,20 +93,16 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
     private boolean hasChanges = false;
 
-    public ConfigureCompetitionView(CompetitionService competitionService, UserService userService, CategoryService categoryService, JudgeService judgeService,
-                                    ChecklistItemRepository checklistItemRepository, ChecklistVoteRepository checklistVoteRepository) {
+    public ConfigureCompetitionView(CompetitionService competitionService, UserService userService, CategoryService categoryService, JudgeService judgeService, ChecklistItemRepository checklistItemRepository) {
         this.competitionService = competitionService;
         this.userService = userService;
         this.categoryService = categoryService;
         this.judgeService = judgeService;
         this.checklistItemRepository = checklistItemRepository;
-        this.checklistVoteRepository = checklistVoteRepository;
         this.judgesToRemove = new java.util.ArrayList<>();
         this.judgesToAdd = new java.util.ArrayList<>();
         this.categoriesToRemove = new java.util.ArrayList<>();
         this.categoriesToAdd = new java.util.ArrayList<>();
-        this.checklistItemsToRemove = new java.util.ArrayList<>();
-        this.checklistItemsToAdd = new java.util.ArrayList<>();
 
         setSizeFull();
         setPadding(false);
@@ -156,8 +147,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         originalCompetition.setVoterType(currentCompetition.getVoterType());
         originalCompetition.setAutoVote(currentCompetition.isAutoVote());
         originalCompetition.setMaxVotesPerPerson(currentCompetition.getMaxVotesPerPerson());
-        originalCompetition.setJudgeWeightMultiplier(currentCompetition.getJudgeWeightMultiplier());
-        originalCompetition.setStandardUserWeightMultiplier(currentCompetition.getStandardUserWeightMultiplier());
         originalCompetition.setVoteType(currentCompetition.getVoteType());
         originalCompetition.setScaleMin(currentCompetition.getScaleMin());
         originalCompetition.setScaleMax(currentCompetition.getScaleMax());
@@ -204,14 +193,12 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         VerticalLayout voteTypeSection = buildVoteTypeSection();
         checklistSection = buildChecklistSection();
         scaleConfigSection = buildScaleConfigSection();
-
-        // VOTE WEIGHTING Section
-        VerticalLayout votingWeightSection = buildVotingWeightSection();
         VerticalLayout commentsSection = buildCommentsSection();
         HorizontalLayout buttonsLayout = buildButtonsLayout();
 
-        contentCard.add(generalSection, participationSection, judgesSection, voteTypeSection, checklistSection, scaleConfigSection, votingWeightSection, commentsSection, buttonsLayout);
-        add(header, contentCard);
+        contentCard.add(generalSection, participationSection, judgesSection, voteTypeSection, checklistSection, scaleConfigSection, commentsSection, buttonsLayout);
+        scrollContainer.add(header, contentCard);
+        add(scrollContainer);
 
         // Set initial visibility based on current vote type
         checklistSection.setVisible("CHECKLIST".equalsIgnoreCase(currentCompetition.getVoteType()));
@@ -276,6 +263,54 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
         dateTimeLayout.add(startDatePicker, startTimePicker, endDatePicker, endTimePicker);
 
+        // Cover image upload
+        H4 coverImageTitle = new H4("COVER IMAGE");
+        coverImageTitle.getStyle().set("margin", "16px 0 10px 0").set("color", "var(--dark)").set("font-weight", "700");
+
+        var compImageBuffer = new MemoryBuffer();
+        var compImageUpload = new Upload(compImageBuffer);
+        compImageUpload.setMaxFiles(1);
+        compImageUpload.setAcceptedFileTypes("image/png", "image/jpeg", "image/webp");
+        compImageUpload.setWidth("100%");
+        compImageUpload.getElement().getStyle()
+                .set("border", "2px dashed var(--border)")
+                .set("border-radius", "var(--radius-md)")
+                .set("padding", "1rem")
+                .set("text-align", "center");
+
+        var compImagePreview = new Div();
+        compImagePreview.setWidth("100%");
+        compImagePreview.getStyle().set("text-align", "center").set("margin-top", "8px");
+
+        // Show current cover image if exists
+        if (currentCompetition.getCoverImage() != null && currentCompetition.getCoverImage().length > 0) {
+            String base64 = java.util.Base64.getEncoder().encodeToString(currentCompetition.getCoverImage());
+            var preview = new com.vaadin.flow.component.html.Image("data:image/png;base64," + base64, "Current cover");
+            preview.setWidth("200px");
+            preview.setHeight("120px");
+            preview.getStyle().set("object-fit", "cover").set("border-radius", "var(--radius-md)");
+            compImagePreview.add(preview);
+        }
+
+        compImageUpload.addSucceededListener(event -> {
+            try {
+                var stream = compImageBuffer.getInputStream();
+                currentCompetition.setCoverImage(stream.readAllBytes());
+                stream.close();
+                markAsChanged();
+                compImagePreview.removeAll();
+                String base64 = java.util.Base64.getEncoder().encodeToString(currentCompetition.getCoverImage());
+                var preview = new com.vaadin.flow.component.html.Image("data:image/png;base64," + base64, "Cover preview");
+                preview.setWidth("200px");
+                preview.setHeight("120px");
+                preview.getStyle().set("object-fit", "cover").set("border-radius", "var(--radius-md)");
+                compImagePreview.add(preview);
+            } catch (Exception ex) {
+                Notification.show("Error reading image", 3000, Notification.Position.BOTTOM_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
         H4 categoriesTitle = new H4("CATEGORIES");
         categoriesTitle.getStyle().set("margin", "16px 0 10px 0").set("color", "var(--dark)").set("font-weight", "700");
 
@@ -294,7 +329,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         addCategoryButton.setIcon(new Icon(VaadinIcon.PLUS));
         addCategoryButton.addClickListener(e -> showAddCategoryDialog());
 
-        section.add(sectionTitle, dateTimeLayout, categoriesTitle, categoriesContainer, addCategoryButton);
+        section.add(sectionTitle, dateTimeLayout, coverImageTitle, compImageUpload, compImagePreview, categoriesTitle, categoriesContainer, addCategoryButton);
         return section;
     }
 
@@ -640,231 +675,180 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         return row;
     }
 
-    private VerticalLayout buildVoteTypeSection() {
-        VerticalLayout section = new VerticalLayout();
-        section.setPadding(true);
-        section.setSpacing(true);
-        section.setWidth("100%");
-        section.getStyle()
-            .set("background", "white")
-            .set("border-radius", "8px")
-            .set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
-            .set("margin-bottom", "20px");
 
-        Span sectionTitle = new Span("VOTE TYPE");
-        sectionTitle.getStyle()
-            .set("font-weight", "bold")
-            .set("color", "#1a3a5c")
-            .set("font-size", "16px")
-            .set("margin-bottom", "15px");
+     private VerticalLayout buildVoteTypeSection() {
+         VerticalLayout section = new VerticalLayout();
+         section.setPadding(true);
+         section.setSpacing(true);
+         section.setWidth("100%");
+         section.getStyle()
+             .set("background", "var(--background)")
+             .set("border-radius", "var(--radius-sm)")
+             .set("padding", "20px")
+             .set("margin-bottom", "16px");
 
-        voteTypeCombo = new ComboBox<>("VOTING MODE");
-        voteTypeCombo.setItems("Normal", "Checklist", "Scale (0-10)");
-        String currentVoteType = currentCompetition.getVoteType();
-        if ("SCALE".equalsIgnoreCase(currentVoteType)) {
-            voteTypeCombo.setValue("Scale (0-10)");
-        } else if ("CHECKLIST".equalsIgnoreCase(currentVoteType)) {
-            voteTypeCombo.setValue("Checklist");
-        } else {
-            voteTypeCombo.setValue("Normal");
-        }
-        voteTypeCombo.setWidth("100%");
-        voteTypeCombo.addValueChangeListener(e -> {
-            markAsChanged();
-            boolean isChecklist = "Checklist".equals(e.getValue());
-            boolean isScale = e.getValue() != null && e.getValue().startsWith("Scale");
-            checklistSection.setVisible(isChecklist);
-            scaleConfigSection.setVisible(isScale);
-        });
+         Span sectionTitle = new Span("VOTE TYPE");
+         sectionTitle.getStyle()
+             .set("font-weight", "700")
+             .set("color", "var(--dark)")
+             .set("font-size", "14px")
+             .set("letter-spacing", "0.5px")
+             .set("margin-bottom", "12px");
 
-        section.add(sectionTitle, voteTypeCombo);
-        return section;
-    }
+         voteTypeCombo = new ComboBox<>("VOTING MODE");
+         voteTypeCombo.setItems("Normal", "Checklist", "Scale (0-10)");
+         String currentVoteType = currentCompetition.getVoteType();
+         if ("SCALE".equalsIgnoreCase(currentVoteType)) {
+             voteTypeCombo.setValue("Scale (0-10)");
+         } else if ("CHECKLIST".equalsIgnoreCase(currentVoteType)) {
+             voteTypeCombo.setValue("Checklist");
+         } else {
+             voteTypeCombo.setValue("Normal");
+         }
+         voteTypeCombo.setWidth("100%");
+         voteTypeCombo.addValueChangeListener(e -> {
+             markAsChanged();
+             boolean isChecklist = "Checklist".equals(e.getValue());
+             boolean isScale = e.getValue() != null && e.getValue().startsWith("Scale");
+             checklistSection.setVisible(isChecklist);
+             scaleConfigSection.setVisible(isScale);
+         });
 
-    private VerticalLayout buildChecklistSection() {
-        VerticalLayout section = new VerticalLayout();
-        section.setPadding(true);
-        section.setSpacing(true);
-        section.setWidth("100%");
-        section.getStyle()
-            .set("background", "white")
-            .set("border-radius", "8px")
-            .set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
-            .set("margin-bottom", "20px");
+         section.add(sectionTitle, voteTypeCombo);
+         return section;
+     }
 
-        Span sectionTitle = new Span("CHECKLIST ITEMS");
-        sectionTitle.getStyle()
-            .set("font-weight", "bold")
-            .set("color", "#1a3a5c")
-            .set("font-size", "16px")
-            .set("margin-bottom", "15px");
+     private VerticalLayout buildChecklistSection() {
+         VerticalLayout section = new VerticalLayout();
+         section.setPadding(true);
+         section.setSpacing(true);
+         section.setWidth("100%");
+         section.getStyle()
+             .set("background", "var(--background)")
+             .set("border-radius", "var(--radius-sm)")
+             .set("padding", "20px")
+             .set("margin-bottom", "16px");
 
-        checklistItemsContainer = new VerticalLayout();
-        checklistItemsContainer.setPadding(false);
-        checklistItemsContainer.setSpacing(true);
-        checklistItemsContainer.setWidth("100%");
+         Span sectionTitle = new Span("CHECKLIST ITEMS");
+         sectionTitle.getStyle()
+             .set("font-weight", "700")
+             .set("color", "var(--dark)")
+             .set("font-size", "14px")
+             .set("letter-spacing", "0.5px")
+             .set("margin-bottom", "12px");
 
-        java.util.List<ChecklistItem> items = checklistItemRepository.findByCompetitionId(currentCompetition.getId());
-        for (ChecklistItem item : items) {
-            checklistItemsContainer.add(buildChecklistItemRow(item));
-        }
+         checklistItemsContainer = new VerticalLayout();
+         checklistItemsContainer.setPadding(false);
+         checklistItemsContainer.setSpacing(true);
+         checklistItemsContainer.setWidth("100%");
 
-        Button addItemButton = new Button("Add Checklist Item");
-        addItemButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-        addItemButton.setIcon(new Icon(VaadinIcon.PLUS));
-        addItemButton.addClickListener(e -> showAddChecklistItemDialog());
+         java.util.List<ChecklistItem> items = checklistItemRepository.findByCompetitionId(currentCompetition.getId());
+         for (ChecklistItem item : items) {
+             checklistItemsContainer.add(buildChecklistItemRow(item));
+         }
 
-        section.add(sectionTitle, checklistItemsContainer, addItemButton);
-        return section;
-    }
+         Button addItemButton = new Button("Add Checklist Item");
+         addItemButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+         addItemButton.setIcon(new Icon(VaadinIcon.PLUS));
+         addItemButton.addClickListener(e -> showAddChecklistItemDialog());
 
-    private HorizontalLayout buildChecklistItemRow(ChecklistItem item) {
-        HorizontalLayout row = new HorizontalLayout();
-        row.setAlignItems(FlexComponent.Alignment.CENTER);
-        row.setWidth("100%");
-        row.getStyle()
-            .set("background", "#f9f9f9")
-            .set("padding", "10px")
-            .set("border-radius", "4px")
-            .set("border-left", "3px solid #1e5ba8");
+         section.add(sectionTitle, checklistItemsContainer, addItemButton);
+         return section;
+     }
 
-        Span itemText = new Span(item.getText());
-        itemText.getStyle().set("flex", "1").set("font-weight", "500");
+     private HorizontalLayout buildChecklistItemRow(ChecklistItem item) {
+         HorizontalLayout row = new HorizontalLayout();
+         row.setAlignItems(FlexComponent.Alignment.CENTER);
+         row.setWidth("100%");
+         row.getStyle()
+             .set("background", "var(--surface)")
+             .set("padding", "10px")
+             .set("border-radius", "var(--radius-sm)")
+             .set("border", "1px solid var(--border)");
 
-        Button deleteButton = new Button();
-        deleteButton.setIcon(new Icon(VaadinIcon.TRASH));
-        deleteButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
-        deleteButton.addClickListener(e -> {
-            if (item.getId() == null) {
-                checklistItemsToAdd.remove(item);
-            } else {
-                checklistItemsToRemove.add(item);
-            }
-            checklistItemsContainer.remove(row);
-            markAsChanged();
-        });
+         Span itemText = new Span(item.getText());
+         itemText.getStyle().set("flex", "1").set("font-weight", "500");
 
-        row.add(itemText, deleteButton);
-        return row;
-    }
+         Button deleteButton = new Button();
+         deleteButton.setIcon(new Icon(VaadinIcon.TRASH));
+         deleteButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+         deleteButton.addClickListener(e -> {
+             if (item.getId() == null) {
+                 checklistItemsToAdd.remove(item);
+             } else {
+                 checklistItemsToRemove.add(item);
+             }
+             checklistItemsContainer.remove(row);
+             markAsChanged();
+         });
 
-    private void showAddChecklistItemDialog() {
-        Dialog dialog = new Dialog();
-        dialog.setHeaderTitle("Add New Checklist Item");
+         row.add(itemText, deleteButton);
+         return row;
+     }
 
-        VerticalLayout content = new VerticalLayout();
-        content.setSpacing(true);
+     private void showAddChecklistItemDialog() {
+         Dialog dialog = new Dialog();
+         dialog.setHeaderTitle("Add New Checklist Item");
 
-        TextField textField = new TextField("Item Description");
-        textField.setWidth("100%");
+         VerticalLayout content = new VerticalLayout();
+         content.setSpacing(true);
 
-        Button saveButton = new Button("Save", e -> {
-            if (textField.getValue().trim().isEmpty()) {
-                Notification.show("Item description is required");
-                return;
-            }
+         TextField textField = new TextField("Item Description");
+         textField.setWidth("100%");
 
-            ChecklistItem newItem = new ChecklistItem();
-            newItem.setText(textField.getValue().trim());
-            newItem.setCompetition(currentCompetition);
+         Button saveButton = new Button("Save", e -> {
+             if (textField.getValue().trim().isEmpty()) {
+                 Notification.show("Item description is required");
+                 return;
+             }
 
-            checklistItemsToAdd.add(newItem);
-            checklistItemsContainer.add(buildChecklistItemRow(newItem));
-            markAsChanged();
-            dialog.close();
-        });
+             ChecklistItem newItem = new ChecklistItem();
+             newItem.setText(textField.getValue().trim());
+             newItem.setCompetition(currentCompetition);
 
-        Button cancelButton = new Button("Cancel", e -> dialog.close());
+             checklistItemsToAdd.add(newItem);
+             checklistItemsContainer.add(buildChecklistItemRow(newItem));
+             markAsChanged();
+             dialog.close();
+         });
 
-        content.add(textField);
-        dialog.add(content);
-        dialog.getFooter().add(cancelButton, saveButton);
-        dialog.open();
-    }
+         Button cancelButton = new Button("Cancel", e -> dialog.close());
 
-    private VerticalLayout buildScaleConfigSection() {
-        VerticalLayout section = new VerticalLayout();
-        section.setPadding(true);
-        section.setSpacing(true);
-        section.setWidth("100%");
-        section.getStyle()
-            .set("background", "white")
-            .set("border-radius", "8px")
-            .set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
-            .set("margin-bottom", "20px");
+         content.add(textField);
+         dialog.add(content);
+         dialog.getFooter().add(cancelButton, saveButton);
+         dialog.open();
+     }
 
-        Span sectionTitle = new Span("SCALE CONFIGURATION");
-        sectionTitle.getStyle()
-            .set("font-weight", "bold")
-            .set("color", "var(--text-primary)")
-            .set("font-size", "16px")
-            .set("margin-bottom", "15px");
+     private VerticalLayout buildScaleConfigSection() {
+         VerticalLayout section = new VerticalLayout();
+         section.setPadding(true);
+         section.setSpacing(true);
+         section.setWidth("100%");
+         section.getStyle()
+             .set("background", "var(--background)")
+             .set("border-radius", "var(--radius-sm)")
+             .set("padding", "20px")
+             .set("margin-bottom", "16px");
 
-        Span scaleInfo = new Span("Scale range is fixed: 0 – 10");
-        scaleInfo.getStyle()
-            .set("font-size", "0.95rem")
-            .set("color", "var(--text-muted)");
+         Span sectionTitle = new Span("SCALE CONFIGURATION");
+         sectionTitle.getStyle()
+             .set("font-weight", "700")
+             .set("color", "var(--dark)")
+             .set("font-size", "14px")
+             .set("letter-spacing", "0.5px")
+             .set("margin-bottom", "12px");
 
-        section.add(sectionTitle, scaleInfo);
-        return section;
-    }
+         Span scaleInfo = new Span("Scale range is fixed: 0 - 10");
+         scaleInfo.getStyle()
+             .set("font-size", "0.95rem")
+             .set("color", "var(--text-muted)");
 
-    private VerticalLayout buildVotingWeightSection() {
-        VerticalLayout section = new VerticalLayout();
-        section.setPadding(true);
-        section.setSpacing(true);
-        section.setWidth("100%");
-        section.getStyle()
-                .set("background", "var(--background)")
-                .set("border-radius", "var(--radius-sm)")
-                .set("padding", "20px")
-                .set("margin-bottom", "16px");
+         section.add(sectionTitle, scaleInfo);
+         return section;
+     }
 
-        Span sectionTitle = new Span("VOTE WEIGHTING");
-        sectionTitle.getStyle()
-                .set("font-weight", "700")
-                .set("color", "var(--dark)")
-                .set("font-size", "14px")
-                .set("letter-spacing", "0.5px")
-                .set("margin-bottom", "12px");
-
-        Span rolWeightTitle = new Span("WEIGHT BY ROLE");
-        rolWeightTitle.getStyle()
-                .set("font-weight", "600")
-                .set("color", "var(--text-primary)")
-                .set("margin-top", "8px")
-                .set("margin-bottom", "10px");
-
-        FormLayout formLayout = new FormLayout();
-        formLayout.setResponsiveSteps(
-                new FormLayout.ResponsiveStep("0px", 2)
-        );
-
-        judgeWeightField = new NumberField("Senior Judge: x");
-        judgeWeightField.addClassName("votify-input");
-        judgeWeightField.setValue(currentCompetition.getJudgeWeightMultiplier() != null
-                ? currentCompetition.getJudgeWeightMultiplier()
-                : 2.0);
-        judgeWeightField.setMin(0);
-        judgeWeightField.setWidth("100%");
-        judgeWeightField.addValueChangeListener(e -> markAsChanged());
-
-        standardUserWeightField = new NumberField("Standard User: x");
-        standardUserWeightField.addClassName("votify-input");
-        standardUserWeightField.setValue(currentCompetition.getStandardUserWeightMultiplier() != null
-                ? currentCompetition.getStandardUserWeightMultiplier()
-                : 1.0);
-        standardUserWeightField.setMin(0);
-        standardUserWeightField.setWidth("100%");
-        standardUserWeightField.addValueChangeListener(e -> markAsChanged());
-
-        formLayout.add(judgeWeightField, standardUserWeightField);
-
-        section.add(sectionTitle, rolWeightTitle, formLayout);
-        return section;
-    }
-
-    private VerticalLayout buildCommentsSection() {
+     private VerticalLayout buildCommentsSection() {
         VerticalLayout section = new VerticalLayout();
         section.setPadding(true);
         section.setSpacing(true);
@@ -958,8 +942,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 judgesToAdd.clear();
                 categoriesToRemove.clear();
                 categoriesToAdd.clear();
-                checklistItemsToRemove.clear();
-                checklistItemsToAdd.clear();
                 navigateBack();
             });
             confirmButton.addClassName("votify-btn-danger");
@@ -1018,42 +1000,20 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         }
 
         currentCompetition.setVoterType("Everyone".equals(voterTypeCombo.getValue()) ? "ALL" : "JUDGES");
-        currentCompetition.setAutoVote("ON".equals(autoVoteCombo.getValue()));
-        currentCompetition.setMaxVotesPerPerson(maxVotesPerPersonField.getValue());
-        currentCompetition.setJudgeWeightMultiplier(judgeWeightField.getValue());
-        currentCompetition.setStandardUserWeightMultiplier(standardUserWeightField.getValue());
-        currentCompetition.setVoteType("Checklist".equals(voteTypeCombo.getValue()) ? "CHECKLIST" :
-                (voteTypeCombo.getValue() != null && voteTypeCombo.getValue().startsWith("Scale") ? "SCALE" : "NORMAL"));
+         currentCompetition.setAutoVote("ON".equals(autoVoteCombo.getValue()));
+         currentCompetition.setMaxVotesPerPerson(maxVotesPerPersonField.getValue());
+         currentCompetition.setVoteType("Checklist".equals(voteTypeCombo.getValue()) ? "CHECKLIST" :
+                 (voteTypeCombo.getValue() != null && voteTypeCombo.getValue().startsWith("Scale") ? "SCALE" : "NORMAL"));
 
-        if ("SCALE".equalsIgnoreCase(currentCompetition.getVoteType())) {
-            currentCompetition.setScaleMin(0);
-            currentCompetition.setScaleMax(10);
-        }
+         // Update scale configuration
+         if ("SCALE".equalsIgnoreCase(currentCompetition.getVoteType())) {
+             currentCompetition.setScaleMin(0);
+             currentCompetition.setScaleMax(10);
+         }
 
-        currentCompetition.setCommentsEnabled("YES".equals(commentsEnabledCombo.getValue()));
+         currentCompetition.setCommentsEnabled("YES".equals(commentsEnabledCombo.getValue()));
         currentCompetition.setCommentsRequired("YES".equals(commentsRequiredCombo.getValue()));
 
-// Apply checklist item changes
-        try {
-            for (ChecklistItem itemToRemove : checklistItemsToRemove) {
-                if (itemToRemove.getId() != null) {
-                    checklistVoteRepository.deleteByChecklistItem_Id(itemToRemove.getId());
-                    checklistItemRepository.deleteById(itemToRemove.getId());
-                }
-            }
-            checklistItemsToRemove.clear();
-
-            for (ChecklistItem newItem : checklistItemsToAdd) {
-                checklistItemRepository.save(newItem);
-            }
-            checklistItemsToAdd.clear();
-        } catch (Exception e) {
-            Notification notification = Notification.show("Error processing checklist item changes: " + e.getMessage());
-            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            return;
-        }
-
-        // Apply judge changes (add new judges and remove marked judges)
         try {
             if (!judgesToRemove.isEmpty()) {
                 for (Judge judgeToRemove : judgesToRemove) {
@@ -1081,16 +1041,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             Notification notification = Notification.show("Configuration saved successfully");
             notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
-            getUI().ifPresent(ui -> {
-                ui.access(() -> {
-                    try {
-                        Thread.sleep(1500);
-                        navigateBack();
-                    } catch (InterruptedException e) {
-                        navigateBack();
-                    }
-                });
-            });
+            navigateBack();
         } catch (Exception e) {
             Notification notification = Notification.show("Error saving configuration: " + e.getMessage());
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);

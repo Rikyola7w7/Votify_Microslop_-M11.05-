@@ -12,7 +12,7 @@ import com.microslop.service.UserService;
 import com.microslop.service.VoterService;
 import com.microslop.service.VoteService;
 import com.microslop.views.components.BallotLoadingComponent;
-import com.microslop.views.components.CelebrationAnimation;
+import com.microslop.views.components.VoterRegisteredAnimation;
 import com.microslop.views.components.PodiumCardComponent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -35,12 +35,9 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 @PageTitle("Ranking")
 @Route("competition/:competitionId/categories/:categoryId/ranking")
@@ -51,9 +48,9 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     private final VoteService voteService;
     private final ProjectService projectService;
     private final UserService userService;
+    private final VoterService voterService;
     private final ChecklistVoteService checklistVoteService;
     private final JudgeRepository judgeRepository;
-    private final VoterService voterService;
     private Long competitionId;
     private Long categoryId;
     private Competition currentCompetition;
@@ -63,14 +60,9 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     private boolean isScaleMode = false;
     private boolean modifyMode;
     private boolean isJudgesRanking;
-
-    // Pending modify changes
-    private Map<Long, Integer> pendingReclassifications;
-    private Map<Long, Integer> pendingVoteEdits;
-    private Set<Long> pendingDeclassifications;
     private Button modifyEntriesButton;
-    private Button discardChangesButton;
-    private Button deleteAllModificationsButton;
+    private Div revertButtonContainer;
+    private Map<Long, Long> voteCounts = Map.of();
 
     public RankingView(CompetitionService competitionService,
                        CategoryService categoryService,
@@ -114,26 +106,22 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         }
 
         try {
-this.currentCompetition = competitionService.getByIdOrFail(competitionId);
-        this.currentCategory = categoryService.getByIdOrFail(categoryId);
+            this.currentCompetition = competitionService.getByIdOrFail(competitionId);
+            this.currentCategory = categoryService.getByIdOrFail(categoryId);
 
-        isChecklistMode = "CHECKLIST".equalsIgnoreCase(currentCompetition.getVoteType());
-        isScaleMode = "SCALE".equalsIgnoreCase(currentCompetition.getVoteType());
+            isChecklistMode = "CHECKLIST".equalsIgnoreCase(currentCompetition.getVoteType());
+            isScaleMode = "SCALE".equalsIgnoreCase(currentCompetition.getVoteType());
         } catch (Exception e) {
             event.forwardTo("");
             return;
         }
 
         this.modifyMode = false;
-        this.pendingReclassifications = new HashMap<>();
-        this.pendingVoteEdits = new HashMap<>();
-        this.pendingDeclassifications = new HashSet<>();
         removeAll();
         buildUi();
     }
 
     private void buildUi() {
-        initDiscardChangesButton();
         add(buildHeader());
         add(buildSummaryCard());
         add(buildRankingFilter());
@@ -145,79 +133,33 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
             .set("max-width", "760px")
             .set("margin", "0 auto");
         add(rankingContainer);
-        add(buildDiscardChangesButtonWrapper());
+        if (isUserOrganizerOrJudge()) {
+            add(buildRevertButton());
+        }
         loadRanking(true);
     }
 
-    private void initDiscardChangesButton() {
-        discardChangesButton = new Button("Discard changes");
-        discardChangesButton.addClassName("votify-btn-secondary");
-        discardChangesButton.getStyle()
-            .set("background", "transparent")
-            .set("color", "var(--error)")
-            .set("border", "2px solid var(--error)")
-            .set("font-weight", "600")
-            .set("margin", "1rem auto 0.5rem 2rem")
-            .set("display", "none");
-        discardChangesButton.addClickListener(e -> discardModifyChanges());
+    private Div buildRevertButton() {
+        revertButtonContainer = new Div();
+        revertButtonContainer.setVisible(false);
+        revertButtonContainer.getStyle()
+            .set("position", "fixed")
+            .set("bottom", "1rem")
+            .set("left", "1rem")
+            .set("z-index", "1000");
 
-        deleteAllModificationsButton = new Button("Delete all modifications");
-        deleteAllModificationsButton.addClassName("votify-btn-danger");
-        deleteAllModificationsButton.getStyle()
-            .set("font-weight", "600")
-            .set("margin", "1rem 2rem 0.5rem auto")
-            .set("display", "none");
-        deleteAllModificationsButton.addClickListener(e -> showDeleteAllModificationsDialog());
-    }
-
-    private HorizontalLayout buildDiscardChangesButtonWrapper() {
-        var wrapper = new HorizontalLayout(discardChangesButton, deleteAllModificationsButton);
-        wrapper.setWidthFull();
-        wrapper.setPadding(false);
-        wrapper.setSpacing(false);
-        wrapper.setAlignItems(FlexComponent.Alignment.CENTER);
-        wrapper.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        return wrapper;
-    }
-
-    private void showDeleteAllModificationsDialog() {
-        var dialog = new Dialog();
-        dialog.setHeaderTitle("Delete all modifications");
-
-        var content = new VerticalLayout();
-        content.setPadding(false);
-        content.setSpacing(true);
-        content.setWidth("400px");
-
-        var message = new Paragraph(
-            "This will permanently delete all custom positions and manual vote counts "
-            + "for all projects in this category. Projects will return to their original "
-            + "ranking based on actual votes. This action cannot be undone.");
-        message.getStyle()
-            .set("color", "var(--text-primary)")
-            .set("font-size", "1rem")
-            .set("line-height", "1.5");
-
-        content.add(message);
-
-        var cancelButton = new Button("Cancel");
-        cancelButton.addClassName("votify-btn-secondary");
-        cancelButton.addClickListener(e -> dialog.close());
-
-        var deleteButton = new Button("Delete all modifications");
-        deleteButton.addClassName("votify-btn-danger");
-        deleteButton.addClickListener(e -> {
+        Button revertButton = new Button("Revert all changes");
+        revertButton.addClassName("votify-btn-danger");
+        revertButton.getStyle()
+            .set("cursor", "pointer")
+            .set("font-weight", "600");
+        revertButton.addClickListener(e -> {
             try {
-                dialog.close();
-                projectService.clearAllModifications(categoryId);
-                pendingReclassifications.clear();
-                pendingVoteEdits.clear();
-                pendingDeclassifications.clear();
+                projectService.resetAllModifications(competitionId);
                 modifyMode = false;
                 modifyEntriesButton.setText("Modify entries");
-                discardChangesButton.getStyle().set("display", "none");
-                deleteAllModificationsButton.getStyle().set("display", "none");
-                Notification.show("All modifications deleted successfully", 3000,
+                revertButtonContainer.setVisible(false);
+                Notification.show("All modifications reverted", 3000,
                     Notification.Position.BOTTOM_CENTER);
                 loadRanking(isJudgesRanking);
             } catch (Exception ex) {
@@ -226,76 +168,8 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
             }
         });
 
-        var buttonLayout = new HorizontalLayout(cancelButton, deleteButton);
-        buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
-        buttonLayout.setSpacing(true);
-        buttonLayout.setWidthFull();
-
-        content.add(buttonLayout);
-        dialog.add(content);
-        dialog.open();
-    }
-
-    private void discardModifyChanges() {
-        pendingReclassifications.clear();
-        pendingVoteEdits.clear();
-        pendingDeclassifications.clear();
-        modifyMode = false;
-        modifyEntriesButton.setText("Modify entries");
-        discardChangesButton.getStyle().set("display", "none");
-        deleteAllModificationsButton.getStyle().set("display", "none");
-        loadRanking(isJudgesRanking);
-    }
-
-    private void enterModifyMode() {
-        pendingReclassifications.clear();
-        pendingVoteEdits.clear();
-        pendingDeclassifications.clear();
-        modifyMode = true;
-        modifyEntriesButton.setText("Save changes");
-        discardChangesButton.getStyle().set("display", "inline-flex");
-        deleteAllModificationsButton.getStyle().set("display", "inline-flex");
-        loadRanking(isJudgesRanking);
-    }
-
-    private void saveModifyChanges() {
-        try {
-            // Apply declassifications first (removes projects before reordering)
-            for (Long projectId : pendingDeclassifications) {
-                projectService.declassifyProject(projectId);
-            }
-
-            // Apply vote edits
-            for (Map.Entry<Long, Integer> entry : pendingVoteEdits.entrySet()) {
-                projectService.editProjectVotes(entry.getKey(), entry.getValue());
-            }
-
-            // Apply reclassifications
-            for (Map.Entry<Long, Integer> entry : pendingReclassifications.entrySet()) {
-                projectService.reclassifyProject(entry.getKey(), entry.getValue());
-            }
-
-            int totalChanges = pendingDeclassifications.size()
-                    + pendingVoteEdits.size()
-                    + pendingReclassifications.size();
-
-            pendingReclassifications.clear();
-            pendingVoteEdits.clear();
-            pendingDeclassifications.clear();
-
-            modifyMode = false;
-            modifyEntriesButton.setText("Modify entries");
-            discardChangesButton.getStyle().set("display", "none");
-            deleteAllModificationsButton.getStyle().set("display", "none");
-
-            Notification.show(totalChanges + " change" + (totalChanges != 1 ? "s" : "") + " saved", 3000,
-                    Notification.Position.BOTTOM_CENTER);
-
-            loadRanking(isJudgesRanking);
-        } catch (Exception ex) {
-            Notification.show("Error saving changes: " + ex.getMessage(), 3000,
-                    Notification.Position.BOTTOM_CENTER);
-        }
+        revertButtonContainer.add(revertButton);
+        return revertButtonContainer;
     }
 
     private boolean isUserOrganizerOrJudge() {
@@ -350,11 +224,10 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
                 .set("cursor", "pointer")
                 .set("font-weight", "600");
             modifyEntriesButton.addClickListener(e -> {
-                if (modifyMode) {
-                    saveModifyChanges();
-                } else {
-                    enterModifyMode();
-                }
+                modifyMode = !modifyMode;
+                modifyEntriesButton.setText(modifyMode ? "Finish changes" : "Modify entries");
+                revertButtonContainer.setVisible(modifyMode);
+                loadRanking(isJudgesRanking);
             });
             rightSection.add(modifyEntriesButton);
         }
@@ -423,17 +296,14 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
                 
                 dialog.close();
                 
-                // Show epic celebration, then redirect to voting
-                CelebrationAnimation celebration = new CelebrationAnimation(
-                    "VOTER REGISTERED",
-                    "Welcome aboard — time to make your voice heard",
+                // Show subtle voter registered animation, then redirect to voting
+                VoterRegisteredAnimation vrAnim = new VoterRegisteredAnimation(
                     () -> {
-                        String votingUrl = "/competition/" + competitionId + "/category/" + categoryId + "/vote";
-                        getUI().ifPresent(ui -> ui.getPage().executeJs(
-                            "window.location.href = '" + votingUrl + "'"));
+                        getUI().ifPresent(ui -> ui.navigate(
+                            "competition/" + competitionId + "/category/" + categoryId + "/vote"));
                     }
                 );
-                getUI().ifPresent(ui -> ui.add(celebration));
+                getUI().ifPresent(ui -> ui.add(vrAnim));
             } catch (IllegalStateException ex) {
                 Notification error = Notification.show("Error: " + ex.getMessage(), 3000,
                     Notification.Position.BOTTOM_CENTER);
@@ -576,71 +446,28 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
         return filterContainer;
     }
 
-    private List<Project> applyPendingChanges(List<Project> ranking) {
-        List<Project> modified = new ArrayList<>();
-        for (Project p : ranking) {
-            if (pendingDeclassifications.contains(p.getId())) {
-                continue;
-            }
-            Long pid = p.getId();
-            if (pendingReclassifications.containsKey(pid)) {
-                p.setCustomPosition(pendingReclassifications.get(pid));
-            }
-            if (pendingVoteEdits.containsKey(pid)) {
-                p.setManualVoteCount(pendingVoteEdits.get(pid));
-            }
-            modified.add(p);
-        }
-
-        List<Project> withPosition = new ArrayList<>();
-        List<Project> withoutPosition = new ArrayList<>();
-        for (Project p : modified) {
-            if (p.getCustomPosition() != null) {
-                withPosition.add(p);
-            } else {
-                withoutPosition.add(p);
-            }
-        }
-
-        withPosition.sort((a, b) -> {
-            int cmp = Integer.compare(a.getCustomPosition(), b.getCustomPosition());
-            if (cmp != 0) return cmp;
-            return Long.compare(a.getId(), b.getId());
-        });
-
-        withoutPosition.sort((a, b) -> {
-            long votesA = a.getManualVoteCount() != null ? a.getManualVoteCount() : a.getVotes().size();
-            long votesB = b.getManualVoteCount() != null ? b.getManualVoteCount() : b.getVotes().size();
-            if (votesA != votesB) return Long.compare(votesB, votesA);
-            return Long.compare(a.getId(), b.getId());
-        });
-
-        List<Project> result = new ArrayList<>(withoutPosition);
-        for (Project p : withPosition) {
-            int pos = Math.min(p.getCustomPosition() - 1, result.size());
-            result.add(pos, p);
-        }
-        return result;
-    }
-
     private void loadRanking(boolean isJudgesRanking) {
         if (rankingContainer == null) return;
 
         rankingContainer.removeAll();
 
-        BallotLoadingComponent loading = new BallotLoadingComponent("Calculating rankings...");
-        rankingContainer.add(loading);
+         BallotLoadingComponent loading = new BallotLoadingComponent("Calculating rankings...");
+         rankingContainer.add(loading);
 
-        List<Project> ranking = projectService.getRankingForCategory(categoryId, isJudgesRanking);
-        if (modifyMode) {
-            ranking = applyPendingChanges(ranking);
-        }
+         List<Project> ranking;
+         if (isChecklistMode) {
+             ranking = projectService.getChecklistRankingByCategory(categoryId);
+         } else if (isScaleMode) {
+             ranking = projectService.getRankingByCategory(categoryId);
+         } else {
+             ranking = projectService.getRankingForCategory(categoryId, isJudgesRanking);
+         }
 
         var content = new Div();
         content.getElement().setAttribute("id", "ranking-content");
         content.setWidthFull();
+        content.addClassName("animate-fade-in");
         content.getStyle()
-            .set("display", "none")
             .set("max-width", "760px")
             .set("margin", "0 auto");
 
@@ -663,6 +490,9 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
             emptyWrapper.add(emptyIcon, emptyTitle);
             content.add(emptyWrapper);
         } else {
+            List<Long> projectIds = ranking.stream().map(Project::getId).toList();
+            voteCounts = voteService.countVotesByProjectIds(projectIds);
+
             var podiumSection = new Div();
             podiumSection.setWidthFull();
             podiumSection.getStyle()
@@ -679,17 +509,27 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
                 PodiumCardComponent.Position.THIRD
             };
 
-            for (int slot = 0; slot < 3; slot++) {
-                int idx = order[slot];
-                if (idx >= ranking.size()) continue;
-                Project p = ranking.get(idx);
-                long votes = p.getManualVoteCount() != null
-                    ? p.getManualVoteCount()
-                    : p.getVotes().size();
-                if (modifyMode) {
+             for (int slot = 0; slot < 3; slot++) {
+                 int idx = order[slot];
+                 if (idx >= ranking.size()) continue;
+                 Project p = ranking.get(idx);
+                 if (modifyMode) {
+                    long votes = p.getManualVoteCount() != null
+                        ? p.getManualVoteCount()
+                        : voteCounts.getOrDefault(p.getId(), 0L);
                     podiumSection.add(buildModifiablePodiumWrapper(p, positions[slot], votes));
+                } else if (isChecklistMode) {
+                    long totalVotes = checklistVoteService.countChecklistVotesByProject(p.getId());
+                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, true, false, 0.0);
+                    podiumSection.add(podiumCard);
+                } else if (isScaleMode) {
+                    long totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+                    double avgScore = voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
+                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, false, true, avgScore);
+                    podiumSection.add(podiumCard);
                 } else {
-                    var podiumCard = new PodiumCardComponent(p, positions[slot], votes);
+                    long totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes);
                     podiumSection.add(podiumCard);
                 }
             }
@@ -701,45 +541,41 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
                 listSection.setPadding(false);
                 listSection.setSpacing(false);
 
-                for (int i = 3; i < ranking.size(); i++) {
-                    Project p = ranking.get(i);
-                    long totalVotes;
-                    double avgScore = 0;
-                    if (isChecklistMode) {
-                        totalVotes = checklistVoteService.countChecklistVotesByProject(p.getId());
-                    } else if (isScaleMode) {
-                        avgScore = voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
-                        totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
-                    } else {
-                        totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
-                    }
-                    int staggerIndex = Math.min(i - 2, 8);
-                    listSection.add(buildListRow(p, i + 1, staggerIndex));
-                }
+                  for (int i = 3; i < ranking.size(); i++) {
+                      Project p = ranking.get(i);
+                      int staggerIndex = Math.min(i - 2, 8);
+                      if (modifyMode) {
+                          long votes = p.getManualVoteCount() != null
+                              ? p.getManualVoteCount()
+                              : voteCounts.getOrDefault(p.getId(), 0L);
+                          listSection.add(buildListRow(p, i + 1, staggerIndex, votes));
+                      } else if (isChecklistMode) {
+                          long checklistVotes = checklistVoteService.countChecklistVotesByProject(p.getId());
+                          listSection.add(buildListRow(p, i + 1, staggerIndex, checklistVotes, 0.0));
+                      } else if (isScaleMode) {
+                          long scaleVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+                          double scaleAvg = voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
+                          listSection.add(buildListRow(p, i + 1, staggerIndex, scaleVotes, scaleAvg));
+                      } else {
+                          long normalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+                          listSection.add(buildListRow(p, i + 1, staggerIndex, normalVotes));
+                      }
+                  }
                 content.add(listSection);
             }
         }
         rankingContainer.add(content);
 
+        // Fade out loading and reveal content
         getElement().executeJs(
             "setTimeout(function() {" +
             "  var loadings = document.querySelectorAll('.votify-loading');" +
-            "  loadings.forEach(function(l) { l.style.display = 'none'; });" +
-            "  var c = document.getElementById('ranking-content');" +
-            "  if (c) { c.style.display = 'block'; }" +
-            "}, 900)");
-    }
-
-    private String getPendingLabel(Project project) {
-        Long pid = project.getId();
-        StringBuilder label = new StringBuilder();
-        if (pendingReclassifications.containsKey(pid)) {
-            label.append("Pos: ").append(pendingReclassifications.get(pid)).append(" ");
-        }
-        if (pendingVoteEdits.containsKey(pid)) {
-            label.append("Votes: ").append(pendingVoteEdits.get(pid)).append(" ");
-        }
-        return label.toString().trim();
+            "  loadings.forEach(function(l) { l.style.opacity = '0'; l.style.transition = 'opacity 0.15s ease'; });" +
+            "  setTimeout(function() {" +
+            "    var loadings = document.querySelectorAll('.votify-loading');" +
+            "    loadings.forEach(function(l) { l.style.display = 'none'; });" +
+            "  }, 150);" +
+            "}, 750)");
     }
 
     private Div buildModifiablePodiumWrapper(Project project, PodiumCardComponent.Position position, long votes) {
@@ -752,39 +588,9 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
 
         var podiumCard = new PodiumCardComponent(project, position, votes);
         wrapper.add(podiumCard);
-
-        String pendingLabel = getPendingLabel(project);
-        if (!pendingLabel.isEmpty()) {
-            var pendingBadge = new Span(pendingLabel);
-            pendingBadge.getStyle()
-                .set("font-size", "0.7rem")
-                .set("color", "var(--warning)")
-                .set("font-weight", "600")
-                .set("margin-top", "0.15rem")
-                .set("background", "rgba(243, 156, 18, 0.12)")
-                .set("padding", "0.15rem 0.5rem")
-                .set("border-radius", "4px");
-            wrapper.add(pendingBadge);
-        }
-
         wrapper.add(buildActionButtons(project));
 
         return wrapper;
-    }
-
-    private Span buildListRowPendingBadge(Project project) {
-        String pendingLabel = getPendingLabel(project);
-        if (pendingLabel.isEmpty()) return null;
-        var badge = new Span("Pending: " + pendingLabel);
-        badge.getStyle()
-            .set("font-size", "0.7rem")
-            .set("color", "var(--warning)")
-            .set("font-weight", "600")
-            .set("background", "rgba(243, 156, 18, 0.12)")
-            .set("padding", "0.15rem 0.5rem")
-            .set("border-radius", "4px")
-            .set("margin-left", "0.5rem");
-        return badge;
     }
 
     private Div buildActionButtons(Project project) {
@@ -823,12 +629,76 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
         return container;
     }
 
-    private HorizontalLayout buildListRow(Project p, int position, int staggerIndex) {
-        var wrapper = new VerticalLayout();
-        wrapper.setPadding(false);
-        wrapper.setSpacing(false);
-        wrapper.setWidthFull();
+    private HorizontalLayout buildListRow(Project p, int position, int staggerIndex, long voteCount) {
+         var wrapper = new VerticalLayout();
+         wrapper.setPadding(false);
+         wrapper.setSpacing(false);
+         wrapper.setWidthFull();
 
+         var row = new HorizontalLayout();
+        row.addClassName("votify-card-static");
+        row.addClassName("animate-fade-in");
+        row.addClassName("stagger-" + staggerIndex);
+        row.setWidthFull();
+        row.setAlignItems(FlexComponent.Alignment.CENTER);
+        row.getStyle()
+            .set("padding", "1rem 1.5rem")
+            .set("margin-bottom", "0");
+
+        var numBadge = new Div();
+        numBadge.getStyle()
+            .set("background", "var(--primary)")
+            .set("border-radius", "50%")
+            .set("width", "40px")
+            .set("height", "40px")
+            .set("display", "flex")
+            .set("align-items", "center")
+            .set("justify-content", "center")
+            .set("font-weight", "700")
+            .set("font-size", "1rem")
+            .set("color", "white")
+            .set("flex-shrink", "0");
+        numBadge.add(new Span(String.valueOf(position)));
+
+        var info = new VerticalLayout();
+        info.setPadding(false);
+        info.setSpacing(false);
+        info.getStyle().set("flex", "1");
+
+        var name = new Span(p.getName().toUpperCase());
+        name.getStyle()
+            .set("font-weight", "700")
+            .set("font-size", "0.95rem")
+            .set("color", "var(--text-primary)");
+
+         long votes = p.getManualVoteCount() != null
+             ? p.getManualVoteCount()
+             : voteCount;
+
+        var votesSpan = new Span(votes + " vote" + (votes != 1 ? "s" : ""));
+        votesSpan.getStyle()
+            .set("font-size", "0.8rem")
+            .set("color", "var(--text-muted)")
+            .set("margin-top", "0.15rem");
+
+        info.add(name, votesSpan);
+        row.add(numBadge, info);
+        wrapper.add(row);
+
+        if (modifyMode) {
+            wrapper.add(buildActionButtons(p));
+        }
+
+        // Cast to HorizontalLayout for compatibility - wrapper is returned as HorizontalLayout-like
+        var result = new HorizontalLayout();
+        result.setWidthFull();
+        result.setPadding(false);
+        result.setSpacing(false);
+        result.add(wrapper);
+        return result;
+    }
+
+    private HorizontalLayout buildListRow(Project p, int position, int staggerIndex, long totalVotes, double avgScore) {
         var row = new HorizontalLayout();
         row.addClassName("votify-card-static");
         row.addClassName("animate-fade-in");
@@ -859,50 +729,33 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
         info.setSpacing(false);
         info.getStyle().set("flex", "1");
 
-        var nameRow = new HorizontalLayout();
-        nameRow.setPadding(false);
-        nameRow.setSpacing(false);
-        nameRow.setAlignItems(FlexComponent.Alignment.CENTER);
-
         var name = new Span(p.getName().toUpperCase());
         name.getStyle()
             .set("font-weight", "700")
             .set("font-size", "0.95rem")
             .set("color", "var(--text-primary)");
-        nameRow.add(name);
 
-        if (modifyMode) {
-            var pendingBadge = buildListRowPendingBadge(p);
-            if (pendingBadge != null) {
-                nameRow.add(pendingBadge);
-            }
+        String voteText;
+        if (isChecklistMode) {
+            voteText = totalVotes + " checks";
+        } else if (isScaleMode) {
+            voteText = String.format("Score: %.1f", avgScore);
+        } else {
+            voteText = totalVotes + " votes";
         }
 
-        long votes = p.getManualVoteCount() != null
-            ? p.getManualVoteCount()
-            : p.getVotes().size();
+        var votesLabel = new Span(voteText);
+        votesLabel.getStyle()
+            .set("font-size", "0.85rem")
+            .set("font-weight", "600")
+            .set("color", "var(--secondary)")
+            .set("background", "rgba(0, 206, 201, 0.1)")
+            .set("padding", "2px 10px")
+            .set("border-radius", "var(--radius-pill)");
 
-        var votesSpan = new Span(votes + " vote" + (votes != 1 ? "s" : ""));
-        votesSpan.getStyle()
-            .set("font-size", "0.8rem")
-            .set("color", "var(--text-muted)")
-            .set("margin-top", "0.15rem");
-
-        info.add(nameRow, votesSpan);
+        info.add(name, votesLabel);
         row.add(numBadge, info);
-        wrapper.add(row);
-
-        if (modifyMode) {
-            wrapper.add(buildActionButtons(p));
-        }
-
-        // Cast to HorizontalLayout for compatibility - wrapper is returned as HorizontalLayout-like
-        var result = new HorizontalLayout();
-        result.setWidthFull();
-        result.setPadding(false);
-        result.setSpacing(false);
-        result.add(wrapper);
-        return result;
+        return row;
     }
 
     private void showReclassifyDialog(Project project) {
@@ -935,19 +788,17 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
         acceptButton.addClassName("votify-btn-primary");
         acceptButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         acceptButton.addClickListener(e -> {
-            int newPosition = positionField.getValue();
-            if (newPosition < 1) {
-                Notification.show("Position must be at least 1", 3000,
+            try {
+                int newPosition = positionField.getValue();
+                projectService.reclassifyProject(project.getId(), newPosition);
+                dialog.close();
+                Notification.show("Project reclassified to position " + newPosition, 3000,
                     Notification.Position.BOTTOM_CENTER);
-                return;
+                loadRanking(isJudgesRanking);
+            } catch (Exception ex) {
+                Notification.show("Error: " + ex.getMessage(), 3000,
+                    Notification.Position.BOTTOM_CENTER);
             }
-            pendingReclassifications.put(project.getId(), newPosition);
-            // If this project was pending declassification, remove that
-            pendingDeclassifications.remove(project.getId());
-            dialog.close();
-            Notification.show("Project will be reclassified to position " + newPosition, 3000,
-                Notification.Position.BOTTOM_CENTER);
-            loadRanking(isJudgesRanking);
         });
 
         var buttonLayout = new HorizontalLayout(cancelButton, acceptButton);
@@ -983,18 +834,19 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
         cancelButton.addClassName("votify-btn-secondary");
         cancelButton.addClickListener(e -> dialog.close());
 
-        var deleteButton = new Button("Mark for deletion");
+        var deleteButton = new Button("Delete permanently");
         deleteButton.addClassName("votify-btn-danger");
         deleteButton.addClickListener(e -> {
-            pendingDeclassifications.add(project.getId());
-            // Remove any pending reclassification for this project
-            pendingReclassifications.remove(project.getId());
-            // Remove any pending vote edits for this project
-            pendingVoteEdits.remove(project.getId());
-            dialog.close();
-            Notification.show("Project marked for deletion — save to confirm", 3000,
-                Notification.Position.BOTTOM_CENTER);
-            loadRanking(isJudgesRanking);
+            try {
+                projectService.declassifyProject(project.getId());
+                dialog.close();
+                Notification.show("Project declassified successfully", 3000,
+                    Notification.Position.BOTTOM_CENTER);
+                loadRanking(isJudgesRanking);
+            } catch (Exception ex) {
+                Notification.show("Error: " + ex.getMessage(), 3000,
+                    Notification.Position.BOTTOM_CENTER);
+            }
         });
 
         var buttonLayout = new HorizontalLayout(cancelButton, deleteButton);
@@ -1023,7 +875,7 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
 
         int currentVotes = project.getManualVoteCount() != null
             ? project.getManualVoteCount()
-            : project.getVotes().size();
+            : voteCounts.getOrDefault(project.getId(), 0L).intValue();
 
         var votesField = new IntegerField("Votes");
         votesField.setMin(0);
@@ -1041,19 +893,17 @@ this.currentCompetition = competitionService.getByIdOrFail(competitionId);
         acceptButton.addClassName("votify-btn-primary");
         acceptButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         acceptButton.addClickListener(e -> {
-            int newVotes = votesField.getValue();
-            if (newVotes < 0) {
-                Notification.show("Vote count cannot be negative", 3000,
+            try {
+                int newVotes = votesField.getValue();
+                projectService.editProjectVotes(project.getId(), newVotes);
+                dialog.close();
+                Notification.show("Votes updated to " + newVotes, 3000,
                     Notification.Position.BOTTOM_CENTER);
-                return;
+                loadRanking(isJudgesRanking);
+            } catch (Exception ex) {
+                Notification.show("Error: " + ex.getMessage(), 3000,
+                    Notification.Position.BOTTOM_CENTER);
             }
-            pendingVoteEdits.put(project.getId(), newVotes);
-            // If this project was pending declassification, remove that
-            pendingDeclassifications.remove(project.getId());
-            dialog.close();
-            Notification.show("Votes will be updated to " + newVotes + " on save", 3000,
-                Notification.Position.BOTTOM_CENTER);
-            loadRanking(isJudgesRanking);
         });
 
         var buttonLayout = new HorizontalLayout(cancelButton, acceptButton);

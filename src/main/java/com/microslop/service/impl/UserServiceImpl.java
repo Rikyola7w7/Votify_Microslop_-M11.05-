@@ -118,7 +118,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void logout() {
-        VaadinSession.getCurrent().setAttribute(User.class, null);
+        VaadinSession session = VaadinSession.getCurrent();
+        if (session != null) {
+            session.getSession().invalidate();
+        }
     }
 
     @Override

@@ -30,5 +30,14 @@ public interface CompetitionRepository extends JpaRepository<Competition, Long>,
     @Query("SELECT c FROM Competition c LEFT JOIN FETCH c.categories WHERE c.id = :id")
     Optional<Competition> findByIdWithCategories(Long id);
 
+    @Query("SELECT c FROM Competition c LEFT JOIN FETCH c.categories WHERE c.status = com.microslop.entity.CompetitionStatus.ACTIVE OR c.status = com.microslop.entity.CompetitionStatus.PAUSED")
+    List<Competition> findActiveWithCategories();
+
     List<Competition> findByCreatedByIgnoreCase(String createdBy);
+
+    @Query("SELECT c FROM Competition c WHERE c.id = :id")
+    Optional<Competition> findByIdBasic(Long id);
+
+    @Query("SELECT c FROM Competition c")
+    List<Competition> findAllBasic();
 }

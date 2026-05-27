@@ -104,6 +104,16 @@ public class SeedRunner implements ApplicationRunner {
                 }
             }
             log.info("PostgreSQL sequences reset successfully");
+
+            // Fix votes_left for existing voters that have NULL
+            try (java.sql.Statement stmt = connection.createStatement()) {
+                stmt.execute(
+                    "UPDATE voter SET votes_left = 1 WHERE votes_left IS NULL"
+                );
+                log.info("Fixed NULL votes_left values in voter table");
+            } catch (Exception e) {
+                log.debug("votes_left column may not exist yet, skipping fix");
+            }
         } catch (Exception e) {
             log.error("Error resetting PostgreSQL sequences", e);
         }

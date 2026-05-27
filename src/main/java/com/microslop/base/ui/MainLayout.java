@@ -17,10 +17,8 @@ import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Layout;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -190,8 +188,6 @@ public final class MainLayout extends AppLayout {
         notificationDialog.setWidth("350px");
         notificationDialog.setMaxWidth("90vw");
 
-        rebuildNotificationDialog();
-
         bellButton.addClickListener(e -> {
             rebuildNotificationDialog();
             notificationDialog.open();
@@ -210,7 +206,10 @@ public final class MainLayout extends AppLayout {
     }
 
     private void updateUnreadBadge() {
-        if (notificationService == null) return;
+        if (notificationService == null || userService == null || !userService.isLoggedIn()) {
+            unreadBadge.getStyle().set("visibility", "hidden");
+            return;
+        }
         try {
             long unreadCount = notificationService.getUnreadCountForCurrentUser();
             if (unreadCount > 0) {

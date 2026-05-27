@@ -1,8 +1,11 @@
 package com.microslop.views;
 
+import com.microslop.entity.Competition;
 import com.microslop.entity.Project;
 import com.microslop.entity.User;
+import com.microslop.service.ProjectCommentService;
 import com.microslop.service.ProjectService;
+import com.microslop.service.VoteService;
 import com.microslop.views.components.ProjectCardComponent;
 import com.microslop.base.ui.MainLayout;
 import com.vaadin.flow.component.button.Button;
@@ -21,18 +24,25 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @PageTitle("My Projects | Votify")
 @Route(value = ":username/projects", layout = MainLayout.class)
 public class UserProjectsView extends VerticalLayout implements BeforeEnterObserver {
 
     private final ProjectService projectService;
+    private final VoteService voteService;
     private String currentUsername;
     private Div projectsContainer;
 
-    public UserProjectsView(ProjectService projectService) {
+    public UserProjectsView(ProjectService projectService, VoteService voteService) {
         this.projectService = projectService;
+        this.voteService = voteService;
         initializeView();
     }
 
@@ -66,7 +76,9 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
         setSizeFull();
         setPadding(false);
         setSpacing(false);
-        getStyle().set("background", "var(--background)");
+        getStyle()
+            .set("background", "var(--background)")
+            .set("overflow-y", "auto");
 
         add(buildHeader());
 
@@ -90,6 +102,7 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setSpacing(true);
         header.addClassName("votify-header");
+        header.getStyle().set("flex-shrink", "0");
 
         Button backButton = new Button(new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
@@ -114,27 +127,54 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
 
             if (projects.isEmpty()) {
                 showNoProjectsMessage();
-            } else {
-                int[] index = {0};
-                projects.forEach(project -> {
-                    Div cardWrapper = new Div(createProjectCard(project));
-                    cardWrapper.addClassName("animate-fade-in");
-                    cardWrapper.addClassName("stagger-" + Math.min(++index[0], 8));
-                    projectsContainer.add(cardWrapper);
-                });
+                return;
+            }
+
+            List<Long> projectIds = projects.stream().map(Project::getId).toList();
+            Map<Long, Long> voteCounts = voteService.countVotesByProjectIds(projectIds);
+
+            Map<Long, Map<Long, Integer>> positionsByCompetition = new HashMap<>();
+            Map<Long, String> competitionNames = new HashMap<>();
+
+            for (Project p : projects) {
+                if (p.getCompetition() != null) {
+                    Long compId = p.getCompetition().getId();
+                    competitionNames.put(compId, p.getCompetition().getName());
+                }
+            }
+
+            for (Long compId : competitionNames.keySet()) {
+                List<Project> ranking = projectService.getRanking(compId);
+                Map<Long, Integer> positions = new HashMap<>();
+                for (int i = 0; i < ranking.size(); i++) {
+                    positions.put(ranking.get(i).getId(), i + 1);
+                }
+                positionsByCompetition.put(compId, positions);
+            }
+
+            int[] index = {0};
+            for (Project project : projects) {
+                Long compId = project.getCompetition() != null ? project.getCompetition().getId() : null;
+                String compName = compId != null ? competitionNames.getOrDefault(compId, "Unknown") : "Unknown";
+                long votes = voteCounts.getOrDefault(project.getId(), 0L);
+                int position = compId != null && positionsByCompetition.containsKey(compId)
+                    ? positionsByCompetition.get(compId).getOrDefault(project.getId(), 0)
+                    : 0;
+
+                Div cardWrapper = new Div(new ProjectCardComponent(
+                    project,
+                    compName,
+                    votes,
+                    position,
+                    () -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/projects/" + project.getId()))
+                ));
+                cardWrapper.addClassName("animate-fade-in");
+                cardWrapper.addClassName("stagger-" + Math.min(++index[0], 8));
+                projectsContainer.add(cardWrapper);
             }
         } catch (Exception e) {
             showErrorNotification("Error loading projects: " + e.getMessage());
         }
-    }
-
-    private Div createProjectCard(Project project) {
-        return new ProjectCardComponent(
-            project,
-            currentUsername,
-            projectService,
-            () -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/projects/" + project.getId()))
-        );
     }
 
     private void showNoProjectsMessage() {

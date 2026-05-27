@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.BatchSize;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @ToString(exclude = {"projects", "categories", "judges"})
+@BatchSize(size = 50)
 public class Competition {
 
     @Id 
@@ -76,7 +78,7 @@ public class Competition {
     private String votingStrategyType = "ALL";
 
     @Column(name = "ranking_strategy_type", length = 50)
-    private String rankingStrategyType = "AVERAGE";
+    private String rankingStrategyType = "WEIGHTED";
 
     public static com.microslop.builder.CompetitionBuilder builder() {
         return com.microslop.builder.CompetitionBuilder.builder();
@@ -90,16 +92,22 @@ public class Competition {
     private Boolean commentsRequired = false;
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<Project> projects = new ArrayList<>();
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<Category> categories = new ArrayList<>();
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<Judge> judges = new ArrayList<>();
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChecklistItem> checklistItems = new ArrayList<>();
+
+    @Column(name = "cover_image")
+    private byte[] coverImage;
 
     @Column(nullable = false, name = "max_votes")
     private int maxVotes = 1;
@@ -211,7 +219,7 @@ public void addChecklistItem(ChecklistItem item) {
             }
         } else {
             if (this.status == CompetitionStatus.ACTIVE
-                    || this.status == CompetitionStatus.PAUSED) {
+                    || this.status == CompetitionStatus.VOTING_OPEN) {
                 this.status = CompetitionStatus.DRAFT;
             }
         }

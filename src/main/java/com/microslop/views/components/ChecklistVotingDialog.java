@@ -16,6 +16,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,7 @@ public class ChecklistVotingDialog extends Dialog {
 
         setHeaderTitle("Checklist Voting: " + projectName);
         setModal(true);
+        getElement().getStyle().set("animation", "fade-in-scale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards");
         setCloseOnEsc(true);
         setCloseOnOutsideClick(false);
 
@@ -112,11 +114,13 @@ public class ChecklistVotingDialog extends Dialog {
         }
 
         try {
+            List<Long> selectedIds = new ArrayList<>();
             for (Map.Entry<Long, Checkbox> entry : checkboxes.entrySet()) {
                 if (entry.getValue().getValue()) {
-                    checklistVoteService.submitChecklistVote(username, projectId, entry.getKey());
+                    selectedIds.add(entry.getKey());
                 }
             }
+            checklistVoteService.submitChecklistVotes(username, projectId, selectedIds);
 
             this.close();
 

@@ -374,8 +374,9 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         var grid = new Div();
         grid.getElement().setAttribute("id", "cat-cards-grid");
         grid.setWidthFull();
+        grid.addClassName("animate-fade-in");
         grid.getStyle()
-            .set("display", "none")
+            .set("display", "flex")
             .set("flex-wrap", "wrap")
             .set("gap", "24px")
             .set("justify-content", "center");
@@ -393,14 +394,16 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         }
         gridContainer.add(grid);
 
-        // After 800ms, hide loading and show grid
+        // Fade out loading and reveal grid
         getElement().executeJs(
             "setTimeout(function() {" +
             "  var loadings = document.querySelectorAll('.votify-loading');" +
-            "  loadings.forEach(function(l) { l.style.display = 'none'; });" +
-            "  var g = document.getElementById('cat-cards-grid');" +
-            "  if (g) { g.style.display = 'flex'; g.style.flexWrap = 'wrap'; g.style.gap = '24px'; g.style.justifyContent = 'center'; }" +
-            "}, 800)");
+            "  loadings.forEach(function(l) { l.style.opacity = '0'; l.style.transition = 'opacity 0.15s ease'; });" +
+            "  setTimeout(function() {" +
+            "    var loadings = document.querySelectorAll('.votify-loading');" +
+            "    loadings.forEach(function(l) { l.style.display = 'none'; });" +
+            "  }, 150);" +
+            "}, 750)");
 
         gridWrapper.add(gridContainer);
         return gridWrapper;

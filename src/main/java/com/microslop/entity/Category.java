@@ -29,7 +29,11 @@ public class Category {
     @Column(name = "vote_type", length = 50)
     private String voteType = "NORMAL"; // NORMAL, CHECKLIST, SCALE
 
-    @ManyToOne
+    @Lob
+    @Column(name = "image")
+    private byte[] image;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "competition_id", nullable = false)
     private Competition competition;
 
