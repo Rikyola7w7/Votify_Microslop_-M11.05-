@@ -450,21 +450,17 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         rankingContainer.removeAll();
 
-        BallotLoadingComponent loading = new BallotLoadingComponent("Calculating rankings...");
-        rankingContainer.add(loading);
+         BallotLoadingComponent loading = new BallotLoadingComponent("Calculating rankings...");
+         rankingContainer.add(loading);
 
-<<<<<<< HEAD
-        List<Project> ranking;
-        if (isChecklistMode) {
-            ranking = projectService.getChecklistRankingByCategory(categoryId);
-        } else if (isScaleMode) {
-            ranking = projectService.getRankingByCategory(categoryId);
-        } else {
-            ranking = projectService.getRankingForCategory(categoryId, isJudgesRanking);
-        }
-=======
-        List<Project> ranking = projectService.getRankingForCategory(categoryId, isJudgesRanking);
->>>>>>> feature/ai-comment-summary
+         List<Project> ranking;
+         if (isChecklistMode) {
+             ranking = projectService.getChecklistRankingByCategory(categoryId);
+         } else if (isScaleMode) {
+             ranking = projectService.getRankingByCategory(categoryId);
+         } else {
+             ranking = projectService.getRankingForCategory(categoryId, isJudgesRanking);
+         }
 
         var content = new Div();
         content.getElement().setAttribute("id", "ranking-content");
@@ -512,17 +508,11 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 PodiumCardComponent.Position.THIRD
             };
 
-            for (int slot = 0; slot < 3; slot++) {
-                int idx = order[slot];
-                if (idx >= ranking.size()) continue;
-                Project p = ranking.get(idx);
-<<<<<<< HEAD
-=======
-                long votes = p.getManualVoteCount() != null
-                    ? p.getManualVoteCount()
-                    : p.getVotes().size();
->>>>>>> feature/ai-comment-summary
-                if (modifyMode) {
+             for (int slot = 0; slot < 3; slot++) {
+                 int idx = order[slot];
+                 if (idx >= ranking.size()) continue;
+                 Project p = ranking.get(idx);
+                 if (modifyMode) {
                     long votes = p.getManualVoteCount() != null
                         ? p.getManualVoteCount()
                         : voteCounts.getOrDefault(p.getId(), 0L);
@@ -550,24 +540,20 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 listSection.setPadding(false);
                 listSection.setSpacing(false);
 
-                for (int i = 3; i < ranking.size(); i++) {
-                    Project p = ranking.get(i);
-                    int staggerIndex = Math.min(i - 2, 8);
-<<<<<<< HEAD
-                    if (modifyMode) {
-                        long votes = p.getManualVoteCount() != null
-                            ? p.getManualVoteCount()
-                            : voteCounts.getOrDefault(p.getId(), 0L);
-                        listSection.add(buildListRow(p, i + 1, staggerIndex, votes));
-                    } else if (isChecklistMode || isScaleMode) {
-                        listSection.add(buildListRow(p, i + 1, staggerIndex, totalVotes, avgScore));
-                    } else {
-                        listSection.add(buildListRow(p, i + 1, staggerIndex, totalVotes));
-                    }
-=======
-                    listSection.add(buildListRow(p, i + 1, staggerIndex));
->>>>>>> feature/ai-comment-summary
-                }
+                 for (int i = 3; i < ranking.size(); i++) {
+                     Project p = ranking.get(i);
+                     int staggerIndex = Math.min(i - 2, 8);
+                     if (modifyMode) {
+                         long votes = p.getManualVoteCount() != null
+                             ? p.getManualVoteCount()
+                             : voteCounts.getOrDefault(p.getId(), 0L);
+                         listSection.add(buildListRow(p, i + 1, staggerIndex, votes));
+                     } else if (isChecklistMode || isScaleMode) {
+                         listSection.add(buildListRow(p, i + 1, staggerIndex, totalVotes, avgScore));
+                     } else {
+                         listSection.add(buildListRow(p, i + 1, staggerIndex, totalVotes));
+                     }
+                 }
                 content.add(listSection);
             }
         }
@@ -637,15 +623,12 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     private HorizontalLayout buildListRow(Project p, int position, int staggerIndex, long voteCount) {
-        var wrapper = new VerticalLayout();
-        wrapper.setPadding(false);
-        wrapper.setSpacing(false);
-        wrapper.setWidthFull();
-<<<<<<< HEAD
-=======
+         var wrapper = new VerticalLayout();
+         wrapper.setPadding(false);
+         wrapper.setSpacing(false);
+         wrapper.setWidthFull();
 
->>>>>>> feature/ai-comment-summary
-        var row = new HorizontalLayout();
+         var row = new HorizontalLayout();
         row.addClassName("votify-card-static");
         row.addClassName("animate-fade-in");
         row.addClassName("stagger-" + staggerIndex);
@@ -681,13 +664,9 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("font-size", "0.95rem")
             .set("color", "var(--text-primary)");
 
-        long votes = p.getManualVoteCount() != null
-            ? p.getManualVoteCount()
-<<<<<<< HEAD
-            : voteCount;
-=======
-            : p.getVotes().size();
->>>>>>> feature/ai-comment-summary
+         long votes = p.getManualVoteCount() != null
+             ? p.getManualVoteCount()
+             : voteCount;
 
         var votesSpan = new Span(votes + " vote" + (votes != 1 ? "s" : ""));
         votesSpan.getStyle()

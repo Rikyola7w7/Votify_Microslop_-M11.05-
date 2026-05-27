@@ -144,7 +144,7 @@ class CompetitionStateTest {
     void votingOpenState_canPauseVoting() {
         competition.setStatus(CompetitionStatus.VOTING_OPEN);
         competition.pauseVoting();
-        assertEquals(CompetitionStatus.ACTIVE, competition.getStatus());
+        assertEquals(CompetitionStatus.PAUSED, competition.getStatus());
     }
 
     @Test
