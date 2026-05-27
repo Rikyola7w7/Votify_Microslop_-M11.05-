@@ -30,4 +30,7 @@ public class CategoryDTO {
         this.voteType = voteType;
     }
 
+    public CategoryDTO(String name, int weight) {
+        this.name = name;
+    }
 }
