@@ -358,7 +358,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         String vtValue = categoryVoterTypeCombo.getValue();
         String voteType = "Scale".equals(vtValue) ? "SCALE" : "Checklist".equals(vtValue) ? "CHECKLIST" : "NORMAL";
         CategoryDTO category = new CategoryDTO(categoryName, "NORMAL", voteType);
-        category.setImage(categoryImage);
         selectedCategories.add(category);
         displayCategory(category);
         updateCategoryCount();

@@ -3,6 +3,8 @@ package com.microslop.views.components;
 import com.microslop.entity.Project;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 public class PodiumCardComponent extends Div {
 
@@ -76,13 +78,13 @@ public class PodiumCardComponent extends Div {
         String votesLabel;
         String displayValue;
         if (isScaleMode) {
-            votesLabel = position.isGold() ? "Avg. Score:" : "Score:";
+            votesLabel = position == Position.FIRST ? "Avg. Score:" : "Score:";
             displayValue = String.format("%.1f", avgScore);
         } else if (isChecklistMode) {
-            votesLabel = position.isGold() ? "Total Checks:" : "Checks:";
+            votesLabel = position == Position.FIRST ? "Total Checks:" : "Checks:";
             displayValue = formatNumber(totalVotes);
         } else {
-            votesLabel = position.isGold() ? "Total Votes:" : "Votes:";
+            votesLabel = position == Position.FIRST ? "Total Votes:" : "Votes:";
             displayValue = formatNumber(totalVotes);
         }
         var labelVotes = new Span(votesLabel);
@@ -94,7 +96,7 @@ public class PodiumCardComponent extends Div {
         var numVotes = new Span(displayValue);
         numVotes.getStyle()
             .set("font-weight", "700")
-            .set("font-size", position.isGold() ? "1.6rem" : "1.2rem")
+            .set("font-size", position == Position.FIRST ? "1.6rem" : "1.2rem")
             .set("color", "#1a1a2e")
             .set("display", "block")
             .set("margin-bottom", "0.8rem");

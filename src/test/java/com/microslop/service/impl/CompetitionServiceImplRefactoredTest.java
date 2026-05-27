@@ -279,7 +279,6 @@ class CompetitionServiceImplRefactoredTest {
         // Setup
         CategoryDTO categoryDTO = new CategoryDTO();
         categoryDTO.setName("Design");
-        categoryDTO.setWeight(1);
         competitionDTO.setCategories(Arrays.asList(categoryDTO));
 
         when(userRepository.findByUsernameIgnoreCase("creator")).thenReturn(Optional.of(creatorUser));
@@ -296,7 +295,6 @@ class CompetitionServiceImplRefactoredTest {
         // Assert
         assertThat(result.getCategories()).hasSize(1);
         assertThat(result.getCategories().get(0).getName()).isEqualTo("Design");
-        assertThat(result.getCategories().get(0).getWeight()).isEqualTo(1);
         assertThat(result.getCategories().get(0).getCompetition()).isEqualTo(result);
     }
 
@@ -305,11 +303,9 @@ class CompetitionServiceImplRefactoredTest {
         // Setup
         CategoryDTO categoryDTO1 = new CategoryDTO();
         categoryDTO1.setName("Design");
-        categoryDTO1.setWeight(2);
 
         CategoryDTO categoryDTO2 = new CategoryDTO();
         categoryDTO2.setName("Functionality");
-        categoryDTO2.setWeight(3);
 
         competitionDTO.setCategories(Arrays.asList(categoryDTO1, categoryDTO2));
 
@@ -381,7 +377,6 @@ class CompetitionServiceImplRefactoredTest {
         // Setup
         CategoryDTO categoryDTO = new CategoryDTO();
         categoryDTO.setName("Design");
-        categoryDTO.setImage("categoryImage.png".getBytes());
         competitionDTO.setCategories(Arrays.asList(categoryDTO));
 
         when(userRepository.findByUsernameIgnoreCase("creator")).thenReturn(Optional.of(creatorUser));
@@ -396,7 +391,7 @@ class CompetitionServiceImplRefactoredTest {
         Competition result = competitionService.createCompetition("creator", competitionDTO);
 
         // Assert
-        assertThat(result.getCategories().get(0).getImage()).isEqualTo("categoryImage.png".getBytes());
+        assertThat(result.getCategories().get(0).getImage()).isNull();
     }
 
     // ── Test createAndAddJudges() ──────────────────────────────────────────
@@ -595,12 +590,10 @@ class CompetitionServiceImplRefactoredTest {
         // Setup: Complete competition with all features
         CategoryDTO categoryDTO1 = new CategoryDTO();
         categoryDTO1.setName("Design");
-        categoryDTO1.setWeight(2);
         categoryDTO1.setVoterType("ALL");
 
         CategoryDTO categoryDTO2 = new CategoryDTO();
         categoryDTO2.setName("Functionality");
-        categoryDTO2.setWeight(3);
         categoryDTO2.setVoterType("JUDGES_ONLY");
 
         competitionDTO.setCategories(Arrays.asList(categoryDTO1, categoryDTO2));
