@@ -3,6 +3,7 @@ package com.microslop.views;
 import com.microslop.entity.Competition;
 import com.microslop.entity.Project;
 import com.microslop.entity.User;
+import com.microslop.service.ProjectCommentService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.VoteService;
 import com.microslop.views.components.ProjectCardComponent;
@@ -75,7 +76,9 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
         setSizeFull();
         setPadding(false);
         setSpacing(false);
-        getStyle().set("background", "var(--background)");
+        getStyle()
+            .set("background", "var(--background)")
+            .set("overflow-y", "auto");
 
         add(buildHeader());
 
@@ -99,6 +102,7 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setSpacing(true);
         header.addClassName("votify-header");
+        header.getStyle().set("flex-shrink", "0");
 
         Button backButton = new Button(new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");

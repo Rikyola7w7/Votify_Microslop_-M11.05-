@@ -45,10 +45,6 @@ public class Competition {
     @Column(name = "event_type", length = 100)
     private String eventType;
 
-    @Lob
-    @Column(name = "cover_image")
-    private byte[] coverImage;
-
     @Column(name = "created_by", length = 255)
     private String createdBy;
 
@@ -63,6 +59,12 @@ public class Competition {
     @Min(value = 1, message = "Max votes per person must be at least 1")
     private Integer maxVotesPerPerson = 1;
 
+    @Column(name = "judge_weight_multiplier", columnDefinition = "double default 1.0")
+    private Double judgeWeightMultiplier = 1.0;
+
+    @Column(name = "standard_user_weight_multiplier", columnDefinition = "double default 1.0")
+    private Double standardUserWeightMultiplier = 1.0;
+
     @Column(name = "vote_type", length = 20)
     private String voteType = "NORMAL"; // NORMAL, CHECKLIST, SCALE
 
@@ -71,11 +73,12 @@ public class Competition {
 
     @Column(name = "scale_max")
     private Integer scaleMax = 10;
+
     @Column(name = "voting_strategy_type", length = 50)
     private String votingStrategyType = "ALL";
 
     @Column(name = "ranking_strategy_type", length = 50)
-    private String rankingStrategyType = "AVERAGE";
+    private String rankingStrategyType = "WEIGHTED";
 
     public static com.microslop.builder.CompetitionBuilder builder() {
         return com.microslop.builder.CompetitionBuilder.builder();
@@ -102,6 +105,9 @@ public class Competition {
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChecklistItem> checklistItems = new ArrayList<>();
+
+    @Column(name = "cover_image")
+    private byte[] coverImage;
 
     @Column(nullable = false, name = "max_votes")
     private int maxVotes = 1;
@@ -213,7 +219,7 @@ public void addChecklistItem(ChecklistItem item) {
             }
         } else {
             if (this.status == CompetitionStatus.ACTIVE
-                    || this.status == CompetitionStatus.PAUSED) {
+                    || this.status == CompetitionStatus.VOTING_OPEN) {
                 this.status = CompetitionStatus.DRAFT;
             }
         }
@@ -244,7 +250,27 @@ public void addChecklistItem(ChecklistItem item) {
         this.maxVotesPerPerson = maxVotesPerPerson;
     }
 
+<<<<<<< HEAD
     public String getVoteType() {
+=======
+    public Double getJudgeWeightMultiplier() {
+        return judgeWeightMultiplier;
+    }
+
+    public void setJudgeWeightMultiplier(Double judgeWeightMultiplier) {
+        this.judgeWeightMultiplier = judgeWeightMultiplier;
+    }
+
+    public Double getStandardUserWeightMultiplier() {
+        return standardUserWeightMultiplier;
+    }
+
+    public void setStandardUserWeightMultiplier(Double standardUserWeightMultiplier) {
+        this.standardUserWeightMultiplier = standardUserWeightMultiplier;
+    }
+
+public String getVoteType() {
+>>>>>>> feature/ai-comment-summary
         return voteType;
     }
 
@@ -267,6 +293,10 @@ public void addChecklistItem(ChecklistItem item) {
     public void setScaleMax(Integer scaleMax) {
         this.scaleMax = scaleMax;
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> feature/ai-comment-summary
     public String getVotingStrategyType() {
         return votingStrategyType;
     }

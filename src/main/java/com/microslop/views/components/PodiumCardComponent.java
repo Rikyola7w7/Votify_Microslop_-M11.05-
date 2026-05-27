@@ -4,9 +4,6 @@ import com.microslop.entity.Project;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 
-import java.text.NumberFormat;
-import java.util.Locale;
-
 public class PodiumCardComponent extends Div {
 
     public enum Position {
@@ -30,15 +27,10 @@ public class PodiumCardComponent extends Div {
         public String getMedal() { return medal; }
         public String getCssClass() { return cssClass; }
         public String getAnimationDelay() { return animationDelay; }
-        public boolean isGold() { return this == FIRST; }
     }
 
     public PodiumCardComponent(Project project, Position position, long totalVotes) {
-        this(project, position, totalVotes, false, false, 0);
-    }
-
-    public PodiumCardComponent(Project project, Position position, long totalVotes, boolean isChecklistMode) {
-        this(project, position, totalVotes, isChecklistMode, false, 0);
+        this(project, position, totalVotes, false, false, 0.0);
     }
 
     public PodiumCardComponent(Project project, Position position, long totalVotes, boolean isChecklistMode, boolean isScaleMode, double avgScore) {

@@ -5,7 +5,6 @@ import com.microslop.entity.Competition;
 import com.microslop.entity.Project;
 import com.microslop.repository.JudgeRepository;
 import com.microslop.service.CategoryService;
-import com.microslop.service.ChecklistVoteService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
@@ -454,6 +453,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         BallotLoadingComponent loading = new BallotLoadingComponent("Calculating rankings...");
         rankingContainer.add(loading);
 
+<<<<<<< HEAD
         List<Project> ranking;
         if (isChecklistMode) {
             ranking = projectService.getChecklistRankingByCategory(categoryId);
@@ -462,6 +462,9 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         } else {
             ranking = projectService.getRankingForCategory(categoryId, isJudgesRanking);
         }
+=======
+        List<Project> ranking = projectService.getRankingForCategory(categoryId, isJudgesRanking);
+>>>>>>> feature/ai-comment-summary
 
         var content = new Div();
         content.getElement().setAttribute("id", "ranking-content");
@@ -513,6 +516,12 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 int idx = order[slot];
                 if (idx >= ranking.size()) continue;
                 Project p = ranking.get(idx);
+<<<<<<< HEAD
+=======
+                long votes = p.getManualVoteCount() != null
+                    ? p.getManualVoteCount()
+                    : p.getVotes().size();
+>>>>>>> feature/ai-comment-summary
                 if (modifyMode) {
                     long votes = p.getManualVoteCount() != null
                         ? p.getManualVoteCount()
@@ -543,17 +552,8 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
                 for (int i = 3; i < ranking.size(); i++) {
                     Project p = ranking.get(i);
-                    long totalVotes;
-                    double avgScore = 0;
-                    if (isChecklistMode) {
-                        totalVotes = checklistVoteService.countChecklistVotesByProject(p.getId());
-                    } else if (isScaleMode) {
-                        avgScore = voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
-                        totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
-                    } else {
-                        totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
-                    }
                     int staggerIndex = Math.min(i - 2, 8);
+<<<<<<< HEAD
                     if (modifyMode) {
                         long votes = p.getManualVoteCount() != null
                             ? p.getManualVoteCount()
@@ -564,6 +564,9 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                     } else {
                         listSection.add(buildListRow(p, i + 1, staggerIndex, totalVotes));
                     }
+=======
+                    listSection.add(buildListRow(p, i + 1, staggerIndex));
+>>>>>>> feature/ai-comment-summary
                 }
                 content.add(listSection);
             }
@@ -638,6 +641,10 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         wrapper.setPadding(false);
         wrapper.setSpacing(false);
         wrapper.setWidthFull();
+<<<<<<< HEAD
+=======
+
+>>>>>>> feature/ai-comment-summary
         var row = new HorizontalLayout();
         row.addClassName("votify-card-static");
         row.addClassName("animate-fade-in");
@@ -676,7 +683,11 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         long votes = p.getManualVoteCount() != null
             ? p.getManualVoteCount()
+<<<<<<< HEAD
             : voteCount;
+=======
+            : p.getVotes().size();
+>>>>>>> feature/ai-comment-summary
 
         var votesSpan = new Span(votes + " vote" + (votes != 1 ? "s" : ""));
         votesSpan.getStyle()

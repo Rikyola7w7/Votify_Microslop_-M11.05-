@@ -14,19 +14,16 @@ public class ProjectCardComponent extends Div {
 
     public ProjectCardComponent(Project project, String competitionName, long totalVotes, int position, Runnable onCommentClick) {
         setWidth("100%");
-        setMaxWidth(300, Unit.PIXELS);
         addClassName("votify-card");
         getStyle()
             .set("padding", "0")
             .set("display", "flex")
             .set("flex-direction", "column")
-            .set("overflow", "hidden")
-            .set("min-height", "300px")
             .set("border-left", "4px solid var(--primary)");
 
         Div iconBlock = new Div();
         iconBlock.setWidthFull();
-        iconBlock.setHeight(80, Unit.PIXELS);
+        iconBlock.setHeight("80px");
         iconBlock.getStyle()
             .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))")
             .set("display", "flex")
@@ -64,27 +61,22 @@ public class ProjectCardComponent extends Div {
             .set("display", "-webkit-box")
             .set("-webkit-line-clamp", "3")
             .set("-webkit-box-orient", "vertical")
-            .set("overflow", "hidden")
-            .set("flex", "1");
+            .set("overflow", "hidden");
 
         HorizontalLayout stats = createStatsLayout(competitionName, totalVotes, position);
-
-        Div spacer = new Div();
-        spacer.setHeight(8, Unit.PIXELS);
-        spacer.setWidthFull();
 
         Button commentsButton = new Button("See comments");
         commentsButton.addClassName("votify-btn-secondary");
         commentsButton.getStyle()
             .set("margin-top", "8px")
-            .set("width", "calc(100% - 32px)");
+            .set("width", "100%");
         commentsButton.addClickListener(e -> {
             if (onCommentClick != null) {
                 onCommentClick.run();
             }
         });
 
-        contentArea.add(projectName, description, stats, spacer, commentsButton);
+        contentArea.add(projectName, description, stats, commentsButton);
         add(iconBlock, contentArea);
     }
 
@@ -92,7 +84,10 @@ public class ProjectCardComponent extends Div {
         HorizontalLayout stats = new HorizontalLayout();
         stats.setSpacing(true);
         stats.setAlignItems(FlexComponent.Alignment.CENTER);
-        stats.getStyle().set("margin-top", "12px");
+        stats.getStyle()
+            .set("margin-top", "12px")
+            .set("flex-wrap", "wrap")
+            .set("gap", "6px");
 
         Span competitionBadge = new Span("Competition: " + competitionName);
         competitionBadge.getStyle()
@@ -100,7 +95,12 @@ public class ProjectCardComponent extends Div {
             .set("font-size", "12px")
             .set("padding", "3px 8px")
             .set("background", "var(--surface-hover)")
-            .set("border-radius", "var(--radius-sm)");
+            .set("border-radius", "var(--radius-sm)")
+            .set("max-width", "140px")
+            .set("white-space", "nowrap")
+            .set("overflow", "hidden")
+            .set("text-overflow", "ellipsis")
+            .set("flex-shrink", "0");
 
         Span votesBadge = new Span(totalVotes + " vote" + (totalVotes != 1 ? "s" : ""));
         votesBadge.getStyle()
@@ -108,19 +108,25 @@ public class ProjectCardComponent extends Div {
             .set("font-size", "12px")
             .set("font-weight", "600")
             .set("padding", "3px 8px")
-            .set("background", "rgba(108, 92, 231, 0.08)")
-            .set("border-radius", "var(--radius-sm)");
+            .set("border-radius", "var(--radius-sm)")
+            .set("color", totalVotes > 0 ? "var(--primary)" : "var(--text-muted)")
+            .set("background", totalVotes > 0 ? "rgba(108, 92, 231, 0.08)" : "var(--surface-hover)")
+            .set("flex-shrink", "0");
 
-        Span positionBadge = new Span(" #" + position);
-        positionBadge.getStyle()
-            .set("color", "white")
-            .set("font-size", "12px")
-            .set("font-weight", "700")
-            .set("padding", "3px 8px")
-            .set("background", "linear-gradient(135deg, var(--primary), var(--primary-dark))")
-            .set("border-radius", "var(--radius-sm)");
+        stats.add(competitionBadge, votesBadge);
 
-        stats.add(competitionBadge, votesBadge, positionBadge);
+        if (position > 0) {
+            Span positionBadge = new Span(" #" + position);
+            positionBadge.getStyle()
+                .set("color", "white")
+                .set("font-size", "12px")
+                .set("font-weight", "700")
+                .set("padding", "3px 8px")
+                .set("background", "linear-gradient(135deg, var(--primary), var(--primary-dark))")
+                .set("border-radius", "var(--radius-sm)");
+            stats.add(positionBadge);
+        }
+
         return stats;
     }
 }

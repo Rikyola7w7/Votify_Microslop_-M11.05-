@@ -48,7 +48,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
     private final ComboBox<String> eventTypeCombo;
     private final DatePicker startDatePicker;
     private final DatePicker endDatePicker;
-    private final ComboBox<String> voteTypeCombo;
     private final TextField categoryNameField;
     private final ComboBox<String> categoryVoterTypeCombo;
     private final VerticalLayout categoriesContainer;
@@ -93,7 +92,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         this.userService = userService;
         this.selectedCategories = new ArrayList<>();
         this.selectedJudges = new ArrayList<>();
-        this.selectedChecklistItems = new ArrayList<>();
 
         setSizeFull();
         setPadding(false);
@@ -168,20 +166,13 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         endDatePicker.setWidth("100%");
         endDatePicker.setValue(LocalDate.now().plusDays(7));
 
-        // Vote Type
-        voteTypeCombo = new ComboBox<>("Vote Type *");
-        voteTypeCombo.setItems("Normal", "Checklist", "Scale (0-10)");
-        voteTypeCombo.setValue("Normal");
-        voteTypeCombo.setWidth("100%");
-
         formLayout.add(
                 competitionNameField,
                 eventTypeCombo,
                 descriptionArea,
                 createEmptySpace(),
                 startDatePicker,
-                endDatePicker,
-                voteTypeCombo
+                endDatePicker
         );
 
         // Competition cover image upload
@@ -324,67 +315,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
                 .set("background-color", "var(--background)")
                 .set("min-height", "60px");
 
-// ── Checklist Items Section ─────────────────────────────────────────────
-        Span checklistTitle = new Span("Checklist Items");
-        checklistTitle.getStyle()
-                .set("font-weight", "bold")
-                .set("font-size", "16px")
-                .set("color", "#1a3a5c")
-                .set("margin-top", "1em");
-
-        HorizontalLayout checklistInputLayout = new HorizontalLayout();
-        checklistInputLayout.setSpacing(true);
-        checklistInputLayout.setAlignItems(Alignment.END);
-
-        checklistItemField = new TextField("Item Description");
-        checklistItemField.setPlaceholder("e.g., Has good UI, Uses best practices...");
-        checklistItemField.setWidth("300px");
-
-        Button addChecklistItemButton = new Button("Add Item");
-        addChecklistItemButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        addChecklistItemButton.setIcon(new Icon(VaadinIcon.PLUS));
-        addChecklistItemButton.addClickListener(e -> addChecklistItem());
-
-        checklistInputLayout.add(checklistItemField, addChecklistItemButton);
-
-        checklistItemsContainer = new VerticalLayout();
-        checklistItemsContainer.setSpacing(true);
-        checklistItemsContainer.setPadding(false);
-        checklistItemsContainer.setWidth("100%");
-        checklistItemsContainer.getStyle().set("border", "1px solid #e0e0e0")
-                .set("border-radius", "4px")
-                .set("padding", "10px")
-                .set("background-color", "#f9f9f9")
-                .set("min-height", "60px");
-
-        checklistSection = new VerticalLayout();
-        checklistSection.setSpacing(true);
-        checklistSection.setPadding(false);
-        checklistSection.setWidth("100%");
-        checklistSection.add(checklistTitle, checklistInputLayout, checklistItemsContainer);
-        checklistSection.setVisible(false);
-
-        // ── Scale Configuration Section ──────────────────────────────────────────
-        Span scaleTitle = new Span("Scale: 0 – 10 (fixed)");
-        scaleTitle.getStyle()
-                .set("font-weight", "bold")
-                .set("font-size", "16px")
-                .set("color", "var(--text-muted)")
-                .set("margin-top", "1em");
-
-        scaleSection = new VerticalLayout();
-        scaleSection.setSpacing(true);
-        scaleSection.setPadding(false);
-        scaleSection.setWidth("100%");
-        scaleSection.add(scaleTitle);
-        scaleSection.setVisible(false);
-
-        voteTypeCombo.addValueChangeListener(e -> {
-            boolean isChecklist = "Checklist".equals(e.getValue());
-            boolean isScale = e.getValue() != null && e.getValue().startsWith("Scale");
-            checklistSection.setVisible(isChecklist);
-            scaleSection.setVisible(isScale);
-        });
         HorizontalLayout buttonsLayout = new HorizontalLayout();
         buttonsLayout.setSpacing(true);
         buttonsLayout.setJustifyContentMode(JustifyContentMode.END);
@@ -409,8 +339,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
                 judgesTitle,
                 judgeInputLayout,
                 judgesContainer,
-                checklistSection,
-                scaleSection,
                 createEmptySpace(),
                 buttonsLayout
         );
@@ -508,52 +436,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         categoriesContainer.add(categoryItem);
     }
 
-private void addChecklistItem() {
-        String itemText = checklistItemField.getValue().trim();
-
-        if (itemText.isEmpty()) {
-            Notification notification = Notification.show("Please enter a checklist item description.");
-            notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
-            return;
-        }
-
-        boolean alreadyExists = selectedChecklistItems.stream()
-                .anyMatch(item -> item.equalsIgnoreCase(itemText));
-        if (alreadyExists) {
-            Notification notification = Notification.show("Checklist item already added.");
-            notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
-            return;
-        }
-
-        selectedChecklistItems.add(itemText);
-        displayChecklistItem(itemText);
-        checklistItemField.clear();
-    }
-
-    private void displayChecklistItem(String itemText) {
-        HorizontalLayout itemLayout = new HorizontalLayout();
-        itemLayout.setAlignItems(Alignment.CENTER);
-        itemLayout.setWidth("100%");
-        itemLayout.getStyle()
-                .set("background-color", "white")
-                .set("padding", "10px")
-                .set("border-radius", "4px")
-                .set("border", "1px solid #ddd");
-
-        Span itemLabel = new Span(itemText);
-        itemLabel.getStyle().set("flex-grow", "1");
-
-        Button removeButton = new Button(new Icon(VaadinIcon.TRASH));
-        removeButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
-        removeButton.addClickListener(e -> {
-            selectedChecklistItems.remove(itemText);
-            checklistItemsContainer.remove(itemLayout);
-        });
-
-        itemLayout.add(itemLabel, removeButton);
-        checklistItemsContainer.add(itemLayout);
-    }
-
     private void addJudge() {
         String judgeUsername = judgeUsernameField.getValue().trim();
 
@@ -614,24 +496,13 @@ private void addChecklistItem() {
         String eventType = eventTypeCombo.getValue();
         LocalDate startDate = startDatePicker.getValue();
         LocalDate endDate = endDatePicker.getValue();
-        String voteType;
-        String voteTypeValue = voteTypeCombo.getValue();
-        if ("Checklist".equals(voteTypeValue)) {
-            voteType = "CHECKLIST";
-        } else if (voteTypeValue != null && voteTypeValue.startsWith("Scale")) {
-            voteType = "SCALE";
-        } else {
-            voteType = "NORMAL";
-        }
 
         List<String> errors = competitionService.validateCompetitionCreation(
                 competitionName,
                 eventType,
                 startDate,
                 endDate,
-                selectedCategories,
-                voteType,
-                selectedChecklistItems
+                selectedCategories
         );
 
         if (!errors.isEmpty()) {
@@ -671,12 +542,6 @@ private void addChecklistItem() {
                 dto.addJudgeUsername(judgeUsername);
             }
 
-// Add checklist items
-            for (String itemText : selectedChecklistItems) {
-                dto.addChecklistItem(new com.microslop.dto.ChecklistItemDTO(itemText));
-            }
-
-            // Save competition
             competitionService.createCompetition(loggedUser.getUsername(), dto);
 
             Notification success = Notification.show("Competition created successfully!");

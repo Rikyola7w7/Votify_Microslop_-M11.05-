@@ -15,7 +15,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.*;
+import java.util.List;
 
 @Service
 @Transactional
@@ -60,6 +60,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public Project getById(Long id) {
+        // Use custom query to fetch project with votes and users to avoid lazy loading issues
         return projectRepository.findByIdWithVotesAndUsers(id)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found: " + id));
     }

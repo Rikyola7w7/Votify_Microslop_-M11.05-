@@ -43,7 +43,7 @@ class VoteServiceObserverTest {
         voteService = new VoteServiceImpl(
             null, null, null, null, null, null, null, null,
             strategyRegistry,
-            observers
+            null, observers
         );
     }
 
@@ -106,6 +106,7 @@ class VoteServiceObserverTest {
         Vote vote = createTestVote();
         VoteEvent event = createTestEvent(vote);
 
+        // Should not throw exception
         voteService.notifyVoteObservers(event);
 
         verify(observer1).onVoteSubmitted(any());
@@ -130,6 +131,8 @@ class VoteServiceObserverTest {
 
         assertEquals(captor1.getValue().getVoteId(), captor2.getValue().getVoteId());
     }
+
+    // Helper methods
 
     private Vote createTestVote() {
         User user = new User();

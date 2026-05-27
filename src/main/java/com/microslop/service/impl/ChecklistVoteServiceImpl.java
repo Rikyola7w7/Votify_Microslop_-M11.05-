@@ -1,4 +1,5 @@
 package com.microslop.service.impl;
+
 import com.microslop.entity.ChecklistItem;
 import com.microslop.entity.ChecklistVote;
 import com.microslop.entity.Project;

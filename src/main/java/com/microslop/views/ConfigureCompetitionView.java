@@ -2,11 +2,8 @@ package com.microslop.views;
 
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Category;
-import com.microslop.entity.ChecklistItem;
 import com.microslop.entity.Competition;
 import com.microslop.entity.Judge;
-import com.microslop.repository.ChecklistItemRepository;
-import com.microslop.repository.ChecklistVoteRepository;
 import com.microslop.service.CategoryService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.JudgeService;
@@ -53,8 +50,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private final UserService userService;
     private final CategoryService categoryService;
     private final JudgeService judgeService;
-    private final ChecklistItemRepository checklistItemRepository;
-    private final ChecklistVoteRepository checklistVoteRepository;
 
     private Competition currentCompetition;
     private Competition originalCompetition;
@@ -75,8 +70,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
     private List<Category> categoriesToRemove;
     private List<Category> categoriesToAdd;
-    private java.util.Map<Long, Double> categoryWeightChanges;
-    private java.util.Map<Long, Double> initialCategoryWeights;
 
     // VOTE TYPE Section
     private ComboBox<String> voteTypeCombo;
@@ -97,22 +90,15 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
     private boolean hasChanges = false;
 
-    public ConfigureCompetitionView(CompetitionService competitionService, UserService userService, CategoryService categoryService, JudgeService judgeService,
-                                    ChecklistItemRepository checklistItemRepository, ChecklistVoteRepository checklistVoteRepository) {
+    public ConfigureCompetitionView(CompetitionService competitionService, UserService userService, CategoryService categoryService, JudgeService judgeService) {
         this.competitionService = competitionService;
         this.userService = userService;
         this.categoryService = categoryService;
         this.judgeService = judgeService;
-        this.checklistItemRepository = checklistItemRepository;
-        this.checklistVoteRepository = checklistVoteRepository;
         this.judgesToRemove = new java.util.ArrayList<>();
         this.judgesToAdd = new java.util.ArrayList<>();
         this.categoriesToRemove = new java.util.ArrayList<>();
         this.categoriesToAdd = new java.util.ArrayList<>();
-this.categoryWeightChanges = new java.util.HashMap<>();
-        this.initialCategoryWeights = new java.util.HashMap<>();
-        this.checklistItemsToRemove = new java.util.ArrayList<>();
-        this.checklistItemsToAdd = new java.util.ArrayList<>();
 
         setSizeFull();
         setPadding(false);
@@ -685,6 +671,7 @@ this.categoryWeightChanges = new java.util.HashMap<>();
         return row;
     }
 
+<<<<<<< HEAD
     private VerticalLayout buildVoteTypeSection() {
         VerticalLayout section = new VerticalLayout();
         section.setPadding(true);
@@ -856,6 +843,8 @@ this.categoryWeightChanges = new java.util.HashMap<>();
         section.add(sectionTitle, scaleInfo);
         return section;
     }
+=======
+>>>>>>> feature/ai-comment-summary
     private VerticalLayout buildCommentsSection() {
         VerticalLayout section = new VerticalLayout();
         section.setPadding(true);
@@ -950,9 +939,6 @@ this.categoryWeightChanges = new java.util.HashMap<>();
                 judgesToAdd.clear();
                 categoriesToRemove.clear();
                 categoriesToAdd.clear();
-categoryWeightChanges.clear();
-                checklistItemsToRemove.clear();
-                checklistItemsToAdd.clear();
                 navigateBack();
             });
             confirmButton.addClassName("votify-btn-danger");
@@ -1013,6 +999,7 @@ categoryWeightChanges.clear();
         currentCompetition.setVoterType("Everyone".equals(voterTypeCombo.getValue()) ? "ALL" : "JUDGES");
         currentCompetition.setAutoVote("ON".equals(autoVoteCombo.getValue()));
         currentCompetition.setMaxVotesPerPerson(maxVotesPerPersonField.getValue());
+<<<<<<< HEAD
         currentCompetition.setVoteType("Checklist".equals(voteTypeCombo.getValue()) ? "CHECKLIST" :
                 (voteTypeCombo.getValue() != null && voteTypeCombo.getValue().startsWith("Scale") ? "SCALE" : "NORMAL"));
 
@@ -1021,31 +1008,13 @@ categoryWeightChanges.clear();
             currentCompetition.setScaleMin(0);
             currentCompetition.setScaleMax(10);
         }
+=======
+
+>>>>>>> feature/ai-comment-summary
 
         currentCompetition.setCommentsEnabled("YES".equals(commentsEnabledCombo.getValue()));
         currentCompetition.setCommentsRequired("YES".equals(commentsRequiredCombo.getValue()));
 
-// Apply checklist item changes
-        try {
-            for (ChecklistItem itemToRemove : checklistItemsToRemove) {
-                if (itemToRemove.getId() != null) {
-                    checklistVoteRepository.deleteByChecklistItem_Id(itemToRemove.getId());
-                    checklistItemRepository.deleteById(itemToRemove.getId());
-                }
-            }
-            checklistItemsToRemove.clear();
-
-            for (ChecklistItem newItem : checklistItemsToAdd) {
-                checklistItemRepository.save(newItem);
-            }
-            checklistItemsToAdd.clear();
-        } catch (Exception e) {
-            Notification notification = Notification.show("Error processing checklist item changes: " + e.getMessage());
-            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            return;
-        }
-
-        // Apply judge changes (add new judges and remove marked judges)
         try {
             if (!judgesToRemove.isEmpty()) {
                 for (Judge judgeToRemove : judgesToRemove) {
