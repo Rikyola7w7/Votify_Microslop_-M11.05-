@@ -401,11 +401,15 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("font-size", isFirst ? "20px" : "16px")
                 .set("color", "var(--text-primary)");
 
-        var desc = new Span(p.getDescription() != null ? p.getDescription() : p.getName());
+        var desc = new Span(p.getDescription() != null ? p.getDescription() : "");
         desc.getStyle()
                 .set("font-size", "14px")
                 .set("color", "var(--text-muted)")
-                .set("margin-top", "0.25rem");
+                .set("margin-top", "0.25rem")
+                .set("display", "-webkit-box")
+                .set("-webkit-line-clamp", "2")
+                .set("-webkit-box-orient", "vertical")
+                .set("overflow", "hidden");
 
         var votesLabel = new Span(localizationService.t("voting.totalvotes") + totalVotes);
         votesLabel.getStyle()

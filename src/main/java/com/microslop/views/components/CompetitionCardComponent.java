@@ -32,6 +32,7 @@ public class CompetitionCardComponent extends Div {
     private void buildCard() {
         setWidth("100%");
         setMaxWidth(280, Unit.PIXELS);
+        setMinHeight(420, Unit.PIXELS);
         addClassName("votify-card");
         getStyle()
             .set("padding", "0")
@@ -43,6 +44,7 @@ public class CompetitionCardComponent extends Div {
         cardContent.setPadding(false);
         cardContent.setSpacing(false);
         cardContent.setSizeFull();
+        cardContent.getStyle().set("flex", "1");
 
         Div ribbonStripe = createRibbonStripe();
         Div iconBlock = createIconBlock();
@@ -56,14 +58,17 @@ public class CompetitionCardComponent extends Div {
             .set("font-weight", "700")
             .set("text-align", "center");
 
-        String truncatedDescription = truncateDescription(competition.getDescription(), 60);
-        Span description = new Span(truncatedDescription);
+        Span description = new Span(competition.getDescription() != null ? competition.getDescription() : "");
         description.getStyle()
             .set("color", "var(--text-muted)")
             .set("font-size", "14px")
             .set("text-align", "center")
-            .set("display", "block")
-            .set("padding", "0 16px");
+            .set("display", "-webkit-box")
+            .set("-webkit-line-clamp", "5")
+            .set("-webkit-box-orient", "vertical")
+            .set("overflow", "hidden")
+            .set("padding", "0 16px")
+            .set("flex", "1");
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         Span startDate = new Span("Start: " + competition.getStartDate().format(dateFormatter));
@@ -72,7 +77,7 @@ public class CompetitionCardComponent extends Div {
             .set("font-size", "13px")
             .set("display", "block")
             .set("padding", "0 16px")
-            .set("margin-top", "4px");
+            .set("margin-top", "8px");
 
         Span endDate = new Span("End: " + competition.getEndDate().format(dateFormatter));
         endDate.getStyle()
@@ -83,12 +88,7 @@ public class CompetitionCardComponent extends Div {
 
         Button viewButton = createViewButton();
 
-        Div spacer = new Div();
-        spacer.setHeight(1, Unit.PIXELS);
-        spacer.setWidthFull();
-        spacer.getStyle().set("flex", "1");
-
-        cardContent.add(ribbonStripe, iconBlock, statusBadge, title, description, startDate, endDate, spacer, viewButton);
+        cardContent.add(ribbonStripe, iconBlock, statusBadge, title, description, startDate, endDate, viewButton);
         add(cardContent);
     }
 
@@ -163,16 +163,6 @@ public class CompetitionCardComponent extends Div {
         badge.addClassName(badgeClass);
         badge.add(new Span(label));
         return badge;
-    }
-
-    private String truncateDescription(String description, int maxLength) {
-        if (description == null || description.isEmpty()) {
-            return "";
-        }
-        if (description.length() > maxLength) {
-            return description.substring(0, maxLength) + "...";
-        }
-        return description;
     }
 
     private Button createViewButton() {

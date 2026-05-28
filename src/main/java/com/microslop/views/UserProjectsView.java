@@ -90,12 +90,12 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
         projectsContainer.setWidthFull();
         projectsContainer.addClassName("animate-fade-in");
         projectsContainer.getStyle()
-            .set("padding", "32px 40px")
+            .set("padding", "16px 24px")
             .set("max-width", "1200px")
             .set("margin", "0 auto")
             .set("display", "grid")
             .set("grid-template-columns", "repeat(auto-fill, minmax(300px, 1fr))")
-            .set("gap", "24px");
+            .set("gap", "16px");
 
         add(projectsContainer);
     }
