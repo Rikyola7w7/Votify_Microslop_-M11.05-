@@ -193,7 +193,7 @@ public class RegisterView extends HorizontalLayout {
             Paragraph message = new Paragraph("Do you want to create your account with the username \"" + 
                     usernameField.getValue().trim() + "\"?");
             
-            Button confirmButton = new Button("Yes", event -> {
+            Button confirmButton = new Button("Confirm", event -> {
                 try {
                     LocalDateTime birthDateLDT = birthDateField.getValue().atStartOfDay();
 
@@ -266,7 +266,7 @@ public class RegisterView extends HorizontalLayout {
             });
             confirmButton.addClassNames("votify-btn-primary");
             
-            Button cancelButton = new Button("No", event -> confirmDialog.close());
+            Button cancelButton = new Button("Cancel", event -> confirmDialog.close());
             cancelButton.addClassNames("votify-btn-secondary");
             
             confirmDialog.add(message);

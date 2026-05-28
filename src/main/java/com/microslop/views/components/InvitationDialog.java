@@ -104,7 +104,7 @@ public class InvitationDialog extends Dialog {
         footer.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
         footer.setSpacing(true);
 
-        Button closeBtn = new Button("Close", e -> close());
+        Button closeBtn = new Button("Cancel", e -> close());
         closeBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         if (invitation.isPending()) {
@@ -112,7 +112,7 @@ public class InvitationDialog extends Dialog {
             acceptBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
             acceptBtn.getStyle().set("cursor", "pointer");
 
-            Button refuseBtn = new Button("Refuse", e -> handleAction(false));
+            Button refuseBtn = new Button("Reject", e -> handleAction(false));
             refuseBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
             refuseBtn.getStyle().set("cursor", "pointer");
 

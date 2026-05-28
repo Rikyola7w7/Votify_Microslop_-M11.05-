@@ -181,7 +181,7 @@ public class InvitationsView extends VerticalLayout implements BeforeEnterObserv
             acceptBtn.getStyle().set("cursor", "pointer");
             acceptBtn.addClickListener(e -> handleInvitation(invitation.getId(), true));
 
-            Button refuseBtn = new Button("Refuse", new Icon(VaadinIcon.CLOSE_SMALL));
+            Button refuseBtn = new Button("Reject", new Icon(VaadinIcon.CLOSE_SMALL));
             refuseBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
             refuseBtn.getStyle().set("cursor", "pointer");
             refuseBtn.addClickListener(e -> handleInvitation(invitation.getId(), false));

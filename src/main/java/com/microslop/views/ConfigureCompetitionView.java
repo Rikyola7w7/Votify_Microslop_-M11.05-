@@ -166,7 +166,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        Button backButton = new Button("Back");
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> navigateBack());
@@ -936,7 +936,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             content.add(new Span("Are you sure you want to exit without saving changes?"));
             confirmDialog.add(content);
 
-            Button confirmButton = new Button("Exit Without Saving", e -> {
+            Button confirmButton = new Button("Confirm", e -> {
                 confirmDialog.close();
                 judgesToRemove.clear();
                 judgesToAdd.clear();
@@ -946,7 +946,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             });
             confirmButton.addClassName("votify-btn-danger");
 
-            Button keepWorkingButton = new Button("Continue Editing", e -> confirmDialog.close());
+            Button keepWorkingButton = new Button("Cancel", e -> confirmDialog.close());
             keepWorkingButton.addClassName("votify-btn-primary");
 
             confirmDialog.getFooter().add(keepWorkingButton, confirmButton);

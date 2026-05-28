@@ -88,7 +88,7 @@ public class ChecklistVotingDialog extends Dialog {
         content.add(itemsLayout);
 
         // Buttons
-        var submitBtn = new Button("Submit Votes", e -> handleSubmitVotes());
+        var submitBtn = new Button("Confirm", e -> handleSubmitVotes());
         submitBtn.addClassName("votify-btn-primary");
         submitBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         submitBtn.setWidth("auto");

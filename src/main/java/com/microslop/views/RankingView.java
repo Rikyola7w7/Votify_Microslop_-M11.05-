@@ -20,6 +20,8 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
@@ -187,14 +189,13 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
-        Button backButton = new Button("\u2190 Categories");
-        backButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
+        backButton.addClassName("votify-btn-secondary");
         backButton.getStyle()
             .set("color", "white")
-            .set("background", "transparent")
-            .set("border", "none")
-            .set("cursor", "pointer")
-            .set("font-weight", "600");
+            .set("background", "rgba(255, 255, 255, 0.15)")
+            .set("border", "1px solid rgba(255, 255, 255, 0.3)")
+            .set("border-radius", "var(--radius-md)");
         backButton.addClickListener(e ->
             getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories")));
 
@@ -287,7 +288,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         content.add(message);
 
-        var yesButton = new Button("Yes, register me");
+        var yesButton = new Button("Confirm");
         yesButton.addClassName("votify-btn-primary");
         yesButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         yesButton.addClickListener(e -> {
@@ -317,7 +318,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             }
         });
 
-        var noButton = new Button("No, stay here");
+        var noButton = new Button("Cancel");
         noButton.addClassName("votify-btn-secondary");
         noButton.getStyle()
             .set("padding", "0.5rem 1.5rem");
@@ -773,7 +774,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         cancelButton.addClassName("votify-btn-secondary");
         cancelButton.addClickListener(e -> dialog.close());
 
-        var acceptButton = new Button("Accept");
+        var acceptButton = new Button("Confirm");
         acceptButton.addClassName("votify-btn-primary");
         acceptButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         acceptButton.addClickListener(e -> {
@@ -823,7 +824,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         cancelButton.addClassName("votify-btn-secondary");
         cancelButton.addClickListener(e -> dialog.close());
 
-        var deleteButton = new Button("Delete permanently");
+        var deleteButton = new Button("Confirm");
         deleteButton.addClassName("votify-btn-danger");
         deleteButton.addClickListener(e -> {
             try {
@@ -878,7 +879,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         cancelButton.addClassName("votify-btn-secondary");
         cancelButton.addClickListener(e -> dialog.close());
 
-        var acceptButton = new Button("Accept");
+        var acceptButton = new Button("Confirm");
         acceptButton.addClassName("votify-btn-primary");
         acceptButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         acceptButton.addClickListener(e -> {

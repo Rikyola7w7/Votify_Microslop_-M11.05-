@@ -162,7 +162,7 @@ public class NotificationCardComponent extends Div {
 
         // Add type-specific action buttons
         if ("PROJECT_SUBMISSION".equals(notification.getType()) && competition != null) {
-            Button viewProjectBtn = new Button("View Project");
+            Button viewProjectBtn = new Button("View Details");
             viewProjectBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
             viewProjectBtn.getStyle().set("cursor", "pointer");
             viewProjectBtn.addClickListener(e -> {
@@ -176,7 +176,7 @@ public class NotificationCardComponent extends Div {
         }
 
         if ("PROJECT_INVITATION".equals(notification.getType()) && notification.getInvitationId() != null) {
-            Button viewBtn = new Button("View Invitation");
+            Button viewBtn = new Button("View Details");
             viewBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
             viewBtn.getStyle().set("cursor", "pointer");
             viewBtn.addClickListener(e -> {
@@ -188,7 +188,7 @@ public class NotificationCardComponent extends Div {
 
         // Certificate-related notifications
         if ("CERTIFICATE_SENT".equals(notification.getType())) {
-            Button viewCertificatesBtn = new Button("View Certificates");
+            Button viewCertificatesBtn = new Button("View Details");
             viewCertificatesBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
             viewCertificatesBtn.getStyle().set("cursor", "pointer");
             viewCertificatesBtn.addClickListener(e -> {
@@ -199,11 +199,11 @@ public class NotificationCardComponent extends Div {
 
         // End-time competition notifications
         if ("END_TIME_COMPETITION".equals(notification.getType())) {
-            Button yesBtn = new Button("YES - Generate Certificates");
+            Button yesBtn = new Button("Confirm");
             yesBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_SUCCESS);
             yesBtn.getStyle().set("cursor", "pointer");
             
-            Button noBtn = new Button("NO - Skip");
+            Button noBtn = new Button("Cancel");
             noBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);
             noBtn.getStyle().set("cursor", "pointer");
             

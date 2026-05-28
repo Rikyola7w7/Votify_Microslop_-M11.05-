@@ -102,7 +102,7 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         header.setWidthFull();
         header.setAlignItems(Alignment.CENTER);
 
-        Button backButton = new Button("Back");
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> navigateBack());

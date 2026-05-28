@@ -10,6 +10,7 @@ import com.microslop.service.ProjectService;
 import com.microslop.views.components.CommentCardComponent;
 import com.microslop.base.ui.MainLayout;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -106,9 +107,9 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
         header.setSpacing(true);
         header.addClassName("votify-header");
 
-        Button backButton = new Button(new Icon(VaadinIcon.ARROW_LEFT));
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
-        backButton.setHeight("40px");
+        backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/projects")));
 
         H2 title = new H2("Project Discussion");

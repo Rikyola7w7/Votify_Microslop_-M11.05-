@@ -138,7 +138,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        Button backButton = new Button("Back to Dashboard");
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/competitions")));
@@ -211,7 +211,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
 
         datesLayout.add(startDatePicker, endDatePicker);
 
-        Button saveDatesButton = new Button("Update Dates", new Icon(VaadinIcon.CALENDAR_CLOCK));
+        Button saveDatesButton = new Button("Save", new Icon(VaadinIcon.CALENDAR_CLOCK));
         saveDatesButton.addClassName("votify-btn-primary");
         saveDatesButton.getStyle().set("margin-top", "20px");
         saveDatesButton.addClickListener(e -> saveDates());
@@ -452,7 +452,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         newEndDatePicker.setValue(LocalDateTime.now().plusDays(7));
         newEndDatePicker.setWidthFull();
 
-        Button confirmBtn = new Button("Reopen", e -> {
+        Button confirmBtn = new Button("Confirm", e -> {
             LocalDateTime newEndDate = newEndDatePicker.getValue();
             if (newEndDate == null || newEndDate.isBefore(LocalDateTime.now())) {
                 Notification.show("Please select a valid future date", 3000, Notification.Position.TOP_CENTER)
@@ -533,12 +533,12 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
 
             info.add(projectName, meta);
 
-            Button acceptBtn = new Button("Accept", new Icon(VaadinIcon.CHECK));
+            Button acceptBtn = new Button("Confirm", new Icon(VaadinIcon.CHECK));
             acceptBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
             acceptBtn.getStyle().set("cursor", "pointer");
             acceptBtn.addClickListener(e -> acceptSubmission(submission));
 
-            Button declineBtn = new Button("Decline", new Icon(VaadinIcon.CLOSE_SMALL));
+            Button declineBtn = new Button("Reject", new Icon(VaadinIcon.CLOSE_SMALL));
             declineBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
             declineBtn.getStyle().set("cursor", "pointer");
             declineBtn.addClickListener(e -> declineSubmission(submission));

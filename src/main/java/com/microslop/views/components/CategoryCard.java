@@ -176,7 +176,7 @@ public class CategoryCard extends Div {
     }
 
     private Button createViewButton() {
-        Button viewButton = new Button("VIEW CATEGORY");
+        Button viewButton = new Button("View Details");
         viewButton.setWidth("calc(100% - 32px)");
         viewButton.addClassName("votify-btn-primary");
         viewButton.getStyle()
