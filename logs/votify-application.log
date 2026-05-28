@@ -4048,3 +4048,78 @@ java.lang.RuntimeException: Error
 	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
 	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
 	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+2026-05-28 17:58:08.427 [main] INFO  com.microslop.Application - Starting Application using Java 21.0.10 with PID 9077 (/home/hugo/IdeaProjects/Votify_Microslop/target/classes started by hugo in /home/hugo/IdeaProjects/Votify_Microslop)
+2026-05-28 17:58:08.428 [main] INFO  com.microslop.Application - No active profile set, falling back to 1 default profile: "default"
+2026-05-28 17:58:09.318 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-05-28 17:58:09.320 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-28 17:58:09.320 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-05-28 17:58:12.476 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-05-28 17:58:13.114 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@185c1e77
+2026-05-28 17:58:13.115 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-05-28 17:58:13.171 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-05-28 17:58:15.333 [main] WARN  o.s.b.s.a.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: bed16ffd-82e7-407d-9923-f97cfdc4f6e6
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-05-28 17:58:15.337 [main] INFO  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-05-28 17:58:15.819 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-05-28 17:58:15.868 [main] INFO  com.microslop.Application - Started Application in 7.745 seconds (process running for 8.349)
+2026-05-28 17:58:16.180 [main] WARN  com.microslop.config.SeedRunner - Could not reset sequence judge_id_seq — table judge may not exist yet
+2026-05-28 17:58:16.292 [main] INFO  com.microslop.config.SeedRunner - PostgreSQL sequences reset successfully
+2026-05-28 17:58:16.347 [main] INFO  com.microslop.config.SeedRunner - Fixed NULL votes_left values in voter table
+2026-05-28 17:58:16.349 [main] WARN  com.microslop.config.SeedRunner - neon.session.sql not found on classpath — skipping seed population
+2026-05-28 17:58:16.775 [RMI TCP Connection(4)-127.0.0.1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-28 17:58:34.958 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2026-05-28 17:58:34.994 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2026-05-28 17:58:41.877 [main] INFO  com.microslop.Application - Starting Application using Java 21.0.10 with PID 9260 (/home/hugo/IdeaProjects/Votify_Microslop/target/classes started by hugo in /home/hugo/IdeaProjects/Votify_Microslop)
+2026-05-28 17:58:41.879 [main] INFO  com.microslop.Application - No active profile set, falling back to 1 default profile: "default"
+2026-05-28 17:58:42.794 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-05-28 17:58:42.795 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-28 17:58:42.795 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-05-28 17:58:46.019 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-05-28 17:58:46.563 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@792621f8
+2026-05-28 17:58:46.564 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-05-28 17:58:46.617 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-05-28 17:58:48.825 [main] WARN  o.s.b.s.a.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: e7c4e3e1-50bb-4563-bbf5-40b5b7a9f01e
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-05-28 17:58:48.829 [main] INFO  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-05-28 17:58:49.310 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-05-28 17:58:49.360 [main] INFO  com.microslop.Application - Started Application in 7.973 seconds (process running for 8.405)
+2026-05-28 17:58:49.643 [main] WARN  com.microslop.config.SeedRunner - Could not reset sequence judge_id_seq — table judge may not exist yet
+2026-05-28 17:58:49.752 [main] INFO  com.microslop.config.SeedRunner - PostgreSQL sequences reset successfully
+2026-05-28 17:58:49.787 [main] INFO  com.microslop.config.SeedRunner - Fixed NULL votes_left values in voter table
+2026-05-28 17:58:49.789 [main] WARN  com.microslop.config.SeedRunner - neon.session.sql not found on classpath — skipping seed population
+2026-05-28 17:58:50.247 [RMI TCP Connection(3)-127.0.0.1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-28 18:00:40.543 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2026-05-28 18:00:40.578 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2026-05-28 18:00:43.615 [main] INFO  com.microslop.Application - Starting Application using Java 21.0.10 with PID 9819 (/home/hugo/IdeaProjects/Votify_Microslop/target/classes started by hugo in /home/hugo/IdeaProjects/Votify_Microslop)
+2026-05-28 18:00:43.616 [main] INFO  com.microslop.Application - No active profile set, falling back to 1 default profile: "default"
+2026-05-28 18:00:44.740 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-05-28 18:00:44.741 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-28 18:00:44.742 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-05-28 18:00:48.501 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-05-28 18:00:49.083 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@70141cf4
+2026-05-28 18:00:49.084 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-05-28 18:00:49.143 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-05-28 18:00:51.301 [main] WARN  o.s.b.s.a.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: c334b63f-c4cd-46c0-a813-f798af64d4a2
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-05-28 18:00:51.305 [main] INFO  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-05-28 18:00:51.785 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-05-28 18:00:51.856 [main] INFO  com.microslop.Application - Started Application in 8.646 seconds (process running for 9.15)
+2026-05-28 18:00:52.208 [main] WARN  com.microslop.config.SeedRunner - Could not reset sequence judge_id_seq — table judge may not exist yet
+2026-05-28 18:00:52.331 [main] INFO  com.microslop.config.SeedRunner - PostgreSQL sequences reset successfully
+2026-05-28 18:00:52.373 [main] INFO  com.microslop.config.SeedRunner - Fixed NULL votes_left values in voter table
+2026-05-28 18:00:52.374 [main] WARN  com.microslop.config.SeedRunner - neon.session.sql not found on classpath — skipping seed population
+2026-05-28 18:00:52.478 [RMI TCP Connection(1)-127.0.0.1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-28 18:01:43.012 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2026-05-28 18:01:43.050 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
