@@ -182,7 +182,7 @@ public class CreateProjectDialog extends Dialog {
             Span participantName = new Span(participant.getUsername());
             participantName.getStyle().set("flex-grow", "1");
             
-            Button removeBtn = new Button("Remove", e -> removeParticipant(participant.getId()));
+            Button removeBtn = new Button("Delete", e -> removeParticipant(participant.getId()));
             removeBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
             removeBtn.getStyle().set("cursor", "pointer");
             

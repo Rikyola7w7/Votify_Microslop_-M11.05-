@@ -108,7 +108,7 @@ public class PdfViewerDialog extends Dialog {
             .set("background", "var(--surface)")
             .set("border-top", "1px solid var(--border-color)");
 
-        Button closeBtn = new Button("Close");
+        Button closeBtn = new Button("Cancel");
         closeBtn.setIcon(new Icon(VaadinIcon.CLOSE));
         closeBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         closeBtn.addClickListener(e -> close());

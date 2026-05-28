@@ -190,7 +190,7 @@ public class NotificationCardComponent extends Div {
         }
 
         if ("PROJECT_INVITATION".equals(notification.getType()) && notification.getInvitationId() != null) {
-            Button viewBtn = new Button("View Invitation");
+            Button viewBtn = new Button("View Details");
             viewBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
             viewBtn.getStyle().set("cursor", "pointer");
             viewBtn.addClickListener(e -> {
@@ -217,7 +217,7 @@ public class NotificationCardComponent extends Div {
             yesBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_SUCCESS);
             yesBtn.getStyle().set("cursor", "pointer");
             
-            Button noBtn = new Button("NO - Skip");
+            Button noBtn = new Button("Cancel");
             noBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);
             noBtn.getStyle().set("cursor", "pointer");
             

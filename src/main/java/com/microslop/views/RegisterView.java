@@ -27,6 +27,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
@@ -162,14 +163,50 @@ public class RegisterView extends HorizontalLayout {
         passwordField.setWidthFull();
         passwordField.addClassNames("votify-input");
         passwordField.setPlaceholder(localizationService.t("register.password.placeholder"));
+        passwordField.setValueChangeMode(ValueChangeMode.EAGER);
 
         PasswordField confirmPasswordField = new PasswordField(localizationService.t("register.confirmpassword"));
         confirmPasswordField.setWidthFull();
         confirmPasswordField.addClassNames("votify-input");
         confirmPasswordField.setPlaceholder(localizationService.t("register.confirmpassword.placeholder"));
+        confirmPasswordField.setValueChangeMode(ValueChangeMode.EAGER);
+
+        Span reqMinLength = createRequirementItem("At least 6 characters");
+        Span reqUppercase = createRequirementItem("One uppercase letter");
+        Span reqLowercase = createRequirementItem("One lowercase letter");
+        Span reqNumber = createRequirementItem("One number");
+
+        VerticalLayout passwordRequirements = new VerticalLayout();
+        passwordRequirements.setPadding(false);
+        passwordRequirements.setSpacing(false);
+        passwordRequirements.getStyle()
+                .set("margin-top", "-8px")
+                .set("margin-bottom", "4px");
+        passwordRequirements.add(reqMinLength, reqUppercase, reqLowercase, reqNumber);
+
+        Span passwordMatchIndicator = new Span();
+        passwordMatchIndicator.getStyle()
+                .set("font-size", "0.85rem")
+                .set("font-weight", "600")
+                .set("display", "block")
+                .set("margin-top", "-4px")
+                .set("margin-bottom", "4px");
+
+        passwordField.addValueChangeListener(e -> {
+            String pwd = e.getValue();
+            updateRequirement(reqMinLength, pwd.length() >= 6);
+            updateRequirement(reqUppercase, pwd.chars().anyMatch(Character::isUpperCase));
+            updateRequirement(reqLowercase, pwd.chars().anyMatch(Character::isLowerCase));
+            updateRequirement(reqNumber, pwd.chars().anyMatch(Character::isDigit));
+            updatePasswordMatchIndicator(passwordMatchIndicator, passwordField.getValue(), confirmPasswordField.getValue());
+        });
+
+        confirmPasswordField.addValueChangeListener(e -> {
+            updatePasswordMatchIndicator(passwordMatchIndicator, passwordField.getValue(), confirmPasswordField.getValue());
+        });
 
         FormLayout formLayout = new FormLayout();
-        formLayout.add(usernameField, nameField, emailField, birthDateField, passwordField, confirmPasswordField);
+        formLayout.add(usernameField, nameField, emailField, birthDateField, passwordField, passwordRequirements, confirmPasswordField, passwordMatchIndicator);
         formLayout.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("500px", 2)
@@ -185,18 +222,36 @@ public class RegisterView extends HorizontalLayout {
                 return;
             }
 
+            String pwd = passwordField.getValue();
+            if (pwd.length() < 6) {
+                Notification.show("Password must be at least 6 characters long.");
+                return;
+            }
+            if (!pwd.chars().anyMatch(Character::isUpperCase)) {
+                Notification.show("Password must contain at least one uppercase letter.");
+                return;
+            }
+            if (!pwd.chars().anyMatch(Character::isLowerCase)) {
+                Notification.show("Password must contain at least one lowercase letter.");
+                return;
+            }
+            if (!pwd.chars().anyMatch(Character::isDigit)) {
+                Notification.show("Password must contain at least one number.");
+                return;
+            }
+
             if (!passwordField.getValue().equals(confirmPasswordField.getValue())) {
                 Notification.show(localizationService.t("register.passwordmismatch"));
                 return;
             }
 
             Dialog confirmDialog = new Dialog();
-            confirmDialog.setHeaderTitle(localizationService.t("register.confirmtitle"));
+            confirmDialog.setHeaderTitle("Confirm Registration");
 
-            Paragraph message = new Paragraph(localizationService.t("register.confirmmessage") +
-                    usernameField.getValue().trim() + "\"");
+            Paragraph message = new Paragraph("Do you want to create your account with the username \"" +
+                    usernameField.getValue().trim() + "\"?");
 
-            Button confirmButton = new Button(localizationService.t("register.yes"), event -> {
+            Button confirmButton = new Button("Confirm", event -> {
                 try {
                     LocalDateTime birthDateLDT = birthDateField.getValue().atStartOfDay();
 
@@ -265,7 +320,7 @@ public class RegisterView extends HorizontalLayout {
             });
             confirmButton.addClassNames("votify-btn-primary");
 
-            Button cancelButton = new Button(localizationService.t("register.no"), event -> confirmDialog.close());
+            Button cancelButton = new Button("Cancel", event -> confirmDialog.close());
             cancelButton.addClassNames("votify-btn-secondary");
 
             confirmDialog.add(message);
@@ -295,9 +350,50 @@ public class RegisterView extends HorizontalLayout {
                 .set("margin-top", "16px")
                 .set("font-size", "0.95rem");
 
-        card.add(title, formLayout, uploadArea, registerButton, linkLogin);
+        RouterLink linkHelp = new RouterLink("Need help? Visit our FAQ", FaqView.class);
+        linkHelp.getStyle()
+                .set("color", "var(--text-muted)")
+                .set("text-align", "center")
+                .set("margin-top", "8px")
+                .set("font-size", "0.85rem");
+
+        card.add(title, formLayout, uploadArea, registerButton, linkLogin, linkHelp);
         rightPanel.add(card);
         return rightPanel;
+    }
+
+    private Span createRequirementItem(String text) {
+        Span item = new Span();
+        item.setText("\u2717  " + text);
+        item.getStyle()
+                .set("font-size", "0.8rem")
+                .set("color", "var(--text-muted)")
+                .set("display", "block")
+                .set("line-height", "1.6");
+        return item;
+    }
+
+    private void updateRequirement(Span item, boolean met) {
+        if (met) {
+            item.setText("\u2713  " + item.getText().substring(2));
+            item.getStyle().set("color", "#059669");
+        } else {
+            item.setText("\u2717  " + item.getText().substring(2));
+            item.getStyle().set("color", "var(--text-muted)");
+        }
+    }
+
+    private void updatePasswordMatchIndicator(Span indicator, String password, String confirmPassword) {
+        if (confirmPassword.isEmpty()) {
+            indicator.setText("");
+            indicator.getStyle().set("color", "");
+        } else if (password.equals(confirmPassword)) {
+            indicator.setText("\u2713 Passwords match");
+            indicator.getStyle().set("color", "#059669");
+        } else {
+            indicator.setText("\u2717 Passwords do not match");
+            indicator.getStyle().set("color", "var(--error)");
+        }
     }
 
     private Div buildUploadArea() {

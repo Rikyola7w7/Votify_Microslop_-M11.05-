@@ -37,6 +37,7 @@ public class CategoryCard extends Div {
     private void buildCard() {
         setWidth("100%");
         setMaxWidth(280, Unit.PIXELS);
+        setMinHeight(420, Unit.PIXELS);
         addClassName("votify-card");
         getStyle()
             .set("padding", "0")
@@ -48,6 +49,7 @@ public class CategoryCard extends Div {
         cardContent.setPadding(false);
         cardContent.setSpacing(false);
         cardContent.setSizeFull();
+        cardContent.getStyle().set("flex", "1");
 
         Div ribbonStripe = createRibbonStripe();
         Div iconBlock = createIconBlock();
@@ -96,16 +98,11 @@ public class CategoryCard extends Div {
             .set("font-size", "13px")
             .set("display", "block")
             .set("padding", "0 16px")
-            .set("margin-top", "4px");
-
-        Div spacer = new Div();
-        spacer.setHeight(1, Unit.PIXELS);
-        spacer.setWidthFull();
-        spacer.getStyle().set("flex", "1");
+            .set("margin-top", "8px");
 
         Button viewButton = createViewButton();
 
-        cardContent.add(ribbonStripe, iconBlock, statusBadge, categoryName, voterBadge, compName, spacer, viewButton);
+        cardContent.add(ribbonStripe, iconBlock, statusBadge, categoryName, voterBadge, compName, viewButton);
         add(cardContent);
     }
 
@@ -183,7 +180,7 @@ public class CategoryCard extends Div {
     }
 
     private Button createViewButton() {
-        Button viewButton = new Button(t("card.viewcategory"));
+        Button viewButton = new Button("View Details");
         viewButton.setWidth("calc(100% - 32px)");
         viewButton.addClassName("votify-btn-primary");
         viewButton.getStyle()

@@ -43,8 +43,7 @@ public class ProjectCardComponent extends Div {
         contentArea.getStyle()
             .set("padding", "16px")
             .set("display", "flex")
-            .set("flex-direction", "column")
-            .set("flex", "1");
+            .set("flex-direction", "column");
 
         Span projectName = new Span(project.getName());
         projectName.getStyle()
@@ -52,20 +51,23 @@ public class ProjectCardComponent extends Div {
             .set("font-size", "18px")
             .set("color", "var(--text-primary)")
             .set("display", "block")
-            .set("margin-bottom", "8px");
+            .set("margin-bottom", "10px");
 
         Span description = new Span(project.getDescription() != null ? project.getDescription() : "No description provided");
         description.getStyle()
             .set("color", "var(--text-muted)")
             .set("font-size", "14px")
+            .set("line-height", "1.5")
+            .set("height", "42px")
             .set("display", "-webkit-box")
-            .set("-webkit-line-clamp", "3")
+            .set("-webkit-line-clamp", "2")
             .set("-webkit-box-orient", "vertical")
             .set("overflow", "hidden");
 
         HorizontalLayout stats = createStatsLayout(competitionName, totalVotes, position);
+        stats.getStyle().set("margin-top", "8px");
 
-        Button commentsButton = new Button("See comments");
+        Button commentsButton = new Button("View Details");
         commentsButton.addClassName("votify-btn-secondary");
         commentsButton.getStyle()
             .set("margin-top", "8px")
@@ -85,7 +87,6 @@ public class ProjectCardComponent extends Div {
         stats.setSpacing(true);
         stats.setAlignItems(FlexComponent.Alignment.CENTER);
         stats.getStyle()
-            .set("margin-top", "12px")
             .set("flex-wrap", "wrap")
             .set("gap", "6px");
 

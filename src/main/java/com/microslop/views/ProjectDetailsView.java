@@ -12,6 +12,7 @@ import com.microslop.service.ProjectService;
 import com.microslop.views.components.CommentCardComponent;
 import com.microslop.base.ui.MainLayout;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -111,9 +112,9 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
         header.setSpacing(true);
         header.addClassName("votify-header");
 
-        Button backButton = new Button("\u2190 Back to projects", new Icon(VaadinIcon.ARROW_LEFT));
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
-        backButton.setHeight("40px");
+        backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/projects")));
 
         H2 title = new H2(localizationService.t("projects.details.title"));
@@ -127,6 +128,7 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
         Button aiFeedbackBtn = new Button("Feedback IA", new Icon(VaadinIcon.CHART));
         aiFeedbackBtn.addClassName("votify-btn-primary");
         aiFeedbackBtn.setHeight("40px");
+        aiFeedbackBtn.setTooltipText("Get AI-powered feedback and suggestions for your project");
         aiFeedbackBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("ai-feedback")));
 
         header.add(backButton, title, aiFeedbackBtn);

@@ -91,7 +91,7 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
-        Button backButton = new Button("\u2190 Back", new Icon(VaadinIcon.ARROW_LEFT));
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));

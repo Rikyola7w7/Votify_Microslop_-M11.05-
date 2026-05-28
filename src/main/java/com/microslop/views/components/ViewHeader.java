@@ -6,6 +6,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 
 public class ViewHeader extends HorizontalLayout {
@@ -19,16 +20,13 @@ public class ViewHeader extends HorizontalLayout {
         setSpacing(true);
         addClassName("votify-header-dark");
 
-        Button backButton = new Button();
-        backButton.setIcon(new Icon(VaadinIcon.ARROW_LEFT));
-        backButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-        backButton.getElement().setAttribute("aria-label", "Go back");
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
+        backButton.addClassName("votify-btn-secondary");
         backButton.getStyle()
                 .set("color", "white")
-                .set("background", "transparent")
-                .set("border", "none")
-                .set("cursor", "pointer")
-                .set("font-weight", "600");
+                .set("background", "rgba(255, 255, 255, 0.15)")
+                .set("border", "1px solid rgba(255, 255, 255, 0.3)")
+                .set("border-radius", "var(--radius-md)");
         if (backRoute != null && !backRoute.isEmpty()) {
             backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(backRoute)));
         } else {
@@ -45,6 +43,17 @@ public class ViewHeader extends HorizontalLayout {
                 .set("flex", "1")
                 .set("text-align", "center");
 
-        add(backButton, titleSpan);
+        Button helpBtn = new Button(new Icon(VaadinIcon.QUESTION_CIRCLE_O));
+        helpBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        helpBtn.getElement().setAttribute("title", "Help & FAQ");
+        helpBtn.getStyle()
+                .set("color", "white")
+                .set("background", "transparent")
+                .set("border", "none")
+                .set("cursor", "pointer")
+                .set("font-size", "20px");
+        helpBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("help")));
+
+        add(backButton, titleSpan, helpBtn);
     }
 }
