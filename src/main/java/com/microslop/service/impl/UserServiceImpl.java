@@ -147,4 +147,15 @@ public class UserServiceImpl implements UserService {
         }
         throw new IllegalStateException("No user is currently logged in");
     }
+
+    @Override
+    public boolean verifyCurrentPassword(String password) {
+        String username = getCurrentUsername();
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+        return userRepository.findByUsernameIgnoreCase(username)
+                .map(user -> passwordEncoder.matches(password, user.getPassword()))
+                .orElse(false);
+    }
 }

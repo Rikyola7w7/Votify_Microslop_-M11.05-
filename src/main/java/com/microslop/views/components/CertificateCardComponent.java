@@ -140,7 +140,8 @@ public class CertificateCardComponent extends Div {
         downloadAnchor.getStyle().set("flex", "1");
         downloadAnchor.add(downloadBtn);
 
-        Button viewBtn = new Button("View Certificate", new Icon(VaadinIcon.EYE));
+        Button viewBtn = new Button("View Details");
+        viewBtn.setIcon(new Icon(VaadinIcon.EYE));
         viewBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         viewBtn.getStyle().set("flex", "1");
         viewBtn.addClickListener(e -> openPdfViewer());

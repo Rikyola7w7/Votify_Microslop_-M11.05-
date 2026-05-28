@@ -18,6 +18,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
+import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -124,6 +125,7 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         editButton.addClassName("votify-btn-primary");
         editButton.setWidth("100%");
         editButton.setHeight("48px");
+        editButton.setTooltipText("Update your username or email address");
 
         HorizontalLayout secondaryButtons = new HorizontalLayout();
         secondaryButtons.setWidthFull();
@@ -138,15 +140,23 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         logoutButton.addClassName("votify-btn-secondary");
         logoutButton.setHeight("44px");
         logoutButton.getStyle().set("flex", "1");
+        logoutButton.setTooltipText("End your current session and sign out");
 
         Button deleteButton = new Button(localizationService.t("profile.deleteaccount"), VaadinIcon.TRASH.create(), e -> openDeleteDialog());
         deleteButton.addClassName("votify-btn-danger");
         deleteButton.setHeight("44px");
         deleteButton.getStyle().set("flex", "1");
+        deleteButton.setTooltipText("Permanently remove your account and all associated data");
 
         secondaryButtons.add(logoutButton, deleteButton);
 
-        card.add(usernameText, emailText, editButton, secondaryButtons);
+        Button helpButton = new Button("Help & FAQ", VaadinIcon.QUESTION_CIRCLE_O.create(), e -> getUI().ifPresent(ui -> ui.navigate("help")));
+        helpButton.addClassName("votify-btn-secondary");
+        helpButton.setWidth("100%");
+        helpButton.setHeight("44px");
+        helpButton.getStyle().set("margin-top", "8px");
+
+        card.add(usernameText, emailText, editButton, secondaryButtons, helpButton);
         contentWrapper.add(avatarWrapper, card);
         add(banner, contentWrapper);
     }
@@ -249,7 +259,13 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
             .set("color", "var(--text-muted)")
             .set("font-size", "0.95rem")
             .set("display", "block")
-            .set("margin-bottom", "20px");
+            .set("margin-bottom", "16px");
+
+        PasswordField passwordField = new PasswordField("Confirm your password");
+        passwordField.setWidthFull();
+        passwordField.addClassName("votify-input");
+        passwordField.setPlaceholder("Enter your password");
+        passwordField.getStyle().set("margin-bottom", "20px");
 
         Button cancelButton = new Button(localizationService.t("profile.cancel"), e -> dialog.close());
         cancelButton.addClassName("votify-btn-secondary");
@@ -257,6 +273,12 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         cancelButton.getStyle().set("flex", "1");
 
         Button confirmButton = new Button(localizationService.t("profile.delete"), VaadinIcon.TRASH.create(), e -> {
+            if (!userService.verifyCurrentPassword(passwordField.getValue())) {
+                Notification.show("Incorrect password");
+                passwordField.clear();
+                passwordField.focus();
+                return;
+            }
             try {
                 userService.deleteUser(user.getUsername());
                 Notification.show(localizationService.t("profile.accountdeletedsuccess"));
@@ -270,14 +292,18 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         confirmButton.addClassName("votify-btn-danger");
         confirmButton.setHeight("44px");
         confirmButton.getStyle().set("flex", "1");
+        confirmButton.setEnabled(false);
+
+        passwordField.addValueChangeListener(e -> confirmButton.setEnabled(!e.getValue().isBlank()));
 
         HorizontalLayout buttons = new HorizontalLayout(cancelButton, confirmButton);
         buttons.setWidthFull();
         buttons.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
         buttons.setSpacing(true);
 
-        VerticalLayout layout = new VerticalLayout(title, message, buttons);
+        VerticalLayout layout = new VerticalLayout(title, message, passwordField, buttons);
         layout.setPadding(false);
+        layout.setAlignItems(FlexComponent.Alignment.STRETCH);
 
         dialog.add(layout);
         dialog.open();

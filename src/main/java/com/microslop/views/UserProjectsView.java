@@ -10,6 +10,7 @@ import com.microslop.service.LocalizationService;
 import com.microslop.views.components.ProjectCardComponent;
 import com.microslop.base.ui.MainLayout;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -89,12 +90,12 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
         projectsContainer.setWidthFull();
         projectsContainer.addClassName("animate-fade-in");
         projectsContainer.getStyle()
-            .set("padding", "32px 40px")
+            .set("padding", "16px 24px")
             .set("max-width", "1200px")
             .set("margin", "0 auto")
             .set("display", "grid")
             .set("grid-template-columns", "repeat(auto-fill, minmax(300px, 1fr))")
-            .set("gap", "24px");
+            .set("gap", "16px");
 
         add(projectsContainer);
     }
@@ -107,9 +108,9 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
         header.addClassName("votify-header");
         header.getStyle().set("flex-shrink", "0");
 
-        Button backButton = new Button("\u2190 Back", new Icon(VaadinIcon.ARROW_LEFT));
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
-        backButton.setHeight("40px");
+        backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
 
         H2 title = new H2(localizationService.t("projects.myprojects"));

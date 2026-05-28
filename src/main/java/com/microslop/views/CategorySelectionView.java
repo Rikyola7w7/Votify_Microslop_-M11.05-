@@ -14,6 +14,7 @@ import com.microslop.views.components.CategoryCard;
 import com.microslop.views.components.CreateProjectDialog;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -109,7 +110,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
                 .set("color", "var(--text-muted)")
                 .set("font-size", "0.95rem");
 
-            Button backBtn = new Button("\u2190 Back to home", new Icon(VaadinIcon.ARROW_LEFT));
+            Button backBtn = new Button("Back to home", new Icon(VaadinIcon.ARROW_LEFT));
             backBtn.addClassName("votify-btn-primary");
             backBtn.addClickListener(ev -> getUI().ifPresent(ui -> ui.navigate("")));
 
@@ -138,7 +139,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         header.addClassName("votify-header-dark");
 
-        Button backButton = new Button("\u2190 Back", new Icon(VaadinIcon.ARROW_LEFT));
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
         backButton.getStyle()
             .set("color", "white")
@@ -173,6 +174,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             .set("cursor", "pointer")
             .set("font-weight", "600")
             .set("padding", "8px 16px");
+        submitBtn.setTooltipText("Submit a new project to this competition");
         submitBtn.addClickListener(e -> {
             if (!userService.isLoggedIn()) {
                 com.vaadin.flow.component.notification.Notification.show("Sign in to submit a project", 3000, com.vaadin.flow.component.notification.Notification.Position.MIDDLE);
@@ -186,7 +188,18 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             dialog.open();
         });
 
-        header.add(leftSection, title, submitBtn);
+        Button helpBtn = new Button(new Icon(VaadinIcon.QUESTION_CIRCLE_O));
+        helpBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        helpBtn.getElement().setAttribute("title", "Help & FAQ");
+        helpBtn.getStyle()
+            .set("color", "white")
+            .set("background", "transparent")
+            .set("border", "none")
+            .set("cursor", "pointer")
+            .set("font-size", "20px");
+        helpBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("help")));
+
+        header.add(leftSection, title, submitBtn, helpBtn);
         return header;
     }
 

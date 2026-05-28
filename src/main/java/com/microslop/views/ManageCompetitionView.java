@@ -139,7 +139,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        Button backButton = new Button("\u2190 Back to Dashboard", new Icon(VaadinIcon.ARROW_LEFT));
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/competitions")));
@@ -212,9 +212,10 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
 
         datesLayout.add(startDatePicker, endDatePicker);
 
-        Button saveDatesButton = new Button("Update Dates", new Icon(VaadinIcon.CALENDAR_CLOCK));
+        Button saveDatesButton = new Button("Save", new Icon(VaadinIcon.CALENDAR_CLOCK));
         saveDatesButton.addClassName("votify-btn-primary");
         saveDatesButton.getStyle().set("margin-top", "20px");
+        saveDatesButton.setTooltipText("Save changes to the voting window dates");
         saveDatesButton.addClickListener(e -> saveDates());
 
         VerticalLayout datesContainer = new VerticalLayout(datesLayout, saveDatesButton);
@@ -234,26 +235,31 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         activateButton = new Button("Activate Competition", new Icon(VaadinIcon.ROCKET));
         activateButton.addClassName("votify-btn-primary");
         activateButton.getStyle().set("flex", "1 1 auto");
+        activateButton.setTooltipText("Make the competition live and visible to participants");
         activateButton.addClickListener(e -> activateCompetition());
 
         votingToggle = new Button("Voting: OFF", new Icon(VaadinIcon.BAN));
         votingToggle.addClassName("votify-btn-secondary");
         votingToggle.getStyle().set("flex", "1 1 auto");
+        votingToggle.setTooltipText("Toggle voting open or closed for participants");
         votingToggle.addClickListener(e -> toggleVoting());
 
         pauseToggle = new Button("Pause Competition", new Icon(VaadinIcon.PAUSE));
         pauseToggle.addClassName("votify-btn-danger");
         pauseToggle.getStyle().set("flex", "1 1 auto");
+        pauseToggle.setTooltipText("Temporarily halt the competition, stopping all activity");
         pauseToggle.addClickListener(e -> togglePause());
 
         endNowButton = new Button("End Voting Now", new Icon(VaadinIcon.STOP));
         endNowButton.addClassName("votify-btn-danger");
         endNowButton.getStyle().set("flex", "1 1 auto");
+        endNowButton.setTooltipText("Immediately conclude the voting period");
         endNowButton.addClickListener(e -> endVotingNow());
 
         reopenButton = new Button("Reopen Voting", new Icon(VaadinIcon.REFRESH));
         reopenButton.addClassName("votify-btn-primary");
         reopenButton.getStyle().set("flex", "1 1 auto");
+        reopenButton.setTooltipText("Start a new voting period for a concluded competition");
         reopenButton.addClickListener(e -> reopenVoting());
 
         actionsLayout.add(activateButton, votingToggle, pauseToggle, endNowButton, reopenButton);
@@ -429,12 +435,38 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     }
 
     private void endVotingNow() {
-        competitionService.conclude(competitionId);
-        competition = competitionService.getByIdOrFail(competitionId);
-        endDatePicker.setValue(competition.getEndDate());
-        Notification.show("Voting has been ended.", 3000, Notification.Position.TOP_CENTER)
-                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-        updateUIState();
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("End Voting Now");
+
+        VerticalLayout content = new VerticalLayout();
+        content.setSpacing(true);
+        content.setPadding(false);
+
+        Span message = new Span(
+            "Are you sure you want to end voting now? " +
+            "No more votes will be accepted until voting is reopened. " +
+            "You can reopen voting manually at any time."
+        );
+        message.getStyle().set("color", "var(--text-muted)").set("font-size", "0.95rem");
+
+        Button confirmBtn = new Button("Confirm", e -> {
+            competitionService.conclude(competitionId);
+            competition = competitionService.getByIdOrFail(competitionId);
+            endDatePicker.setValue(competition.getEndDate());
+            dialog.close();
+            Notification.show("Voting has been ended.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            updateUIState();
+        });
+        confirmBtn.addClassName("votify-btn-danger");
+
+        Button cancelBtn = new Button("Cancel", e -> dialog.close());
+        cancelBtn.addClassName("votify-btn-secondary");
+
+        dialog.getFooter().add(cancelBtn, confirmBtn);
+        content.add(message);
+        dialog.add(content);
+        dialog.open();
     }
 
     private void reopenVoting() {
@@ -453,7 +485,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         newEndDatePicker.setValue(LocalDateTime.now().plusDays(7));
         newEndDatePicker.setWidthFull();
 
-        Button confirmBtn = new Button("Reopen", e -> {
+        Button confirmBtn = new Button("Confirm", e -> {
             LocalDateTime newEndDate = newEndDatePicker.getValue();
             if (newEndDate == null || newEndDate.isBefore(LocalDateTime.now())) {
                 Notification.show("Please select a valid future date", 3000, Notification.Position.TOP_CENTER)
@@ -534,12 +566,12 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
 
             info.add(projectName, meta);
 
-            Button acceptBtn = new Button("Accept", new Icon(VaadinIcon.CHECK));
+            Button acceptBtn = new Button("Confirm", new Icon(VaadinIcon.CHECK));
             acceptBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
             acceptBtn.getStyle().set("cursor", "pointer");
             acceptBtn.addClickListener(e -> acceptSubmission(submission));
 
-            Button declineBtn = new Button("Decline", new Icon(VaadinIcon.CLOSE_SMALL));
+            Button declineBtn = new Button("Reject", new Icon(VaadinIcon.CLOSE_SMALL));
             declineBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
             declineBtn.getStyle().set("cursor", "pointer");
             declineBtn.addClickListener(e -> declineSubmission(submission));
