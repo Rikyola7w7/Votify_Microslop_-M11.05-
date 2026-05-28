@@ -14,7 +14,6 @@ public class ProjectCardComponent extends Div {
 
     public ProjectCardComponent(Project project, String competitionName, long totalVotes, int position, Runnable onCommentClick) {
         setWidth("100%");
-        setMinHeight(420, Unit.PIXELS);
         addClassName("votify-card");
         getStyle()
             .set("padding", "0")
@@ -44,9 +43,7 @@ public class ProjectCardComponent extends Div {
         contentArea.getStyle()
             .set("padding", "16px")
             .set("display", "flex")
-            .set("flex-direction", "column")
-            .set("flex", "1")
-            .set("flex-grow", "1");
+            .set("flex-direction", "column");
 
         Span projectName = new Span(project.getName());
         projectName.getStyle()
@@ -61,18 +58,17 @@ public class ProjectCardComponent extends Div {
             .set("color", "var(--text-muted)")
             .set("font-size", "14px")
             .set("display", "-webkit-box")
-            .set("-webkit-line-clamp", "5")
+            .set("-webkit-line-clamp", "2")
             .set("-webkit-box-orient", "vertical")
-            .set("overflow", "hidden")
-            .set("flex", "1");
+            .set("overflow", "hidden");
 
         HorizontalLayout stats = createStatsLayout(competitionName, totalVotes, position);
-        stats.getStyle().set("margin-top", "8px");
+        stats.getStyle().set("margin-top", "4px");
 
         Button commentsButton = new Button("See comments");
         commentsButton.addClassName("votify-btn-secondary");
         commentsButton.getStyle()
-            .set("margin-top", "8px")
+            .set("margin-top", "4px")
             .set("width", "100%");
         commentsButton.addClickListener(e -> {
             if (onCommentClick != null) {
@@ -89,7 +85,6 @@ public class ProjectCardComponent extends Div {
         stats.setSpacing(true);
         stats.setAlignItems(FlexComponent.Alignment.CENTER);
         stats.getStyle()
-            .set("margin-top", "12px")
             .set("flex-wrap", "wrap")
             .set("gap", "6px");
 
