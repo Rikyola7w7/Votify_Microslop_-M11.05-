@@ -14,6 +14,7 @@ public class ProjectCardComponent extends Div {
 
     public ProjectCardComponent(Project project, String competitionName, long totalVotes, int position, Runnable onCommentClick) {
         setWidth("100%");
+        setMinHeight(420, Unit.PIXELS);
         addClassName("votify-card");
         getStyle()
             .set("padding", "0")
@@ -44,7 +45,8 @@ public class ProjectCardComponent extends Div {
             .set("padding", "16px")
             .set("display", "flex")
             .set("flex-direction", "column")
-            .set("flex", "1");
+            .set("flex", "1")
+            .set("flex-grow", "1");
 
         Span projectName = new Span(project.getName());
         projectName.getStyle()
@@ -64,6 +66,7 @@ public class ProjectCardComponent extends Div {
             .set("overflow", "hidden");
 
         HorizontalLayout stats = createStatsLayout(competitionName, totalVotes, position);
+        stats.getStyle().set("margin-top", "auto");
 
         Button commentsButton = new Button("See comments");
         commentsButton.addClassName("votify-btn-secondary");

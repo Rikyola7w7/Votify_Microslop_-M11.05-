@@ -25,6 +25,7 @@ public class CompetitionCardComponent extends Div {
     private void buildCard() {
         setWidth("100%");
         setMaxWidth(280, Unit.PIXELS);
+        setMinHeight(420, Unit.PIXELS);
         addClassName("votify-card");
         getStyle()
             .set("padding", "0")
@@ -36,6 +37,7 @@ public class CompetitionCardComponent extends Div {
         cardContent.setPadding(false);
         cardContent.setSpacing(false);
         cardContent.setSizeFull();
+        cardContent.getStyle().set("flex", "1");
 
         Div ribbonStripe = createRibbonStripe();
         Div iconBlock = createIconBlock();
@@ -67,7 +69,7 @@ public class CompetitionCardComponent extends Div {
             .set("font-size", "13px")
             .set("display", "block")
             .set("padding", "0 16px")
-            .set("margin-top", "4px");
+            .set("margin-top", "auto");
 
         Span endDate = new Span("End: " + competition.getEndDate().format(dateFormatter));
         endDate.getStyle()
@@ -78,12 +80,7 @@ public class CompetitionCardComponent extends Div {
 
         Button viewButton = createViewButton();
 
-        Div spacer = new Div();
-        spacer.setHeight(1, Unit.PIXELS);
-        spacer.setWidthFull();
-        spacer.getStyle().set("flex", "1");
-
-        cardContent.add(ribbonStripe, iconBlock, statusBadge, title, description, startDate, endDate, spacer, viewButton);
+        cardContent.add(ribbonStripe, iconBlock, statusBadge, title, description, startDate, endDate, viewButton);
         add(cardContent);
     }
 
