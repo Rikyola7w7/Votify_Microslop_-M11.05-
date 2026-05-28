@@ -21,7 +21,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H2;
+
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
@@ -157,15 +157,6 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
             .set("margin", "20px auto 40px auto")
             .set("box-sizing", "border-box");
 
-        H2 title = new H2(competition.getName());
-        title.getStyle()
-                .set("color", "var(--dark)")
-                .set("margin", "0 0 10px 0")
-                .set("font-size", "2rem")
-                .set("font-weight", "800")
-                .set("line-height", "1.2")
-                .set("word-break", "break-word");
-
         Span description = new Span(competition.getDescription() != null && !competition.getDescription().isEmpty() ? competition.getDescription() : "No description available.");
         description.getStyle()
                 .set("color", "var(--text-muted)")
@@ -264,7 +255,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
 
         actionsLayout.add(activateButton, votingToggle, pauseToggle, endNowButton, reopenButton);
 
-        mainContent.add(title, description, statusLayout, sectionTitle, datesContainer, actionsLayout);
+        mainContent.add(description, statusLayout, sectionTitle, datesContainer, actionsLayout);
 
         // Pending projects section
         VerticalLayout pendingSection = buildPendingProjectsSection();

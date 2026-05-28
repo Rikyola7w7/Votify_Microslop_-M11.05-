@@ -141,21 +141,6 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
 
             commentsContainer.removeAll();
 
-            Div projectTitleWrapper = new Div();
-            projectTitleWrapper.addClassName("animate-slide-up");
-            projectTitleWrapper.setWidthFull();
-            projectTitleWrapper.getStyle().set("text-align", "center").set("margin-bottom", "32px");
-
-            Span projectTitle = new Span(project.getName());
-            projectTitle.getStyle()
-                .set("font-size", "1.6rem")
-                .set("font-weight", "700")
-                .set("color", "var(--text-primary)")
-                .set("display", "block");
-
-            projectTitleWrapper.add(projectTitle);
-            commentsContainer.add(projectTitleWrapper);
-
             List<Vote> votes = voteRepository.findByProjectIdWithUserAndCategory(projectId);
             List<ProjectComment> comments = projectCommentRepository.findByProjectId(projectId);
 

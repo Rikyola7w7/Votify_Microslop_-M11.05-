@@ -3,10 +3,6 @@ package com.microslop.views;
 import com.microslop.base.ui.MainLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -27,8 +23,6 @@ public class HelpFaqsView extends VerticalLayout {
         content.setPadding(true);
         content.setSpacing(false);
         content.getStyle().set("padding", "2rem").set("overflow-y", "auto").set("max-width", "800px").set("margin", "0 auto");
-
-        content.add(createHeader());
 
         content.add(createFaqItem(
                 "How do I create a competition?",
@@ -53,27 +47,6 @@ public class HelpFaqsView extends VerticalLayout {
 
         add(content);
         setFlexGrow(1, content);
-    }
-
-    private HorizontalLayout createHeader() {
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setSpacing(true);
-        header.getStyle().set("margin-bottom", "2rem");
-
-        Icon icon = new Icon(VaadinIcon.QUESTION_CIRCLE_O);
-        icon.setSize("32px");
-        icon.getStyle().set("color", "var(--primary)");
-
-        Span title = new Span("Help & FAQs");
-        title.getStyle()
-                .set("font-size", "1.75rem")
-                .set("font-weight", "700")
-                .set("color", "var(--text-primary)");
-
-        header.add(icon, title);
-        return header;
     }
 
     private Div createFaqItem(String question, String answer) {

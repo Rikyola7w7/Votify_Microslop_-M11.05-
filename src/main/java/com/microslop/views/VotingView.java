@@ -27,7 +27,6 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
@@ -252,31 +251,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         body.setAlignItems(Alignment.CENTER);
         body.getStyle().set("padding", "2rem 1rem");
 
-        var titleWrapper = new Div();
-        titleWrapper.setWidthFull();
-        titleWrapper.getStyle()
-            .set("max-width", "760px")
-            .set("padding", "0 0 1.5rem 0");
-
-        var title = new H1(localizationService.t("voting.title"));
-        title.getStyle()
-                .set("font-size", "2rem")
-                .set("font-weight", "800")
-                .set("color", "var(--text-primary)")
-                .set("margin", "0 0 0.25rem 0")
-                .set("text-align", "center");
-
-        var subtitle = new Span(localizationService.t("voting.category") + selectedCategory.getName() + " • " + competitionName);
-        subtitle.getStyle()
-                .set("font-size", "1rem")
-                .set("color", "var(--text-muted)")
-                .set("font-style", "italic")
-                .set("margin-bottom", "1rem")
-                .set("display", "block")
-                .set("text-align", "center");
-
-        titleWrapper.add(title, subtitle);
-
         maxVotesLabel = new Span();
         if (selectedCategory.isChecklistVoting()) {
             maxVotesLabel.setText(localizationService.t("voting.markchecklist"));
@@ -367,7 +341,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         updateProjectsList.run();
 
-        body.add(titleWrapper, counterWrapper, projectsContainer);
+        body.add(counterWrapper, projectsContainer);
         return body;
     }
 
