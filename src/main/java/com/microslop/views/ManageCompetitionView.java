@@ -443,8 +443,9 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         content.setPadding(false);
 
         Span message = new Span(
-            "Are you sure you want to end voting immediately? " +
-            "This action is irreversible and no more votes will be accepted."
+            "Are you sure you want to end voting now? " +
+            "No more votes will be accepted until voting is reopened. " +
+            "You can reopen voting manually at any time."
         );
         message.getStyle().set("color", "var(--text-muted)").set("font-size", "0.95rem");
 
