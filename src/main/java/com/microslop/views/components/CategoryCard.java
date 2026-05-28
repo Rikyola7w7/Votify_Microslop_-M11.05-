@@ -91,7 +91,7 @@ public class CategoryCard extends Div {
             .set("font-size", "13px")
             .set("display", "block")
             .set("padding", "0 16px")
-            .set("margin-top", "auto");
+            .set("margin-top", "8px");
 
         Button viewButton = createViewButton();
 

@@ -57,10 +57,11 @@ public class CompetitionCardComponent extends Div {
             .set("font-size", "14px")
             .set("text-align", "center")
             .set("display", "-webkit-box")
-            .set("-webkit-line-clamp", "2")
+            .set("-webkit-line-clamp", "5")
             .set("-webkit-box-orient", "vertical")
             .set("overflow", "hidden")
-            .set("padding", "0 16px");
+            .set("padding", "0 16px")
+            .set("flex", "1");
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         Span startDate = new Span("Start: " + competition.getStartDate().format(dateFormatter));
@@ -69,7 +70,7 @@ public class CompetitionCardComponent extends Div {
             .set("font-size", "13px")
             .set("display", "block")
             .set("padding", "0 16px")
-            .set("margin-top", "auto");
+            .set("margin-top", "8px");
 
         Span endDate = new Span("End: " + competition.getEndDate().format(dateFormatter));
         endDate.getStyle()
