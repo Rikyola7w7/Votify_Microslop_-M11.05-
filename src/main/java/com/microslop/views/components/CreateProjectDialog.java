@@ -273,12 +273,11 @@ public class CreateProjectDialog extends Dialog {
                 try {
                     var creator = userService.searchByUsernameIgnoreCase(creatorName);
                     creator.ifPresent(user ->
-                        notificationService.createNotification(
+                        notificationService.saveAndPublish(new com.microslop.factory.notification.ProjectSubmissionNotificationCreator().create(
                             user,
                             "New Project Submission",
-                            userService.getCurrentUsername() + " submitted project \"" + name + "\" to \"" + competition.getName() + "\"",
-                            "PROJECT_SUBMISSION"
-                        )
+                            userService.getCurrentUsername() + " submitted project \"" + name + "\" to \"" + competition.getName() + "\""
+                        ))
                     );
                 } catch (Exception ignored) {}
             }

@@ -273,7 +273,7 @@ class NotificationServiceImplEnhancedTest {
         when(notificationRepository.save(any(Notification.class))).thenReturn(newNotif);
         notificationService.registerNotificationObserver(mockObserver);
         
-        notificationService.createNotification(testUser, "Test", "Message", "TEST");
+        notificationService.saveAndPublish(new Notification(testUser, "Test", "Message", "TEST"));
         
         ArgumentCaptor<NotificationCreatedEvent> captor = ArgumentCaptor.forClass(NotificationCreatedEvent.class);
         verify(mockObserver).onNotificationCreated(captor.capture());

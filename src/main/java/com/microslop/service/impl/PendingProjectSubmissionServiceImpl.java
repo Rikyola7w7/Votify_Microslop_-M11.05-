@@ -3,6 +3,9 @@ package com.microslop.service.impl;
 import com.microslop.entity.*;
 import com.microslop.repository.*;
 import com.microslop.service.*;
+import com.microslop.factory.notification.ProjectInvitationNotificationCreator;
+import com.microslop.factory.notification.ProjectAcceptedNotificationCreator;
+import com.microslop.factory.notification.ProjectDeclinedNotificationCreator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
@@ -22,6 +25,9 @@ public class PendingProjectSubmissionServiceImpl implements PendingProjectSubmis
     private final ProjectService projectService;
     private final NotificationService notificationService;
     private final InvitationService invitationService;
+    private final ProjectInvitationNotificationCreator projectInvitationNotificationCreator;
+    private final ProjectAcceptedNotificationCreator projectAcceptedNotificationCreator;
+    private final ProjectDeclinedNotificationCreator projectDeclinedNotificationCreator;
 
     public PendingProjectSubmissionServiceImpl(PendingProjectSubmissionRepository repository,
                                                 CompetitionRepository competitionRepository,
@@ -29,7 +35,10 @@ public class PendingProjectSubmissionServiceImpl implements PendingProjectSubmis
                                                 CategoryRepository categoryRepository,
                                                 ProjectService projectService,
                                                 NotificationService notificationService,
-                                                InvitationService invitationService) {
+                                                InvitationService invitationService,
+                                                ProjectInvitationNotificationCreator projectInvitationNotificationCreator,
+                                                ProjectAcceptedNotificationCreator projectAcceptedNotificationCreator,
+                                                ProjectDeclinedNotificationCreator projectDeclinedNotificationCreator) {
         this.repository = repository;
         this.competitionRepository = competitionRepository;
         this.userRepository = userRepository;
@@ -37,6 +46,9 @@ public class PendingProjectSubmissionServiceImpl implements PendingProjectSubmis
         this.projectService = projectService;
         this.notificationService = notificationService;
         this.invitationService = invitationService;
+        this.projectInvitationNotificationCreator = projectInvitationNotificationCreator;
+        this.projectAcceptedNotificationCreator = projectAcceptedNotificationCreator;
+        this.projectDeclinedNotificationCreator = projectDeclinedNotificationCreator;
     }
 
     @Override
@@ -111,13 +123,12 @@ public class PendingProjectSubmissionServiceImpl implements PendingProjectSubmis
                                 logger.info("Created invitation {} for user {}", invitation.getId(), invitedUser.getUsername());
                                 
                                 // Send notification with invitation reference
-                                Notification notification = notificationService.createNotification(
+                                Notification notification = notificationService.saveAndPublish(projectInvitationNotificationCreator.createWithInvitation(
                                     invitedUser,
                                     "Project Invitation",
                                     submission.getSubmitter().getUsername() + " invited you to join \"" + submission.getProjectName() + "\" in \"" + submission.getCompetition().getName() + "\".",
-                                    "PROJECT_INVITATION",
                                     invitation.getId()
-                                );
+                                ));
                                 logger.info("Sent notification {} to user {} for invitation {}", notification.getId(), invitedUser.getUsername(), invitation.getId());
                             } catch (Exception e) {
                                 logger.error("Error sending invitation to user {}: {}", invitedUser.getUsername(), e.getMessage(), e);
@@ -131,11 +142,10 @@ public class PendingProjectSubmissionServiceImpl implements PendingProjectSubmis
             }
         }
 
-        notifyUser(submission.getSubmitter(),
+        notifyUser(projectAcceptedNotificationCreator.create(submission.getSubmitter(),
             "Project Accepted",
-            "Your project \"" + submission.getProjectName() + "\" has been accepted to \"" + submission.getCompetition().getName() + "\"!",
-            "PROJECT_ACCEPTED"
-        );
+            "Your project \"" + submission.getProjectName() + "\" has been accepted to \"" + submission.getCompetition().getName() + "\"!"
+        ));
 
         repository.delete(submission);
     }
@@ -146,19 +156,18 @@ public class PendingProjectSubmissionServiceImpl implements PendingProjectSubmis
         PendingProjectSubmission submission = repository.findById(submissionId)
             .orElseThrow(() -> new RuntimeException("Pending submission not found"));
 
-        notifyUser(submission.getSubmitter(),
+        notifyUser(projectDeclinedNotificationCreator.create(submission.getSubmitter(),
             "Project Declined",
-            "Your project \"" + submission.getProjectName() + "\" has been declined for \"" + submission.getCompetition().getName() + "\".",
-            "PROJECT_DECLINED"
-        );
+            "Your project \"" + submission.getProjectName() + "\" has been declined for \"" + submission.getCompetition().getName() + "\"."
+        ));
 
         repository.delete(submission);
     }
 
-    private void notifyUser(User user, String title, String message, String type) {
+    private void notifyUser(Notification notification) {
         try {
             if (notificationService != null) {
-                notificationService.createNotification(user, title, message, type);
+                notificationService.saveAndPublish(notification);
             }
         } catch (Exception ignored) {}
     }

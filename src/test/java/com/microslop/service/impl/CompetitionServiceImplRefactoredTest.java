@@ -132,7 +132,7 @@ class CompetitionServiceImplRefactoredTest {
 
         // Act & Assert
         assertThatThrownBy(() -> competitionService.createCompetition("nonexistent", competitionDTO))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
                 .hasMessageContaining("User not found");
     }
 

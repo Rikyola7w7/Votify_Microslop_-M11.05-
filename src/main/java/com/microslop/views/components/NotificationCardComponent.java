@@ -6,6 +6,9 @@ import com.microslop.service.CertificateService;
 import com.microslop.service.InvitationService;
 import com.microslop.service.LocalizationService;
 import com.microslop.service.NotificationService;
+import com.microslop.factory.notification.ProjectSubmissionNotificationCreator;
+import com.microslop.factory.notification.CertificateSentNotificationCreator;
+import com.microslop.factory.notification.CompetitionEndTimeNotificationCreator;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -172,8 +175,8 @@ public class NotificationCardComponent extends Div {
         actions.setPadding(false);
 
         // Add type-specific action buttons
-        if ("PROJECT_SUBMISSION".equals(notification.getType()) && competition != null) {
-            Button viewProjectBtn = new Button("View Details");
+        if (new ProjectSubmissionNotificationCreator().getNotificationType().equals(notification.getType()) && competition != null) {
+            Button viewProjectBtn = new Button("View Project");
             viewProjectBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
             viewProjectBtn.getStyle().set("cursor", "pointer");
             viewProjectBtn.addClickListener(e -> {
@@ -198,8 +201,8 @@ public class NotificationCardComponent extends Div {
         }
 
         // Certificate-related notifications
-        if ("CERTIFICATE_SENT".equals(notification.getType())) {
-            Button viewCertificatesBtn = new Button("View Details");
+        if (new CertificateSentNotificationCreator().getNotificationType().equals(notification.getType())) {
+            Button viewCertificatesBtn = new Button("View Certificates");
             viewCertificatesBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
             viewCertificatesBtn.getStyle().set("cursor", "pointer");
             viewCertificatesBtn.addClickListener(e -> {
@@ -209,8 +212,8 @@ public class NotificationCardComponent extends Div {
         }
 
         // End-time competition notifications
-        if ("END_TIME_COMPETITION".equals(notification.getType())) {
-            Button yesBtn = new Button("Confirm");
+        if (new CompetitionEndTimeNotificationCreator().getNotificationType().equals(notification.getType())) {
+            Button yesBtn = new Button("YES - Generate Certificates");
             yesBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_SUCCESS);
             yesBtn.getStyle().set("cursor", "pointer");
             

@@ -167,7 +167,7 @@ class ProjectCommentServiceImplTest {
         when(userRepository.findByUsernameIgnoreCase("nonexistent")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> projectCommentService.getCommentsByUser("nonexistent"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
                 .hasMessage("User not found: nonexistent");
     }
 

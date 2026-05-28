@@ -88,7 +88,7 @@ class ProjectServiceImplTest {
         when(projectRepository.findByIdWithVotesAndUsers(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> projectService.getById(999L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
                 .hasMessage("Project not found: 999");
     }
 

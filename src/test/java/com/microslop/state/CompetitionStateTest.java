@@ -31,27 +31,27 @@ class CompetitionStateTest {
 
     @Test
     void draftState_cannotDeactivate() {
-        assertThrows(IllegalStateException.class, () -> competition.deactivate());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.deactivate());
     }
 
     @Test
     void draftState_cannotOpenVoting() {
-        assertThrows(IllegalStateException.class, () -> competition.openVoting());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.openVoting());
     }
 
     @Test
     void draftState_cannotConclude() {
-        assertThrows(IllegalStateException.class, () -> competition.conclude());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.conclude());
     }
 
     @Test
     void draftState_cannotArchive() {
-        assertThrows(IllegalStateException.class, () -> competition.archive());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.archive());
     }
 
     @Test
     void draftState_cannotReopen() {
-        assertThrows(IllegalStateException.class, () -> competition.reopen());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.reopen());
     }
 
     @Test
@@ -105,13 +105,13 @@ class CompetitionStateTest {
     @Test
     void activeState_cannotActivate() {
         competition.setStatus(CompetitionStatus.ACTIVE);
-        assertThrows(IllegalStateException.class, () -> competition.activate());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.activate());
     }
 
     @Test
     void activeState_cannotArchive() {
         competition.setStatus(CompetitionStatus.ACTIVE);
-        assertThrows(IllegalStateException.class, () -> competition.archive());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.archive());
     }
 
     @Test
@@ -157,19 +157,19 @@ class CompetitionStateTest {
     @Test
     void votingOpenState_cannotActivate() {
         competition.setStatus(CompetitionStatus.VOTING_OPEN);
-        assertThrows(IllegalStateException.class, () -> competition.activate());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.activate());
     }
 
     @Test
     void votingOpenState_cannotDeactivate() {
         competition.setStatus(CompetitionStatus.VOTING_OPEN);
-        assertThrows(IllegalStateException.class, () -> competition.deactivate());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.deactivate());
     }
 
     @Test
     void votingOpenState_cannotOpenVoting() {
         competition.setStatus(CompetitionStatus.VOTING_OPEN);
-        assertThrows(IllegalStateException.class, () -> competition.openVoting());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.openVoting());
     }
 
     @Test
@@ -215,7 +215,7 @@ class CompetitionStateTest {
     @Test
     void concludedState_cannotActivate() {
         competition.setStatus(CompetitionStatus.CONCLUDED);
-        assertThrows(IllegalStateException.class, () -> competition.activate());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.activate());
     }
 
     @Test
@@ -247,37 +247,37 @@ class CompetitionStateTest {
     @Test
     void archivedState_cannotActivate() {
         competition.setStatus(CompetitionStatus.ARCHIVED);
-        assertThrows(IllegalStateException.class, () -> competition.activate());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.activate());
     }
 
     @Test
     void archivedState_cannotDeactivate() {
         competition.setStatus(CompetitionStatus.ARCHIVED);
-        assertThrows(IllegalStateException.class, () -> competition.deactivate());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.deactivate());
     }
 
     @Test
     void archivedState_cannotOpenVoting() {
         competition.setStatus(CompetitionStatus.ARCHIVED);
-        assertThrows(IllegalStateException.class, () -> competition.openVoting());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.openVoting());
     }
 
     @Test
     void archivedState_cannotConclude() {
         competition.setStatus(CompetitionStatus.ARCHIVED);
-        assertThrows(IllegalStateException.class, () -> competition.conclude());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.conclude());
     }
 
     @Test
     void archivedState_cannotReopen() {
         competition.setStatus(CompetitionStatus.ARCHIVED);
-        assertThrows(IllegalStateException.class, () -> competition.reopen());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.reopen());
     }
 
     @Test
     void archivedState_cannotArchive() {
         competition.setStatus(CompetitionStatus.ARCHIVED);
-        assertThrows(IllegalStateException.class, () -> competition.archive());
+        assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.archive());
     }
 
     @Test

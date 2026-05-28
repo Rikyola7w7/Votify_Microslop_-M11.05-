@@ -2,7 +2,9 @@ package com.microslop.service.impl;
 
 import com.microslop.entity.Competition;
 import com.microslop.entity.Voter;
-import com.microslop.enums.NotificationType;
+import com.microslop.factory.notification.CompetitionClosedNotificationCreator;
+import com.microslop.factory.notification.CompetitionClosingSoonNotificationCreator;
+import com.microslop.factory.notification.CompetitionOpenedNotificationCreator;
 import com.microslop.repository.VoterRepository;
 import com.microslop.service.CompetitionNotificationService;
 import com.microslop.service.NotificationService;
@@ -23,11 +25,20 @@ public class CompetitionNotificationServiceImpl implements CompetitionNotificati
 
     private final NotificationService notificationService;
     private final VoterRepository voterRepository;
+    private final CompetitionOpenedNotificationCreator competitionOpenedNotificationCreator;
+    private final CompetitionClosingSoonNotificationCreator competitionClosingSoonNotificationCreator;
+    private final CompetitionClosedNotificationCreator competitionClosedNotificationCreator;
 
     public CompetitionNotificationServiceImpl(NotificationService notificationService,
-                                           VoterRepository voterRepository) {
+                                              VoterRepository voterRepository,
+                                              CompetitionOpenedNotificationCreator competitionOpenedNotificationCreator,
+                                              CompetitionClosingSoonNotificationCreator competitionClosingSoonNotificationCreator,
+                                              CompetitionClosedNotificationCreator competitionClosedNotificationCreator) {
         this.notificationService = notificationService;
         this.voterRepository = voterRepository;
+        this.competitionOpenedNotificationCreator = competitionOpenedNotificationCreator;
+        this.competitionClosingSoonNotificationCreator = competitionClosingSoonNotificationCreator;
+        this.competitionClosedNotificationCreator = competitionClosedNotificationCreator;
     }
 
     @Override
@@ -53,12 +64,13 @@ public class CompetitionNotificationServiceImpl implements CompetitionNotificati
 
             // Send notification to each voter
             for (var user : distinctUsers) {
-                notificationService.createNotification(
-                    user,
-                    "Competition " + competition.getName() + " is now open",
-                    "Voting for competition '" + competition.getName() + "' has started. You can now cast your votes.",
-                    NotificationType.COMPETITION_OPENED.getCode(),
-                    competition
+                notificationService.saveAndPublish(
+                    competitionOpenedNotificationCreator.createWithCompetition(
+                        user,
+                        "Competition " + competition.getName() + " is now open",
+                        "Voting for competition '" + competition.getName() + "' has started. You can now cast your votes.",
+                        competition
+                    )
                 );
             }
 
@@ -94,12 +106,13 @@ public class CompetitionNotificationServiceImpl implements CompetitionNotificati
 
             // Send notification to each voter
             for (var user : distinctUsers) {
-                notificationService.createNotification(
-                    user,
-                    "Competition " + competition.getName() + " is closing soon",
-                    "Voting for competition '" + competition.getName() + "' will close in approximately 1 hour. Make sure to cast your votes before the deadline.",
-                    NotificationType.COMPETITION_CLOSING_SOON.getCode(),
-                    competition
+                notificationService.saveAndPublish(
+                    competitionClosingSoonNotificationCreator.createWithCompetition(
+                        user,
+                        "Competition " + competition.getName() + " is closing soon",
+                        "Voting for competition '" + competition.getName() + "' will close in approximately 1 hour. Make sure to cast your votes before the deadline.",
+                        competition
+                    )
                 );
             }
 
@@ -135,12 +148,13 @@ public class CompetitionNotificationServiceImpl implements CompetitionNotificati
 
             // Send notification to each voter
             for (var user : distinctUsers) {
-                notificationService.createNotification(
-                    user,
-                    "Competition " + competition.getName() + " is closed",
-                    "Voting for competition '" + competition.getName() + "' has ended. Thank you for participating!",
-                    NotificationType.COMPETITION_CLOSED.getCode(),
-                    competition
+                notificationService.saveAndPublish(
+                    competitionClosedNotificationCreator.createWithCompetition(
+                        user,
+                        "Competition " + competition.getName() + " is closed",
+                        "Voting for competition '" + competition.getName() + "' has ended. Thank you for participating!",
+                        competition
+                    )
                 );
             }
 

@@ -107,7 +107,7 @@ class CompetitionServiceImplTest {
         when(userRepository.findByUsernameIgnoreCase("nonexistent")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> competitionService.createCompetition("nonexistent", competitionDTO))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
                 .hasMessage("User not found: nonexistent");
     }
 
@@ -125,7 +125,7 @@ class CompetitionServiceImplTest {
                  });
 
          assertThatThrownBy(() -> competitionService.createCompetition("creator", competitionDTO))
-                 .isInstanceOf(IllegalArgumentException.class)
+                 .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
                  .hasMessage("Judge user not found: judge2");
      }
 
@@ -200,7 +200,7 @@ class CompetitionServiceImplTest {
         when(competitionRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> competitionService.getByIdOrFail(999L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
                 .hasMessage("Competition not found: 999");
     }
 
