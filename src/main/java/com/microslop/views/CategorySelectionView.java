@@ -13,6 +13,7 @@ import com.microslop.service.UserService;
 import com.microslop.views.components.BallotLoadingComponent;
 import com.microslop.views.components.CategoryCard;
 import com.microslop.views.components.CreateProjectDialog;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
@@ -113,6 +114,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             Button backBtn = new Button("\u2190 Back to home", new Icon(VaadinIcon.ARROW_LEFT));
             backBtn.addClassName("votify-btn-primary");
             backBtn.addClickListener(ev -> getUI().ifPresent(ui -> ui.navigate("")));
+            backBtn.addClickShortcut(Key.ESCAPE);
 
             errorState.add(icon, message, sub, backBtn);
             add(errorState);
@@ -126,6 +128,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
     }
 
     private void buildUi() {
+
         Button submitBtn = new Button("Submit Project", new Icon(VaadinIcon.PLUS_CIRCLE_O));
         submitBtn.addClassName("votify-btn-primary");
         submitBtn.getStyle().set("margin", "16px 24px 0 24px").set("align-self", "flex-start");

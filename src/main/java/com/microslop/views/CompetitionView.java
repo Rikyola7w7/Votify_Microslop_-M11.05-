@@ -10,6 +10,7 @@ import com.microslop.service.CompetitionService;
 import com.microslop.service.VoteService;
 import com.microslop.views.components.PodiumCardComponent;
 import com.vaadin.flow.component.avatar.Avatar;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -218,6 +219,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             .set("border-radius", "var(--radius-md)")
             .set("cursor", "pointer");
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
+        backButton.addClickShortcut(Key.ESCAPE);
 
         // Title
         var title = new H2(competitionName.toUpperCase());
@@ -275,7 +277,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             userMenu.addItem("My Projects", event -> {
                 String username = userService.getCurrentUsername();
                 if (username != null) {
-                    getUI().ifPresent(ui -> ui.navigate(username + "/projects"));
+                    getUI().ifPresent(ui -> ui.navigate(UserProjectsView.class, new com.vaadin.flow.router.RouteParameters("username", username)));
                 } else {
                     Notification.show("Unable to load your projects.");
                 }
@@ -283,12 +285,12 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             userMenu.addItem("Edit Profile", event -> {
                 String username = userService.getCurrentUsername();
                 if (username != null) {
-                    getUI().ifPresent(ui -> ui.navigate(username));
+                    getUI().ifPresent(ui -> ui.navigate(UserProfileView.class));
                 } else {
                     Notification.show("Unable to load your profile.");
                 }
             });
-            userMenu.addItem("Help", event -> getUI().ifPresent(ui -> ui.navigate("help")));
+            userMenu.addItem("Help", event -> getUI().ifPresent(ui -> ui.navigate(FaqView.class)));
             userMenu.addItem("Sign Out", event -> {
                 VaadinSession session = VaadinSession.getCurrent();
                 if (session != null) {
@@ -298,9 +300,9 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
                 Notification.show("Logged out successfully");
             });
         } else {
-            userMenu.addItem("Sign In", event -> getUI().ifPresent(ui -> ui.navigate("login")));
-            userMenu.addItem("Register", event -> getUI().ifPresent(ui -> ui.navigate("register")));
-            userMenu.addItem("Help", event -> getUI().ifPresent(ui -> ui.navigate("help")));
+            userMenu.addItem("Sign In", event -> getUI().ifPresent(ui -> ui.navigate(LoginView.class)));
+            userMenu.addItem("Register", event -> getUI().ifPresent(ui -> ui.navigate(RegisterView.class)));
+            userMenu.addItem("Help", event -> getUI().ifPresent(ui -> ui.navigate(FaqView.class)));
         }
 
         rightSection.add(voteButton, avatar);

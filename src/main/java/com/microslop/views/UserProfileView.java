@@ -4,6 +4,7 @@ import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.User;
 import com.microslop.service.LocalizationService;
 import com.microslop.service.UserService;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
@@ -13,6 +14,7 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -70,7 +72,20 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         banner.setHeight("140px");
         banner.getStyle()
             .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))")
-            .set("flex-shrink", "0");
+            .set("flex-shrink", "0")
+            .set("position", "relative");
+
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
+        backButton.addClassName("votify-btn-secondary");
+        backButton.getStyle()
+            .set("position", "absolute")
+            .set("top", "20px")
+            .set("left", "20px")
+            .set("z-index", "10");
+        backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
+        backButton.addClickShortcut(Key.ESCAPE);
+        
+        banner.add(backButton);
 
         Div contentWrapper = new Div();
         contentWrapper.setWidthFull();

@@ -4,6 +4,7 @@ import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Competition;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.UserService;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H3;
@@ -91,6 +92,7 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
 
         add(competitionsContainer);
     }
+
 
     private void loadUserCompetitions() {
         competitionsContainer.removeAll();

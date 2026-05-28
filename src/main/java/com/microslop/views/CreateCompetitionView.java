@@ -7,6 +7,8 @@ import com.microslop.entity.User;
 import com.microslop.exception.ErrorHandler;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.UserService;
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.KeyModifier;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -97,6 +99,7 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         scrollContainer.getStyle()
             .set("overflow-y", "auto")
             .set("height", "calc(100vh - 64px)");
+
 
         VerticalLayout contentCard = new VerticalLayout();
         contentCard.addClassName("votify-card-static");

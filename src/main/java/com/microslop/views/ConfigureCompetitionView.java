@@ -10,6 +10,8 @@ import com.microslop.service.CategoryService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.JudgeService;
 import com.microslop.service.UserService;
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.KeyModifier;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -91,6 +93,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private Button saveButton;
     private Button cancelButton;
 
+    private Span unsavedChangesBadge;
     private boolean hasChanges = false;
 
     public ConfigureCompetitionView(CompetitionService competitionService, UserService userService, CategoryService categoryService, JudgeService judgeService, ChecklistItemRepository checklistItemRepository) {
@@ -160,6 +163,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         scrollContainer.getStyle()
             .set("overflow-y", "auto")
             .set("height", "calc(100vh - 64px)");
+
 
         VerticalLayout contentCard = new VerticalLayout();
         contentCard.addClassName("votify-card-static");
@@ -892,18 +896,25 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         cancelButton.addClassName("votify-btn-secondary");
         cancelButton.setIcon(new Icon(VaadinIcon.CLOSE));
         cancelButton.addClickListener(e -> handleCancel());
+        cancelButton.addClickShortcut(Key.ESCAPE);
 
         saveButton = new Button("Save");
         saveButton.addClassName("votify-btn-primary");
         saveButton.setIcon(new Icon(VaadinIcon.CHECK));
         saveButton.addClickListener(e -> handleSave());
+        saveButton.addClickShortcut(Key.ENTER);
 
         layout.add(cancelButton, saveButton);
         return layout;
     }
 
     private void markAsChanged() {
-        hasChanges = true;
+        if (!hasChanges) {
+            hasChanges = true;
+            if (unsavedChangesBadge != null) {
+                unsavedChangesBadge.setVisible(true);
+            }
+        }
     }
 
     private void handleCancel() {
@@ -1016,6 +1027,9 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         try {
             competitionService.save(currentCompetition);
             hasChanges = false;
+            if (unsavedChangesBadge != null) {
+                unsavedChangesBadge.setVisible(false);
+            }
 
             Notification notification = Notification.show("Configuration saved successfully");
             notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);

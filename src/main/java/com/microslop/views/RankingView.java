@@ -16,6 +16,7 @@ import com.microslop.service.VoteService;
 import com.microslop.views.components.BallotLoadingComponent;
 import com.microslop.views.components.VoterRegisteredAnimation;
 import com.microslop.views.components.PodiumCardComponent;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -25,8 +26,6 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -143,6 +142,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             Button backBtn = new Button("\u2190 Back to home", new Icon(VaadinIcon.ARROW_LEFT));
             backBtn.addClassName("votify-btn-primary");
             backBtn.addClickListener(ev -> getUI().ifPresent(ui -> ui.navigate("")));
+            backBtn.addClickShortcut(Key.ESCAPE);
 
             errorState.add(icon, message, sub, backBtn);
             add(errorState);
@@ -237,6 +237,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         long userId = userService.getCurrentUserId();
         return judgeRepository.existsByUserIdAndCompetitionId(userId, competitionId);
     }
+
 
     private void handleVoteClick() {
         if (!userService.isLoggedIn()) {

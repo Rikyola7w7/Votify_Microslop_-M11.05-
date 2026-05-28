@@ -9,6 +9,7 @@ import com.microslop.service.VoteService;
 import com.microslop.service.LocalizationService;
 import com.microslop.views.components.ProjectCardComponent;
 import com.microslop.base.ui.MainLayout;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
@@ -96,6 +97,7 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
 
         add(projectsContainer);
     }
+
 
     private void loadUserProjects() {
         try {
