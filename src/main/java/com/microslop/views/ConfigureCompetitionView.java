@@ -161,21 +161,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             .set("overflow-y", "auto")
             .set("height", "calc(100vh - 64px)");
 
-        HorizontalLayout header = new HorizontalLayout();
-        header.addClassName("votify-header");
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-
-        Button backButton = new Button("\u2190 Back to Dashboard");
-        backButton.addClassName("votify-btn-secondary");
-        backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        backButton.addClickListener(e -> navigateBack());
-
-        H2 titleText = new H2("Configure: " + currentCompetition.getName());
-        titleText.getStyle().set("color", "var(--dark)").set("margin", "0").set("font-weight", "800");
-
-        header.add(backButton, titleText);
-
         VerticalLayout contentCard = new VerticalLayout();
         contentCard.addClassName("votify-card-static");
         contentCard.addClassName("animate-fade-in");
@@ -197,7 +182,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         HorizontalLayout buttonsLayout = buildButtonsLayout();
 
         contentCard.add(generalSection, participationSection, judgesSection, voteTypeSection, checklistSection, scaleConfigSection, commentsSection, buttonsLayout);
-        scrollContainer.add(header, contentCard);
+        scrollContainer.add(contentCard);
         add(scrollContainer);
 
         // Set initial visibility based on current vote type

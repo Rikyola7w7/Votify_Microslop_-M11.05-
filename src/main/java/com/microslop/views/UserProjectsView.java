@@ -83,8 +83,6 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
             .set("background", "var(--background)")
             .set("overflow-y", "auto");
 
-        add(buildHeader());
-
         projectsContainer = new Div();
         projectsContainer.setWidthFull();
         projectsContainer.addClassName("animate-fade-in");
@@ -97,30 +95,6 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
             .set("gap", "24px");
 
         add(projectsContainer);
-    }
-
-    private HorizontalLayout buildHeader() {
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setSpacing(true);
-        header.addClassName("votify-header");
-        header.getStyle().set("flex-shrink", "0");
-
-        Button backButton = new Button("\u2190 Back", new Icon(VaadinIcon.ARROW_LEFT));
-        backButton.addClassName("votify-btn-secondary");
-        backButton.setHeight("40px");
-        backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
-
-        H2 title = new H2(localizationService.t("projects.myprojects"));
-        title.getStyle()
-            .set("margin", "0")
-            .set("color", "var(--text-primary)")
-            .set("font-size", "1.4rem")
-            .set("font-weight", "700");
-
-        header.add(backButton, title);
-        return header;
     }
 
     private void loadUserProjects() {

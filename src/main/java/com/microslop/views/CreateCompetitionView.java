@@ -98,21 +98,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
             .set("overflow-y", "auto")
             .set("height", "calc(100vh - 64px)");
 
-        HorizontalLayout header = new HorizontalLayout();
-        header.addClassName("votify-header");
-        header.setWidthFull();
-        header.setAlignItems(Alignment.CENTER);
-
-        Button backButton = new Button("\u2190 Back to Dashboard");
-        backButton.addClassName("votify-btn-secondary");
-        backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        backButton.addClickListener(e -> navigateBack());
-
-        H2 title = new H2("Create Competition");
-        title.getStyle().set("color", "var(--dark)").set("margin", "0").set("font-weight", "800");
-
-        header.add(backButton, title);
-
         VerticalLayout contentCard = new VerticalLayout();
         contentCard.addClassName("votify-card-static");
         contentCard.addClassName("animate-fade-in");
@@ -335,7 +320,7 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
                 buttonsLayout
         );
 
-        scrollContainer.add(header, contentCard);
+        scrollContainer.add(contentCard);
         add(scrollContainer);
     }
 

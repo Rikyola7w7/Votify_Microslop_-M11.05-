@@ -72,7 +72,15 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         setSpacing(true);
         getStyle().set("background", "var(--background)");
 
-        add(buildHeader());
+        Button createButton = new Button("Create Competition", new Icon(VaadinIcon.PLUS));
+        createButton.addClassName("votify-btn-primary");
+        createButton.addClickListener(e -> {
+            String username = getLoggedInUsername();
+            if (username != null) {
+                getUI().ifPresent(ui -> ui.navigate(username + "/competitions/create-competition"));
+            }
+        });
+        add(createButton);
 
         competitionsContainer = new VerticalLayout();
         competitionsContainer.setPadding(false);
@@ -82,36 +90,6 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         competitionsContainer.getStyle().set("margin", "0 auto");
 
         add(competitionsContainer);
-    }
-
-    private HorizontalLayout buildHeader() {
-        HorizontalLayout header = new HorizontalLayout();
-        header.addClassName("votify-header");
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-
-        Button backButton = new Button("\u2190 Back", new Icon(VaadinIcon.ARROW_LEFT));
-        backButton.addClassName("votify-btn-secondary");
-        backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
-
-        H4 title = new H4("My Competitions");
-        title.getStyle().set("color", "var(--dark)").set("margin", "0").set("font-weight", "800").set("font-size", "1.3rem");
-
-        Button createButton = new Button("Create Competition");
-        createButton.setIcon(new Icon(VaadinIcon.PLUS));
-        createButton.addClassName("votify-btn-primary");
-
-        createButton.addClickListener(e -> {
-            String username = getLoggedInUsername();
-            if (username != null) {
-                getUI().ifPresent(ui -> ui.navigate(username + "/competitions/create-competition"));
-            }
-        });
-
-        header.add(backButton, title, createButton);
-        return header;
     }
 
     private void loadUserCompetitions() {

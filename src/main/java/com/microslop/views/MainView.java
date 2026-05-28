@@ -49,30 +49,9 @@ public class MainView extends VerticalLayout {
             .set("background", "var(--background)")
             .set("font-family", "var(--font-main)");
 
-        add(buildHeader());
         add(buildHeroSection());
         add(buildFilterBar());
         add(buildCardsContainer());
-    }
-
-    private HorizontalLayout buildHeader() {
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        header.addClassName("votify-header");
-        header.getStyle().set("padding", "2rem");
-
-        Span title = new Span(localizationService.t("home.discover"));
-        title.getStyle()
-            .set("font-size", "20px")
-            .set("font-weight", "700")
-            .set("color", "var(--dark)")
-            .set("letter-spacing", "-0.3px");
-
-        header.add(title);
-
-        return header;
     }
 
     private Div buildHeroSection() {

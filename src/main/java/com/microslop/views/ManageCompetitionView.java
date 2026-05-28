@@ -134,18 +134,6 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
             .set("overflow-y", "auto")
             .set("height", "calc(100vh - 64px)");
 
-        HorizontalLayout header = new HorizontalLayout();
-        header.addClassName("votify-header");
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-
-        Button backButton = new Button("\u2190 Back to Dashboard", new Icon(VaadinIcon.ARROW_LEFT));
-        backButton.addClassName("votify-btn-secondary");
-        backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/competitions")));
-
-        header.add(backButton);
-
         mainContent = new VerticalLayout();
         mainContent.addClassName("votify-card-static");
         mainContent.addClassName("animate-fade-in");
@@ -266,7 +254,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
             mainContent.add(pendingSection);
         }
 
-        scrollContainer.add(header, mainContent);
+        scrollContainer.add(mainContent);
         add(scrollContainer);
     }
 

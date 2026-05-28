@@ -154,7 +154,32 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     private void buildUi() {
-        add(buildHeader());
+        var actionBar = new HorizontalLayout();
+        actionBar.setWidthFull();
+        actionBar.setAlignItems(FlexComponent.Alignment.CENTER);
+        actionBar.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        actionBar.setSpacing(true);
+        actionBar.setPadding(false);
+        actionBar.getStyle().set("padding", "12px 24px 0 24px");
+
+        if (isUserOrganizerOrJudge()) {
+            modifyEntriesButton = new Button(localizationService.t("ranking.modifyentries"));
+            modifyEntriesButton.addClassName("votify-btn-secondary");
+            modifyEntriesButton.addClickListener(e -> {
+                modifyMode = !modifyMode;
+                modifyEntriesButton.setText(modifyMode ? "Finish changes" : "Modify entries");
+                revertButtonContainer.setVisible(modifyMode);
+                loadRanking(isJudgesRanking);
+            });
+            actionBar.add(modifyEntriesButton);
+        }
+
+        Button voteButton = new Button(localizationService.t("ranking.vote"));
+        voteButton.addClassName("votify-btn-primary");
+        voteButton.addClickListener(e -> handleVoteClick());
+        actionBar.add(voteButton);
+
+        add(actionBar);
         add(buildSummaryCard());
         add(buildRankingFilter());
         rankingContainer = new VerticalLayout();
@@ -210,73 +235,6 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         if (currentCompetition.getCreatedBy().equals(username)) return true;
         long userId = userService.getCurrentUserId();
         return judgeRepository.existsByUserIdAndCompetitionId(userId, competitionId);
-    }
-
-    private HorizontalLayout buildHeader() {
-        var header = new HorizontalLayout();
-        header.setWidthFull();
-        header.addClassName("votify-header-dark");
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-
-        Button backButton = new Button("\u2190 " + localizationService.t("ranking.categories"));
-        backButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-        backButton.getStyle()
-            .set("color", "white")
-            .set("background", "transparent")
-            .set("border", "none")
-            .set("cursor", "pointer")
-            .set("font-weight", "600");
-        backButton.addClickListener(e ->
-            getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories")));
-
-        var title = new H2(localizationService.t("ranking.title"));
-        title.getStyle()
-            .set("color", "white")
-            .set("margin", "0")
-            .set("font-size", "1.3rem")
-            .set("font-weight", "700")
-            .set("letter-spacing", "0.05em")
-            .set("flex", "1")
-            .set("text-align", "center");
-
-        var rightSection = new HorizontalLayout();
-        rightSection.setAlignItems(FlexComponent.Alignment.CENTER);
-        rightSection.setSpacing(true);
-        rightSection.setMargin(false);
-        rightSection.setPadding(false);
-
-        if (isUserOrganizerOrJudge()) {
-            modifyEntriesButton = new Button(localizationService.t("ranking.modifyentries"));
-            modifyEntriesButton.addClassName("votify-btn-secondary");
-            modifyEntriesButton.getStyle()
-                .set("background", "white")
-                .set("color", "var(--primary)")
-                .set("border", "none")
-                .set("cursor", "pointer")
-                .set("font-weight", "600");
-            modifyEntriesButton.addClickListener(e -> {
-                modifyMode = !modifyMode;
-                modifyEntriesButton.setText(modifyMode ? "Finish changes" : "Modify entries");
-                revertButtonContainer.setVisible(modifyMode);
-                loadRanking(isJudgesRanking);
-            });
-            rightSection.add(modifyEntriesButton);
-        }
-
-        Button voteButton = new Button(localizationService.t("ranking.vote"));
-        voteButton.addClassName("votify-btn-secondary");
-        voteButton.getStyle()
-            .set("background", "white")
-            .set("color", "var(--primary)")
-            .set("border", "none")
-            .set("cursor", "pointer")
-            .set("font-weight", "600");
-        voteButton.addClickListener(e -> handleVoteClick());
-
-        rightSection.add(voteButton);
-        header.add(backButton, title, rightSection);
-        return header;
     }
 
     private void handleVoteClick() {

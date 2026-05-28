@@ -9,7 +9,6 @@ import com.microslop.service.NotificationService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -52,32 +51,12 @@ public class InvitationsView extends VerticalLayout implements BeforeEnterObserv
         setSpacing(false);
         getStyle().set("background", "var(--background)");
 
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        header.addClassName("votify-header");
-        header.getStyle()
-            .set("padding", "2rem")
-            .set("background", "var(--surface)");
-
-        H1 title = new H1(localizationService.t("invitations.title"));
-        title.getStyle()
-            .set("margin", "0")
-            .set("color", "var(--dark)")
-            .set("font-size", "28px");
-
         Button refreshBtn = new Button(new Icon(VaadinIcon.REFRESH));
         refreshBtn.addThemeVariants(ButtonVariant.LUMO_ICON);
         refreshBtn.getElement().setAttribute("aria-label", "Refresh invitations");
         refreshBtn.getElement().setAttribute("title", "Refresh");
         refreshBtn.addClickListener(e -> loadInvitations());
-
-        HorizontalLayout headerActions = new HorizontalLayout(refreshBtn);
-        headerActions.setSpacing(true);
-
-        header.add(title, headerActions);
-        add(header);
+        refreshBtn.getStyle().set("margin-bottom", "16px");
 
         VerticalLayout content = new VerticalLayout();
         content.setWidthFull();
@@ -87,6 +66,8 @@ public class InvitationsView extends VerticalLayout implements BeforeEnterObserv
         content.getStyle()
             .set("padding", "2rem")
             .set("overflow-y", "auto");
+
+        content.add(refreshBtn);
 
         invitationsContainer = new Div();
         invitationsContainer.setWidthFull();

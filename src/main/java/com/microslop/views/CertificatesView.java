@@ -11,7 +11,6 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -64,34 +63,6 @@ public class CertificatesView extends VerticalLayout implements BeforeEnterObser
         setSpacing(false);
         getStyle().set("background", "var(--background)");
 
-        // Header
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        header.addClassName("votify-header");
-        header.getStyle()
-            .set("padding", "2rem")
-            .set("background", "var(--surface)");
-
-        H1 title = new H1("My Certificates");
-        title.getStyle()
-            .set("margin", "0")
-            .set("color", "var(--dark)")
-            .set("font-size", "28px");
-
-        Button refreshBtn = new Button(new Icon(VaadinIcon.REFRESH));
-        refreshBtn.addThemeVariants(ButtonVariant.LUMO_ICON);
-        refreshBtn.getElement().setAttribute("aria-label", "Refresh certificates");
-        refreshBtn.getElement().setAttribute("title", "Refresh");
-        refreshBtn.addClickListener(e -> loadCertificates());
-
-        HorizontalLayout headerActions = new HorizontalLayout(refreshBtn);
-        headerActions.setSpacing(true);
-
-        header.add(title, headerActions);
-        add(header);
-
         // Filters
         HorizontalLayout filterLayout = new HorizontalLayout();
         filterLayout.setWidthFull();
@@ -127,6 +98,15 @@ public class CertificatesView extends VerticalLayout implements BeforeEnterObser
         content.setPadding(true);
         content.setSpacing(true);
         content.getStyle().set("overflow-y", "auto");
+
+        Button refreshBtn = new Button(new Icon(VaadinIcon.REFRESH));
+        refreshBtn.addThemeVariants(ButtonVariant.LUMO_ICON);
+        refreshBtn.getElement().setAttribute("aria-label", "Refresh certificates");
+        refreshBtn.getElement().setAttribute("title", "Refresh");
+        refreshBtn.addClickListener(e -> loadCertificates());
+        refreshBtn.getStyle().set("margin-bottom", "8px");
+
+        content.add(refreshBtn);
 
         certificatesContainer = new Div();
         certificatesContainer.setWidthFull();

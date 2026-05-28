@@ -10,7 +10,6 @@ import com.microslop.views.components.NotificationCardComponent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -49,29 +48,23 @@ public class NotificationView extends VerticalLayout {
             .set("background", "var(--background)")
             .set("font-family", "var(--font-main)");
 
-        add(buildHeader());
         add(buildContentArea());
     }
 
-    private HorizontalLayout buildHeader() {
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        header.addClassName("votify-header");
-        header.getStyle()
+    private VerticalLayout buildContentArea() {
+        VerticalLayout content = new VerticalLayout();
+        content.setWidthFull();
+        content.setHeight("100%");
+        content.setPadding(false);
+        content.setSpacing(false);
+        content.getStyle()
             .set("padding", "2rem")
-            .set("background", "var(--surface)");
-
-        H1 title = new H1(localizationService.t("notification.title"));
-        title.getStyle()
-            .set("margin", "0")
-            .set("color", "var(--dark)")
-            .set("font-size", "28px");
+            .set("overflow-y", "auto");
 
         HorizontalLayout actions = new HorizontalLayout();
         actions.setSpacing(true);
         actions.setPadding(false);
+        actions.getStyle().set("margin-bottom", "16px");
 
         long unreadCount = notificationService.getUnreadCountForCurrentUser();
         if (unreadCount > 0) {
@@ -100,21 +93,8 @@ public class NotificationView extends VerticalLayout {
         });
         actions.add(deleteAllBtn);
 
-        header.add(title, actions);
-        return header;
-    }
+        content.add(actions);
 
-    private VerticalLayout buildContentArea() {
-        VerticalLayout content = new VerticalLayout();
-        content.setWidthFull();
-        content.setHeight("100%");
-        content.setPadding(false);
-        content.setSpacing(false);
-        content.getStyle()
-            .set("padding", "2rem")
-            .set("overflow-y", "auto");
-
-        long unreadCount = notificationService.getUnreadCountForCurrentUser();
         if (unreadCount > 0) {
             HorizontalLayout unreadInfo = new HorizontalLayout();
             unreadInfo.setAlignItems(FlexComponent.Alignment.CENTER);

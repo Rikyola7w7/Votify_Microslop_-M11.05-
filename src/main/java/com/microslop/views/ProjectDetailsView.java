@@ -92,7 +92,12 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
         setSpacing(false);
         getStyle().set("background", "var(--background)");
 
-        add(buildHeader());
+        Button aiFeedbackBtn = new Button("Feedback IA", new Icon(VaadinIcon.CHART));
+        aiFeedbackBtn.addClassName("votify-btn-primary");
+        aiFeedbackBtn.setHeight("40px");
+        aiFeedbackBtn.getStyle().set("margin", "16px 40px 0 40px").set("align-self", "flex-start");
+        aiFeedbackBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("ai-feedback")));
+        add(aiFeedbackBtn);
 
         commentsContainer = new Div();
         commentsContainer.setWidthFull();
@@ -102,35 +107,6 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
             .set("margin", "0 auto");
 
         add(commentsContainer);
-    }
-
-    private HorizontalLayout buildHeader() {
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setSpacing(true);
-        header.addClassName("votify-header");
-
-        Button backButton = new Button("\u2190 Back to projects", new Icon(VaadinIcon.ARROW_LEFT));
-        backButton.addClassName("votify-btn-secondary");
-        backButton.setHeight("40px");
-        backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/projects")));
-
-        H2 title = new H2(localizationService.t("projects.details.title"));
-        title.getStyle()
-            .set("margin", "0")
-            .set("color", "var(--text-primary)")
-            .set("font-size", "1.4rem")
-            .set("font-weight", "700")
-            .set("flex", "1");
-
-        Button aiFeedbackBtn = new Button("Feedback IA", new Icon(VaadinIcon.CHART));
-        aiFeedbackBtn.addClassName("votify-btn-primary");
-        aiFeedbackBtn.setHeight("40px");
-        aiFeedbackBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("ai-feedback")));
-
-        header.add(backButton, title, aiFeedbackBtn);
-        return header;
     }
 
     private void loadProjectAndComments() {
