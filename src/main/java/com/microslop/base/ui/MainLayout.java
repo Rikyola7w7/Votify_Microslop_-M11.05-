@@ -2,6 +2,7 @@ package com.microslop.base.ui;
 
 import com.microslop.entity.Competition;
 import com.microslop.entity.Category;
+import com.microslop.entity.User;
 import com.microslop.service.CategoryService;
 import com.microslop.service.CertificateService;
 import com.microslop.service.CompetitionCheckService;
@@ -17,22 +18,24 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.menubar.MenuBar;
-import com.vaadin.flow.component.menubar.MenuBarVariant;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.router.Location;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -70,6 +73,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private Button backButton;
     private Span pageTitle;
     private Div userMenuContainer;
+    private HorizontalLayout rightActionsContainer;
     private BreadcrumbBar breadcrumbBar;
     private boolean notificationInitialized;
     private Button mobileToggle;
@@ -84,7 +88,6 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     public MainLayout() {
         setDrawerOpened(false);
         buildNavbar();
-        buildBreadcrumbs();
     }
 
     @Override
@@ -124,6 +127,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     // ══════════════════════════════════════════════════════════
 
     private void buildNavbar() {
+        // ── Top bar ─────────────────────────────────────────
         var navbar = new HorizontalLayout();
         navbar.setWidthFull();
         navbar.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -150,7 +154,19 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
         navbar.add(buildRightActions());
 
-        addToNavbar(navbar);
+        // ── Breadcrumbs ─────────────────────────────────────
+        breadcrumbBar = new BreadcrumbBar();
+
+        // ── Wrap navbar + breadcrumbs into one component ─────
+        var wrapper = new VerticalLayout();
+        wrapper.setPadding(false);
+        wrapper.setSpacing(false);
+        wrapper.setWidthFull();
+        wrapper.setHeight("auto");
+        wrapper.add(navbar);
+        wrapper.add(breadcrumbBar);
+
+        addToNavbar(wrapper);
 
         Div skipLink = new Div();
         skipLink.addClassName("skip-to-content");
@@ -463,11 +479,6 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     //  BREADCRUMBS (with DB name lookups)
     // ══════════════════════════════════════════════════════════
 
-    private void buildBreadcrumbs() {
-        breadcrumbBar = new BreadcrumbBar();
-        addToNavbar(breadcrumbBar);
-    }
-
     private void updateBreadcrumbs(BeforeEnterEvent event) {
         if (breadcrumbBar == null) return;
 
@@ -570,27 +581,20 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     // ══════════════════════════════════════════════════════════
 
     private HorizontalLayout buildRightActions() {
-        var rightActions = new HorizontalLayout();
-        rightActions.addClassName("votify-nav-actions");
-        rightActions.setAlignItems(FlexComponent.Alignment.CENTER);
-        rightActions.setSpacing(false);
-        rightActions.setPadding(false);
-
-        if (languageSelector == null && localizationService != null) {
-            languageSelector = new LanguageSelectorComponent(localizationService);
-            var langBtn = languageSelector.createLanguageSelector();
-            langBtn.addClassName("votify-nav-lang-btn");
-            rightActions.add(langBtn);
-        }
+        rightActionsContainer = new HorizontalLayout();
+        rightActionsContainer.addClassName("votify-nav-actions");
+        rightActionsContainer.setAlignItems(FlexComponent.Alignment.CENTER);
+        rightActionsContainer.setSpacing(false);
+        rightActionsContainer.setPadding(false);
 
         if (notificationService != null) {
-            rightActions.add(createNotificationBell());
+            rightActionsContainer.add(createNotificationBell());
         }
 
         userMenuContainer = new Div();
-        rightActions.add(userMenuContainer);
+        rightActionsContainer.add(userMenuContainer);
 
-        return rightActions;
+        return rightActionsContainer;
     }
 
     private Div createNotificationBell() {
@@ -657,49 +661,37 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         boolean isLoggedIn = userService.isLoggedIn();
 
         if (isLoggedIn) {
-            String username = userService.getCurrentUsername();
+            User user = userService.getCurrentUser();
             String displayName = userService.getUserDisplayName();
-
-            Div userTrigger = new Div();
-            userTrigger.addClassName("votify-nav-user");
 
             Div avatarDiv = new Div();
             avatarDiv.addClassName("user-avatar");
-            avatarDiv.setText(getInitials(displayName));
-
-            Span nameSpan = new Span(username);
-            nameSpan.addClassName("user-name");
+            if (user != null && user.getProfilePicture() != null) {
+                var resource = new com.vaadin.flow.server.StreamResource("avatar.jpg",
+                    () -> new ByteArrayInputStream(user.getProfilePicture()));
+                Image img = new Image(resource, "Profile");
+                img.addClassName("user-avatar-img");
+                avatarDiv.add(img);
+            } else {
+                avatarDiv.setText(getInitials(displayName));
+            }
 
             Icon chevron = new Icon(VaadinIcon.CHEVRON_DOWN);
             chevron.addClassName("user-chevron");
             chevron.setSize("14px");
 
-            userTrigger.add(avatarDiv, nameSpan, chevron);
+            Div userTrigger = new Div(avatarDiv, chevron);
+            userTrigger.addClassName("votify-nav-user");
 
-            MenuBar userMenu = new MenuBar();
-            userMenu.addThemeVariants(MenuBarVariant.LUMO_ICON);
-            userMenu.getElement().setAttribute("aria-label", "User menu");
-            userMenu.getStyle().set("position", "absolute").set("opacity", "0").set("pointer-events", "none");
+            ContextMenu menu = new ContextMenu();
+            menu.setOpenOnClick(true);
+            menu.addItem("Edit Profile", e -> getUI().ifPresent(ui -> ui.navigate("profile")));
+            menu.addItem("Help / FAQs", e -> { /* TODO: connect after branch merge */ });
+            menu.addSeparator();
+            menu.addItem("Log Out", e -> handleLogout());
+            menu.setTarget(userTrigger);
 
-            var item = userMenu.addItem(userTrigger);
-            var subMenu = item.getSubMenu();
-
-            subMenu.addItem(createMenuItem("My Projects", VaadinIcon.FOLDER));
-            subMenu.addItem(createMenuItem("My Competitions", VaadinIcon.TROPHY));
-            subMenu.addItem(createMenuItem("Certificates", VaadinIcon.DIPLOMA));
-            subMenu.addItem(createMenuItem("Invitations", VaadinIcon.ENVELOPE));
-            subMenu.addItem(createMenuItem("Edit Profile", VaadinIcon.USER));
-            subMenu.addSeparator();
-            subMenu.addItem(createMenuItem("Sign Out", VaadinIcon.SIGN_OUT));
-
-            subMenu.getItems().get(0).addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(username + "/projects")));
-            subMenu.getItems().get(1).addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(username + "/competitions")));
-            subMenu.getItems().get(2).addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("certificates")));
-            subMenu.getItems().get(3).addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("invitations")));
-            subMenu.getItems().get(4).addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("profile")));
-            subMenu.getItems().get(6).addClickListener(e -> handleLogout());
-
-            userMenuContainer.add(userMenu);
+            userMenuContainer.add(userTrigger);
         } else {
             Button signInBtn = new Button("Sign In");
             signInBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -712,24 +704,6 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             signInBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("login")));
             userMenuContainer.add(signInBtn);
         }
-    }
-
-    private Component createMenuItem(String label, VaadinIcon icon) {
-        HorizontalLayout layout = new HorizontalLayout();
-        layout.setAlignItems(FlexComponent.Alignment.CENTER);
-        layout.setSpacing(true);
-        layout.setPadding(false);
-        layout.setMargin(false);
-
-        Icon menuIcon = new Icon(icon);
-        menuIcon.setSize("16px");
-        menuIcon.getStyle().set("opacity", "0.6");
-
-        Span menuLabel = new Span(label);
-        menuLabel.getStyle().set("font-size", "0.85rem");
-
-        layout.add(menuIcon, menuLabel);
-        return layout;
     }
 
     private String getInitials(String name) {
@@ -830,6 +804,14 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
                     }
                 })
             );
+        }
+
+        if (languageSelector == null && localizationService != null && rightActionsContainer != null) {
+            languageSelector = new LanguageSelectorComponent(localizationService);
+            var langLayout = languageSelector.createLanguageSelector();
+            langLayout.addClassName("votify-nav-lang-btn");
+            rightActionsContainer.add(langLayout);
+            rightActionsContainer.getElement().insertChild(0, langLayout.getElement());
         }
 
         rebuildUserMenu();
