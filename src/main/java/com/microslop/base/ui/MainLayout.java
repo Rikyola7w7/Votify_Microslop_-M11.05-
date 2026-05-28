@@ -168,10 +168,12 @@ private void rebuildUserMenu() {
             subMenu.addItem("My Certificates", event -> getUI().ifPresent(ui -> ui.navigate("certificates")));
             subMenu.addItem(localizationService.t("nav.invitations"), event -> getUI().ifPresent(ui -> ui.navigate("invitations")));
             subMenu.addItem(localizationService.t("nav.editprofile"), event -> getUI().ifPresent(ui -> ui.navigate("profile")));
+            subMenu.addItem("Help", event -> getUI().ifPresent(ui -> ui.navigate("help")));
             subMenu.addItem(localizationService.t("nav.signout"), event -> handleLogout());
         } else {
             subMenu.addItem(localizationService.t("nav.signin"), event -> getUI().ifPresent(ui -> ui.navigate("login")));
             subMenu.addItem(localizationService.t("nav.register"), event -> getUI().ifPresent(ui -> ui.navigate("register")));
+            subMenu.addItem("Help", event -> getUI().ifPresent(ui -> ui.navigate("help")));
         }
 
         userMenuContainer.add(userMenu);

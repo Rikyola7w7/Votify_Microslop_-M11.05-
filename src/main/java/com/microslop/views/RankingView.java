@@ -274,7 +274,18 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("font-weight", "600");
         voteButton.addClickListener(e -> handleVoteClick());
 
-        rightSection.add(voteButton);
+        Button helpBtn = new Button(new Icon(VaadinIcon.QUESTION_CIRCLE_O));
+        helpBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        helpBtn.getElement().setAttribute("title", "Help & FAQ");
+        helpBtn.getStyle()
+            .set("color", "white")
+            .set("background", "transparent")
+            .set("border", "none")
+            .set("cursor", "pointer")
+            .set("font-size", "20px");
+        helpBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("help")));
+
+        rightSection.add(voteButton, helpBtn);
         header.add(backButton, title, rightSection);
         return header;
     }

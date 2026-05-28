@@ -14,6 +14,7 @@ import com.microslop.views.components.CategoryCard;
 import com.microslop.views.components.CreateProjectDialog;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -186,7 +187,18 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             dialog.open();
         });
 
-        header.add(leftSection, title, submitBtn);
+        Button helpBtn = new Button(new Icon(VaadinIcon.QUESTION_CIRCLE_O));
+        helpBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        helpBtn.getElement().setAttribute("title", "Help & FAQ");
+        helpBtn.getStyle()
+            .set("color", "white")
+            .set("background", "transparent")
+            .set("border", "none")
+            .set("cursor", "pointer")
+            .set("font-size", "20px");
+        helpBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("help")));
+
+        header.add(leftSection, title, submitBtn, helpBtn);
         return header;
     }
 

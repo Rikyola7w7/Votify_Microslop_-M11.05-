@@ -146,7 +146,13 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
 
         secondaryButtons.add(logoutButton, deleteButton);
 
-        card.add(usernameText, emailText, editButton, secondaryButtons);
+        Button helpButton = new Button("Help & FAQ", VaadinIcon.QUESTION_CIRCLE_O.create(), e -> getUI().ifPresent(ui -> ui.navigate("help")));
+        helpButton.addClassName("votify-btn-secondary");
+        helpButton.setWidth("100%");
+        helpButton.setHeight("44px");
+        helpButton.getStyle().set("margin-top", "8px");
+
+        card.add(usernameText, emailText, editButton, secondaryButtons, helpButton);
         contentWrapper.add(avatarWrapper, card);
         add(banner, contentWrapper);
     }

@@ -295,7 +295,14 @@ public class RegisterView extends HorizontalLayout {
                 .set("margin-top", "16px")
                 .set("font-size", "0.95rem");
 
-        card.add(title, formLayout, uploadArea, registerButton, linkLogin);
+        RouterLink linkHelp = new RouterLink("Need help? Visit our FAQ", FaqView.class);
+        linkHelp.getStyle()
+                .set("color", "var(--text-muted)")
+                .set("text-align", "center")
+                .set("margin-top", "8px")
+                .set("font-size", "0.85rem");
+
+        card.add(title, formLayout, uploadArea, registerButton, linkLogin, linkHelp);
         rightPanel.add(card);
         return rightPanel;
     }

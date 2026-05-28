@@ -284,6 +284,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
                     Notification.show("Unable to load your profile.");
                 }
             });
+            userMenu.addItem("Help", event -> getUI().ifPresent(ui -> ui.navigate("help")));
             userMenu.addItem("Sign Out", event -> {
                 VaadinSession session = VaadinSession.getCurrent();
                 if (session != null) {
@@ -295,6 +296,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         } else {
             userMenu.addItem("Sign In", event -> getUI().ifPresent(ui -> ui.navigate("login")));
             userMenu.addItem("Register", event -> getUI().ifPresent(ui -> ui.navigate("register")));
+            userMenu.addItem("Help", event -> getUI().ifPresent(ui -> ui.navigate("help")));
         }
 
         rightSection.add(voteButton, avatar);
