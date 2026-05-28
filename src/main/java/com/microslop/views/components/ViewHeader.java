@@ -22,6 +22,7 @@ public class ViewHeader extends HorizontalLayout {
         Button backButton = new Button();
         backButton.setIcon(new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        backButton.getElement().setAttribute("aria-label", "Go back");
         backButton.getStyle()
                 .set("color", "white")
                 .set("background", "transparent")

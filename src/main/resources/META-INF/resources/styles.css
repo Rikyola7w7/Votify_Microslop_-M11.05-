@@ -254,6 +254,34 @@ button:disabled {
   outline: none !important;
 }
 
+*:focus-visible {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: 2px !important;
+}
+
+/* Skip to content link - visible when focused */
+.skip-to-content {
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  font-weight: 600;
+  z-index: 1000;
+  transition: top 0.2s ease;
+  text-decoration: none;
+  border-bottom: none;
+}
+
+.skip-to-content:focus {
+  top: 0;
+  outline: 2px solid var(--primary-dark) !important;
+  outline-offset: 2px !important;
+}
+
 /* ── Links & Navigation ─────────────────────────────────── */
 a {
   color: var(--primary);

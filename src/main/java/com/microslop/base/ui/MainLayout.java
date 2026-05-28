@@ -8,6 +8,7 @@ import com.microslop.service.NotificationService;
 import com.microslop.service.UserService;
 import com.microslop.views.components.LanguageSelectorComponent;
 import com.microslop.views.components.NotificationCardComponent;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -64,6 +65,8 @@ public final class MainLayout extends AppLayout {
         navbar.setPadding(false);
         navbar.setHeight("64px");
         navbar.getStyle().set("padding", "0 2rem");
+        navbar.getElement().setAttribute("role", "navigation");
+        navbar.getElement().setAttribute("aria-label", "Main navigation");
 
         var brand = new HorizontalLayout();
         brand.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -71,6 +74,7 @@ public final class MainLayout extends AppLayout {
         brand.setPadding(false);
         brand.getStyle().set("cursor", "pointer");
         brand.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
+        brand.getElement().setAttribute("aria-label", "Votify home");
 
         var logoIcon = new Icon(VaadinIcon.CHECK_SQUARE_O);
         logoIcon.setSize("28px");
@@ -94,6 +98,11 @@ public final class MainLayout extends AppLayout {
 
         navbar.add(rightActions);
         addToNavbar(navbar);
+
+        Anchor skipLink = new Anchor("#main-content", "Skip to main content");
+        skipLink.addClassName("skip-to-content");
+        skipLink.getElement().setAttribute("aria-label", "Skip to main content");
+        addToNavbar(skipLink);
     }
 
     @Override
@@ -145,6 +154,7 @@ private void rebuildUserMenu() {
 
         MenuBar userMenu = new MenuBar();
         userMenu.addThemeVariants(MenuBarVariant.LUMO_ICON);
+        userMenu.getElement().setAttribute("aria-label", "User menu");
 
         boolean isLoggedIn = userService.isLoggedIn();
 
@@ -187,10 +197,12 @@ private void rebuildUserMenu() {
 
         Button bellButton = new Button(new Icon(VaadinIcon.BELL_O));
         bellButton.addThemeVariants(ButtonVariant.LUMO_ICON);
+        bellButton.getElement().setAttribute("aria-label", "Notifications");
         bellButton.getElement().setAttribute("title", "Notifications");
         bellButton.getStyle().set("font-size", "20px");
 
         unreadBadge = new Span();
+        unreadBadge.getElement().setAttribute("aria-hidden", "true");
         unreadBadge.getStyle()
             .set("position", "absolute")
             .set("top", "-8px")
