@@ -124,6 +124,7 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         editButton.addClassName("votify-btn-primary");
         editButton.setWidth("100%");
         editButton.setHeight("48px");
+        editButton.setTooltipText("Update your username or email address");
 
         HorizontalLayout secondaryButtons = new HorizontalLayout();
         secondaryButtons.setWidthFull();
@@ -138,11 +139,13 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         logoutButton.addClassName("votify-btn-secondary");
         logoutButton.setHeight("44px");
         logoutButton.getStyle().set("flex", "1");
+        logoutButton.setTooltipText("End your current session and sign out");
 
         Button deleteButton = new Button(localizationService.t("profile.deleteaccount"), VaadinIcon.TRASH.create(), e -> openDeleteDialog());
         deleteButton.addClassName("votify-btn-danger");
         deleteButton.setHeight("44px");
         deleteButton.getStyle().set("flex", "1");
+        deleteButton.setTooltipText("Permanently remove your account and all associated data");
 
         secondaryButtons.add(logoutButton, deleteButton);
 

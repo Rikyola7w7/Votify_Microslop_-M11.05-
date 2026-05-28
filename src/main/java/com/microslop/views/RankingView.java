@@ -255,6 +255,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("border", "none")
                 .set("cursor", "pointer")
                 .set("font-weight", "600");
+            modifyEntriesButton.setTooltipText("Enable manual editing of rankings, votes, and project positions");
             modifyEntriesButton.addClickListener(e -> {
                 modifyMode = !modifyMode;
                 modifyEntriesButton.setText(modifyMode ? "Finish changes" : "Modify entries");
@@ -272,6 +273,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("border", "none")
             .set("cursor", "pointer")
             .set("font-weight", "600");
+        voteButton.setTooltipText("Go to the voting page for this category");
         voteButton.addClickListener(e -> handleVoteClick());
 
         Button helpBtn = new Button(new Icon(VaadinIcon.QUESTION_CIRCLE_O));

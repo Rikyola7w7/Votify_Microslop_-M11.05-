@@ -174,6 +174,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             .set("cursor", "pointer")
             .set("font-weight", "600")
             .set("padding", "8px 16px");
+        submitBtn.setTooltipText("Submit a new project to this competition");
         submitBtn.addClickListener(e -> {
             if (!userService.isLoggedIn()) {
                 com.vaadin.flow.component.notification.Notification.show("Sign in to submit a project", 3000, com.vaadin.flow.component.notification.Notification.Position.MIDDLE);

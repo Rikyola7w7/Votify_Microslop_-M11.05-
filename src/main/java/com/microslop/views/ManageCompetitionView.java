@@ -215,6 +215,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         Button saveDatesButton = new Button("Update Dates", new Icon(VaadinIcon.CALENDAR_CLOCK));
         saveDatesButton.addClassName("votify-btn-primary");
         saveDatesButton.getStyle().set("margin-top", "20px");
+        saveDatesButton.setTooltipText("Save changes to the voting window dates");
         saveDatesButton.addClickListener(e -> saveDates());
 
         VerticalLayout datesContainer = new VerticalLayout(datesLayout, saveDatesButton);
@@ -234,26 +235,31 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         activateButton = new Button("Activate Competition", new Icon(VaadinIcon.ROCKET));
         activateButton.addClassName("votify-btn-primary");
         activateButton.getStyle().set("flex", "1 1 auto");
+        activateButton.setTooltipText("Make the competition live and visible to participants");
         activateButton.addClickListener(e -> activateCompetition());
 
         votingToggle = new Button("Voting: OFF", new Icon(VaadinIcon.BAN));
         votingToggle.addClassName("votify-btn-secondary");
         votingToggle.getStyle().set("flex", "1 1 auto");
+        votingToggle.setTooltipText("Toggle voting open or closed for participants");
         votingToggle.addClickListener(e -> toggleVoting());
 
         pauseToggle = new Button("Pause Competition", new Icon(VaadinIcon.PAUSE));
         pauseToggle.addClassName("votify-btn-danger");
         pauseToggle.getStyle().set("flex", "1 1 auto");
+        pauseToggle.setTooltipText("Temporarily halt the competition, stopping all activity");
         pauseToggle.addClickListener(e -> togglePause());
 
         endNowButton = new Button("End Voting Now", new Icon(VaadinIcon.STOP));
         endNowButton.addClassName("votify-btn-danger");
         endNowButton.getStyle().set("flex", "1 1 auto");
+        endNowButton.setTooltipText("Immediately conclude the voting period");
         endNowButton.addClickListener(e -> endVotingNow());
 
         reopenButton = new Button("Reopen Voting", new Icon(VaadinIcon.REFRESH));
         reopenButton.addClassName("votify-btn-primary");
         reopenButton.getStyle().set("flex", "1 1 auto");
+        reopenButton.setTooltipText("Start a new voting period for a concluded competition");
         reopenButton.addClickListener(e -> reopenVoting());
 
         actionsLayout.add(activateButton, votingToggle, pauseToggle, endNowButton, reopenButton);

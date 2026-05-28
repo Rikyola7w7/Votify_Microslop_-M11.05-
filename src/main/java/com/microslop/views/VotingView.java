@@ -427,6 +427,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             checklistButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
             checklistButton.setWidth("auto");
             checklistButton.getStyle().set("padding", "0.75rem 1.25rem");
+            checklistButton.setTooltipText("Open checklist to mark criteria for this project");
 
             checklistButton.addClickListener(e -> handleChecklistVoting(p, selectedCategory, cachedChecklistItems));
             voteInterface.add(checklistButton);
@@ -446,6 +447,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
             submitButton.setWidth("auto");
             submitButton.getStyle().set("padding", "0.75rem 1.25rem");
+            submitButton.setTooltipText("Submit your vote with the selected points");
 
             int availableVotes = getAvailableVotes(selectedCategory);
             if (availableVotes <= 0) {
@@ -472,6 +474,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         commentsBtn.getStyle()
                 .set("white-space", "normal")
                 .set("min-width", "120px");
+        commentsBtn.setTooltipText("View and leave feedback for this project");
         commentsBtn.addClickListener(e -> openCommentsDialog(p.getName(), p.getId()));
 
         var actions = new VerticalLayout(voteInterface, commentsBtn);

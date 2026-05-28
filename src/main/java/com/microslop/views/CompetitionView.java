@@ -244,6 +244,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             .set("background", "white")
             .set("border", "none")
             .set("cursor", "pointer");
+        voteButton.setTooltipText("Go to the voting page for this competition");
         voteButton.addClickListener(e -> {
             if (userService.isLoggedIn()) {
                 getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/vote"));
