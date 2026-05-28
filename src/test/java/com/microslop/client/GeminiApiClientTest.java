@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
+import com.microslop.exception.ExternalServiceException;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
@@ -53,7 +55,7 @@ class GeminiApiClientTest {
     void should_throw_when_api_key_not_configured() {
         GeminiApiClient emptyClient = new GeminiApiClient("");
         assertThatThrownBy(() -> emptyClient.generateFeedback("some comments"))
-            .isInstanceOf(com.microslop.exception.ExternalServiceException.class)
+            .isInstanceOf(ExternalServiceException.class)
             .hasMessageContaining("API key is not configured");
     }
 
@@ -62,7 +64,7 @@ class GeminiApiClientTest {
     void should_throw_when_api_key_is_placeholder() {
         GeminiApiClient placeholderClient = new GeminiApiClient("TU_API_KEY_DE_GEMINI");
         assertThatThrownBy(() -> placeholderClient.generateFeedback("some comments"))
-            .isInstanceOf(com.microslop.exception.ExternalServiceException.class)
+            .isInstanceOf(ExternalServiceException.class)
             .hasMessageContaining("API key is not configured");
     }
 
