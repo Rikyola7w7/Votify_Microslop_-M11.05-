@@ -409,7 +409,13 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("-webkit-box-orient", "vertical")
                 .set("overflow", "hidden");
 
-        info.add(name, desc);
+        var votesLabel = new Span("Total votes: " + totalVotes);
+        votesLabel.getStyle()
+                .set("font-size", "0.85rem")
+                .set("color", "var(--text-muted)")
+                .set("margin-top", "0.75rem");
+
+        info.add(name, desc, votesLabel);
 
         var voteInterface = new HorizontalLayout();
         voteInterface.setAlignItems(Alignment.END);
