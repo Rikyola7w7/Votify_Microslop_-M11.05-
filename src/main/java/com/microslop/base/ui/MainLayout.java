@@ -597,7 +597,6 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             case "projects" -> "Projects";
             case "competitions" -> "Competitions";
             case "help" -> "Help & FAQs";
-            case "invitations" -> "Invitations";
             default -> {
                 if (segment.startsWith(":")) {
                     yield "Details";
