@@ -7,6 +7,8 @@ import com.microslop.entity.User;
 import com.microslop.exception.ErrorHandler;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.UserService;
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.KeyModifier;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -107,6 +109,7 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> navigateBack());
+        backButton.addClickShortcut(Key.ESCAPE);
 
         H2 title = new H2("Create Competition");
         title.getStyle().set("color", "var(--dark)").set("margin", "0").set("font-weight", "800");
@@ -316,10 +319,12 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         Button cancelButton = new Button("Cancel", e -> navigateBack());
         cancelButton.addClassName("votify-btn-secondary");
         cancelButton.setTooltipText("Discard changes and return to dashboard");
+        cancelButton.addClickShortcut(Key.ESCAPE);
 
         Button createButton = new Button("Create", e -> createCompetition());
         createButton.addClassName("votify-btn-primary");
         createButton.setTooltipText("Create and publish your competition");
+        createButton.addClickShortcut(Key.ENTER);
 
         buttonsLayout.add(cancelButton, createButton);
 

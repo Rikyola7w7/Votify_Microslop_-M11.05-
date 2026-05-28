@@ -4,6 +4,7 @@ import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Competition;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.UserService;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H3;
@@ -95,6 +96,7 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
+        backButton.addClickShortcut(Key.ESCAPE);
 
         H4 title = new H4("My Competitions");
         title.getStyle().set("color", "var(--dark)").set("margin", "0").set("font-weight", "800").set("font-size", "1.3rem");

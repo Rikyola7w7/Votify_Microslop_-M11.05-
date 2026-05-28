@@ -12,6 +12,7 @@ import com.microslop.service.UserService;
 import com.microslop.views.components.BallotLoadingComponent;
 import com.microslop.views.components.CategoryCard;
 import com.microslop.views.components.CreateProjectDialog;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -113,6 +114,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             Button backBtn = new Button("Back to home", new Icon(VaadinIcon.ARROW_LEFT));
             backBtn.addClassName("votify-btn-primary");
             backBtn.addClickListener(ev -> getUI().ifPresent(ui -> ui.navigate("")));
+            backBtn.addClickShortcut(Key.ESCAPE);
 
             errorState.add(icon, message, sub, backBtn);
             add(errorState);
@@ -147,6 +149,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             .set("border", "1px solid rgba(255, 255, 255, 0.3)")
             .set("border-radius", "var(--radius-md)");
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
+        backButton.addClickShortcut(Key.ESCAPE);
 
         HorizontalLayout leftSection = new HorizontalLayout(backButton);
         leftSection.setAlignItems(FlexComponent.Alignment.CENTER);

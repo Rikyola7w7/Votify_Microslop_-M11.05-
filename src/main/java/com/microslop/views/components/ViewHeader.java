@@ -3,6 +3,7 @@ package com.microslop.views.components;
 import com.microslop.service.UserService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -29,6 +30,7 @@ public class ViewHeader extends HorizontalLayout {
                 .set("border-radius", "var(--radius-md)");
         if (backRoute != null && !backRoute.isEmpty()) {
             backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(backRoute)));
+            backButton.addClickShortcut(Key.ESCAPE);
         } else {
             backButton.setEnabled(false);
             backButton.setVisible(false);

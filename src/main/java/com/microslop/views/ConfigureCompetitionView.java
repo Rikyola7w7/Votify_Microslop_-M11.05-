@@ -10,6 +10,8 @@ import com.microslop.service.CategoryService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.JudgeService;
 import com.microslop.service.UserService;
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.KeyModifier;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -171,6 +173,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> navigateBack());
+        backButton.addClickShortcut(Key.ESCAPE);
 
         H2 titleText = new H2("Configure: " + currentCompetition.getName());
         titleText.getStyle().set("color", "var(--dark)").set("margin", "0").set("font-weight", "800");
@@ -920,11 +923,13 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         cancelButton.addClassName("votify-btn-secondary");
         cancelButton.setIcon(new Icon(VaadinIcon.CLOSE));
         cancelButton.addClickListener(e -> handleCancel());
+        cancelButton.addClickShortcut(Key.ESCAPE);
 
         saveButton = new Button("Save");
         saveButton.addClassName("votify-btn-primary");
         saveButton.setIcon(new Icon(VaadinIcon.CHECK));
         saveButton.addClickListener(e -> handleSave());
+        saveButton.addClickShortcut(Key.ENTER);
 
         layout.add(cancelButton, saveButton);
         return layout;

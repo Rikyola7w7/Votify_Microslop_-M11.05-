@@ -9,6 +9,7 @@ import com.microslop.service.VoteService;
 import com.microslop.service.LocalizationService;
 import com.microslop.views.components.ProjectCardComponent;
 import com.microslop.base.ui.MainLayout;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
@@ -112,6 +113,7 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
+        backButton.addClickShortcut(Key.ESCAPE);
 
         H2 title = new H2(localizationService.t("projects.myprojects"));
         title.getStyle()

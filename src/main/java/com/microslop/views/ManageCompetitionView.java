@@ -16,6 +16,8 @@ import com.microslop.service.InvitationService;
 import com.microslop.service.NotificationService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.KeyModifier;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
@@ -143,6 +145,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/competitions")));
+        backButton.addClickShortcut(Key.ESCAPE);
 
         header.add(backButton);
 
@@ -217,6 +220,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         saveDatesButton.getStyle().set("margin-top", "20px");
         saveDatesButton.setTooltipText("Save changes to the voting window dates");
         saveDatesButton.addClickListener(e -> saveDates());
+        saveDatesButton.addClickShortcut(Key.ENTER);
 
         VerticalLayout datesContainer = new VerticalLayout(datesLayout, saveDatesButton);
         datesContainer.setPadding(false);
