@@ -44,11 +44,11 @@ public class CertificatePdfGenerator {
 
             try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
                 // Draw background
-                drawBackground(contentStream);
-
                 if (certificate.isParticipantCertificate()) {
+                    drawBackground(contentStream, false);
                     drawParticipantCertificate(contentStream, certificate);
                 } else {
+                    drawBackground(contentStream, true);
                     drawWinnerCertificate(contentStream, certificate);
                 }
             }
@@ -66,15 +66,24 @@ public class CertificatePdfGenerator {
     /**
      * Draw background (light cream with border)
      */
-    private void drawBackground(PDPageContentStream contentStream) throws IOException {
+    private void drawBackground(PDPageContentStream contentStream, boolean isWinner) throws IOException {
         // Light cream background
-        contentStream.setNonStrokingColor(LIGHT_CREAM[0], LIGHT_CREAM[1], LIGHT_CREAM[2]);
+        float[] CREAM = {0.98f, 0.97f, 0.94f};
+        contentStream.setNonStrokingColor(CREAM[0], CREAM[1], CREAM[2]);
         contentStream.fillRect(0, 0, PAGE_WIDTH, PAGE_HEIGHT);
 
-        // Dark blue border (top and bottom)
-        contentStream.setNonStrokingColor(DARK_BLUE[0], DARK_BLUE[1], DARK_BLUE[2]);
-        contentStream.fillRect(0, PAGE_HEIGHT - 40, PAGE_WIDTH, 40);  // Top bar
-        contentStream.fillRect(0, 0, PAGE_WIDTH, 30);                  // Bottom bar
+        if (isWinner) {
+            // Elegant thin golden border
+            contentStream.setStrokingColor(GOLD[0], GOLD[1], GOLD[2]);
+            contentStream.setLineWidth(2f);
+            contentStream.addRect(20, 20, PAGE_WIDTH - 40, PAGE_HEIGHT - 40);
+            contentStream.stroke();
+            
+            // Inner thin border
+            contentStream.setLineWidth(1f);
+            contentStream.addRect(25, 25, PAGE_WIDTH - 50, PAGE_HEIGHT - 50);
+            contentStream.stroke();
+        }
     }
 
     /**
@@ -82,65 +91,73 @@ public class CertificatePdfGenerator {
      */
     private void drawParticipantCertificate(PDPageContentStream contentStream, Certificate certificate) throws IOException {
         float centerX = PAGE_WIDTH / 2;
-        float currentY = PAGE_HEIGHT - 80;
+        float currentY = PAGE_HEIGHT - 100;
 
-        // Header: Logo and title
-        PDFont titleFont = PDType1Font.HELVETICA_BOLD;
         PDFont boldFont = PDType1Font.HELVETICA_BOLD;
         PDFont regularFont = PDType1Font.HELVETICA;
-        PDFont smallFont = PDType1Font.HELVETICA;
 
-        // Logo (simple V)
-        drawCenteredText(contentStream, boldFont, 48, "[V]", centerX, currentY, DARK_BLUE);
-        currentY -= 50;
+        // Header: Logo and title
+        drawCenteredText(contentStream, boldFont, 24, "Votify", centerX, currentY, DARK_BLUE);
+        currentY -= 80;
 
-        // "Votición App"
-        drawCenteredText(contentStream, titleFont, 20, "Votición App", centerX, currentY, DARK_BLUE);
-        currentY -= 50;
-
-        // Main title
-        drawCenteredText(contentStream, boldFont, 32, "CERTIFICADO DE PARTICIPANTE", centerX, currentY, DARK_BLUE);
+        drawCenteredText(contentStream, boldFont, 36, "CERTIFICADO", centerX, currentY, DARK_BLUE);
+        currentY -= 40;
+        drawCenteredText(contentStream, boldFont, 36, "DE PARTICIPANTE", centerX, currentY, DARK_BLUE);
         currentY -= 70;
 
         // Body text
         contentStream.setNonStrokingColor(BLACK[0], BLACK[1], BLACK[2]);
-        drawCenteredMultilineText(contentStream, regularFont, 12,
-                "Este certificado reconoce que " + certificate.getUser().getName() +
-                        " ha participado exitosamente en la " + certificate.getCompetition().getName() +
-                        " con el proyecto titulado '" + certificate.getProject().getName() +
-                        "' en la categoría " + certificate.getCategory().getName(),
-                centerX, currentY, PAGE_WIDTH - 80);
-        currentY -= 100;
-
-        // Seal (circular design in text)
-        drawCenteredText(contentStream, boldFont, 14, "*===================*", centerX, currentY, GOLD);
-        currentY -= 20;
-        drawCenteredText(contentStream, boldFont, 12, "PARTICIPANTE", centerX, currentY, GOLD);
-        currentY -= 18;
-        drawCenteredText(contentStream, boldFont, 12, "VOTICIÓN APP", centerX, currentY, GOLD);
-        currentY -= 18;
-        drawCenteredText(contentStream, regularFont, 10, "EDICIÓN " + certificate.getCertificateYear(), centerX, currentY, GOLD);
+        drawCenteredText(contentStream, regularFont, 16, "Este certificado reconoce que", centerX, currentY, BLACK);
         currentY -= 40;
+        
+        drawCenteredText(contentStream, boldFont, 20, certificate.getUser().getName(), centerX, currentY, BLACK);
+        currentY -= 40;
+        
+        drawCenteredText(contentStream, regularFont, 14, "ha participado exitosamente en la categoría:", centerX, currentY, BLACK);
+        currentY -= 25;
+        drawCenteredText(contentStream, boldFont, 16, certificate.getCategory().getName(), centerX, currentY, BLACK);
+        currentY -= 30;
+        
+        drawCenteredText(contentStream, regularFont, 14, "de la competición:", centerX, currentY, BLACK);
+        currentY -= 25;
+        drawCenteredText(contentStream, boldFont, 16, certificate.getCompetition().getName(), centerX, currentY, BLACK);
+        currentY -= 40;
+        
+        drawCenteredText(contentStream, regularFont, 14, "con el proyecto titulado", centerX, currentY, BLACK);
+        currentY -= 30;
+        drawCenteredMultilineText(contentStream, boldFont, 16, "\"" + certificate.getProject().getName() + "\"", centerX, currentY, PAGE_WIDTH - 120);
+        currentY -= 80;
 
-        // Signature lines
-        float leftX = 100;
-        float rightX = PAGE_WIDTH - 100;
-        contentStream.setNonStrokingColor(BLACK[0], BLACK[1], BLACK[2]);
+        // Seal
+        drawCenteredText(contentStream, boldFont, 14, "*===================*", centerX, currentY, DARK_BLUE);
+        currentY -= 20;
+        drawCenteredText(contentStream, boldFont, 12, "PARTICIPANTE", centerX, currentY, DARK_BLUE);
+        currentY -= 18;
+        drawCenteredText(contentStream, boldFont, 12, "VOTIFY", centerX, currentY, DARK_BLUE);
+        currentY -= 18;
+        drawCenteredText(contentStream, regularFont, 10, "EDICIÓN " + certificate.getCertificateYear(), centerX, currentY, DARK_BLUE);
+        currentY -= 15;
+        drawCenteredText(contentStream, boldFont, 14, "*===================*", centerX, currentY, DARK_BLUE);
+        currentY -= 60;
+
+        // Footer lines
+        float leftX = 80;
+        float rightX = PAGE_WIDTH - 80;
+        
+        contentStream.setStrokingColor(BLACK[0], BLACK[1], BLACK[2]);
         contentStream.setLineWidth(1);
         contentStream.moveTo(leftX, currentY);
-        contentStream.lineTo(leftX + 120, currentY);
-        contentStream.moveTo(rightX - 120, currentY);
+        contentStream.lineTo(leftX + 160, currentY);
+        contentStream.moveTo(rightX - 160, currentY);
         contentStream.lineTo(rightX, currentY);
         contentStream.stroke();
 
-        currentY -= 30;
-        drawLeftAlignedText(contentStream, regularFont, 10, "Firma del Organizador", leftX, currentY, BLACK);
-        drawRightAlignedText(contentStream, regularFont, 10, "Firma del Jurado", rightX, currentY, BLACK);
-
-        currentY -= 40;
-        drawCenteredText(contentStream, regularFont, 10, 
-                "Fecha: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), 
-                centerX, currentY, BLACK);
+        currentY -= 20;
+        String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        drawCenteredText(contentStream, regularFont, 12, "Fecha: " + dateStr, leftX + 80, currentY, BLACK);
+        
+        String rankingDisplay = certificate.getRankingType() != null && certificate.getRankingType().isPopularRanking() ? "Popular" : "Jueces";
+        drawCenteredText(contentStream, regularFont, 12, "Valoración: " + rankingDisplay, rightX - 80, currentY, BLACK);
     }
 
     /**
@@ -148,71 +165,78 @@ public class CertificatePdfGenerator {
      */
     private void drawWinnerCertificate(PDPageContentStream contentStream, Certificate certificate) throws IOException {
         float centerX = PAGE_WIDTH / 2;
-        float currentY = PAGE_HEIGHT - 80;
+        float currentY = PAGE_HEIGHT - 100;
 
-        PDFont titleFont = PDType1Font.HELVETICA_BOLD;
         PDFont boldFont = PDType1Font.HELVETICA_BOLD;
         PDFont regularFont = PDType1Font.HELVETICA;
 
-        // Header: Logo (in gold) and title
-        drawCenteredText(contentStream, boldFont, 48, "[V]", centerX, currentY, GOLD);
-        currentY -= 50;
+        // Header: Logo and title
+        drawCenteredText(contentStream, boldFont, 24, "Votify", centerX, currentY, GOLD);
+        currentY -= 80;
 
-        // "Votición App"
-        drawCenteredText(contentStream, titleFont, 20, "Votición App", centerX, currentY, GOLD);
-        currentY -= 50;
-
-        // Main title in gold
-        drawCenteredText(contentStream, boldFont, 36, "CERTIFICADO DE GANADOR", centerX, currentY, GOLD);
+        drawCenteredText(contentStream, boldFont, 38, "CERTIFICADO", centerX, currentY, GOLD);
         currentY -= 40;
-
-        // Subtitle
-        drawCenteredText(contentStream, regularFont, 14, "RECONOCIMIENTO DE EXCELENCIA", centerX, currentY, DARK_BLUE);
+        drawCenteredText(contentStream, boldFont, 38, "DE GANADOR", centerX, currentY, GOLD);
         currentY -= 60;
 
         // Body text
-        String rankingText = certificate.getRankingType().isJudgesRanking()
-                ? "1st Place - Judges Ranking" 
-                : "1st Place - Popular Vote";
-
         contentStream.setNonStrokingColor(BLACK[0], BLACK[1], BLACK[2]);
-        drawCenteredMultilineText(contentStream, regularFont, 12,
-                "Este certificado otorga el " + rankingText + " a " + certificate.getUser().getName() +
-                        " por su destacada participación en la " + certificate.getCompetition().getName() +
-                        " con el proyecto titulado '" + certificate.getProject().getName() +
-                        "' en la categoría " + certificate.getCategory().getName(),
-                centerX, currentY, PAGE_WIDTH - 80);
-        currentY -= 110;
+        drawCenteredText(contentStream, regularFont, 16, "Este certificado otorga el", centerX, currentY, BLACK);
+        currentY -= 30;
+        drawCenteredText(contentStream, boldFont, 18, "PRIMER LUGAR a", centerX, currentY, BLACK);
+        currentY -= 40;
+        
+        drawCenteredText(contentStream, boldFont, 22, certificate.getUser().getName(), centerX, currentY, BLACK);
+        currentY -= 40;
 
-        // Seal (larger, golden, detailed)
-        drawCenteredText(contentStream, boldFont, 16, "+=====================+", centerX, currentY, GOLD);
-        currentY -= 22;
-        drawCenteredText(contentStream, boldFont, 13, "GANADOR - " + rankingText, centerX, currentY, GOLD);
-        currentY -= 20;
-        drawCenteredText(contentStream, boldFont, 13, "VOTICIÓN APP", centerX, currentY, GOLD);
-        currentY -= 20;
-        drawCenteredText(contentStream, regularFont, 11, "EDICIÓN " + certificate.getCertificateYear(), centerX, currentY, GOLD);
+        drawCenteredText(contentStream, regularFont, 14, "por su destacada participación en la categoría:", centerX, currentY, BLACK);
+        currentY -= 25;
+        drawCenteredText(contentStream, boldFont, 16, certificate.getCategory().getName(), centerX, currentY, BLACK);
+        currentY -= 30;
+        
+        drawCenteredText(contentStream, regularFont, 14, "de la competición:", centerX, currentY, BLACK);
+        currentY -= 25;
+        drawCenteredText(contentStream, boldFont, 16, certificate.getCompetition().getName(), centerX, currentY, BLACK);
+        currentY -= 40;
+        
+        drawCenteredText(contentStream, regularFont, 14, "con el proyecto titulado", centerX, currentY, BLACK);
+        currentY -= 30;
+        drawCenteredMultilineText(contentStream, boldFont, 16, "\"" + certificate.getProject().getName() + "\"", centerX, currentY, PAGE_WIDTH - 120);
         currentY -= 50;
 
-        // Signature lines
-        float leftX = 100;
-        float rightX = PAGE_WIDTH - 100;
-        contentStream.setNonStrokingColor(BLACK[0], BLACK[1], BLACK[2]);
-        contentStream.setLineWidth(1.5f);
+        drawCenteredText(contentStream, regularFont, 14, "RECONOCIMIENTO DE EXCELENCIA", centerX, currentY, GOLD);
+        currentY -= 60;
+
+        // Seal
+        drawCenteredText(contentStream, boldFont, 16, "+=====================+", centerX, currentY, GOLD);
+        currentY -= 22;
+        drawCenteredText(contentStream, boldFont, 13, "GANADOR - PRIMER LUGAR", centerX, currentY, GOLD);
+        currentY -= 20;
+        drawCenteredText(contentStream, boldFont, 13, "VOTIFY", centerX, currentY, GOLD);
+        currentY -= 20;
+        drawCenteredText(contentStream, regularFont, 11, "EDICIÓN " + certificate.getCertificateYear(), centerX, currentY, GOLD);
+        currentY -= 15;
+        drawCenteredText(contentStream, boldFont, 16, "+=====================+", centerX, currentY, GOLD);
+        currentY -= 60;
+
+        // Footer lines
+        float leftX = 80;
+        float rightX = PAGE_WIDTH - 80;
+        
+        contentStream.setStrokingColor(BLACK[0], BLACK[1], BLACK[2]);
+        contentStream.setLineWidth(1);
         contentStream.moveTo(leftX, currentY);
-        contentStream.lineTo(leftX + 120, currentY);
-        contentStream.moveTo(rightX - 120, currentY);
+        contentStream.lineTo(leftX + 160, currentY);
+        contentStream.moveTo(rightX - 160, currentY);
         contentStream.lineTo(rightX, currentY);
         contentStream.stroke();
 
-        currentY -= 30;
-        drawLeftAlignedText(contentStream, regularFont, 10, "Firma del Organizador", leftX, currentY, BLACK);
-        drawRightAlignedText(contentStream, regularFont, 10, "Firma del Jurado", rightX, currentY, BLACK);
-
-        currentY -= 40;
-        drawCenteredText(contentStream, regularFont, 10, 
-                "Fecha: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), 
-                centerX, currentY, BLACK);
+        currentY -= 20;
+        String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        drawCenteredText(contentStream, regularFont, 12, "Fecha: " + dateStr, leftX + 80, currentY, BLACK);
+        
+        String rankingDisplay = certificate.getRankingType() != null && certificate.getRankingType().isPopularRanking() ? "Popular" : "Jueces";
+        drawCenteredText(contentStream, regularFont, 12, "Valoración: " + rankingDisplay, rightX - 80, currentY, BLACK);
     }
 
     /**
