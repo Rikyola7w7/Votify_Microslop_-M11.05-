@@ -14,7 +14,6 @@ import com.microslop.views.components.CategoryCard;
 import com.microslop.views.components.CreateProjectDialog;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -110,7 +109,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
                 .set("color", "var(--text-muted)")
                 .set("font-size", "0.95rem");
 
-            Button backBtn = new Button("Back to home", new Icon(VaadinIcon.ARROW_LEFT));
+            Button backBtn = new Button("\u2190 Back to home", new Icon(VaadinIcon.ARROW_LEFT));
             backBtn.addClassName("votify-btn-primary");
             backBtn.addClickListener(ev -> getUI().ifPresent(ui -> ui.navigate("")));
 
@@ -126,55 +125,9 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
     }
 
     private void buildUi() {
-        add(buildHeader());
-        add(buildSummaryCard());
-        add(buildSearchBar());
-        add(buildCategoriesGrid());
-    }
-
-    private HorizontalLayout buildHeader() {
-        var header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        header.addClassName("votify-header-dark");
-
-        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
-        backButton.addClassName("votify-btn-secondary");
-        backButton.getStyle()
-            .set("color", "white")
-            .set("background", "rgba(255, 255, 255, 0.15)")
-            .set("border", "1px solid rgba(255, 255, 255, 0.3)")
-            .set("border-radius", "var(--radius-md)");
-        backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
-
-        HorizontalLayout leftSection = new HorizontalLayout(backButton);
-        leftSection.setAlignItems(FlexComponent.Alignment.CENTER);
-        leftSection.setSpacing(true);
-        leftSection.setPadding(false);
-
-        Span title = new Span("Categories");
-        title.getStyle()
-            .set("color", "white")
-            .set("font-size", "18px")
-            .set("font-weight", "700")
-            .set("letter-spacing", "-0.2px")
-            .set("flex", "1")
-            .set("text-align", "center")
-            .set("overflow", "hidden")
-            .set("text-overflow", "ellipsis")
-            .set("white-space", "nowrap");
-
         Button submitBtn = new Button("Submit Project", new Icon(VaadinIcon.PLUS_CIRCLE_O));
-        submitBtn.getStyle()
-            .set("background", "white")
-            .set("color", "var(--primary)")
-            .set("border", "none")
-            .set("border-radius", "var(--radius-md)")
-            .set("cursor", "pointer")
-            .set("font-weight", "600")
-            .set("padding", "8px 16px");
-        submitBtn.setTooltipText("Submit a new project to this competition");
+        submitBtn.addClassName("votify-btn-primary");
+        submitBtn.getStyle().set("margin", "16px 24px 0 24px").set("align-self", "flex-start");
         submitBtn.addClickListener(e -> {
             if (!userService.isLoggedIn()) {
                 com.vaadin.flow.component.notification.Notification.show("Sign in to submit a project", 3000, com.vaadin.flow.component.notification.Notification.Position.MIDDLE);
@@ -187,20 +140,10 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             );
             dialog.open();
         });
-
-        Button helpBtn = new Button(new Icon(VaadinIcon.QUESTION_CIRCLE_O));
-        helpBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-        helpBtn.getElement().setAttribute("title", "Help & FAQ");
-        helpBtn.getStyle()
-            .set("color", "white")
-            .set("background", "transparent")
-            .set("border", "none")
-            .set("cursor", "pointer")
-            .set("font-size", "20px");
-        helpBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("help")));
-
-        header.add(leftSection, title, submitBtn, helpBtn);
-        return header;
+        add(submitBtn);
+        add(buildSummaryCard());
+        add(buildSearchBar());
+        add(buildCategoriesGrid());
     }
 
     private Div buildSummaryCard() {

@@ -19,7 +19,6 @@ import com.microslop.service.VoterService;
 import com.microslop.views.components.ChecklistVotingDialog;
 import com.microslop.views.components.CelebrationAnimation;
 import com.microslop.views.components.CommentAnimation;
-import com.microslop.views.components.ViewHeader;
 import com.microslop.views.components.VoteSuccessAnimation;
 import com.microslop.views.components.VoteQuickAnimation;
 import com.vaadin.flow.component.button.Button;
@@ -198,7 +197,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         this.currentUser = userService.getCurrentUser();
         var projects = projectService.listByCompetition(competitionId);
 
-        add(new ViewHeader(localizationService.t("voting.title"), userService, "competition/" + competitionId + "/categories"));
         add(buildBody(projects, currentCompetition.getName()));
     }
 
