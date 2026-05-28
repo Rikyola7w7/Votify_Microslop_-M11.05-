@@ -460,7 +460,8 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         content.addClassName("animate-fade-in");
         content.getStyle()
             .set("max-width", "760px")
-            .set("margin", "0 auto");
+            .set("margin", "0 auto")
+            .set("opacity", "0");
 
         String rankingTitle = isJudgesRanking
             ? localizationService.t("ranking.judgesranking")
@@ -565,6 +566,8 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             "setTimeout(function() {" +
             "  var loadings = document.querySelectorAll('.votify-loading');" +
             "  loadings.forEach(function(l) { l.style.opacity = '0'; l.style.transition = 'opacity 0.15s ease'; });" +
+            "  var contents = document.querySelectorAll('#ranking-content');" +
+            "  contents.forEach(function(c) { c.style.opacity = '1'; c.style.transition = 'opacity 0.3s ease'; });" +
             "  setTimeout(function() {" +
             "    var loadings = document.querySelectorAll('.votify-loading');" +
             "    loadings.forEach(function(l) { l.style.display = 'none'; });" +

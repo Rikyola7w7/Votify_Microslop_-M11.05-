@@ -201,7 +201,8 @@ public class MainView extends VerticalLayout {
             .set("display", "flex")
             .set("flex-wrap", "wrap")
             .set("gap", "24px")
-            .set("justify-content", "center");
+            .set("justify-content", "center")
+            .set("opacity", "0");
 
         for (int i = 0; i < competitions.size(); i++) {
             CompetitionCardComponent card = new CompetitionCardComponent(competitions.get(i), localizationService);
@@ -216,6 +217,8 @@ public class MainView extends VerticalLayout {
             "setTimeout(function() {" +
             "  var loadings = document.querySelectorAll('.votify-loading');" +
             "  loadings.forEach(function(l) { l.style.opacity = '0'; l.style.transition = 'opacity 0.15s ease'; });" +
+            "  var grids = document.querySelectorAll('#main-cards-grid');" +
+            "  grids.forEach(function(g) { g.style.opacity = '1'; g.style.transition = 'opacity 0.3s ease'; });" +
             "  setTimeout(function() {" +
             "    var loadings = document.querySelectorAll('.votify-loading');" +
             "    loadings.forEach(function(l) { l.style.display = 'none'; });" +

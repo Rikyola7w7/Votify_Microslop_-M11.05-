@@ -362,7 +362,8 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             .set("display", "flex")
             .set("flex-wrap", "wrap")
             .set("gap", "24px")
-            .set("justify-content", "center");
+            .set("justify-content", "center")
+            .set("opacity", "0");
 
         for (int i = 0; i < allCategories.size(); i++) {
             Category category = allCategories.get(i);
@@ -382,6 +383,8 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             "setTimeout(function() {" +
             "  var loadings = document.querySelectorAll('.votify-loading');" +
             "  loadings.forEach(function(l) { l.style.opacity = '0'; l.style.transition = 'opacity 0.15s ease'; });" +
+            "  var grids = document.querySelectorAll('#cat-cards-grid');" +
+            "  grids.forEach(function(g) { g.style.opacity = '1'; g.style.transition = 'opacity 0.3s ease'; });" +
             "  setTimeout(function() {" +
             "    var loadings = document.querySelectorAll('.votify-loading');" +
             "    loadings.forEach(function(l) { l.style.display = 'none'; });" +
