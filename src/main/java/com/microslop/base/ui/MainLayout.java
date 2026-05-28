@@ -214,6 +214,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         links.add(createNavLink("My Competitions", null, VaadinIcon.TROPHY, "nav-competitions"));
         links.add(createNavLink("Projects", null, VaadinIcon.FOLDER, "nav-projects"));
         links.add(createNavLink("Certificates", "certificates", VaadinIcon.DIPLOMA, "nav-certificates"));
+        links.add(createNavLink("Invitations", "invitations", VaadinIcon.ENVELOPE, "nav-invitations"));
 
         return links;
     }
@@ -243,6 +244,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             case "nav-competitions" -> username != null ? username + "/competitions" : "login";
             case "nav-projects" -> username != null ? username + "/projects" : "login";
             case "nav-certificates" -> "certificates";
+            case "nav-invitations" -> "invitations";
             default -> null;
         };
     }
@@ -263,6 +265,8 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             activeSection = "nav-projects";
         } else if (currentRoute.equals("certificates")) {
             activeSection = "nav-certificates";
+        } else if (currentRoute.equals("invitations")) {
+            activeSection = "nav-invitations";
         } else {
             activeSection = null;
         }
@@ -291,7 +295,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             .map(Button.class::cast)
             .forEach(btn -> {
                 String id = btn.getId().orElse("");
-                boolean requiresAuth = "nav-projects".equals(id) || "nav-certificates".equals(id) || "nav-competitions".equals(id);
+                boolean requiresAuth = "nav-projects".equals(id) || "nav-certificates".equals(id) || "nav-competitions".equals(id) || "nav-invitations".equals(id);
                 if (requiresAuth) {
                     btn.setVisible(loggedIn);
                     btn.getElement().setAttribute("hidden", !loggedIn);
@@ -593,6 +597,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             case "projects" -> "Projects";
             case "competitions" -> "Competitions";
             case "help" -> "Help & FAQs";
+            case "invitations" -> "Invitations";
             default -> {
                 if (segment.startsWith(":")) {
                     yield "Details";
