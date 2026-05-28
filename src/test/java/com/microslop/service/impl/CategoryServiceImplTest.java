@@ -86,7 +86,7 @@ class CategoryServiceImplTest {
         when(competitionRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> categoryService.createCategory(999L, categoryDTO))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
                 .hasMessage("Competition not found: 999");
     }
 
@@ -96,7 +96,7 @@ class CategoryServiceImplTest {
         when(categoryRepository.findByCompetitionIdAndName(1L, "Test Category")).thenReturn(Optional.of(category));
 
         assertThatThrownBy(() -> categoryService.createCategory(1L, categoryDTO))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.BusinessValidationException.class)
                 .hasMessageContaining("already exist");
     }
 
@@ -141,7 +141,7 @@ class CategoryServiceImplTest {
         when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> categoryService.getByIdOrFail(999L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
                 .hasMessage("Category not found: 999");
     }
 }

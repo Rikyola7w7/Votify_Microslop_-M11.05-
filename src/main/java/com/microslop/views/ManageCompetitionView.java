@@ -585,13 +585,12 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                                     submission.getSubmitter()
                                 );
 
-                                notificationService.createNotification(
+                                notificationService.saveAndPublish(new com.microslop.factory.notification.ProjectInvitationNotificationCreator().createWithInvitation(
                                     invitedUser,
                                     "Project Invitation",
                                     submission.getSubmitter().getUsername() + " invited you to join \"" + submission.getProjectName() + "\" in \"" + competition.getName() + "\".",
-                                    "PROJECT_INVITATION",
                                     invitation.getId()
-                                );
+                                ));
                             } catch (Exception ex) {
                                 System.err.println("Error creating invitation for user " + userId + ": " + ex.getMessage());
                             }
@@ -600,11 +599,11 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 }
             }
 
-            notifyUser(submission.getSubmitter(),
+            notifyUser(new com.microslop.factory.notification.ProjectAcceptedNotificationCreator().create(
+                submission.getSubmitter(),
                 "Project Accepted",
-                "Your project \"" + submission.getProjectName() + "\" has been accepted to \"" + competition.getName() + "\"!",
-                "PROJECT_ACCEPTED"
-            );
+                "Your project \"" + submission.getProjectName() + "\" has been accepted to \"" + competition.getName() + "\"!"
+            ));
 
             pendingSubmissionRepository.delete(submission);
 
@@ -619,11 +618,11 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
 
     private void declineSubmission(PendingProjectSubmission submission) {
         try {
-            notifyUser(submission.getSubmitter(),
+            notifyUser(new com.microslop.factory.notification.ProjectDeclinedNotificationCreator().create(
+                submission.getSubmitter(),
                 "Project Declined",
-                "Your project \"" + submission.getProjectName() + "\" has been declined for \"" + competition.getName() + "\".",
-                "PROJECT_DECLINED"
-            );
+                "Your project \"" + submission.getProjectName() + "\" has been declined for \"" + competition.getName() + "\"."
+            ));
 
             pendingSubmissionRepository.delete(submission);
 
@@ -636,10 +635,10 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         }
     }
 
-    private void notifyUser(com.microslop.entity.User user, String title, String message, String type) {
+    private void notifyUser(com.microslop.entity.Notification notification) {
         try {
-            if (notificationService != null && user != null) {
-                notificationService.createNotification(user, title, message, type);
+            if (notificationService != null && notification.getUser() != null) {
+                notificationService.saveAndPublish(notification);
             }
         } catch (Exception ignored) {}
     }

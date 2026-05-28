@@ -65,7 +65,7 @@ class UserServiceImplTest {
         when(userRepository.existsByUsernameIgnoreCase("johndoe")).thenReturn(true);
 
         assertThatThrownBy(() -> userService.registerUser(newUser))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.BusinessValidationException.class)
                 .hasMessage("Username is already in use. Choose another one.");
     }
 
@@ -76,7 +76,7 @@ class UserServiceImplTest {
         when(userRepository.existsByEmailIgnoreCase("john@example.com")).thenReturn(true);
 
         assertThatThrownBy(() -> userService.registerUser(newUser))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.BusinessValidationException.class)
                 .hasMessage("An account with this email already exists.");
     }
 
@@ -87,7 +87,7 @@ class UserServiceImplTest {
         when(userRepository.existsByEmailIgnoreCase("john@example.com")).thenReturn(false);
 
         assertThatThrownBy(() -> userService.registerUser(newUser))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.BusinessValidationException.class)
                 .hasMessage("Password cannot be null.");
     }
 
@@ -98,7 +98,7 @@ class UserServiceImplTest {
         when(userRepository.existsByEmailIgnoreCase("john@example.com")).thenReturn(false);
 
         assertThatThrownBy(() -> userService.registerUser(newUser))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.BusinessValidationException.class)
                 .hasMessage("Password must be at least 6 characters long.");
     }
 
@@ -109,7 +109,7 @@ class UserServiceImplTest {
         when(userRepository.existsByEmailIgnoreCase("young@example.com")).thenReturn(false);
 
         assertThatThrownBy(() -> userService.registerUser(newUser))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.BusinessValidationException.class)
                 .hasMessage("You must be at least 13 years old to register.");
     }
 
@@ -120,7 +120,7 @@ class UserServiceImplTest {
         when(userRepository.existsByEmailIgnoreCase("future@example.com")).thenReturn(false);
 
         assertThatThrownBy(() -> userService.registerUser(newUser))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.BusinessValidationException.class)
                 .hasMessage("Birth date cannot be in the future.");
     }
 

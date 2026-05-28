@@ -2,7 +2,7 @@ package com.microslop.service.impl;
 
 import com.microslop.entity.Competition;
 import com.microslop.entity.CompetitionStatus;
-import com.microslop.enums.NotificationType;
+import com.microslop.factory.notification.CompetitionEndTimeNotificationCreator;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.UserRepository;
 import com.microslop.service.CompetitionCheckService;
@@ -24,15 +24,18 @@ public class CompetitionCheckServiceImpl implements CompetitionCheckService {
     private final UserRepository userRepository;
     private final CompetitionNotificationService competitionNotificationService;
     private final NotificationService notificationService;
+    private final CompetitionEndTimeNotificationCreator competitionEndTimeNotificationCreator;
 
     public CompetitionCheckServiceImpl(CompetitionRepository competitionRepository,
                                        UserRepository userRepository,
                                        CompetitionNotificationService competitionNotificationService,
-                                       NotificationService notificationService) {
+                                       NotificationService notificationService,
+                                       CompetitionEndTimeNotificationCreator competitionEndTimeNotificationCreator) {
         this.competitionRepository = competitionRepository;
         this.userRepository = userRepository;
         this.competitionNotificationService = competitionNotificationService;
         this.notificationService = notificationService;
+        this.competitionEndTimeNotificationCreator = competitionEndTimeNotificationCreator;
     }
 
     @Override
@@ -65,12 +68,14 @@ public class CompetitionCheckServiceImpl implements CompetitionCheckService {
                             String message = "The competition '" + competition.getName() + 
                                            "' has ended. Would you like to generate certificates for competitors?";
                             
-                            notificationService.createNotification(
-                                    creator.get(),
-                                    title,
-                                    message,
-                                    NotificationType.END_TIME_COMPETITION.getCode(),
-                                    competition);
+                            notificationService.saveAndPublish(
+                                    competitionEndTimeNotificationCreator.createWithCompetition(
+                                            creator.get(),
+                                            title,
+                                            message,
+                                            competition
+                                    )
+                            );
                             
                             competition.setEndNotificationSent(true);
                         }

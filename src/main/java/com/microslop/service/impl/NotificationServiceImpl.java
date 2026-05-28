@@ -67,42 +67,14 @@ public class NotificationServiceImpl implements NotificationService, Notificatio
     // ── Notification CRUD Operations ────────────────────────────────────────
     
     @Override
-    public Notification createNotification(User user, String title, String message, String type) {
-        Notification notification = new Notification(user, title, message, type);
+    public Notification saveAndPublish(Notification notification) {
         Notification savedNotification = notificationRepository.save(notification);
         
         // Publish notification created event
-        NotificationCreatedEvent event = new NotificationCreatedEvent(savedNotification, user.getUsername());
+        NotificationCreatedEvent event = new NotificationCreatedEvent(savedNotification, savedNotification.getUser().getUsername());
         notifyNotificationCreated(event);
         
-        log.info("Notification created for user {}: {}", user.getUsername(), title);
-        return savedNotification;
-    }
-    
-    @Override
-    public Notification createNotification(User user, String title, String message, String type, LocalDateTime expirationDate) {
-        Notification notification = new Notification(user, title, message, type, expirationDate);
-        Notification savedNotification = notificationRepository.save(notification);
-        
-        // Publish notification created event
-        NotificationCreatedEvent event = new NotificationCreatedEvent(savedNotification, user.getUsername());
-        notifyNotificationCreated(event);
-        
-        log.info("Notification created for user {}: {} (expires: {})", user.getUsername(), title, expirationDate);
-        return savedNotification;
-    }
-
-    @Override
-    public Notification createNotification(User user, String title, String message, String type, Long invitationId) {
-        Notification notification = new Notification(user, title, message, type);
-        notification.setInvitationId(invitationId);
-        Notification savedNotification = notificationRepository.save(notification);
-        
-        // Publish notification created event
-        NotificationCreatedEvent event = new NotificationCreatedEvent(savedNotification, user.getUsername());
-        notifyNotificationCreated(event);
-        
-        log.info("Notification created for user {}: {} (invitation: {})", user.getUsername(), title, invitationId);
+        log.info("Notification saved and published for user {}: {}", savedNotification.getUser().getUsername(), savedNotification.getTitle());
         return savedNotification;
     }
     
@@ -241,31 +213,5 @@ public class NotificationServiceImpl implements NotificationService, Notificatio
         return notificationRepository.findByUserAndIsReadFalseOrderByCreationDateDesc(currentUser);
     }
 
-    @Override
-    public Notification createNotification(User user, String title, String message, String type, Competition competition) {
-        Notification notification = new Notification(user, title, message, type, competition);
-        Notification savedNotification = notificationRepository.save(notification);
-        
-        // Publish notification created event
-        NotificationCreatedEvent event = new NotificationCreatedEvent(savedNotification, user.getUsername());
-        notifyNotificationCreated(event);
-        
-        log.info("Notification created for user {}: {} (competition: {})", 
-            user.getUsername(), title, competition != null ? competition.getId() : "none");
-        return savedNotification;
-    }
 
-    @Override
-    public Notification createNotification(User user, String title, String message, String type, LocalDateTime expirationDate, Competition competition) {
-        Notification notification = new Notification(user, title, message, type, expirationDate, competition);
-        Notification savedNotification = notificationRepository.save(notification);
-        
-        // Publish notification created event
-        NotificationCreatedEvent event = new NotificationCreatedEvent(savedNotification, user.getUsername());
-        notifyNotificationCreated(event);
-        
-        log.info("Notification created for user {}: {} (expires: {}, competition: {})", 
-            user.getUsername(), title, expirationDate, competition != null ? competition.getId() : "none");
-        return savedNotification;
-    }
 }

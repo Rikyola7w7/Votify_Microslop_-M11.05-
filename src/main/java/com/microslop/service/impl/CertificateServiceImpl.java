@@ -1,7 +1,7 @@
 package com.microslop.service.impl;
 
 import com.microslop.entity.*;
-import com.microslop.enums.NotificationType;
+import com.microslop.factory.notification.CertificateSentNotificationCreator;
 import com.microslop.repository.CertificateRepository;
 import com.microslop.repository.CertificateTypeRepository;
 import com.microslop.repository.ProjectRepository;
@@ -40,6 +40,7 @@ public class CertificateServiceImpl implements CertificateService {
     private final CertificatePdfGenerator pdfGenerator;
     private final CertificateTypeRepository certificateTypeRepository;
     private final RankingTypeRepository rankingTypeRepository;
+    private final CertificateSentNotificationCreator certificateSentNotificationCreator;
 
     public CertificateServiceImpl(CertificateRepository certificateRepository,
                                  ProjectRepository projectRepository,
@@ -49,7 +50,8 @@ public class CertificateServiceImpl implements CertificateService {
                                  UserService userService,
                                  CertificatePdfGenerator pdfGenerator,
                                  CertificateTypeRepository certificateTypeRepository,
-                                 RankingTypeRepository rankingTypeRepository) {
+                                 RankingTypeRepository rankingTypeRepository,
+                                 CertificateSentNotificationCreator certificateSentNotificationCreator) {
         this.certificateRepository = certificateRepository;
         this.projectRepository = projectRepository;
         this.voteRepository = voteRepository;
@@ -59,6 +61,7 @@ public class CertificateServiceImpl implements CertificateService {
         this.pdfGenerator = pdfGenerator;
         this.certificateTypeRepository = certificateTypeRepository;
         this.rankingTypeRepository = rankingTypeRepository;
+        this.certificateSentNotificationCreator = certificateSentNotificationCreator;
     }
 
     @Override
@@ -233,7 +236,7 @@ public class CertificateServiceImpl implements CertificateService {
             String message = "You have received a " + certificateType.getDisplayName() +
                            " for category '" + category.getName() + "' from the competition '" + competition.getName() + "'";
 
-            notificationService.createNotification(user, title, message, NotificationType.CERTIFICATE_SENT.getCode());
+            notificationService.saveAndPublish(certificateSentNotificationCreator.create(user, title, message));
             log.debug("Sent CERTIFICATE_SENT notification to user {} for competition {}", user.getId(), competition.getId());
         } catch (Exception e) {
             log.error("Error sending certificate notification: {}", e.getMessage());

@@ -53,7 +53,7 @@ class GeminiApiClientTest {
     void should_throw_when_api_key_not_configured() {
         GeminiApiClient emptyClient = new GeminiApiClient("");
         assertThatThrownBy(() -> emptyClient.generateFeedback("some comments"))
-            .isInstanceOf(IllegalStateException.class)
+            .isInstanceOf(com.microslop.exception.ExternalServiceException.class)
             .hasMessageContaining("API key is not configured");
     }
 
@@ -62,7 +62,7 @@ class GeminiApiClientTest {
     void should_throw_when_api_key_is_placeholder() {
         GeminiApiClient placeholderClient = new GeminiApiClient("TU_API_KEY_DE_GEMINI");
         assertThatThrownBy(() -> placeholderClient.generateFeedback("some comments"))
-            .isInstanceOf(IllegalStateException.class)
+            .isInstanceOf(com.microslop.exception.ExternalServiceException.class)
             .hasMessageContaining("API key is not configured");
     }
 

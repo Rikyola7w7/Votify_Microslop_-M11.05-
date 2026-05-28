@@ -11,19 +11,9 @@ import java.util.Optional;
 public interface NotificationService {
     
     /**
-     * Create a new notification for a user
+     * Save a new notification and publish its creation event
      */
-    Notification createNotification(User user, String title, String message, String type);
-    
-    /**
-     * Create a new notification with expiration date
-     */
-    Notification createNotification(User user, String title, String message, String type, LocalDateTime expirationDate);
-
-    /**
-     * Create a new notification with invitation reference
-     */
-    Notification createNotification(User user, String title, String message, String type, Long invitationId);
+    Notification saveAndPublish(Notification notification);
     
     /**
      * Get all notifications for the current user
@@ -100,13 +90,4 @@ public interface NotificationService {
      */
     List<Notification> getUnreadNotificationsForCurrentUser();
 
-    /**
-     * Create a new notification with competition association
-     */
-    Notification createNotification(User user, String title, String message, String type, Competition competition);
-
-    /**
-     * Create a new notification with expiration date and competition association
-     */
-    Notification createNotification(User user, String title, String message, String type, LocalDateTime expirationDate, Competition competition);
 }
