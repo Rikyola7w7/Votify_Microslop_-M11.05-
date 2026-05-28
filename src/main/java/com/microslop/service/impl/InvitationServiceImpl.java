@@ -4,12 +4,15 @@ import com.microslop.entity.Competition;
 import com.microslop.entity.Invitation;
 import com.microslop.entity.Project;
 import com.microslop.entity.User;
+import com.microslop.exception.EntityNotFoundException;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.InvitationRepository;
 import com.microslop.repository.ProjectRepository;
 import com.microslop.service.InvitationService;
 import com.microslop.service.NotificationService;
 import com.microslop.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +21,8 @@ import java.util.Optional;
 
 @Service
 public class InvitationServiceImpl implements InvitationService {
+
+    private static final Logger log = LoggerFactory.getLogger(InvitationServiceImpl.class);
 
     private final InvitationRepository invitationRepository;
     private final ProjectRepository projectRepository;
@@ -41,10 +46,12 @@ public class InvitationServiceImpl implements InvitationService {
     @Transactional
     public Invitation createInvitation(User invitedUser, Long projectId, String projectName, Long competitionId, User invitedBy) {
         Competition competition = competitionRepository.findById(competitionId)
-            .orElseThrow(() -> new RuntimeException("Competition not found"));
+            .orElseThrow(() -> new EntityNotFoundException("Competition", competitionId));
 
         Invitation invitation = new Invitation(invitedUser, projectId, projectName, competition, invitedBy);
-        return invitationRepository.save(invitation);
+        Invitation saved = invitationRepository.save(invitation);
+        log.info("Invitation created: user {} invited by {} to project {}", invitedUser.getUsername(), invitedBy.getUsername(), projectName);
+        return saved;
     }
 
     @Override
@@ -64,13 +71,12 @@ public class InvitationServiceImpl implements InvitationService {
     public Invitation acceptInvitation(Long invitationId) {
         User currentUser = userService.getCurrentUser();
         Invitation invitation = invitationRepository.findByIdAndUser(invitationId, currentUser)
-            .orElseThrow(() -> new RuntimeException("Invitation not found or does not belong to current user"));
+            .orElseThrow(() -> new EntityNotFoundException("Invitation", invitationId));
 
         if (!invitation.isPending()) {
-            throw new RuntimeException("Invitation is not pending");
+            throw new IllegalStateException("Invitation is not pending");
         }
 
-        // Add user to project
         Optional<Project> projectOpt = projectRepository.findById(invitation.getProjectId());
         if (projectOpt.isPresent()) {
             Project project = projectOpt.get();
@@ -78,11 +84,10 @@ public class InvitationServiceImpl implements InvitationService {
             projectRepository.save(project);
         }
 
-        // Update invitation status
         invitation.setStatus(Invitation.InvitationStatus.ACCEPTED);
         Invitation updatedInvitation = invitationRepository.save(invitation);
+        log.info("Invitation {} accepted by user {}", invitationId, currentUser.getUsername());
 
-        // Notify the user who invited them
         try {
             notificationService.createNotification(
                 invitation.getInvitedBy(),
@@ -90,7 +95,9 @@ public class InvitationServiceImpl implements InvitationService {
                 currentUser.getUsername() + " accepted your invitation to join \"" + invitation.getProjectName() + "\"",
                 "INVITATION_ACCEPTED"
             );
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("Failed to send notification for accepted invitation {}: {}", invitationId, e.getMessage());
+        }
 
         return updatedInvitation;
     }
@@ -100,17 +107,16 @@ public class InvitationServiceImpl implements InvitationService {
     public Invitation refuseInvitation(Long invitationId) {
         User currentUser = userService.getCurrentUser();
         Invitation invitation = invitationRepository.findByIdAndUser(invitationId, currentUser)
-            .orElseThrow(() -> new RuntimeException("Invitation not found or does not belong to current user"));
+            .orElseThrow(() -> new EntityNotFoundException("Invitation", invitationId));
 
         if (!invitation.isPending()) {
-            throw new RuntimeException("Invitation is not pending");
+            throw new IllegalStateException("Invitation is not pending");
         }
 
-        // Update invitation status
         invitation.setStatus(Invitation.InvitationStatus.REFUSED);
         Invitation updatedInvitation = invitationRepository.save(invitation);
+        log.info("Invitation {} refused by user {}", invitationId, currentUser.getUsername());
 
-        // Notify the user who invited them
         try {
             notificationService.createNotification(
                 invitation.getInvitedBy(),
@@ -118,7 +124,9 @@ public class InvitationServiceImpl implements InvitationService {
                 currentUser.getUsername() + " refused your invitation to join \"" + invitation.getProjectName() + "\"",
                 "INVITATION_REFUSED"
             );
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("Failed to send notification for refused invitation {}: {}", invitationId, e.getMessage());
+        }
 
         return updatedInvitation;
     }

@@ -1,12 +1,14 @@
 package com.microslop.state;
 
-public class UnsupportedStateTransition extends IllegalStateException {
+import com.microslop.exception.CompetitionStateException;
+
+public class UnsupportedStateTransition extends CompetitionStateException {
 
     private final String fromState;
     private final String toState;
 
     public UnsupportedStateTransition(String fromState, String toState) {
-        super(String.format("Transition from '%s' to '%s' is not supported", fromState, toState));
+        super(String.format("Cannot transition from '%s' to '%s'", fromState, toState));
         this.fromState = fromState;
         this.toState = toState;
     }

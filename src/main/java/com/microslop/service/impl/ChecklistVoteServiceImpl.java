@@ -4,6 +4,8 @@ import com.microslop.entity.ChecklistItem;
 import com.microslop.entity.ChecklistVote;
 import com.microslop.entity.Project;
 import com.microslop.entity.User;
+import com.microslop.exception.CompetitionStateException;
+import com.microslop.exception.EntityNotFoundException;
 import com.microslop.factory.ChecklistVoteCreator;
 import com.microslop.repository.ChecklistItemRepository;
 import com.microslop.repository.ChecklistVoteRepository;
@@ -11,6 +13,8 @@ import com.microslop.repository.ProjectRepository;
 import com.microslop.service.ChecklistVoteService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +22,8 @@ import java.util.List;
 @Service
 @Transactional
 public class ChecklistVoteServiceImpl implements ChecklistVoteService {
+
+    private static final Logger log = LoggerFactory.getLogger(ChecklistVoteServiceImpl.class);
 
     private final ChecklistVoteRepository checklistVoteRepository;
     private final ChecklistItemRepository checklistItemRepository;
@@ -49,25 +55,28 @@ public class ChecklistVoteServiceImpl implements ChecklistVoteService {
     @Transactional
     public void submitChecklistVotes(String username, Long projectId, List<Long> checklistItemIds) {
         User user = userService.searchByUsernameIgnoreCase(username)
-                .orElseThrow(() -> new IllegalStateException("User not found."));
+                .orElseThrow(() -> new EntityNotFoundException("User", username));
         Project project = projectService.getById(projectId);
         var competition = project.getCompetition();
         if (!competition.isActive()) {
-            throw new IllegalStateException("Competition is not active.");
+            throw new CompetitionStateException(competition.getStatus().name(), "vote with checklist");
         }
 
         if (!"CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
-            throw new IllegalStateException("This competition does not use checklist voting.");
+            throw new CompetitionStateException("This competition does not use checklist voting.");
         }
 
         List<ChecklistItem> items = checklistItemRepository.findAllById(checklistItemIds);
+        int saved = 0;
         for (ChecklistItem item : items) {
             if (!checklistVoteRepository.existsByUserIdAndProjectIdAndChecklistItemId(
                     user.getId(), projectId, item.getId())) {
                 ChecklistVote vote = checklistVoteCreator.create(user, project, item);
                 checklistVoteRepository.save(vote);
+                saved++;
             }
         }
+        log.info("User {} submitted {} checklist votes for project {}", username, saved, projectId);
     }
 
     @Override

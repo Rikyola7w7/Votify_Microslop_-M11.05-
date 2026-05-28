@@ -1,6 +1,7 @@
 package com.microslop.service.impl;
 
 import com.microslop.entity.ProjectComment;
+import com.microslop.exception.EntityNotFoundException;
 import com.microslop.repository.ProjectCommentRepository;
 import com.microslop.repository.ProjectRepository;
 import com.microslop.repository.UserRepository;
@@ -8,6 +9,8 @@ import com.microslop.repository.CategoryRepository;
 import com.microslop.service.ProjectCommentService;
 import com.microslop.command.CommandExecutor;
 import com.microslop.command.comment.SubmitCommentCommand;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +19,8 @@ import java.util.List;
 @Service
 @Transactional
 public class ProjectCommentServiceImpl implements ProjectCommentService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProjectCommentServiceImpl.class);
 
     private final ProjectCommentRepository commentRepository;
     private final ProjectRepository projectRepository;
@@ -61,7 +66,7 @@ public class ProjectCommentServiceImpl implements ProjectCommentService {
     @Transactional(readOnly = true)
     public List<ProjectComment> getCommentsByUser(String username) {
         var user = userRepository.findByUsernameIgnoreCase(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+                .orElseThrow(() -> new EntityNotFoundException("User", username));
         return commentRepository.findByUserIdOrderByCreationDateDesc(user.getId());
     }
 

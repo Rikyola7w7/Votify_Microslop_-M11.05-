@@ -2,6 +2,7 @@ package com.microslop.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.microslop.exception.ExternalServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +62,7 @@ public class GeminiApiClient {
      */
     public String generateFeedback(String commentsText) {
         if (apiKey == null || apiKey.isBlank()) {
-            throw new IllegalStateException("OpenRouter/Gemini API key is not configured. Please set OPENROUTER_API_KEY in .env");
+            throw new ExternalServiceException("OpenRouter", "API key is not configured. Please set OPENROUTER_API_KEY in .env");
         }
 
         String prompt = buildPrompt(commentsText);
@@ -91,18 +92,20 @@ public class GeminiApiClient {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 return extractTextFromResponse(response.getBody());
             }
-            throw new GeminiApiException("OpenRouter API returned non-2xx status: " + response.getStatusCode(), response.getStatusCode().value());
+            throw new ExternalServiceException("OpenRouter", "API returned non-2xx status: " + response.getStatusCode(), response.getStatusCode().value());
         } catch (HttpClientErrorException e) {
             log.error("OpenRouter API client error: {}, response body: {}", e.getStatusCode(), e.getResponseBodyAsString());
             if (e.getStatusCode().value() == 429) {
                 log.warn("OpenRouter API rate limit exceeded (429). Retry after a few seconds.");
-                throw new GeminiApiException(
-                    "AI request limit reached. Please wait a moment and try again.", 429);
+                throw new ExternalServiceException(
+                    "OpenRouter", "AI request limit reached. Please wait a moment and try again.", 429);
             }
-            throw new GeminiApiException("OpenRouter API error: " + e.getStatusText() + " - " + e.getResponseBodyAsString(), e);
+            throw new ExternalServiceException("OpenRouter", "API error: " + e.getStatusText(), e);
+        } catch (ExternalServiceException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error calling OpenRouter API", e);
-            throw new GeminiApiException("Failed to generate AI feedback: " + e.getMessage(), e);
+            throw new ExternalServiceException("OpenRouter", "Failed to generate AI feedback: " + e.getMessage(), e);
         }
     }
 

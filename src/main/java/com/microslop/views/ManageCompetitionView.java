@@ -7,6 +7,7 @@ import com.microslop.entity.Invitation;
 import com.microslop.entity.PendingProjectSubmission;
 import com.microslop.entity.Project;
 import com.microslop.entity.User;
+import com.microslop.exception.ErrorHandler;
 import com.microslop.repository.CategoryRepository;
 import com.microslop.repository.PendingProjectSubmissionRepository;
 import com.microslop.repository.UserRepository;
@@ -612,8 +613,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
             Notification.show("Project accepted.", 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         } catch (Exception ex) {
-            Notification.show("Error accepting project: " + ex.getMessage(), 4000, Notification.Position.TOP_CENTER)
-                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            ErrorHandler.handleException(ex, "accept-submission", "Error accepting project");
         }
     }
 
@@ -632,8 +632,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
             Notification.show("Project declined and removed.", 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         } catch (Exception ex) {
-            Notification.show("Error declining project: " + ex.getMessage(), 4000, Notification.Position.TOP_CENTER)
-                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            ErrorHandler.handleException(ex, "decline-submission", "Error declining project");
         }
     }
 

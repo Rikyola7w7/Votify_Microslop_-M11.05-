@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import com.microslop.entity.Category;
 import com.microslop.entity.Project;
+import com.microslop.exception.ErrorHandler;
 import com.microslop.repository.ChecklistItemRepository;
 import com.microslop.service.CategoryService;
 import com.microslop.service.ChecklistVoteService;
@@ -513,7 +514,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 CommentAnimation commentAnim = new CommentAnimation(() -> {});
                 getUI().ifPresent(ui -> ui.add(commentAnim));
             } catch (Exception ex) {
-                showNotification(localizationService.t("voting.errorsavingcomment") + ex.getMessage(), NotificationVariant.LUMO_ERROR);
+                ErrorHandler.handleException(ex, "voting-comment", localizationService.t("voting.errorsavingcomment"));
             }
         });
         saveBtn.addClassName("votify-btn-primary");
@@ -677,7 +678,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             dialog.open();
 
         } catch (Exception ex) {
-            showNotification(localizationService.t("voting.checklisterror") + ex.getMessage(), NotificationVariant.LUMO_ERROR);
+            ErrorHandler.handleException(ex, "checklist-voting", localizationService.t("voting.checklisterror"));
         }
     }
 }

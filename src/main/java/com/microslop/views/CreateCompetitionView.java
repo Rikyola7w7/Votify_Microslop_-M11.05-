@@ -4,6 +4,7 @@ import com.microslop.base.ui.MainLayout;
 import com.microslop.dto.CategoryDTO;
 import com.microslop.dto.CompetitionDTO;
 import com.microslop.entity.User;
+import com.microslop.exception.ErrorHandler;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.UserService;
 import com.vaadin.flow.component.button.Button;
@@ -544,11 +545,9 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
             getUI().ifPresent(ui -> ui.navigate(username + "/competitions"));
 
         } catch (IllegalArgumentException ex) {
-            Notification error = Notification.show(ex.getMessage());
-            error.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            ErrorHandler.handleException(ex, "create-competition");
         } catch (Exception ex) {
-            Notification error = Notification.show("An error occurred while creating the competition.");
-            error.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            ErrorHandler.handleException(ex, "create-competition", "An error occurred while creating the competition.");
         }
     }
 

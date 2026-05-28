@@ -1,6 +1,7 @@
 package com.microslop.views;
 
 import com.microslop.entity.User;
+import com.microslop.exception.ErrorHandler;
 import com.microslop.service.LocalizationService;
 import com.microslop.service.UserService;
 import com.microslop.views.components.CelebrationAnimation;
@@ -259,8 +260,7 @@ public class RegisterView extends HorizontalLayout {
                     }
 
                 } catch (IllegalArgumentException ex) {
-                    Notification error = Notification.show(ex.getMessage());
-                    error.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    ErrorHandler.handleException(ex, "register");
                 }
             });
             confirmButton.addClassNames("votify-btn-primary");

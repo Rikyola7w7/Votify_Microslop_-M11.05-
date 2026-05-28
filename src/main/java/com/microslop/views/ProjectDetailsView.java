@@ -4,6 +4,7 @@ import com.microslop.entity.Project;
 import com.microslop.entity.ProjectComment;
 import com.microslop.entity.User;
 import com.microslop.entity.Vote;
+import com.microslop.exception.ErrorHandler;
 import com.microslop.repository.ProjectCommentRepository;
 import com.microslop.repository.VoteRepository;
 import com.microslop.service.LocalizationService;
@@ -187,7 +188,7 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
                 showNoCommentsMessage();
             }
         } catch (Exception e) {
-            showErrorNotification(localizationService.t("common.error") + ": " + e.getMessage());
+            ErrorHandler.handleException(e, "load-project", localizationService.t("common.error"));
         }
     }
 

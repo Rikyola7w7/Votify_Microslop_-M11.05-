@@ -1,6 +1,7 @@
 package com.microslop.views;
 
 import com.microslop.entity.User;
+import com.microslop.exception.ErrorHandler;
 import com.microslop.service.LocalizationService;
 import com.microslop.service.UserService;
 import com.vaadin.flow.component.button.Button;
@@ -193,11 +194,9 @@ public class LoginView extends HorizontalLayout {
                 getUI().ifPresent(ui -> ui.getPage().executeJs("window.location.href = $0", finalDest));
 
             } catch (IllegalArgumentException ex) {
-                Notification error = Notification.show(ex.getMessage());
-                error.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                ErrorHandler.handleException(ex, "login");
             } catch (IllegalStateException ex) {
-                Notification error = Notification.show(localizationService.t("login.unexpectederror"));
-                error.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                ErrorHandler.handleException(ex, "login", localizationService.t("login.unexpectederror"));
             }
         });
         loginButton.setWidthFull();

@@ -1,23 +1,18 @@
 package com.microslop.client;
 
+import com.microslop.exception.ExternalServiceException;
+
 /**
  * Exception thrown when the Gemini API returns an error.
+ * Kept for backward compatibility. New code should use ExternalServiceException.
  */
-public class GeminiApiException extends RuntimeException {
-
-    private final int statusCode;
+public class GeminiApiException extends ExternalServiceException {
 
     public GeminiApiException(String message, int statusCode) {
-        super(message);
-        this.statusCode = statusCode;
+        super("Gemini", message, statusCode);
     }
 
     public GeminiApiException(String message, Throwable cause) {
-        super(message, cause);
-        this.statusCode = -1;
-    }
-
-    public int getStatusCode() {
-        return statusCode;
+        super("Gemini", message, cause);
     }
 }

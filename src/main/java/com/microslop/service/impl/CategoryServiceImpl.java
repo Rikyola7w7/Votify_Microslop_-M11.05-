@@ -3,11 +3,15 @@ package com.microslop.service.impl;
 import com.microslop.dto.CategoryDTO;
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
+import com.microslop.exception.BusinessValidationException;
+import com.microslop.exception.EntityNotFoundException;
 import com.microslop.repository.CategoryRepository;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.ProjectCommentRepository;
 import com.microslop.repository.VoteRepository;
 import com.microslop.service.CategoryService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -23,6 +27,8 @@ import java.util.Optional;
 @Service
 @Transactional
 public class CategoryServiceImpl implements CategoryService {
+
+    private static final Logger log = LoggerFactory.getLogger(CategoryServiceImpl.class);
 
     private final CategoryRepository categoryRepository;
     private final CompetitionRepository competitionRepository;
@@ -52,17 +58,15 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     @CacheEvict(value = {"categories", "categoriesAll", "categoriesByCompetition"}, allEntries = true)
     public Category createCategory(Long competitionId, CategoryDTO categoryDTO) {
-        // Validate competition exists
         Competition competition = competitionRepository.findById(competitionId)
-                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + competitionId));
+                .orElseThrow(() -> new EntityNotFoundException("Competition", competitionId));
 
         categoryRepository.findByCompetitionIdAndName(competitionId, categoryDTO.getName())
-                .ifPresent(existing ->{
-                    throw new IllegalArgumentException(
+                .ifPresent(existing -> {
+                    throw new BusinessValidationException(
                             "A category with name '" + categoryDTO.getName() + "' already exist in this competition"
                     );
                 });
-        // Create new category from DTO
         Category category = new Category();
         category.setName(categoryDTO.getName());
         category.setCompetition(competition);
@@ -76,8 +80,9 @@ public class CategoryServiceImpl implements CategoryService {
         } else {
             category.setVoteType("NORMAL");
         }
-        // Save to database
-        return categoryRepository.save(category);
+        Category saved = categoryRepository.save(category);
+        log.info("Category '{}' created for competition {}", categoryDTO.getName(), competitionId);
+        return saved;
     }
 
     @Override
@@ -113,7 +118,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Cacheable(value = "categories", key = "#id")
     public Category getByIdOrFail(Long id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Category not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Category", id));
     }
 
     @Override

@@ -9,7 +9,10 @@ import com.microslop.service.CategoryService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.UserService;
 import com.microslop.service.VoterService;
+import com.microslop.exception.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class VoterServiceImpl implements VoterService {
+
+    private static final Logger log = LoggerFactory.getLogger(VoterServiceImpl.class);
 
     private final VoterRepository voterRepository;
     private final UserService userService;
@@ -34,15 +39,16 @@ public class VoterServiceImpl implements VoterService {
         }
 
         User user = userService.getUserById(userId)
-                .orElseThrow(() -> new IllegalStateException("User not found."));
+                .orElseThrow(() -> new EntityNotFoundException("User", userId));
 
         Competition competition = competitionService.getById(competitionId)
-                .orElseThrow(() -> new IllegalStateException("Competition not found."));
+                .orElseThrow(() -> new EntityNotFoundException("Competition", competitionId));
 
         Category category = categoryService.getByIdOrFail(categoryId);
 
         int maxVotes = competition.getMaxVotesPerPerson() != null ? competition.getMaxVotesPerPerson() : 1;
         Voter voter = new Voter(user, competition, category, maxVotes);
+        log.info("Registering voter {} for competition {} category {}", userId, competitionId, categoryId);
         return voterRepository.save(voter);
     }
 

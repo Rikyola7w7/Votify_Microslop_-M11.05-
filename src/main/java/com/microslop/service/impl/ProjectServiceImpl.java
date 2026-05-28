@@ -1,6 +1,8 @@
 package com.microslop.service.impl;
 
 import com.microslop.entity.Project;
+import com.microslop.exception.BusinessValidationException;
+import com.microslop.exception.EntityNotFoundException;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.JudgeRepository;
 import com.microslop.repository.ProjectRepository;
@@ -13,6 +15,8 @@ import com.microslop.command.project.CreateProjectCommand;
 import com.microslop.utility.ProjectRankingSorter;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -25,6 +29,8 @@ import java.util.Map;
 @Service
 @Transactional
 public class ProjectServiceImpl implements ProjectService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProjectServiceImpl.class);
 
     private final ProjectRepository projectRepository;
     private final CompetitionRepository competitionRepository;
@@ -68,9 +74,8 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public Project getById(Long id) {
-        // Use custom query to fetch project with votes and users to avoid lazy loading issues
         return projectRepository.findByIdWithVotesAndUsers(id)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Project", id));
     }
 
     @Override
@@ -158,10 +163,10 @@ public class ProjectServiceImpl implements ProjectService {
     @CacheEvict(value = {"projects", "projectsAll", "projectsByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
     public void reclassifyProject(Long projectId, int newPosition) {
         if (newPosition < 1) {
-            throw new IllegalArgumentException("Position must be at least 1");
+            throw new BusinessValidationException("Position must be at least 1");
         }
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
+                .orElseThrow(() -> new EntityNotFoundException("Project", projectId));
 
         List<Project> projectsWithCustomPosition = projectRepository
                 .findByCompetitionIdAndCustomPositionIsNotNull(project.getCompetition().getId());
@@ -206,10 +211,10 @@ public class ProjectServiceImpl implements ProjectService {
     @CacheEvict(value = {"projects", "projectsAll", "projectsByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
     public void editProjectVotes(Long projectId, int newVoteCount) {
         if (newVoteCount < 0) {
-            throw new IllegalArgumentException("Vote count cannot be negative");
+            throw new BusinessValidationException("Vote count cannot be negative");
         }
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
+                .orElseThrow(() -> new EntityNotFoundException("Project", projectId));
         project.setManualVoteCount(newVoteCount);
         projectRepository.save(project);
     }

@@ -15,6 +15,9 @@ import com.microslop.event.CompetitionVotingOpenedEvent;
 import com.microslop.event.CompetitionVotingPausedEvent;
 import com.microslop.event.CompetitionArchivedEvent;
 import com.microslop.event.CompetitionReopenedEvent;
+import com.microslop.exception.BusinessValidationException;
+import com.microslop.exception.CompetitionStateException;
+import com.microslop.exception.EntityNotFoundException;
 import com.microslop.observer.observer.CompetitionObserver;
 import com.microslop.observer.subject.CompetitionEventSubject;
 import com.microslop.repository.CompetitionRepository;
@@ -167,7 +170,7 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
      */
     private void validateCompetitionData(CompetitionDTO competitionDTO, String creatorUsername) {
         userRepository.findByUsernameIgnoreCase(creatorUsername)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + creatorUsername));
+                .orElseThrow(() -> new EntityNotFoundException("User", creatorUsername));
     }
 
     /**
@@ -280,7 +283,7 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
     private void createAndAddJudges(Competition competition, List<String> judgeUsernames) {
         for (String judgeUsername : judgeUsernames) {
             User judge = userRepository.findByUsernameIgnoreCase(judgeUsername)
-                    .orElseThrow(() -> new IllegalArgumentException("Judge user not found: " + judgeUsername));
+                    .orElseThrow(() -> new EntityNotFoundException("User (judge)", judgeUsername));
 
             Judge judgeEntity = new Judge(judge, competition);
             competition.addJudge(judgeEntity);
@@ -319,13 +322,14 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
         try {
             commandExecutor.execute(command);
             Competition competition = competitionRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+                    .orElseThrow(() -> new EntityNotFoundException("Competition", id));
             notifyCompetitionObservers(new CompetitionActivatedEvent(competition));
+            log.info("Competition {} activated", id);
             return competition;
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to activate competition", e);
+            throw new CompetitionStateException("Failed to activate competition: " + e.getMessage());
         }
     }
 
@@ -337,63 +341,69 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
         try {
             commandExecutor.execute(command);
             Competition competition = competitionRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+                    .orElseThrow(() -> new EntityNotFoundException("Competition", id));
             notifyCompetitionObservers(new CompetitionDeactivatedEvent(competition));
+            log.info("Competition {} deactivated", id);
             return competition;
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to deactivate competition", e);
+            throw new CompetitionStateException("Failed to deactivate competition: " + e.getMessage());
         }
     }
 
     @Override
     public Competition openVoting(Long id) {
         Competition competition = competitionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Competition", id));
         competition.openVoting();
         competitionRepository.save(competition);
         notifyCompetitionObservers(new CompetitionVotingOpenedEvent(competition));
+        log.info("Voting opened for competition {}", id);
         return competition;
     }
 
     @Override
     public Competition pauseVoting(Long id) {
         Competition competition = competitionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Competition", id));
         competition.pauseVoting();
         competitionRepository.save(competition);
         notifyCompetitionObservers(new CompetitionVotingPausedEvent(competition));
+        log.info("Voting paused for competition {}", id);
         return competition;
     }
 
     @Override
     public Competition conclude(Long id) {
         Competition competition = competitionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Competition", id));
         competition.conclude();
         competitionRepository.save(competition);
         notifyCompetitionObservers(new CompetitionConcludedEvent(competition));
+        log.info("Competition {} concluded", id);
         return competition;
     }
 
     @Override
     public Competition archive(Long id) {
         Competition competition = competitionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Competition", id));
         competition.archive();
         competitionRepository.save(competition);
         notifyCompetitionObservers(new CompetitionArchivedEvent(competition));
+        log.info("Competition {} archived", id);
         return competition;
     }
 
     @Override
     public Competition reopen(Long id) {
         Competition competition = competitionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Competition", id));
         competition.reopen();
         competitionRepository.save(competition);
         notifyCompetitionObservers(new CompetitionReopenedEvent(competition));
+        log.info("Competition {} reopened", id);
         return competition;
     }
 
@@ -410,7 +420,7 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
     @Cacheable(value = "competitions", key = "#id")
     public Competition getByIdOrFail(Long id) {
         return competitionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Competition", id));
     }
 
     @Override
@@ -418,7 +428,7 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
     @Cacheable(value = "competitions", key = "#id")
     public Competition getByIdOrFailWithCategories(Long id) {
         return competitionRepository.findByIdWithCategories(id)
-                .orElseThrow(() -> new IllegalArgumentException("Competition not found: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Competition", id));
     }
 
     @Override
@@ -495,19 +505,16 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
                                                     String voteType, List<String> checklistItems) {
         List<String> errors = new ArrayList<>();
 
-        // Validate competition name
         if (competitionName == null || competitionName.trim().isEmpty()) {
             errors.add("• Competition name is required");
         } else if (competitionName.length() > 20) {
             errors.add("• Competition name cannot exceed 20 characters");
         }
 
-        // Validate event type
         if (eventType == null || eventType.trim().isEmpty()) {
             errors.add("• Event type is required");
         }
 
-        // Validate dates
         if (startDate == null) {
             errors.add("• Start date is required");
         }
@@ -518,12 +525,10 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
             errors.add("• End date must be after start date");
         }
 
-        // Validate categories
         if (categories == null || categories.isEmpty()) {
             errors.add("• At least one category is required");
         }
 
-        // Validate checklist items for CHECKLIST vote type
         if ("CHECKLIST".equalsIgnoreCase(voteType)) {
             if (checklistItems == null || checklistItems.isEmpty()) {
                 errors.add("• At least one checklist item is required for checklist voting");
@@ -535,8 +540,9 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
             }
         }
 
-        // Categories are still required for SCALE vote type (uses category-weighted scoring)
-        // No additional validation needed for SCALE beyond what's already validated
+        if (!errors.isEmpty()) {
+            log.debug("Competition validation failed with {} errors: {}", errors.size(), errors);
+        }
 
         return errors;
     }

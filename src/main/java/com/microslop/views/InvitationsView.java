@@ -2,6 +2,7 @@ package com.microslop.views;
 
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Invitation;
+import com.microslop.exception.ErrorHandler;
 import com.microslop.service.InvitationService;
 import com.microslop.service.LocalizationService;
 import com.microslop.service.NotificationService;
@@ -220,8 +221,7 @@ public class InvitationsView extends VerticalLayout implements BeforeEnterObserv
             }
             loadInvitations();
         } catch (Exception e) {
-            Notification.show(localizationService.t("common.error") + ": " + e.getMessage(), 4000, Notification.Position.MIDDLE)
-                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            ErrorHandler.handleException(e, "handle-invitation", localizationService.t("common.error"));
         }
     }
 
