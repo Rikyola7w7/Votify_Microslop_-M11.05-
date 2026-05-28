@@ -10785,3 +10785,219 @@ This generated password is for development use only. Your security configuration
 2026-05-28 21:39:36.651 [scheduling-1] WARN  com.zaxxer.hikari.pool.PoolBase - HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@cdb1c73 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
 2026-05-28 21:46:43.855 [http-nio-8080-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
 2026-05-28 21:46:47.332 [http-nio-8080-exec-1] WARN  org.apache.catalina.util.SessionIdGeneratorBase - Creation of SecureRandom instance for session ID generation using [SHA1PRNG] took [731] milliseconds.
+2026-05-28 22:43:17.948 [main] INFO  com.microslop.Application - Starting Application using Java 21.0.6 with PID 29068 (C:\Users\rumuq\OneDrive\Escritorio\votify\Votify_Microslop\target\classes started by rumuq in C:\Users\rumuq\OneDrive\Escritorio\votify\Votify_Microslop)
+2026-05-28 22:43:18.222 [main] INFO  com.microslop.Application - No active profile set, falling back to 1 default profile: "default"
+2026-05-28 22:43:54.010 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-05-28 22:43:54.022 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-28 22:43:54.093 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-05-28 22:44:05.239 [main] ERROR c.v.flow.spring.VaadinServletContextInitializer - Route configuration error found:
+2026-05-28 22:44:05.339 [main] ERROR c.v.flow.spring.VaadinServletContextInitializer - Navigation target paths (considering @Route, @RouteAlias and @RoutePrefix values) must be unique, found navigation targets 'com.microslop.views.FaqView' and 'com.microslop.views.HelpFaqsView' having the same route.
+2026-05-28 22:44:05.775 [main] ERROR o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Exception sending context initialized event to listener instance of class [com.vaadin.flow.spring.VaadinServletContextInitializer$CompositeServletContextListener]
+java.lang.RuntimeException: Unable to initialize com.vaadin.flow.spring.VaadinServletContextInitializer$RouteServletContextListener
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$FailFastServletContextListener.contextInitialized(VaadinServletContextInitializer.java:206)
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$CompositeServletContextListener.lambda$contextInitialized$0(VaadinServletContextInitializer.java:230)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$CompositeServletContextListener.contextInitialized(VaadinServletContextInitializer.java:230)
+	at org.apache.catalina.core.StandardContext.listenerStart(StandardContext.java:4001)
+	at org.apache.catalina.core.StandardContext.startInternal(StandardContext.java:4426)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1162)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1158)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:145)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:714)
+	at org.apache.catalina.core.StandardHost.startInternal(StandardHost.java:780)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1162)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1158)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:145)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:714)
+	at org.apache.catalina.core.StandardEngine.startInternal(StandardEngine.java:201)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardService.startInternal(StandardService.java:410)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardServer.startInternal(StandardServer.java:864)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.startup.Tomcat.start(Tomcat.java:435)
+	at org.springframework.boot.tomcat.TomcatWebServer.initialize(TomcatWebServer.java:131)
+	at org.springframework.boot.tomcat.TomcatWebServer.<init>(TomcatWebServer.java:110)
+	at org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory.getTomcatWebServer(TomcatServletWebServerFactory.java:408)
+	at org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory.getWebServer(TomcatServletWebServerFactory.java:166)
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.createWebServer(ServletWebServerApplicationContext.java:190)
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:164)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:615)
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:143)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:756)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:445)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:321)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1365)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1354)
+	at com.microslop.Application.main(Application.java:23)
+Caused by: java.lang.IllegalStateException: com.vaadin.flow.server.AmbiguousRouteConfigurationException: Navigation target paths (considering @Route, @RouteAlias and @RoutePrefix values) must be unique, found navigation targets 'com.microslop.views.FaqView' and 'com.microslop.views.HelpFaqsView' having the same route.
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$RouteServletContextListener.failFastContextInitialized(VaadinServletContextInitializer.java:398)
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$FailFastServletContextListener.contextInitialized(VaadinServletContextInitializer.java:202)
+	... 41 common frames omitted
+Caused by: com.vaadin.flow.server.AmbiguousRouteConfigurationException: Navigation target paths (considering @Route, @RouteAlias and @RoutePrefix values) must be unique, found navigation targets 'com.microslop.views.FaqView' and 'com.microslop.views.HelpFaqsView' having the same route.
+	at com.vaadin.flow.router.internal.RouteSegment.ambigousException(RouteSegment.java:806)
+	at com.vaadin.flow.router.internal.RouteSegment.ambigousTarget(RouteSegment.java:801)
+	at com.vaadin.flow.router.internal.RouteSegment.setRouteTarget(RouteSegment.java:487)
+	at com.vaadin.flow.router.internal.RouteSegment.addSubRoute(RouteSegment.java:458)
+	at com.vaadin.flow.router.internal.RouteSegment.addSubRoute(RouteSegment.java:267)
+	at com.vaadin.flow.router.internal.RouteModel.addRoute(RouteModel.java:130)
+	at com.vaadin.flow.router.internal.ConfigureRoutes.setRoute(ConfigureRoutes.java:175)
+	at com.vaadin.flow.router.internal.AbstractRouteRegistry.lambda$setRoute$2df6994$1(AbstractRouteRegistry.java:395)
+	at com.vaadin.flow.router.internal.AbstractRouteRegistry.lambda$configureWithFullTemplate$ccc9e4ad$1(AbstractRouteRegistry.java:446)
+	at com.vaadin.flow.router.internal.AbstractRouteRegistry.configure(AbstractRouteRegistry.java:120)
+	at com.vaadin.flow.router.internal.AbstractRouteRegistry.configureWithFullTemplate(AbstractRouteRegistry.java:445)
+	at com.vaadin.flow.router.internal.AbstractRouteRegistry.setRoute(AbstractRouteRegistry.java:393)
+	at com.vaadin.flow.server.startup.ApplicationRouteRegistry.setRoute(ApplicationRouteRegistry.java:133)
+	at com.vaadin.flow.router.RouteConfiguration.setAnnotatedRoute(RouteConfiguration.java:225)
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$RouteServletContextListener.setAnnotatedRoutes(VaadinServletContextInitializer.java:415)
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$RouteServletContextListener.lambda$failFastContextInitialized$8c9eb953$1(VaadinServletContextInitializer.java:389)
+	at com.vaadin.flow.router.internal.AbstractRouteRegistry.update(AbstractRouteRegistry.java:131)
+	at com.vaadin.flow.router.RouteConfiguration.update(RouteConfiguration.java:203)
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$RouteServletContextListener.failFastContextInitialized(VaadinServletContextInitializer.java:389)
+	... 42 common frames omitted
+2026-05-28 22:44:05.878 [main] ERROR org.apache.catalina.core.StandardContext - One or more listeners failed to start. Full details will be found in the appropriate container log file
+2026-05-28 22:44:05.942 [main] ERROR org.apache.catalina.core.StandardContext - Context [] startup failed due to previous errors
+2026-05-28 22:44:06.073 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-05-28 22:44:09.593 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-8080"]
+2026-05-28 22:44:09.596 [main] INFO  org.apache.catalina.core.StandardService - Stopping service [Tomcat]
+2026-05-28 22:44:09.601 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-8080"]
+2026-05-28 22:44:09.611 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Destroying ProtocolHandler ["http-nio-8080"]
+2026-05-28 22:44:09.614 [main] WARN  o.s.b.w.s.s.c.AnnotationConfigServletWebServerApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Unable to start web server
+2026-05-28 22:44:09.832 [main] ERROR org.springframework.boot.SpringApplication - Application run failed
+org.springframework.context.ApplicationContextException: Unable to start web server
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:167)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:615)
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:143)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:756)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:445)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:321)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1365)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1354)
+	at com.microslop.Application.main(Application.java:23)
+Caused by: org.springframework.boot.web.server.WebServerException: Unable to start embedded Tomcat
+	at org.springframework.boot.tomcat.TomcatWebServer.initialize(TomcatWebServer.java:150)
+	at org.springframework.boot.tomcat.TomcatWebServer.<init>(TomcatWebServer.java:110)
+	at org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory.getTomcatWebServer(TomcatServletWebServerFactory.java:408)
+	at org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory.getWebServer(TomcatServletWebServerFactory.java:166)
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.createWebServer(ServletWebServerApplicationContext.java:190)
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:164)
+	... 8 common frames omitted
+Caused by: java.lang.IllegalStateException: StandardEngine[Tomcat].StandardHost[localhost].TomcatEmbeddedContext[] failed to start
+	at org.springframework.boot.tomcat.TomcatWebServer.rethrowDeferredStartupExceptions(TomcatWebServer.java:206)
+	at org.springframework.boot.tomcat.TomcatWebServer.initialize(TomcatWebServer.java:134)
+	... 13 common frames omitted
+2026-05-28 22:45:43.683 [main] INFO  com.microslop.Application - Starting Application using Java 21.0.6 with PID 22692 (C:\Users\rumuq\OneDrive\Escritorio\votify\Votify_Microslop\target\classes started by rumuq in C:\Users\rumuq\OneDrive\Escritorio\votify\Votify_Microslop)
+2026-05-28 22:45:43.828 [main] INFO  com.microslop.Application - No active profile set, falling back to 1 default profile: "default"
+2026-05-28 22:47:43.066 [main] INFO  com.microslop.Application - Starting Application using Java 21.0.6 with PID 11936 (C:\Users\rumuq\OneDrive\Escritorio\votify\Votify_Microslop\target\classes started by rumuq in C:\Users\rumuq\OneDrive\Escritorio\votify\Votify_Microslop)
+2026-05-28 22:47:43.134 [main] INFO  com.microslop.Application - No active profile set, falling back to 1 default profile: "default"
+2026-05-28 22:48:20.466 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-05-28 22:48:20.530 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-28 22:48:20.566 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-05-28 22:48:38.594 [main] ERROR c.v.flow.spring.VaadinServletContextInitializer - Route configuration error found:
+2026-05-28 22:48:38.614 [main] ERROR c.v.flow.spring.VaadinServletContextInitializer - Navigation target paths (considering @Route, @RouteAlias and @RoutePrefix values) must be unique, found navigation targets 'com.microslop.views.HelpFaqsView' and 'com.microslop.views.FaqView' having the same route.
+2026-05-28 22:48:38.635 [main] ERROR o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Exception sending context initialized event to listener instance of class [com.vaadin.flow.spring.VaadinServletContextInitializer$CompositeServletContextListener]
+java.lang.RuntimeException: Unable to initialize com.vaadin.flow.spring.VaadinServletContextInitializer$RouteServletContextListener
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$FailFastServletContextListener.contextInitialized(VaadinServletContextInitializer.java:206)
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$CompositeServletContextListener.lambda$contextInitialized$0(VaadinServletContextInitializer.java:230)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$CompositeServletContextListener.contextInitialized(VaadinServletContextInitializer.java:230)
+	at org.apache.catalina.core.StandardContext.listenerStart(StandardContext.java:4001)
+	at org.apache.catalina.core.StandardContext.startInternal(StandardContext.java:4426)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1162)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1158)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:145)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:714)
+	at org.apache.catalina.core.StandardHost.startInternal(StandardHost.java:780)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1162)
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1158)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:81)
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:145)
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:714)
+	at org.apache.catalina.core.StandardEngine.startInternal(StandardEngine.java:201)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardService.startInternal(StandardService.java:410)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.core.StandardServer.startInternal(StandardServer.java:864)
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164)
+	at org.apache.catalina.startup.Tomcat.start(Tomcat.java:435)
+	at org.springframework.boot.tomcat.TomcatWebServer.initialize(TomcatWebServer.java:131)
+	at org.springframework.boot.tomcat.TomcatWebServer.<init>(TomcatWebServer.java:110)
+	at org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory.getTomcatWebServer(TomcatServletWebServerFactory.java:408)
+	at org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory.getWebServer(TomcatServletWebServerFactory.java:166)
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.createWebServer(ServletWebServerApplicationContext.java:190)
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:164)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:615)
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:143)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:756)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:445)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:321)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1365)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1354)
+	at com.microslop.Application.main(Application.java:23)
+Caused by: java.lang.IllegalStateException: com.vaadin.flow.server.AmbiguousRouteConfigurationException: Navigation target paths (considering @Route, @RouteAlias and @RoutePrefix values) must be unique, found navigation targets 'com.microslop.views.HelpFaqsView' and 'com.microslop.views.FaqView' having the same route.
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$RouteServletContextListener.failFastContextInitialized(VaadinServletContextInitializer.java:398)
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$FailFastServletContextListener.contextInitialized(VaadinServletContextInitializer.java:202)
+	... 41 common frames omitted
+Caused by: com.vaadin.flow.server.AmbiguousRouteConfigurationException: Navigation target paths (considering @Route, @RouteAlias and @RoutePrefix values) must be unique, found navigation targets 'com.microslop.views.HelpFaqsView' and 'com.microslop.views.FaqView' having the same route.
+	at com.vaadin.flow.router.internal.RouteSegment.ambigousException(RouteSegment.java:806)
+	at com.vaadin.flow.router.internal.RouteSegment.ambigousTarget(RouteSegment.java:801)
+	at com.vaadin.flow.router.internal.RouteSegment.setRouteTarget(RouteSegment.java:487)
+	at com.vaadin.flow.router.internal.RouteSegment.addSubRoute(RouteSegment.java:458)
+	at com.vaadin.flow.router.internal.RouteSegment.addSubRoute(RouteSegment.java:267)
+	at com.vaadin.flow.router.internal.RouteModel.addRoute(RouteModel.java:130)
+	at com.vaadin.flow.router.internal.ConfigureRoutes.setRoute(ConfigureRoutes.java:175)
+	at com.vaadin.flow.router.internal.AbstractRouteRegistry.lambda$setRoute$2df6994$1(AbstractRouteRegistry.java:395)
+	at com.vaadin.flow.router.internal.AbstractRouteRegistry.lambda$configureWithFullTemplate$ccc9e4ad$1(AbstractRouteRegistry.java:446)
+	at com.vaadin.flow.router.internal.AbstractRouteRegistry.configure(AbstractRouteRegistry.java:120)
+	at com.vaadin.flow.router.internal.AbstractRouteRegistry.configureWithFullTemplate(AbstractRouteRegistry.java:445)
+	at com.vaadin.flow.router.internal.AbstractRouteRegistry.setRoute(AbstractRouteRegistry.java:393)
+	at com.vaadin.flow.server.startup.ApplicationRouteRegistry.setRoute(ApplicationRouteRegistry.java:133)
+	at com.vaadin.flow.router.RouteConfiguration.setAnnotatedRoute(RouteConfiguration.java:225)
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$RouteServletContextListener.setAnnotatedRoutes(VaadinServletContextInitializer.java:415)
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$RouteServletContextListener.lambda$failFastContextInitialized$8c9eb953$1(VaadinServletContextInitializer.java:389)
+	at com.vaadin.flow.router.internal.AbstractRouteRegistry.update(AbstractRouteRegistry.java:131)
+	at com.vaadin.flow.router.RouteConfiguration.update(RouteConfiguration.java:203)
+	at com.vaadin.flow.spring.VaadinServletContextInitializer$RouteServletContextListener.failFastContextInitialized(VaadinServletContextInitializer.java:389)
+	... 42 common frames omitted
+2026-05-28 22:48:38.668 [main] ERROR org.apache.catalina.core.StandardContext - One or more listeners failed to start. Full details will be found in the appropriate container log file
+2026-05-28 22:48:38.837 [main] ERROR org.apache.catalina.core.StandardContext - Context [] startup failed due to previous errors
+2026-05-28 22:48:39.205 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-05-28 22:48:44.372 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-8080"]
+2026-05-28 22:48:44.378 [main] INFO  org.apache.catalina.core.StandardService - Stopping service [Tomcat]
+2026-05-28 22:48:44.382 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-8080"]
+2026-05-28 22:48:44.651 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Destroying ProtocolHandler ["http-nio-8080"]
+2026-05-28 22:48:44.654 [main] WARN  o.s.b.w.s.s.c.AnnotationConfigServletWebServerApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Unable to start web server
+2026-05-28 22:48:45.040 [main] ERROR org.springframework.boot.SpringApplication - Application run failed
+org.springframework.context.ApplicationContextException: Unable to start web server
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:167)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:615)
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:143)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:756)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:445)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:321)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1365)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1354)
+	at com.microslop.Application.main(Application.java:23)
+Caused by: org.springframework.boot.web.server.WebServerException: Unable to start embedded Tomcat
+	at org.springframework.boot.tomcat.TomcatWebServer.initialize(TomcatWebServer.java:150)
+	at org.springframework.boot.tomcat.TomcatWebServer.<init>(TomcatWebServer.java:110)
+	at org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory.getTomcatWebServer(TomcatServletWebServerFactory.java:408)
+	at org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory.getWebServer(TomcatServletWebServerFactory.java:166)
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.createWebServer(ServletWebServerApplicationContext.java:190)
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:164)
+	... 8 common frames omitted
+Caused by: java.lang.IllegalStateException: StandardEngine[Tomcat].StandardHost[localhost].TomcatEmbeddedContext[] failed to start
+	at org.springframework.boot.tomcat.TomcatWebServer.rethrowDeferredStartupExceptions(TomcatWebServer.java:206)
+	at org.springframework.boot.tomcat.TomcatWebServer.initialize(TomcatWebServer.java:134)
+	... 13 common frames omitted

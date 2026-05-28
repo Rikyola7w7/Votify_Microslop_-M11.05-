@@ -1,15 +1,8 @@
 package com.microslop.views;
 
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
+import com.microslop.base.ui.MainLayout;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -18,7 +11,7 @@ import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 
-@Route("help")
+@Route(value = "help", layout = MainLayout.class)
 @PageTitle("Help & FAQ | Votify")
 public class FaqView extends VerticalLayout {
 
@@ -31,44 +24,7 @@ public class FaqView extends VerticalLayout {
             .set("background", "var(--background)")
             .set("font-family", "var(--font-main)");
 
-        add(buildHeader());
         add(buildContent());
-    }
-
-    private HorizontalLayout buildHeader() {
-        var header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setHeight("64px");
-        header.setAlignItems(Alignment.CENTER);
-        header.setJustifyContentMode(JustifyContentMode.BETWEEN);
-        header.setPadding(false);
-        header.addClassName("votify-header-dark");
-        header.getStyle().set("padding", "0 2rem");
-
-        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
-        backButton.addClassName("votify-btn-secondary");
-        backButton.getStyle()
-            .set("color", "white")
-            .set("background", "rgba(255, 255, 255, 0.15)")
-            .set("border", "1px solid rgba(255, 255, 255, 0.3)")
-            .set("border-radius", "var(--radius-md)")
-            .set("cursor", "pointer");
-        backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
-
-        Span title = new Span("Help & FAQ");
-        title.getStyle()
-            .set("color", "white")
-            .set("font-size", "18px")
-            .set("font-weight", "700")
-            .set("letter-spacing", "-0.2px")
-            .set("flex", "1")
-            .set("text-align", "center");
-
-        Span spacer = new Span();
-        spacer.setWidth("40px");
-
-        header.add(backButton, title, spacer);
-        return header;
     }
 
     private VerticalLayout buildContent() {
@@ -79,23 +35,6 @@ public class FaqView extends VerticalLayout {
         content.setPadding(true);
         content.setSpacing(false);
         content.getStyle().set("padding", "2rem 1rem 4rem");
-
-        H1 heroTitle = new H1("Frequently Asked Questions");
-        heroTitle.getStyle()
-            .set("font-size", "2rem")
-            .set("font-weight", "800")
-            .set("color", "var(--dark)")
-            .set("margin", "0 0 8px 0")
-            .set("text-align", "center");
-
-        Paragraph heroSubtitle = new Paragraph("Everything you need to know about Votify");
-        heroSubtitle.getStyle()
-            .set("color", "var(--text-muted)")
-            .set("font-size", "1.1rem")
-            .set("margin", "0 0 2rem 0")
-            .set("text-align", "center");
-
-        content.add(heroTitle, heroSubtitle);
 
         List<Map.Entry<String, String>> faqs = List.of(
             new AbstractMap.SimpleEntry<>(
