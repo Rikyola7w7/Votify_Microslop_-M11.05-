@@ -1,6 +1,7 @@
 package com.microslop.views.components;
 
 import com.microslop.entity.Competition;
+import com.microslop.service.LocalizationService;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
@@ -16,10 +17,16 @@ import java.util.Base64;
 public class CompetitionCardComponent extends Div {
 
     private final Competition competition;
+    private final LocalizationService localizationService;
 
-    public CompetitionCardComponent(Competition competition) {
+    public CompetitionCardComponent(Competition competition, LocalizationService localizationService) {
         this.competition = competition;
+        this.localizationService = localizationService;
         buildCard();
+    }
+
+    private String t(String key) {
+        return localizationService != null ? localizationService.t(key) : key;
     }
 
     private void buildCard() {
@@ -169,7 +176,7 @@ public class CompetitionCardComponent extends Div {
     }
 
     private Button createViewButton() {
-        Button viewButton = new Button("VIEW");
+        Button viewButton = new Button(t("card.view"));
         viewButton.setWidth("calc(100% - 32px)");
         viewButton.addClassName("votify-btn-primary");
         viewButton.getStyle()

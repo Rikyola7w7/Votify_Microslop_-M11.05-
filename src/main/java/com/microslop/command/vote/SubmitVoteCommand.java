@@ -79,12 +79,15 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
             throw new IllegalStateException("Competition not found for project: " + projectId);
         }
 
+if ("CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
+            throw new IllegalStateException("This competition uses checklist voting. Please use the checklist voting interface.");
+        }
+
         VotingStrategy votingStrategy = strategyRegistry.resolveVotingStrategy(competition.getVotingStrategyType());
 
         if (!votingStrategy.canVote(user, competition)) {
             throw new IllegalStateException("User is not allowed to vote in this competition");
         }
-
         if (!competition.isActive()) {
             boolean hasEnded = competition.getEndDate() != null
                     && java.time.LocalDateTime.now().isAfter(competition.getEndDate());

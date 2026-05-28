@@ -358,7 +358,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         String vtValue = categoryVoterTypeCombo.getValue();
         String voteType = "Scale".equals(vtValue) ? "SCALE" : "Checklist".equals(vtValue) ? "CHECKLIST" : "NORMAL";
         CategoryDTO category = new CategoryDTO(categoryName, "NORMAL", voteType);
-        category.setImage(categoryImage);
         selectedCategories.add(category);
         displayCategory(category);
         updateCategoryCount();
@@ -519,6 +518,12 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
                     eventType
             );
             dto.setCoverImage(competitionCoverImage);
+            String voteType = "NORMAL";  // Default to normal voting
+            dto.setVoteType(voteType);
+            if ("SCALE".equals(voteType)) {
+                dto.setScaleMin(0);
+                dto.setScaleMax(10);
+            }
 
             for (CategoryDTO category : selectedCategories) {
                 dto.addCategory(category);

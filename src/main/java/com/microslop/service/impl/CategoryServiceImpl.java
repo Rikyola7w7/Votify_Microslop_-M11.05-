@@ -8,6 +8,8 @@ import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.ProjectCommentRepository;
 import com.microslop.repository.VoteRepository;
 import com.microslop.service.CategoryService;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,11 +42,15 @@ public class CategoryServiceImpl implements CategoryService {
     // ── Write Operations ────────────────────────────────────────────────────────
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"categories", "categoriesAll", "categoriesByCompetition"}, allEntries = true)
     public Category save(Category category) {
         return categoryRepository.save(category);
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"categories", "categoriesAll", "categoriesByCompetition"}, allEntries = true)
     public Category createCategory(Long competitionId, CategoryDTO categoryDTO) {
         // Validate competition exists
         Competition competition = competitionRepository.findById(competitionId)
@@ -70,21 +76,20 @@ public class CategoryServiceImpl implements CategoryService {
         } else {
             category.setVoteType("NORMAL");
         }
-        if (categoryDTO.getImage() != null) {
-            category.setImage(categoryDTO.getImage());
-        }
-
         // Save to database
         return categoryRepository.save(category);
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"categories", "categoriesAll", "categoriesByCompetition"}, allEntries = true)
     public void delete(Long id) {
         categoryRepository.deleteById(id);
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = {"categories", "categoriesAll", "categoriesByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
     public void deleteWithCascade(Long categoryId) {
         // Delete all project comments for this category first (foreign key constraint)
         projectCommentRepository.deleteByCategory_Id(categoryId);
@@ -98,12 +103,14 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "categories", key = "#id")
     public Optional<Category> getById(Long id) {
         return categoryRepository.findById(id);
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "categories", key = "#id")
     public Category getByIdOrFail(Long id) {
         return categoryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found: " + id));
@@ -111,12 +118,14 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "categoriesByCompetition", key = "#competitionId")
     public List<Category> getCategoriesByCompetition(Long competitionId) {
         return categoryRepository.findByCompetitionId(competitionId);
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "categoriesAll")
     public List<Category> findAll() {
         return categoryRepository.findAll();
     }

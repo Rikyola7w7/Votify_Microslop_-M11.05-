@@ -3,6 +3,8 @@ package com.microslop.views.components;
 import com.microslop.entity.Project;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 public class PodiumCardComponent extends Div {
 
@@ -30,10 +32,14 @@ public class PodiumCardComponent extends Div {
     }
 
     public PodiumCardComponent(Project project, Position position, long totalVotes) {
-        buildCard(project, position, totalVotes);
+        this(project, position, totalVotes, false, false, 0.0);
     }
 
-    private void buildCard(Project project, Position position, long totalVotes) {
+    public PodiumCardComponent(Project project, Position position, long totalVotes, boolean isChecklistMode, boolean isScaleMode, double avgScore) {
+        buildCard(project, position, totalVotes, isChecklistMode, isScaleMode, avgScore);
+    }
+
+    private void buildCard(Project project, Position position, long totalVotes, boolean isChecklistMode, boolean isScaleMode, double avgScore) {
         for (String cls : position.getCssClass().split(" ")) {
             addClassName(cls);
         }
@@ -69,14 +75,36 @@ public class PodiumCardComponent extends Div {
             .set("display", "block")
             .set("color", "var(--text-primary)");
 
-        Span votesSpan = new Span(totalVotes + " vote" + (totalVotes != 1 ? "s" : ""));
-        votesSpan.getStyle()
-            .set("font-size", position == Position.FIRST ? "13px" : "12px")
-            .set("font-weight", "600")
-            .set("color", "var(--text-muted)")
-            .set("display", "block")
-            .set("margin-top", "0.35rem");
+        String votesLabel;
+        String displayValue;
+        if (isScaleMode) {
+            votesLabel = position == Position.FIRST ? "Avg. Score:" : "Score:";
+            displayValue = String.format("%.1f", avgScore);
+        } else if (isChecklistMode) {
+            votesLabel = position == Position.FIRST ? "Total Checks:" : "Checks:";
+            displayValue = formatNumber(totalVotes);
+        } else {
+            votesLabel = position == Position.FIRST ? "Total Votes:" : "Votes:";
+            displayValue = formatNumber(totalVotes);
+        }
+        var labelVotes = new Span(votesLabel);
+        labelVotes.getStyle()
+            .set("font-size", "0.8rem")
+            .set("color", "#444")
+            .set("display", "block");
 
-        add(medalSpan, nameSpan, votesSpan);
+        var numVotes = new Span(displayValue);
+        numVotes.getStyle()
+            .set("font-weight", "700")
+            .set("font-size", position == Position.FIRST ? "1.6rem" : "1.2rem")
+            .set("color", "#1a1a2e")
+            .set("display", "block")
+            .set("margin-bottom", "0.8rem");
+
+        add(medalSpan, nameSpan, labelVotes, numVotes);
+    }
+
+    private static String formatNumber(long num) {
+        return NumberFormat.getNumberInstance(Locale.US).format(num);
     }
 }

@@ -2,7 +2,9 @@ package com.microslop.views.components;
 
 import com.microslop.entity.Competition;
 import com.microslop.entity.Notification;
+import com.microslop.service.CertificateService;
 import com.microslop.service.InvitationService;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.NotificationService;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
@@ -23,20 +25,36 @@ public class NotificationCardComponent extends Div {
     private final Notification notification;
     private final NotificationService notificationService;
     private final InvitationService invitationService;
+    private final CertificateService certificateService;
     private final Runnable refreshCallback;
     private final Competition competition;
+    private final LocalizationService localizationService;
 
     public NotificationCardComponent(Notification notification, NotificationService notificationService, InvitationService invitationService, Runnable refreshCallback) {
-        this(notification, notificationService, invitationService, refreshCallback, null);
+        this(notification, notificationService, invitationService, null, refreshCallback, null, null);
     }
 
     public NotificationCardComponent(Notification notification, NotificationService notificationService, InvitationService invitationService, Runnable refreshCallback, Competition competition) {
+        this(notification, notificationService, invitationService, null, refreshCallback, competition, null);
+    }
+
+    public NotificationCardComponent(Notification notification, NotificationService notificationService, InvitationService invitationService, CertificateService certificateService, Runnable refreshCallback, Competition competition) {
+        this(notification, notificationService, invitationService, certificateService, refreshCallback, competition, null);
+    }
+
+    public NotificationCardComponent(Notification notification, NotificationService notificationService, InvitationService invitationService, CertificateService certificateService, Runnable refreshCallback, Competition competition, LocalizationService localizationService) {
         this.notification = notification;
         this.notificationService = notificationService;
         this.invitationService = invitationService;
+        this.certificateService = certificateService;
         this.refreshCallback = refreshCallback;
         this.competition = competition != null ? competition : notification.getCompetition();
+        this.localizationService = localizationService;
         buildCard();
+    }
+
+    private String t(String key) {
+        return localizationService != null ? localizationService.t(key) : key;
     }
 
     private void buildCard() {
@@ -107,7 +125,8 @@ public class NotificationCardComponent extends Div {
     }
 
     private Span createTypeBadge() {
-        Span badge = new Span(notification.getType());
+        String displayType = notification.getType().replace("_HANDLED", "");
+        Span badge = new Span(displayType);
         badge.getStyle()
             .set("background", "var(--primary)")
             .set("color", "#ffffff")
@@ -176,6 +195,61 @@ public class NotificationCardComponent extends Div {
                 dialog.open();
             });
             actions.add(viewBtn);
+        }
+
+        // Certificate-related notifications
+        if ("CERTIFICATE_SENT".equals(notification.getType())) {
+            Button viewCertificatesBtn = new Button("View Certificates");
+            viewCertificatesBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
+            viewCertificatesBtn.getStyle().set("cursor", "pointer");
+            viewCertificatesBtn.addClickListener(e -> {
+                e.getSource().getUI().ifPresent(ui -> ui.navigate("certificates"));
+            });
+            actions.add(viewCertificatesBtn);
+        }
+
+        // End-time competition notifications
+        if ("END_TIME_COMPETITION".equals(notification.getType())) {
+            Button yesBtn = new Button("YES - Generate Certificates");
+            yesBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_SUCCESS);
+            yesBtn.getStyle().set("cursor", "pointer");
+            
+            Button noBtn = new Button("NO - Skip");
+            noBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);
+            noBtn.getStyle().set("cursor", "pointer");
+            
+            yesBtn.addClickListener(e -> {
+                try {
+                    if (certificateService != null && competition != null) {
+                        certificateService.generateCertificatesForCompetition(competition.getId());
+                        com.vaadin.flow.component.notification.Notification.show(
+                            "Certificates generated successfully for " + competition.getName())
+                            .addThemeVariants(com.vaadin.flow.component.notification.NotificationVariant.LUMO_SUCCESS);
+                    }
+                } catch (Exception ex) {
+                    com.vaadin.flow.component.notification.Notification.show(
+                        "Error generating certificates: " + ex.getMessage())
+                        .addThemeVariants(com.vaadin.flow.component.notification.NotificationVariant.LUMO_ERROR);
+                } finally {
+                    yesBtn.setEnabled(false);
+                    noBtn.setEnabled(false);
+                    notificationService.markAsHandled(notification.getId());
+                    if (refreshCallback != null) {
+                        refreshCallback.run();
+                    }
+                }
+            });
+            
+            noBtn.addClickListener(e -> {
+                yesBtn.setEnabled(false);
+                noBtn.setEnabled(false);
+                notificationService.markAsHandled(notification.getId());
+                if (refreshCallback != null) {
+                    refreshCallback.run();
+                }
+            });
+            
+            actions.add(yesBtn, noBtn);
         }
 
         if (!notification.getIsRead()) {

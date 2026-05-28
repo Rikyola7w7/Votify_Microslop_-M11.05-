@@ -1,14 +1,16 @@
 package com.microslop.service.impl;
 
+import com.microslop.entity.Competition;
 import com.microslop.entity.Vote;
 import com.microslop.event.VoteEvent;
 import com.microslop.event.VoteSubmittedEvent;
+import com.microslop.factory.ScaleVoteCreator;
 import com.microslop.factory.VoteCreator;
 import com.microslop.observer.observer.VoteObserver;
 import com.microslop.observer.subject.VoteEventSubject;
 import com.microslop.repository.VoteRepository;
-import com.microslop.repository.VoterRepository;
 import com.microslop.repository.CategoryRepository;
+import com.microslop.repository.VoterRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
 import com.microslop.service.VoteService;
@@ -18,8 +20,10 @@ import com.microslop.specification.vote.VotesByCategorySpecification;
 import com.microslop.strategy.StrategyRegistry;
 import com.microslop.strategy.voting.VotingStrategy;
 import com.microslop.command.CommandExecutor;
+import com.microslop.command.vote.SubmitScaleVoteCommand;
 import com.microslop.command.vote.SubmitVoteCommand;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,18 +31,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class VoteServiceImpl implements VoteService, VoteEventSubject {
 
     private static final Logger log = LoggerFactory.getLogger(VoteServiceImpl.class);
+    private static final int MAX_VOTES_PER_CATEGORY = 1;
 
     private final VoteRepository voteRepository;
     private final ProjectService projectService;
     private final UserService userService;
     private final VoteCreator voteCreator;
+    private final ScaleVoteCreator scaleVoteCreator;
     private final CategoryRepository categoryRepository;
     private final VoterRepository voterRepository;
     private final CommandExecutor commandExecutor;
@@ -46,18 +54,20 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
     private final List<VoteObserver> voteObservers;
 
     public VoteServiceImpl(VoteRepository voteRepository,
-                          ProjectService projectService,
-                          UserService userService,
-                          VoteCreator voteCreator,
-                          CategoryRepository categoryRepository,
-                          VoterRepository voterRepository,
-                          CommandExecutor commandExecutor,
-                          StrategyRegistry strategyRegistry,
-                          @Autowired(required = false) List<VoteObserver> observers) {
+                           ProjectService projectService,
+                           UserService userService,
+                           VoteCreator voteCreator,
+                           ScaleVoteCreator scaleVoteCreator,
+                           CategoryRepository categoryRepository,
+                           VoterRepository voterRepository,
+                           CommandExecutor commandExecutor,
+                           StrategyRegistry strategyRegistry,
+                           @Autowired(required = false) List<VoteObserver> observers) {
         this.voteRepository = voteRepository;
         this.projectService = projectService;
         this.userService = userService;
         this.voteCreator = voteCreator;
+        this.scaleVoteCreator = scaleVoteCreator;
         this.categoryRepository = categoryRepository;
         this.voterRepository = voterRepository;
         this.commandExecutor = commandExecutor;
@@ -117,6 +127,8 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
     // ── Write ─────────────────────────────────────────────────────────────
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"projects", "projectsAll", "projectsByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
     public void submitVote(String userUsername, Long projectId, Long categoryId) {
         SubmitVoteCommand command = new SubmitVoteCommand(
             userUsername, projectId, categoryId,
@@ -137,6 +149,8 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = {"projects", "projectsAll", "projectsByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
     public void submitVote(String userUsername, Long projectId, Long categoryId, int points) {
         SubmitVoteCommand command = new SubmitVoteCommand(
             userUsername, projectId, categoryId, points,
@@ -200,6 +214,52 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
         return voteRepository.sumPointsByUserIdAndCategoryId(userId, categoryId);
     }
 
+// ── Scale Voting ──────────────────────────────────────────────────────
+
+    @Override
+    public void submitScaleVote(String userUsername, Long projectId, Long categoryId, int score) {
+        SubmitScaleVoteCommand command = new SubmitScaleVoteCommand(
+            userUsername, projectId, categoryId, score,
+            voteRepository, projectService, userService, scaleVoteCreator,
+            categoryRepository, strategyRegistry
+        );
+        try {
+            commandExecutor.execute(command);
+            Vote createdVote = command.getCreatedVote();
+            if (createdVote != null) {
+                notifyVoteObservers(new VoteSubmittedEvent(createdVote, userUsername));
+            }
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to submit scale vote", e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public double getAverageScoreByProject(Long projectId) {
+        return voteRepository.avgScoreByProjectId(projectId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public double getAverageScoreByProjectAndCategory(Long projectId, Long categoryId) {
+        return voteRepository.avgScoreByProjectIdAndCategoryId(projectId, categoryId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getSumScoreByProject(Long projectId) {
+        return voteRepository.sumScoreByProjectId(projectId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getSumScoreByProjectAndCategory(Long projectId, Long categoryId) {
+        return voteRepository.sumScoreByProjectIdAndCategoryId(projectId, categoryId);
+    }
+
     // ── Specification-based Queries ─────────────────────────────────────────
 
     @Override
@@ -226,6 +286,30 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
         Specification<Vote> spec = new VotesByUserSpecification(userId)
             .and(new VotesByProjectSpecification(projectId));
         return voteRepository.findAll(spec);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Long> countVotesByProjectIds(List<Long> projectIds) {
+        if (projectIds == null || projectIds.isEmpty()) return Map.of();
+        return voteRepository.countVotesByProjectIds(projectIds).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Long> countVotesByProjectIdsAndCategory(List<Long> projectIds, Long categoryId) {
+        if (projectIds == null || projectIds.isEmpty()) return Map.of();
+        return voteRepository.countVotesByProjectIdsAndCategory(projectIds, categoryId).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Long> countUserVotesByProjectIdsAndCategory(List<Long> projectIds, Long userId, Long categoryId) {
+        if (projectIds == null || projectIds.isEmpty()) return Map.of();
+        return voteRepository.countUserVotesByProjectIdsAndCategory(projectIds, userId, categoryId).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
     }
 
     @Override

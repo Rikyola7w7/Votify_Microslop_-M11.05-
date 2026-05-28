@@ -22,9 +22,8 @@ public class LanguageSelectorComponent {
 
         String currentLocale = localizationService.getLocale();
         String langCode = LocalizationService.ENGLISH.equals(currentLocale) ? "EN" : "ES";
-        String flagEmoji = LocalizationService.ENGLISH.equals(currentLocale) ? "🇬🇧" : "🇪🇸";
 
-        Button langButton = new Button(new Span(flagEmoji + " " + langCode));
+        Button langButton = new Button(new Span(langCode));
         langButton.getElement().setAttribute("title", localizationService.t("language.select"));
         langButton.getStyle()
             .set("cursor", "pointer")
@@ -35,12 +34,12 @@ public class LanguageSelectorComponent {
         var subMenu = item.getSubMenu();
 
         if (LocalizationService.ENGLISH.equals(currentLocale)) {
-            var spanishItem = subMenu.addItem("🇪🇸 " + localizationService.t("language.spanish"), event -> {
+            var spanishItem = subMenu.addItem(localizationService.t("language.spanish"), event -> {
                 localizationService.establecerIdioma(LocalizationService.SPANISH);
                 refreshPage();
             });
         } else {
-            var englishItem = subMenu.addItem("🇬🇧 " + localizationService.t("language.english"), event -> {
+            var englishItem = subMenu.addItem(localizationService.t("language.english"), event -> {
                 localizationService.establecerIdioma(LocalizationService.ENGLISH);
                 refreshPage();
             });

@@ -2,6 +2,7 @@ package com.microslop.views;
 
 import com.microslop.entity.Competition;
 import java.time.LocalDateTime;
+import java.util.Map;
 import com.microslop.entity.Category;
 import com.microslop.entity.Project;
 import com.microslop.repository.ChecklistItemRepository;
@@ -70,6 +71,12 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
     private com.microslop.entity.User currentUser;
 
     private VerticalLayout projectsContainer;
+    private ComboBox<Category> categoryDropdown;
+
+    private java.util.List<Project> cachedProjects = java.util.List.of();
+    private java.util.List<Long> cachedProjectIds = java.util.List.of();
+    private Map<Long, Long> cachedTotalVotes = Map.of();
+    private Map<Long, Long> cachedUserVotes = Map.of();
 
     public VotingView(CompetitionService competitionService,
                       ProjectService projectService,
@@ -116,7 +123,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
 
-        var competition = competitionService.getByIdOrFail(competitionId);
+        this.currentCompetition = competitionService.getByIdOrFail(competitionId);
+        var competition = this.currentCompetition;
 
         if (!competition.canVote()) {
             Notification n = Notification.show(
@@ -151,15 +159,46 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         buildUi();
     }
 
-    private void buildUi() {
-        var competition = competitionService.getByIdOrFail(competitionId);
-        this.currentCompetition = competition;
-        this.currentUser = userService.getCurrentUser();
+    // ── UI ────────────────────────────────────────────────────────────────
 
+    private void refreshProjectList() {
+        if (cachedProjects.isEmpty() || cachedProjectIds.isEmpty()) {
+            removeAll();
+            buildUi();
+            return;
+        }
+
+        var currentUserLocal = currentUser != null ? currentUser : userService.getCurrentUser();
+        if (currentUserLocal == null) return;
+
+        boolean hasVotedInCategory = voteService.countVotesByUserAndCategory(currentUserLocal.getId(), selectedCategory.getId()) > 0;
+
+        cachedTotalVotes = voteService.countVotesByProjectIdsAndCategory(cachedProjectIds, selectedCategory.getId());
+        cachedUserVotes = voteService.countUserVotesByProjectIdsAndCategory(cachedProjectIds, currentUserLocal.getId(), selectedCategory.getId());
+
+        projectsContainer.removeAll();
+
+        var cachedChecklistItems = selectedCategory.isChecklistVoting()
+                ? checklistItemRepository.findByCompetitionId(competitionId)
+                : java.util.List.<com.microslop.entity.ChecklistItem>of();
+
+        int staggerIndex = 1;
+        boolean isFirst = true;
+        for (Project p : cachedProjects) {
+            boolean alreadyVoted = cachedUserVotes.getOrDefault(p.getId(), 0L) > 0;
+            long totalVotes = cachedTotalVotes.getOrDefault(p.getId(), 0L);
+            projectsContainer.add(buildProjectCard(p, alreadyVoted, hasVotedInCategory, staggerIndex, cachedChecklistItems, isFirst, totalVotes));
+            staggerIndex = Math.min(staggerIndex + 1, 8);
+            isFirst = false;
+        }
+    }
+
+    private void buildUi() {
+        this.currentUser = userService.getCurrentUser();
         var projects = projectService.listByCompetition(competitionId);
 
         add(new ViewHeader(localizationService.t("voting.title"), userService, "competition/" + competitionId + "/categories"));
-        add(buildBody(projects, competition.getName()));
+        add(buildBody(projects, currentCompetition.getName()));
     }
 
     private int getAvailableVotes(Category selectedCategory) {
@@ -302,7 +341,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         Runnable updateProjectsList = () -> {
             projectsContainer.removeAll();
-            updateMaxVotesLabel(selectedCategory);
 
             boolean hasVotedInCategory = voteService.countVotesByUserAndCategory(currentUserLocal.getId(), selectedCategory.getId()) > 0;
 
@@ -310,18 +348,21 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                     ? checklistItemRepository.findByCompetitionId(competitionId)
                     : java.util.List.<com.microslop.entity.ChecklistItem>of();
 
+            var projectsWithCategories = projectService.listByCompetitionWithCategories(competitionId, selectedCategory.getId());
+
+            cachedProjects = new java.util.ArrayList<>(projectsWithCategories);
+            cachedProjectIds = cachedProjects.stream().map(Project::getId).toList();
+            cachedTotalVotes = voteService.countVotesByProjectIdsAndCategory(cachedProjectIds, selectedCategory.getId());
+            cachedUserVotes = voteService.countUserVotesByProjectIdsAndCategory(cachedProjectIds, currentUserLocal.getId(), selectedCategory.getId());
+
             int staggerIndex = 1;
             boolean isFirst = true;
-            for (Project p : projects) {
-                boolean belongsToCategory = p.getCategories().stream()
-                        .anyMatch(c -> c.getId().equals(selectedCategory.getId()));
-
-                if (belongsToCategory) {
-                    long alreadyVoted = voteService.countVotesByUserAndProjectAndCategory(currentUserLocal.getId(), p.getId(), selectedCategory.getId());
-                    projectsContainer.add(buildProjectCard(p, alreadyVoted > 0, hasVotedInCategory, staggerIndex, cachedChecklistItems, isFirst));
-                    staggerIndex = Math.min(staggerIndex + 1, 8);
-                    isFirst = false;
-                }
+            for (Project p : cachedProjects) {
+                boolean alreadyVoted = cachedUserVotes.getOrDefault(p.getId(), 0L) > 0;
+                long totalVotes = cachedTotalVotes.getOrDefault(p.getId(), 0L);
+                projectsContainer.add(buildProjectCard(p, alreadyVoted, hasVotedInCategory, staggerIndex, cachedChecklistItems, isFirst, totalVotes));
+                staggerIndex = Math.min(staggerIndex + 1, 8);
+                isFirst = false;
             }
         };
 
@@ -331,8 +372,9 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         return body;
     }
 
-    private Div buildProjectCard(Project p, boolean alreadySelected, boolean hasVotedInCategory, int staggerIndex, java.util.List<com.microslop.entity.ChecklistItem> cachedChecklistItems, boolean isFirst) {
-        long totalVotes = voteService.countVotesByProject(p.getId());
+    // ── Project Card ──────────────────────────────────────────────────────
+
+    private Div buildProjectCard(Project p, boolean alreadySelected, boolean hasVotedInCategory, int staggerIndex, java.util.List<com.microslop.entity.ChecklistItem> cachedChecklistItems, boolean isFirst, long totalVotes) {
         boolean otherProjectVoted = hasVotedInCategory && !alreadySelected;
 
         var card = new Div();
@@ -493,7 +535,16 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         dialog.open();
     }
 
-    private void handleVoteWithPoints(Project project, int points, Category selectedCategory) {
+    // ── Utilities ─────────────────────────────────────────────────────────
+
+    /**
+     * Unified vote handling method for both points-based and single-vote scenarios.
+     * Encapsulates common validation, submission, and UI update logic.
+     *
+     * @param project the project to vote for
+     * @param points  the number of points to assign (1 for regular vote, or custom value for scale voting)
+     */
+    private void doHandleVote(Project project, int points) {
         String username = userService.getCurrentUsername();
         if (username == null || username.isEmpty()) {
             showNotification(localizationService.t("voting.mustlogin"), NotificationVariant.LUMO_CONTRAST);
@@ -510,7 +561,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
 
-        var competition = competitionService.getByIdOrFail(competitionId);
+        var competition = currentCompetition;
         if (!competition.canVote()) {
             showNotification(localizationService.t("voting.nocompetition"),
                     NotificationVariant.LUMO_WARNING);
@@ -550,8 +601,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 if (isLastVote) {
                     getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories/" + selectedCategory.getId() + "/ranking"));
                 } else {
-                    removeAll();
-                    buildUi();
+                    refreshProjectList();
                 }
             };
 
@@ -568,66 +618,26 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
          }
      }
 
+    /**
+     * Handles voting with custom points value.
+     * Delegates to doHandleVote() with the specified points.
+     *
+     * @param project         the project to vote for
+     * @param points          the number of points to assign
+     * @param selectedCategory the category being voted in (for validation)
+     */
+    private void handleVoteWithPoints(Project project, int points, Category selectedCategory) {
+        doHandleVote(project, points);
+    }
+
+    /**
+     * Handles regular voting with default single point.
+     * Delegates to doHandleVote() with points=1.
+     *
+     * @param project the project to vote for
+     */
     private void handleVote(Project project) {
-        String username = userService.getCurrentUsername();
-        if (username == null || username.isEmpty()) {
-            showNotification(localizationService.t("voting.mustlogin"), NotificationVariant.LUMO_CONTRAST);
-            return;
-        }
-
-        if (selectedCategory == null) {
-            showNotification(localizationService.t("voting.selectcategory"), NotificationVariant.LUMO_WARNING);
-            return;
-        }
-
-        var competition = competitionService.getByIdOrFail(competitionId);
-
-        if (!competition.canVote()) {
-            showNotification(localizationService.t("voting.nocompetition"),
-                    NotificationVariant.LUMO_WARNING);
-            return;
-        }
-
-        try {
-            voteService.submitVote(username, project.getId(), selectedCategory.getId());
-
-            voterService.decrementVotesLeft(currentUser.getId(), competitionId, selectedCategory.getId(), 1);
-
-            int remainingVotes = getAvailableVotes(selectedCategory);
-            boolean isLastVote = remainingVotes <= 0;
-
-            if (!isLastVote) {
-                if (remainingVotes <= 0) {
-                    maxVotesLabel.setText(localizationService.t("voting.no votes remaining"));
-                } else {
-                    String votesText = remainingVotes == 1
-                        ? localizationService.t("voting.votesleft")
-                        : localizationService.t("voting.votesleft.plural");
-                    maxVotesLabel.setText(localizationService.t("voting.youhave") + remainingVotes + votesText);
-                }
-                maxVotesLabel.getStyle().set("animation", "vote-success-pulse 0.4s ease");
-            }
-
-            Runnable afterAnimation = () -> {
-                if (isLastVote) {
-                    getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/categories/" + selectedCategory.getId() + "/ranking"));
-                } else {
-                    removeAll();
-                    buildUi();
-                }
-            };
-
-            if (isLastVote) {
-                VoteSuccessAnimation overlay = new VoteSuccessAnimation(afterAnimation);
-                getUI().ifPresent(ui -> ui.add(overlay));
-            } else {
-                updateMaxVotesLabel(selectedCategory);
-                VoteQuickAnimation quick = new VoteQuickAnimation(remainingVotes, afterAnimation);
-                getUI().ifPresent(ui -> ui.add(quick));
-            }
-        } catch (IllegalStateException ex) {
-            showNotification(ex.getMessage(), NotificationVariant.LUMO_CONTRAST);
-        }
+        doHandleVote(project, 1);
     }
 
     private void showNotification(String msg, NotificationVariant variant) {

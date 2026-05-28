@@ -34,7 +34,7 @@ class CompetitionServiceObserverTest {
     void setUp() {
         List<CompetitionObserver> observers = new ArrayList<>();
         competitionService = new CompetitionServiceImpl(
-            null, null, null, null,
+            null, null, null,
             observers
         );
     }

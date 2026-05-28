@@ -27,13 +27,13 @@ public class Category {
     private String voterType = "NORMAL";
 
     @Column(name = "vote_type", length = 50)
-    private String voteType = "NORMAL"; // NORMAL, CHECKLIST
+    private String voteType = "NORMAL"; // NORMAL, CHECKLIST, SCALE
 
     @Lob
     @Column(name = "image")
     private byte[] image;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "competition_id", nullable = false)
     private Competition competition;
 

@@ -15,6 +15,11 @@ public class CompetitionBuilder {
     private String voterType = "ALL";
     private Boolean autoVote = false;
     private Integer maxVotesPerPerson = 1;
+    private Double judgeWeightMultiplier = 1.0;
+    private Double standardUserWeightMultiplier = 1.0;
+    private String voteType = "NORMAL";
+    private Integer scaleMin = 0;
+    private Integer scaleMax = 10;
 
     public static CompetitionBuilder builder() {
         return new CompetitionBuilder();
@@ -65,6 +70,26 @@ public class CompetitionBuilder {
         this.maxVotesPerPerson = maxVotesPerPerson;
         return this;
     }
+    public CompetitionBuilder judgeWeightMultiplier(Double judgeWeightMultiplier) {
+        this.judgeWeightMultiplier = judgeWeightMultiplier;
+        return this;
+    }
+    public CompetitionBuilder standardUserWeightMultiplier(Double standardUserWeightMultiplier) {
+        this.standardUserWeightMultiplier = standardUserWeightMultiplier;
+        return this;
+    }
+    public CompetitionBuilder voteType(String voteType) {
+        this.voteType = voteType;
+        return this;
+    }
+    public CompetitionBuilder scaleMin(Integer scaleMin) {
+        this.scaleMin = scaleMin;
+        return this;
+    }
+    public CompetitionBuilder scaleMax(Integer scaleMax) {
+        this.scaleMax = scaleMax;
+        return this;
+    }
     public Competition build() {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Competition name cannot be empty.");
@@ -83,6 +108,11 @@ public class CompetitionBuilder {
         competition.setVoterType(voterType);
         competition.setAutoVote(autoVote);
         competition.setMaxVotesPerPerson(maxVotesPerPerson);
+        competition.setJudgeWeightMultiplier(judgeWeightMultiplier);
+        competition.setStandardUserWeightMultiplier(standardUserWeightMultiplier);
+        competition.setVoteType(voteType);
+        competition.setScaleMin(scaleMin);
+        competition.setScaleMax(scaleMax);
         return competition;
     }
 }

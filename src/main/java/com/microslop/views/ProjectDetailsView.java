@@ -4,6 +4,8 @@ import com.microslop.entity.Project;
 import com.microslop.entity.ProjectComment;
 import com.microslop.entity.User;
 import com.microslop.entity.Vote;
+import com.microslop.repository.ProjectCommentRepository;
+import com.microslop.repository.VoteRepository;
 import com.microslop.service.LocalizationService;
 import com.microslop.service.ProjectService;
 import com.microslop.views.components.CommentCardComponent;
@@ -32,13 +34,20 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
 
     private final ProjectService projectService;
     private final LocalizationService localizationService;
+    private final VoteRepository voteRepository;
+    private final ProjectCommentRepository projectCommentRepository;
     private String currentUsername;
     private Long projectId;
     private Project project;
     private Div commentsContainer;
 
-    public ProjectDetailsView(ProjectService projectService, LocalizationService localizationService) {
+    public ProjectDetailsView(ProjectService projectService,
+                              VoteRepository voteRepository,
+                              ProjectCommentRepository projectCommentRepository,
+                              LocalizationService localizationService) {
         this.projectService = projectService;
+        this.voteRepository = voteRepository;
+        this.projectCommentRepository = projectCommentRepository;
         this.localizationService = localizationService;
         initializeView();
     }
@@ -114,7 +123,12 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
             .set("font-weight", "700")
             .set("flex", "1");
 
-        header.add(backButton, title);
+        Button aiFeedbackBtn = new Button("Feedback IA", new Icon(VaadinIcon.CHART));
+        aiFeedbackBtn.addClassName("votify-btn-primary");
+        aiFeedbackBtn.setHeight("40px");
+        aiFeedbackBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("ai-feedback")));
+
+        header.add(backButton, title, aiFeedbackBtn);
         return header;
     }
 
@@ -139,8 +153,8 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
             projectTitleWrapper.add(projectTitle);
             commentsContainer.add(projectTitleWrapper);
 
-            List<Vote> votes = project.getVotes();
-            List<ProjectComment> comments = project.getComments();
+            List<Vote> votes = voteRepository.findByProjectIdWithUserAndCategory(projectId);
+            List<ProjectComment> comments = projectCommentRepository.findByProjectId(projectId);
 
             boolean hasComments = false;
             int staggerIndex = 1;

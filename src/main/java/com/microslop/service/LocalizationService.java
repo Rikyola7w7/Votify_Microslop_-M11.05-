@@ -203,6 +203,9 @@ public class LocalizationService {
         en.put("common.loading", "Loading...");
         en.put("common.na", "N/A");
 
+        en.put("card.view", "VIEW");
+        en.put("card.viewcategory", "VIEW CATEGORY");
+
         translations.put(ENGLISH, en);
 
         Map<String, String> es = new HashMap<>();
@@ -391,6 +394,9 @@ public class LocalizationService {
         es.put("common.success", "Éxito");
         es.put("common.loading", "Cargando...");
         es.put("common.na", "N/D");
+
+        es.put("card.view", "VER");
+        es.put("card.viewcategory", "VER CATEGORÍA");
 
         translations.put(SPANISH, es);
     }

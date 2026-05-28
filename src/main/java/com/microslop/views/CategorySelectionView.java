@@ -5,6 +5,7 @@ import com.microslop.entity.Competition;
 import com.microslop.entity.CompetitionStatus;
 import com.microslop.service.CategoryService;
 import com.microslop.service.CompetitionService;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.NotificationService;
 import com.microslop.service.PendingProjectSubmissionService;
 import com.microslop.service.UserService;
@@ -40,6 +41,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
     private final PendingProjectSubmissionService pendingProjectSubmissionService;
     private final UserService userService;
     private final NotificationService notificationService;
+    private final LocalizationService localizationService;
 
     private Long competitionId;
     private Competition currentCompetition;
@@ -51,12 +53,14 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
                                   CategoryService categoryService,
                                   PendingProjectSubmissionService pendingProjectSubmissionService,
                                   UserService userService,
-                                  NotificationService notificationService) {
+                                  NotificationService notificationService,
+                                  LocalizationService localizationService) {
         this.competitionService = competitionService;
         this.categoryService = categoryService;
         this.pendingProjectSubmissionService = pendingProjectSubmissionService;
         this.userService = userService;
         this.notificationService = notificationService;
+        this.localizationService = localizationService;
 
         setSizeFull();
         setPadding(false);
@@ -345,7 +349,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
                     getUI().ifPresent(ui -> ui.navigate(
                         "competition/" + competitionId + "/categories/" + category.getId() + "/ranking"
                     ));
-                });
+                }, localizationService);
                 int staggerIndex = (i % 8) + 1;
                 card.addClassNames("animate-fade-in", "stagger-" + staggerIndex);
                 grid.add(card);
@@ -374,8 +378,9 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         var grid = new Div();
         grid.getElement().setAttribute("id", "cat-cards-grid");
         grid.setWidthFull();
+        grid.addClassName("animate-fade-in");
         grid.getStyle()
-            .set("display", "none")
+            .set("display", "flex")
             .set("flex-wrap", "wrap")
             .set("gap", "24px")
             .set("justify-content", "center");
@@ -386,21 +391,23 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
                 getUI().ifPresent(ui -> ui.navigate(
                     "competition/" + competitionId + "/categories/" + category.getId() + "/ranking"
                 ));
-            });
+            }, localizationService);
             int staggerIndex = (i % 8) + 1;
             card.addClassNames("animate-fade-in", "stagger-" + staggerIndex);
             grid.add(card);
         }
         gridContainer.add(grid);
 
-        // After 800ms, hide loading and show grid
+        // Fade out loading and reveal grid
         getElement().executeJs(
             "setTimeout(function() {" +
             "  var loadings = document.querySelectorAll('.votify-loading');" +
-            "  loadings.forEach(function(l) { l.style.display = 'none'; });" +
-            "  var g = document.getElementById('cat-cards-grid');" +
-            "  if (g) { g.style.display = 'flex'; g.style.flexWrap = 'wrap'; g.style.gap = '24px'; g.style.justifyContent = 'center'; }" +
-            "}, 800)");
+            "  loadings.forEach(function(l) { l.style.opacity = '0'; l.style.transition = 'opacity 0.15s ease'; });" +
+            "  setTimeout(function() {" +
+            "    var loadings = document.querySelectorAll('.votify-loading');" +
+            "    loadings.forEach(function(l) { l.style.display = 'none'; });" +
+            "  }, 150);" +
+            "}, 750)");
 
         gridWrapper.add(gridContainer);
         return gridWrapper;

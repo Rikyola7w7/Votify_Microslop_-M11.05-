@@ -1,5 +1,7 @@
 package com.microslop.base.ui;
 
+import com.microslop.service.CertificateService;
+import com.microslop.service.CompetitionCheckService;
 import com.microslop.service.InvitationService;
 import com.microslop.service.LocalizationService;
 import com.microslop.service.NotificationService;
@@ -20,10 +22,8 @@ import com.vaadin.flow.component.menubar.MenuBarVariant;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Layout;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -34,6 +34,9 @@ public final class MainLayout extends AppLayout {
     private UserService userService;
 
     @Autowired(required = false)
+    private CompetitionCheckService competitionCheckService;
+
+    @Autowired(required = false)
     private NotificationService notificationService;
 
     @Autowired(required = false)
@@ -41,6 +44,9 @@ public final class MainLayout extends AppLayout {
 
     @Autowired(required = false)
     private LocalizationService localizationService;
+
+    @Autowired(required = false)
+    private CertificateService certificateService;
 
     private LanguageSelectorComponent languageSelector;
     private HorizontalLayout rightActions;
@@ -106,11 +112,19 @@ public final class MainLayout extends AppLayout {
             userMenuContainer = new Div();
             rightActions.add(userMenuContainer);
             getUI().ifPresent(ui ->
-                ui.addAfterNavigationListener(e -> rebuildUserMenu())
+                ui.addAfterNavigationListener(e -> {
+                    rebuildUserMenu();
+                    if (competitionCheckService != null) {
+                        competitionCheckService.checkAndProcessCompetitions();
+                    }
+                })
             );
         }
 
         rebuildUserMenu();
+        if (competitionCheckService != null) {
+            competitionCheckService.checkAndProcessCompetitions();
+        }
 
         // Enable real-time badge polling (every 10 seconds)
         getUI().ifPresent(ui -> {
@@ -141,6 +155,7 @@ private void rebuildUserMenu() {
             String username = userService.getCurrentUsername();
             subMenu.addItem(localizationService.t("nav.myprojects"), event -> getUI().ifPresent(ui -> ui.navigate(username + "/projects")));
             subMenu.addItem(localizationService.t("nav.mycompetitions"), event -> getUI().ifPresent(ui -> ui.navigate(username + "/competitions")));
+            subMenu.addItem("My Certificates", event -> getUI().ifPresent(ui -> ui.navigate("certificates")));
             subMenu.addItem(localizationService.t("nav.invitations"), event -> getUI().ifPresent(ui -> ui.navigate("invitations")));
             subMenu.addItem(localizationService.t("nav.editprofile"), event -> getUI().ifPresent(ui -> ui.navigate("profile")));
             subMenu.addItem(localizationService.t("nav.signout"), event -> handleLogout());
@@ -199,8 +214,6 @@ private void rebuildUserMenu() {
         notificationDialog.setWidth("350px");
         notificationDialog.setMaxWidth("90vw");
 
-        rebuildNotificationDialog();
-
         bellButton.addClickListener(e -> {
             rebuildNotificationDialog();
             notificationDialog.open();
@@ -209,7 +222,12 @@ private void rebuildUserMenu() {
         // Poll the badge on every server roundtrip (every 10s via setPollInterval)
         bellContainer.addAttachListener(event -> {
             getUI().ifPresent(ui -> {
-                ui.addPollListener(e -> updateUnreadBadge());
+                ui.addPollListener(e -> {
+                    updateUnreadBadge();
+                    if (competitionCheckService != null) {
+                        competitionCheckService.checkAndProcessCompetitions();
+                    }
+                });
             });
         });
 
@@ -219,7 +237,10 @@ private void rebuildUserMenu() {
     }
 
     private void updateUnreadBadge() {
-        if (notificationService == null) return;
+        if (notificationService == null || userService == null || !userService.isLoggedIn()) {
+            unreadBadge.getStyle().set("visibility", "hidden");
+            return;
+        }
         try {
             long unreadCount = notificationService.getUnreadCountForCurrentUser();
             if (unreadCount > 0) {
@@ -266,6 +287,7 @@ private void rebuildUserMenu() {
                             notification,
                             notificationService,
                             invitationService,
+                            certificateService,
                             this::rebuildNotificationDialog,
                             notification.getCompetition()
                         );

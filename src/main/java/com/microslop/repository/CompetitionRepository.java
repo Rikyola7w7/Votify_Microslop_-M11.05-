@@ -19,6 +19,11 @@ public interface CompetitionRepository extends JpaRepository<Competition, Long>,
 
     List<Competition> findByStatus(CompetitionStatus status);
 
+    @Query("SELECT c FROM Competition c WHERE c.status = com.microslop.entity.CompetitionStatus.ACTIVE OR c.status = com.microslop.entity.CompetitionStatus.VOTING_OPEN OR c.status = com.microslop.entity.CompetitionStatus.PAUSED")
+    List<Competition> findActiveAndVotingOpen();
+
+    List<Competition> findByStatusIn(List<CompetitionStatus> statuses);
+
     Optional<Competition> findByNameIgnoreCase(String name);
 
     @Query("SELECT DISTINCT c FROM Competition c LEFT JOIN FETCH c.projects WHERE c.status = com.microslop.entity.CompetitionStatus.ACTIVE OR c.status = com.microslop.entity.CompetitionStatus.PAUSED")
@@ -27,5 +32,14 @@ public interface CompetitionRepository extends JpaRepository<Competition, Long>,
     @Query("SELECT c FROM Competition c LEFT JOIN FETCH c.categories WHERE c.id = :id")
     Optional<Competition> findByIdWithCategories(Long id);
 
+    @Query("SELECT c FROM Competition c LEFT JOIN FETCH c.categories WHERE c.status = com.microslop.entity.CompetitionStatus.ACTIVE OR c.status = com.microslop.entity.CompetitionStatus.PAUSED")
+    List<Competition> findActiveWithCategories();
+
     List<Competition> findByCreatedByIgnoreCase(String createdBy);
+
+    @Query("SELECT c FROM Competition c WHERE c.id = :id")
+    Optional<Competition> findByIdBasic(Long id);
+
+    @Query("SELECT c FROM Competition c")
+    List<Competition> findAllBasic();
 }

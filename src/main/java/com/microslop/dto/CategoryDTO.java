@@ -14,7 +14,6 @@ public class CategoryDTO {
     private String name;
     private String voterType = "NORMAL";
     private String voteType = "NORMAL";
-    private byte[] image;
 
     public CategoryDTO(String name) {
         this.name = name;
@@ -29,5 +28,9 @@ public class CategoryDTO {
         this.name = name;
         this.voterType = voterType;
         this.voteType = voteType;
+    }
+
+    public CategoryDTO(String name, int weight) {
+        this.name = name;
     }
 }

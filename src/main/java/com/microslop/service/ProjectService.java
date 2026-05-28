@@ -20,6 +20,8 @@ public interface ProjectService {
 
     java.util.List<Project> getPopularRankingByCategory(Long categoryId);
 
+    java.util.List<Project> getChecklistRankingByCategory(Long categoryId);
+
     java.util.List<Project> getUserProjects(String username);
 
     /**
@@ -36,6 +38,14 @@ public interface ProjectService {
      * @return ordered list of projects
      */
     java.util.List<Project> getRankingForCategory(Long categoryId, boolean isJudgesRanking);
+
+    /**
+     * Get projects for a competition that belong to a specific category, with categories eagerly loaded.
+     * @param competitionId the competition ID
+     * @param categoryId the category ID to filter by
+     * @return list of projects in that category
+     */
+    java.util.List<Project> listByCompetitionWithCategories(Long competitionId, Long categoryId);
 
     /**
      * Reclassify a project to a new position in the ranking.
@@ -56,4 +66,17 @@ public interface ProjectService {
      * @param newVoteCount the new vote count
      */
     void editProjectVotes(Long projectId, int newVoteCount);
+
+    /**
+     * Clear all modifications (custom position and manual vote count) for all projects in a category.
+     * @param categoryId the category ID
+     */
+    void clearAllModifications(Long categoryId);
+
+    /**
+     * Reset all custom positions and manual vote counts for projects in a competition,
+     * restoring the natural ranking order.
+     * @param competitionId the competition ID
+     */
+    void resetAllModifications(Long competitionId);
 }

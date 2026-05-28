@@ -25,7 +25,7 @@ class RegisterViewTest {
     }
 
     @Test
-    void register_view_constructor_accepts_user_service() throws NoSuchMethodException {
-        assertThat(RegisterView.class.getConstructor(com.microslop.service.UserService.class)).isNotNull();
+    void register_view_constructor_accepts_user_service_and_localization() throws NoSuchMethodException {
+        assertThat(RegisterView.class.getConstructor(com.microslop.service.UserService.class, com.microslop.service.LocalizationService.class)).isNotNull();
     }
 }

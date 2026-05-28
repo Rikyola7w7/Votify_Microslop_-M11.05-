@@ -26,12 +26,18 @@ public class CompetitionDTO {
     private String voterType;
     private Boolean autoVote;
     private Integer maxVotesPerPerson;
+    private Double judgeWeightMultiplier;
+    private Double standardUserWeightMultiplier;
     private Boolean commentsEnabled;
     private Boolean commentsRequired;
     private int maxVotes;
+    private String voteType = "NORMAL";
+    private Integer scaleMin = 0;
+    private Integer scaleMax = 10;
     private byte[] coverImage;
     private List<CategoryDTO> categories = new ArrayList<>();
     private List<String> judgeUsernames = new ArrayList<>();
+    private List<ChecklistItemDTO> checklistItems = new ArrayList<>();
 
     public CompetitionDTO(String name, String description,
                           LocalDateTime startDate, LocalDateTime endDate,
@@ -49,5 +55,9 @@ public class CompetitionDTO {
 
     public void addJudgeUsername(String username) {
         this.judgeUsernames.add(username);
+    }
+
+    public void addChecklistItem(ChecklistItemDTO item) {
+        this.checklistItems.add(item);
     }
 }

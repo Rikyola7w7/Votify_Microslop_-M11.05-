@@ -3,6 +3,7 @@ package com.microslop.service;
 import com.microslop.entity.Vote;
 import com.microslop.observer.subject.VoteEventSubject;
 import java.util.List;
+import java.util.Map;
 
 public interface VoteService extends VoteEventSubject {
 
@@ -23,6 +24,24 @@ public interface VoteService extends VoteEventSubject {
     long countVotesByUserAndProjectAndCategory(Long userId, Long projectId, Long categoryId);
 
     long countPointsByUserAndCategory(Long userId, Long categoryId);
+
+    // Scale voting support
+    void submitScaleVote(String userUsername, Long projectId, Long categoryId, int score);
+
+    double getAverageScoreByProject(Long projectId);
+
+    double getAverageScoreByProjectAndCategory(Long projectId, Long categoryId);
+
+    long getSumScoreByProject(Long projectId);
+
+    long getSumScoreByProjectAndCategory(Long projectId, Long categoryId);
+
+    // Batch counting helpers
+    Map<Long, Long> countVotesByProjectIds(List<Long> projectIds);
+
+    Map<Long, Long> countVotesByProjectIdsAndCategory(List<Long> projectIds, Long categoryId);
+
+    Map<Long, Long> countUserVotesByProjectIdsAndCategory(List<Long> projectIds, Long userId, Long categoryId);
 
     List<Vote> getVotesByUser(Long userId);
 

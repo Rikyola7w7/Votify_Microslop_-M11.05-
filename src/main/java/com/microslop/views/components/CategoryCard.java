@@ -3,6 +3,7 @@ package com.microslop.views.components;
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
 import com.microslop.entity.CompetitionStatus;
+import com.microslop.service.LocalizationService;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
@@ -19,12 +20,18 @@ public class CategoryCard extends Div {
     private final Category category;
     private final Competition competition;
     private final Runnable navigationAction;
+    private final LocalizationService localizationService;
 
-    public CategoryCard(Category category, Competition competition, Runnable navigationAction) {
+    public CategoryCard(Category category, Competition competition, Runnable navigationAction, LocalizationService localizationService) {
         this.category = category;
         this.competition = competition;
         this.navigationAction = navigationAction;
+        this.localizationService = localizationService;
         buildCard();
+    }
+
+    private String t(String key) {
+        return localizationService != null ? localizationService.t(key) : key;
     }
 
     private void buildCard() {
@@ -176,7 +183,7 @@ public class CategoryCard extends Div {
     }
 
     private Button createViewButton() {
-        Button viewButton = new Button("VIEW CATEGORY");
+        Button viewButton = new Button(t("card.viewcategory"));
         viewButton.setWidth("calc(100% - 32px)");
         viewButton.addClassName("votify-btn-primary");
         viewButton.getStyle()
@@ -185,6 +192,7 @@ public class CategoryCard extends Div {
 
         viewButton.addClickListener(event -> {
             getStyle().set("animation", "category-select-flash 0.4s ease");
+            viewButton.setEnabled(false);
             if (navigationAction != null) {
                 navigationAction.run();
             }

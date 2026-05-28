@@ -10,6 +10,11 @@ import com.microslop.entity.CompetitionStatus;
 public class DraftCompetitionState implements CompetitionState {
 
     @Override
+    public String name() {
+        return "DRAFT";
+    }
+
+    @Override
     public void activate(Competition competition) {
         competition.setStatus(CompetitionStatus.ACTIVE);
     }

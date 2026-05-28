@@ -84,30 +84,11 @@ class CompetitionServiceImplTest {
     }
 
      @Test
-     void should_create_competition_with_categories_and_judges() throws Exception {
+     void should_create_competition_with_categories_and_judges() {
          when(userRepository.findByUsernameIgnoreCase("creator")).thenReturn(Optional.of(creatorUser));
          when(userRepository.findByUsernameIgnoreCase("judge1")).thenReturn(Optional.of(judgeUser1));
          when(userRepository.findByUsernameIgnoreCase("judge2")).thenReturn(Optional.of(judgeUser2));
 
-         Competition savedCompetition = new Competition();
-         savedCompetition.setId(1L);
-         savedCompetition.setName("Test Competition");
-         
-         when(commandExecutor.execute(any())).thenAnswer(invocation -> {
-             Object commandArg = invocation.getArgument(0);
-             // The command's execute() method will call executeCommand() and set lastResult
-             // We need to simulate what would happen if execute() is called
-             if (commandArg instanceof com.microslop.command.Command) {
-                 try {
-                     // Call the actual execute() method on the mocked command to trigger real logic
-                     return ((com.microslop.command.Command<?>) commandArg).execute();
-                 } catch (Exception e) {
-                     throw new RuntimeException(e);
-                 }
-             }
-             return null;
-         });
-         
          when(competitionRepository.save(any(Competition.class)))
                  .thenAnswer(invocation -> {
                      Competition c = invocation.getArgument(0);
@@ -131,14 +112,17 @@ class CompetitionServiceImplTest {
     }
 
      @Test
-     void should_throw_exception_when_judge_not_found() throws Exception {
-         lenient().when(userRepository.findByUsernameIgnoreCase("creator")).thenReturn(Optional.of(creatorUser));
-         lenient().when(userRepository.findByUsernameIgnoreCase("judge1")).thenReturn(Optional.of(judgeUser1));
-         lenient().when(userRepository.findByUsernameIgnoreCase("judge2")).thenReturn(Optional.empty());
+     void should_throw_exception_when_judge_not_found() {
+         when(userRepository.findByUsernameIgnoreCase("creator")).thenReturn(Optional.of(creatorUser));
+         when(userRepository.findByUsernameIgnoreCase("judge1")).thenReturn(Optional.of(judgeUser1));
+         when(userRepository.findByUsernameIgnoreCase("judge2")).thenReturn(Optional.empty());
 
-         // Mock the command executor to throw exception when validation fails
-         doThrow(new IllegalArgumentException("Judge user not found: judge2"))
-                 .when(commandExecutor).execute(any());
+         when(competitionRepository.save(any(Competition.class)))
+                 .thenAnswer(invocation -> {
+                     Competition c = invocation.getArgument(0);
+                     c.setId(1L);
+                     return c;
+                 });
 
          assertThatThrownBy(() -> competitionService.createCompetition("creator", competitionDTO))
                  .isInstanceOf(IllegalArgumentException.class)
@@ -231,7 +215,7 @@ class CompetitionServiceImplTest {
          active2.setName("Active 2");
 
          List<Competition> activeList = Arrays.asList(active1, active2);
-         when(competitionRepository.findActiveWithProjects()).thenReturn(activeList);
+         when(competitionRepository.findActiveWithCategories()).thenReturn(activeList);
 
          List<Competition> result = competitionService.getActiveCompetitions();
 

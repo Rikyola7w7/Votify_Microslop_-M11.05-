@@ -2,10 +2,10 @@ package com.microslop.entity;
 
 import com.microslop.state.CompetitionState;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.BatchSize;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +15,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @ToString(exclude = {"projects", "categories", "judges"})
+@BatchSize(size = 50)
 public class Competition {
 
     @Id 
@@ -43,10 +44,6 @@ public class Competition {
     @Column(name = "event_type", length = 100)
     private String eventType;
 
-    @Lob
-    @Column(name = "cover_image")
-    private byte[] coverImage;
-
     @Column(name = "created_by", length = 255)
     private String createdBy;
 
@@ -57,15 +54,14 @@ public class Competition {
     @Column(name = "auto_vote", columnDefinition = "boolean default false")
     private Boolean autoVote = false;
 
-    @Column(name = "max_votes_per_person", columnDefinition = "integer default 1")
-    @Min(value = 1, message = "Max votes per person must be at least 1")
-    private Integer maxVotesPerPerson = 1;
+    @Column(name = "judge_weight_multiplier", columnDefinition = "double default 1.0")
+    private Double judgeWeightMultiplier = 1.0;
 
-    @Column(name = "voting_strategy_type", length = 50)
-    private String votingStrategyType = "ALL";
+    @Column(name = "standard_user_weight_multiplier", columnDefinition = "double default 1.0")
+    private Double standardUserWeightMultiplier = 1.0;
 
-    @Column(name = "ranking_strategy_type", length = 50)
-    private String rankingStrategyType = "AVERAGE";
+    @Embedded
+    private VotingConfiguration votingConfiguration = new VotingConfiguration();
 
     public static com.microslop.builder.CompetitionBuilder builder() {
         return com.microslop.builder.CompetitionBuilder.builder();
@@ -79,18 +75,33 @@ public class Competition {
     private Boolean commentsRequired = false;
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<Project> projects = new ArrayList<>();
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<Category> categories = new ArrayList<>();
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<Judge> judges = new ArrayList<>();
+
+    @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChecklistItem> checklistItems = new ArrayList<>();
+
+    @Column(name = "cover_image")
+    private byte[] coverImage;
 
     @Column(nullable = false, name = "max_votes")
     private int maxVotes = 1;
 
-    public Competition(String name, String description,
+     @Column(name = "end_notification_sent", columnDefinition = "boolean default false")
+     private boolean endNotificationSent = false;
+
+     @Column(name = "closing_soon_notification_sent", columnDefinition = "boolean default false")
+     private boolean closingSoonNotificationSent = false;
+
+     public Competition(String name, String description,
                        LocalDateTime startDate, LocalDateTime endDate) {
         this.name      = name;
         this.description = description;
@@ -128,97 +139,66 @@ public class Competition {
         judge.setCompetition(null);
     }
 
+public void addChecklistItem(ChecklistItem item) {
+        checklistItems.add(item);
+        item.setCompetition(this);
+    }
+
+    public void removeChecklistItem(ChecklistItem item) {
+        checklistItems.remove(item);
+        item.setCompetition(null);
+    }
+
     // ── State Pattern Methods ─────────────────────────────────────────────
 
-    /**
-     * Delegates to current state object to transition to ACTIVE.
-     */
     public void activate() {
         this.status.getState().activate(this);
     }
 
-    /**
-     * Delegates to current state object to deactivate (back to DRAFT).
-     */
     public void deactivate() {
         this.status.getState().deactivate(this);
     }
 
-    /**
-     * Delegates to current state object to open voting.
-     */
     public void openVoting() {
         this.status.getState().openVoting(this);
     }
 
-    /**
-     * Delegates to current state object to pause voting.
-     */
     public void pauseVoting() {
         this.status.getState().pauseVoting(this);
     }
 
-    /**
-     * Delegates to current state object to conclude.
-     */
     public void conclude() {
         this.status.getState().conclude(this);
     }
 
-    /**
-     * Delegates to current state object to archive.
-     */
     public void archive() {
         this.status.getState().archive(this);
     }
 
-    /**
-     * Delegates to current state object to reopen.
-     */
     public void reopen() {
         this.status.getState().reopen(this);
     }
 
-    /**
-     * Whether voting is currently allowed based on state.
-     */
     public boolean canVote() {
         return status != null && status.getState().canVote();
     }
 
-    /**
-     * Whether projects can be submitted based on state.
-     */
     public boolean canSubmitProjects() {
         return status != null && status.getState().canSubmitProjects();
     }
 
-    /**
-     * Whether configuration can be edited based on state.
-     */
     public boolean canEditConfiguration() {
         return status != null && status.getState().canEditConfiguration();
     }
 
-    /**
-     * Whether this state is terminal (no further transitions).
-     */
     public boolean isTerminal() {
         return status != null && status.getState().isTerminal();
     }
 
-    /**
-     * Computed property: derives active status from the current state.
-     * Replaces the direct boolean field for reads.
-     */
     public boolean isActive() {
         return status != null && status.getState().isActiveLegacy();
     }
 
-    /**
-     * @deprecated Use state transition methods (activate, deactivate, etc.) instead.
-     * Kept for backward compatibility. Sets status to ACTIVE or DRAFT.
-     */
     @Deprecated
     public void setActive(boolean active) {
         if (active) {
@@ -228,7 +208,7 @@ public class Competition {
             }
         } else {
             if (this.status == CompetitionStatus.ACTIVE
-                    || this.status == CompetitionStatus.PAUSED) {
+                    || this.status == CompetitionStatus.VOTING_OPEN) {
                 this.status = CompetitionStatus.DRAFT;
             }
         }
@@ -251,27 +231,75 @@ public class Competition {
         this.autoVote = autoVote;
     }
 
+    public VotingConfiguration getVotingConfiguration() {
+        return votingConfiguration;
+    }
+
+    public void setVotingConfiguration(VotingConfiguration votingConfiguration) {
+        this.votingConfiguration = votingConfiguration;
+    }
+
     public Integer getMaxVotesPerPerson() {
-        return maxVotesPerPerson;
+        return votingConfiguration.getMaxVotesPerPerson();
     }
 
     public void setMaxVotesPerPerson(Integer maxVotesPerPerson) {
-        this.maxVotesPerPerson = maxVotesPerPerson;
+        this.votingConfiguration.setMaxVotesPerPerson(maxVotesPerPerson);
+    }
+
+    public Double getJudgeWeightMultiplier() {
+        return judgeWeightMultiplier;
+    }
+
+    public void setJudgeWeightMultiplier(Double judgeWeightMultiplier) {
+        this.judgeWeightMultiplier = judgeWeightMultiplier;
+    }
+
+    public Double getStandardUserWeightMultiplier() {
+        return standardUserWeightMultiplier;
+    }
+
+    public void setStandardUserWeightMultiplier(Double standardUserWeightMultiplier) {
+        this.standardUserWeightMultiplier = standardUserWeightMultiplier;
+    }
+
+    public String getVoteType() {
+        return votingConfiguration.getVoteType();
+    }
+
+    public void setVoteType(String voteType) {
+        this.votingConfiguration.setVoteType(voteType);
+    }
+
+    public Integer getScaleMin() {
+        return votingConfiguration.getScaleMin();
+    }
+
+    public void setScaleMin(Integer scaleMin) {
+        this.votingConfiguration.setScaleMin(scaleMin);
+    }
+
+    public Integer getScaleMax() {
+        return votingConfiguration.getScaleMax();
+    }
+
+    public void setScaleMax(Integer scaleMax) {
+        this.votingConfiguration.setScaleMax(scaleMax);
     }
 
     public String getVotingStrategyType() {
-        return votingStrategyType;
+        return votingConfiguration.getVotingStrategyType();
     }
 
     public void setVotingStrategyType(String votingStrategyType) {
-        this.votingStrategyType = votingStrategyType;
+        this.votingConfiguration.setVotingStrategyType(votingStrategyType);
     }
 
     public String getRankingStrategyType() {
-        return rankingStrategyType;
+        return votingConfiguration.getRankingStrategyType();
     }
 
     public void setRankingStrategyType(String rankingStrategyType) {
-        this.rankingStrategyType = rankingStrategyType;
+        this.votingConfiguration.setRankingStrategyType(rankingStrategyType);
     }
 }

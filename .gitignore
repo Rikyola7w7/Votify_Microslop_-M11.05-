@@ -15,6 +15,11 @@ vite.generated.ts
 .env
 neon.session.sql
 
+# Local data and SQL files
+data/
+*.db
+*.sql
+
 .agents
 skills-lock.json
 CONTEXT.md
