@@ -378,39 +378,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
         nameRow.add(competitionName, separator, categoryName);
 
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-        String startDateStr = currentCompetition.getStartDate() != null
-            ? currentCompetition.getStartDate().format(dateFormatter)
-            : "N/A";
-        String endDateStr = currentCompetition.getEndDate() != null
-            ? currentCompetition.getEndDate().format(dateFormatter)
-            : "N/A";
-
-        var datesRow = new HorizontalLayout();
-        datesRow.setAlignItems(FlexComponent.Alignment.CENTER);
-        datesRow.setSpacing(true);
-        datesRow.setPadding(false);
-        datesRow.getStyle().set("margin-top", "0.5rem");
-
-        var startDate = new Span("Start: " + startDateStr);
-        startDate.getStyle()
-            .set("font-size", "0.9rem")
-            .set("color", "var(--text-muted)");
-
-        var dateSeparator = new Span("|");
-        dateSeparator.getStyle()
-            .set("color", "var(--border)")
-            .set("font-size", "0.9rem");
-
-        var endDate = new Span("End: " + endDateStr);
-        endDate.getStyle()
-            .set("font-size", "0.9rem")
-            .set("color", "var(--text-muted)");
-
-        datesRow.add(startDate, dateSeparator, endDate);
-
-        leftSection.add(nameRow, datesRow);
+        leftSection.add(nameRow);
 
         content.add(leftSection);
         card.add(content);
@@ -470,15 +438,6 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         content.getStyle()
             .set("max-width", "760px")
             .set("margin", "0 auto");
-
-        var title = new H3(isJudgesRanking ? "Judges' Ranking" : "Popular Ranking");
-        title.getStyle()
-            .set("font-size", "1.3rem")
-            .set("font-weight", "700")
-            .set("color", "var(--text-primary)")
-            .set("margin", "1rem 0")
-            .set("text-align", "center");
-        content.add(title);
 
         if (ranking.isEmpty()) {
             var emptyWrapper = new Div();

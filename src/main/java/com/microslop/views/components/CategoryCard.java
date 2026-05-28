@@ -83,14 +83,6 @@ public class CategoryCard extends Div {
                 .set("border", "1px solid rgba(245, 158, 11, 0.3)");
         }
 
-        Span compName = new Span("Competition: " + competition.getName());
-        compName.getStyle()
-            .set("color", "var(--text-muted)")
-            .set("font-size", "13px")
-            .set("display", "block")
-            .set("padding", "0 16px")
-            .set("margin-top", "4px");
-
         Div spacer = new Div();
         spacer.setHeight(1, Unit.PIXELS);
         spacer.setWidthFull();
@@ -98,7 +90,7 @@ public class CategoryCard extends Div {
 
         Button viewButton = createViewButton();
 
-        cardContent.add(ribbonStripe, iconBlock, statusBadge, categoryName, voterBadge, compName, spacer, viewButton);
+        cardContent.add(ribbonStripe, iconBlock, statusBadge, categoryName, voterBadge, spacer, viewButton);
         add(cardContent);
     }
 
