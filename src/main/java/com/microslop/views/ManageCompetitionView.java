@@ -138,7 +138,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        Button backButton = new Button("Back to Dashboard");
+        Button backButton = new Button("\u2190 Back to Dashboard", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/competitions")));

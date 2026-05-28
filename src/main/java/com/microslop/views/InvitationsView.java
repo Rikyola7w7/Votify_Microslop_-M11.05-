@@ -68,6 +68,7 @@ public class InvitationsView extends VerticalLayout implements BeforeEnterObserv
 
         Button refreshBtn = new Button(new Icon(VaadinIcon.REFRESH));
         refreshBtn.addThemeVariants(ButtonVariant.LUMO_ICON);
+        refreshBtn.getElement().setAttribute("aria-label", "Refresh invitations");
         refreshBtn.getElement().setAttribute("title", "Refresh");
         refreshBtn.addClickListener(e -> loadInvitations());
 

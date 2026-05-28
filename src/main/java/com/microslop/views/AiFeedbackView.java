@@ -153,7 +153,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
-        Button backButton = new Button("\u2190 Back");
+        Button backButton = new Button("\u2190 Back to projects", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(loggedInUsername + "/projects")));

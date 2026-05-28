@@ -255,6 +255,7 @@ public class NotificationCardComponent extends Div {
         if (!notification.getIsRead()) {
             Button markReadBtn = new Button(new Icon(VaadinIcon.CHECK));
             markReadBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+            markReadBtn.getElement().setAttribute("aria-label", "Mark as read");
             markReadBtn.getElement().setAttribute("title", "Mark as read");
             markReadBtn.addClickListener(e -> {
                 notificationService.markAsRead(notification.getId());
@@ -267,6 +268,7 @@ public class NotificationCardComponent extends Div {
 
         Button deleteBtn = new Button(new Icon(VaadinIcon.TRASH));
         deleteBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        deleteBtn.getElement().setAttribute("aria-label", "Delete notification");
         deleteBtn.getElement().setAttribute("title", "Delete notification");
         deleteBtn.addClickListener(e -> {
             notificationService.deleteNotification(notification.getId());

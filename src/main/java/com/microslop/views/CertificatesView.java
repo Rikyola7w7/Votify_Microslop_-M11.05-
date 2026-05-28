@@ -82,6 +82,7 @@ public class CertificatesView extends VerticalLayout implements BeforeEnterObser
 
         Button refreshBtn = new Button(new Icon(VaadinIcon.REFRESH));
         refreshBtn.addThemeVariants(ButtonVariant.LUMO_ICON);
+        refreshBtn.getElement().setAttribute("aria-label", "Refresh certificates");
         refreshBtn.getElement().setAttribute("title", "Refresh");
         refreshBtn.addClickListener(e -> loadCertificates());
 

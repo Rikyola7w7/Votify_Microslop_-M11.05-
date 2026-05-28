@@ -24,6 +24,8 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -116,7 +118,33 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             isChecklistMode = "CHECKLIST".equalsIgnoreCase(currentCompetition.getVoteType());
             isScaleMode = "SCALE".equalsIgnoreCase(currentCompetition.getVoteType());
         } catch (Exception e) {
-            event.forwardTo("");
+            removeAll();
+            VerticalLayout errorState = new VerticalLayout();
+            errorState.setAlignItems(FlexComponent.Alignment.CENTER);
+            errorState.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+            errorState.setWidthFull();
+            errorState.setHeight("60vh");
+
+            Span icon = new Span("\u26A0");
+            icon.getStyle().set("font-size", "48px");
+
+            Span message = new Span("Competition or category not found.");
+            message.getStyle()
+                .set("font-size", "1.2rem")
+                .set("font-weight", "600")
+                .set("color", "var(--text-primary)");
+
+            Span sub = new Span("It may have been removed or the link is invalid.");
+            sub.getStyle()
+                .set("color", "var(--text-muted)")
+                .set("font-size", "0.95rem");
+
+            Button backBtn = new Button("\u2190 Back to home", new Icon(VaadinIcon.ARROW_LEFT));
+            backBtn.addClassName("votify-btn-primary");
+            backBtn.addClickListener(ev -> getUI().ifPresent(ui -> ui.navigate("")));
+
+            errorState.add(icon, message, sub, backBtn);
+            add(errorState);
             return;
         }
 

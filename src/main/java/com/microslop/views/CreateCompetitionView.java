@@ -102,7 +102,7 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         header.setWidthFull();
         header.setAlignItems(Alignment.CENTER);
 
-        Button backButton = new Button("Back");
+        Button backButton = new Button("\u2190 Back to Dashboard");
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> navigateBack());
@@ -416,6 +416,7 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
 
         Button removeButton = new Button(new Icon(VaadinIcon.TRASH));
         removeButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+        removeButton.getElement().setAttribute("aria-label", "Remove category");
         removeButton.addClickListener(e -> {
             selectedCategories.remove(category);
             categoriesContainer.remove(categoryItem);
@@ -471,6 +472,7 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
 
         Button removeButton = new Button(new Icon(VaadinIcon.TRASH));
         removeButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+        removeButton.getElement().setAttribute("aria-label", "Remove judge");
         removeButton.addClickListener(e -> {
             selectedJudges.remove(judgeUsername);
             judgesContainer.remove(judgeItem);

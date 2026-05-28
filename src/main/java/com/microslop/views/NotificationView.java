@@ -86,6 +86,7 @@ public class NotificationView extends VerticalLayout {
 
         Button refreshBtn = new Button(new Icon(VaadinIcon.REFRESH));
         refreshBtn.addThemeVariants(ButtonVariant.LUMO_ICON);
+        refreshBtn.getElement().setAttribute("aria-label", "Refresh notifications");
         refreshBtn.getElement().setAttribute("title", "Refresh");
         refreshBtn.addClickListener(e -> refreshNotifications());
         actions.add(refreshBtn);

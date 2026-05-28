@@ -107,7 +107,7 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
         header.addClassName("votify-header");
         header.getStyle().set("flex-shrink", "0");
 
-        Button backButton = new Button(new Icon(VaadinIcon.ARROW_LEFT));
+        Button backButton = new Button("\u2190 Back", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
         backButton.setHeight("40px");
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));

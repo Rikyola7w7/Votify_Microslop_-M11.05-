@@ -110,7 +110,7 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
         header.setSpacing(true);
         header.addClassName("votify-header");
 
-        Button backButton = new Button(new Icon(VaadinIcon.ARROW_LEFT));
+        Button backButton = new Button("\u2190 Back to projects", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
         backButton.setHeight("40px");
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/projects")));

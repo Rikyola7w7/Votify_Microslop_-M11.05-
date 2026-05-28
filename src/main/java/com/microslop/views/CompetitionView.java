@@ -17,6 +17,8 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -206,7 +208,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             .set("box-shadow", "0 2px 8px rgba(0,0,0,0.3)");
 
         // Back button
-        Button backButton = new Button("← Back");
+        Button backButton = new Button("\u2190 Back", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         backButton.getStyle()
             .set("color", "white")

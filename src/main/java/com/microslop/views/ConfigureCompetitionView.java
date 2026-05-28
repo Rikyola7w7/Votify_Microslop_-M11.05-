@@ -166,7 +166,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        Button backButton = new Button("Back");
+        Button backButton = new Button("\u2190 Back to Dashboard");
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> navigateBack());
@@ -377,12 +377,8 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         Button deleteButton = new Button();
         deleteButton.setIcon(new Icon(VaadinIcon.TRASH));
         deleteButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+        deleteButton.getElement().setAttribute("aria-label", "Delete category");
         deleteButton.addClickListener(e -> {
-            if (category.getId() == null) {
-                categoriesToAdd.remove(category);
-            } else {
-                categoriesToRemove.add(category);
-            }
             categoriesContainer.remove(row);
             markAsChanged();
             Notification.show("Category removed", 2000, Notification.Position.BOTTOM_CENTER);
@@ -557,6 +553,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         Button deleteButton = new Button();
         deleteButton.setIcon(new Icon(VaadinIcon.TRASH));
         deleteButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+        deleteButton.getElement().setAttribute("aria-label", "Remove judge");
         deleteButton.addClickListener(e -> {
             judgesToRemove.add(judge);
             judgesContainer.remove(row);
@@ -665,6 +662,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         Button deleteButton = new Button();
         deleteButton.setIcon(new Icon(VaadinIcon.TRASH));
         deleteButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+        deleteButton.getElement().setAttribute("aria-label", "Remove pending judge");
         deleteButton.addClickListener(e -> {
             judgesToAdd.remove(judge.getUser());
             judgesContainer.remove(row);
@@ -772,12 +770,8 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
          Button deleteButton = new Button();
          deleteButton.setIcon(new Icon(VaadinIcon.TRASH));
          deleteButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+         deleteButton.getElement().setAttribute("aria-label", "Delete checklist item");
          deleteButton.addClickListener(e -> {
-             if (item.getId() == null) {
-                 checklistItemsToAdd.remove(item);
-             } else {
-                 checklistItemsToRemove.add(item);
-             }
              checklistItemsContainer.remove(row);
              markAsChanged();
          });
