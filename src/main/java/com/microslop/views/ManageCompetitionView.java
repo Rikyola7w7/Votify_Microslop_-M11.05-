@@ -435,12 +435,37 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     }
 
     private void endVotingNow() {
-        competitionService.conclude(competitionId);
-        competition = competitionService.getByIdOrFail(competitionId);
-        endDatePicker.setValue(competition.getEndDate());
-        Notification.show("Voting has been ended.", 3000, Notification.Position.TOP_CENTER)
-                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-        updateUIState();
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("End Voting Now");
+
+        VerticalLayout content = new VerticalLayout();
+        content.setSpacing(true);
+        content.setPadding(false);
+
+        Span message = new Span(
+            "Are you sure you want to end voting immediately? " +
+            "This action is irreversible and no more votes will be accepted."
+        );
+        message.getStyle().set("color", "var(--text-muted)").set("font-size", "0.95rem");
+
+        Button confirmBtn = new Button("Confirm", e -> {
+            competitionService.conclude(competitionId);
+            competition = competitionService.getByIdOrFail(competitionId);
+            endDatePicker.setValue(competition.getEndDate());
+            dialog.close();
+            Notification.show("Voting has been ended.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            updateUIState();
+        });
+        confirmBtn.addClassName("votify-btn-danger");
+
+        Button cancelBtn = new Button("Cancel", e -> dialog.close());
+        cancelBtn.addClassName("votify-btn-secondary");
+
+        dialog.getFooter().add(cancelBtn, confirmBtn);
+        content.add(message);
+        dialog.add(content);
+        dialog.open();
     }
 
     private void reopenVoting() {
