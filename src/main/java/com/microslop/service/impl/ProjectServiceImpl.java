@@ -242,7 +242,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public List<Project> getUserProjectsByUserId(Long userId) {
-        return projectRepository.findAll(new ProjectsByCreatorSpecification(userId));
+        return projectRepository.findProjectsByParticipantUserId(userId);
     }
 
     @Override

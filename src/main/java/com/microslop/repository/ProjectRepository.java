@@ -27,6 +27,15 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
         """)
     List<Project> findProjectsByParticipantUsername(@Param("username") String username);
 
+    @Query("""
+        SELECT DISTINCT p FROM Project p
+        LEFT JOIN FETCH p.competition
+        LEFT JOIN FETCH p.votes
+        INNER JOIN p.participants u
+        WHERE u.id = :userId
+        """)
+    List<Project> findProjectsByParticipantUserId(@Param("userId") Long userId);
+
     @Query("SELECT p FROM Project p LEFT JOIN p.votes v WHERE p.competition.id = :competitionId GROUP BY p ORDER BY COUNT(v) DESC")
     List<Project> findRankingByCompetition(@Param("competitionId") Long competitionId);
 
