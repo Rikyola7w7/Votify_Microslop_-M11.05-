@@ -1,7 +1,7 @@
 package com.microslop.views;
 
 import com.microslop.entity.User;
-import com.microslop.exception.ErrorHandler;
+import com.microslop.exception.BusinessValidationException;
 import com.microslop.service.LocalizationService;
 import com.microslop.service.UserService;
 import com.vaadin.flow.component.button.Button;
@@ -25,7 +25,6 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.VaadinSession;
-import com.vaadin.flow.theme.lumo.LumoUtility;
 
 @Route("login")
 @PageTitle("Login | Votify")
@@ -138,12 +137,25 @@ public class LoginView extends HorizontalLayout {
         passwordField.addClassNames("votify-input");
         passwordField.setPlaceholder(localizationService.t("login.password.placeholder"));
 
+        Span errorMessage = new Span();
+        errorMessage.getStyle()
+                .set("color", "var(--error)")
+                .set("font-size", "0.85rem")
+                .set("font-weight", "600")
+                .set("display", "block")
+                .set("margin-top", "-8px")
+                .set("margin-bottom", "4px")
+                .set("min-height", "1.2em");
+
         Button loginButton = new Button(localizationService.t("login.signin"), e -> {
             String username = usernameField.getValue().trim();
             String password = passwordField.getValue().trim();
 
+            errorMessage.setText("");
+
             if (username.isEmpty() || password.isEmpty()) {
-                Notification.show(localizationService.t("login.fillall"));
+                errorMessage.setText(localizationService.t("login.fillall"));
+                usernameField.focus();
                 return;
             }
 
@@ -193,10 +205,13 @@ public class LoginView extends HorizontalLayout {
                 String finalDest = finalDestination;
                 getUI().ifPresent(ui -> ui.getPage().executeJs("window.location.href = $0", finalDest));
 
-            } catch (IllegalArgumentException ex) {
-                ErrorHandler.handleException(ex, "login");
-            } catch (IllegalStateException ex) {
-                ErrorHandler.handleException(ex, "login", localizationService.t("login.unexpectederror"));
+            } catch (BusinessValidationException ex) {
+                errorMessage.setText("Invalid username or password. Please try again.");
+                passwordField.clear();
+                usernameField.focus();
+            } catch (Exception ex) {
+                errorMessage.setText(localizationService.t("login.unexpectederror"));
+                usernameField.focus();
             }
         });
         loginButton.setWidthFull();
@@ -210,6 +225,9 @@ public class LoginView extends HorizontalLayout {
 
         usernameField.addKeyPressListener(Key.ENTER, e -> loginButton.click());
         passwordField.addKeyPressListener(Key.ENTER, e -> loginButton.click());
+
+        usernameField.addKeyPressListener(e -> errorMessage.setText(""));
+        passwordField.addKeyPressListener(e -> errorMessage.setText(""));
 
         RouterLink linkRegister = new RouterLink(localizationService.t("login.noaccount"), RegisterView.class);
         linkRegister.getStyle()
@@ -226,7 +244,7 @@ public class LoginView extends HorizontalLayout {
                 .set("margin-top", "8px")
                 .set("font-size", "0.85rem");
 
-        card.add(title, subtitle, usernameField, passwordField, loginButton, linkRegister, linkHelp);
+        card.add(title, subtitle, usernameField, passwordField, errorMessage, loginButton, linkRegister, linkHelp);
         rightPanel.add(card);
         return rightPanel;
     }
