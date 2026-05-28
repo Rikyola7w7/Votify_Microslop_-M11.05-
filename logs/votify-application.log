@@ -4117,3 +4117,27 @@ This generated password is for development use only. Your security configuration
 2026-05-28 18:12:20.529 [main] INFO  com.microslop.config.SeedRunner - Fixed NULL votes_left values in voter table
 2026-05-28 18:12:20.530 [main] WARN  com.microslop.config.SeedRunner - neon.session.sql not found on classpath — skipping seed population
 2026-05-28 18:12:20.574 [RMI TCP Connection(2)-127.0.0.1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-28 21:07:23.173 [main] INFO  com.microslop.Application - Starting Application using Java 23.0.2 with PID 49460 (C:\Users\User\Documentos\GitHub\Votify_Microslop\target\classes started by User in C:\Users\User\Documentos\GitHub\Votify_Microslop)
+2026-05-28 21:07:23.176 [main] INFO  com.microslop.Application - No active profile set, falling back to 1 default profile: "default"
+2026-05-28 21:07:26.821 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-05-28 21:07:26.823 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-28 21:07:26.824 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-05-28 21:07:40.564 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-05-28 21:07:41.935 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@dce0228
+2026-05-28 21:07:41.939 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-05-28 21:07:42.073 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-05-28 21:07:50.615 [main] WARN  o.s.b.s.a.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: 4e3b29bc-cfc1-4ab6-a0bd-613284c297da
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-05-28 21:07:50.633 [main] INFO  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-05-28 21:07:53.096 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-05-28 21:07:53.311 [main] INFO  com.microslop.Application - Started Application in 30.705 seconds (process running for 31.585)
+2026-05-28 21:07:53.738 [main] WARN  com.microslop.config.SeedRunner - Could not reset sequence judge_id_seq — table judge may not exist yet
+2026-05-28 21:07:53.893 [main] INFO  com.microslop.config.SeedRunner - PostgreSQL sequences reset successfully
+2026-05-28 21:07:53.964 [main] INFO  com.microslop.config.SeedRunner - Fixed NULL votes_left values in voter table
+2026-05-28 21:07:53.968 [main] WARN  com.microslop.config.SeedRunner - neon.session.sql not found on classpath — skipping seed population
+2026-05-28 21:07:54.446 [RMI TCP Connection(3)-127.0.0.1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-28 21:08:06.470 [http-nio-8080-exec-4] INFO  com.microslop.service.impl.UserServiceImpl - User logged in: user1

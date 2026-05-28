@@ -91,6 +91,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private Button saveButton;
     private Button cancelButton;
 
+    private Span unsavedChangesBadge;
     private boolean hasChanges = false;
 
     public ConfigureCompetitionView(CompetitionService competitionService, UserService userService, CategoryService categoryService, JudgeService judgeService, ChecklistItemRepository checklistItemRepository) {
@@ -174,7 +175,19 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         H2 titleText = new H2("Configure: " + currentCompetition.getName());
         titleText.getStyle().set("color", "var(--dark)").set("margin", "0").set("font-weight", "800");
 
-        header.add(backButton, titleText);
+        unsavedChangesBadge = new Span("You have changes unsaved");
+        unsavedChangesBadge.getStyle()
+            .set("color", "#b45309")
+            .set("background", "#fef3c7")
+            .set("padding", "4px 12px")
+            .set("border-radius", "var(--radius-sm)")
+            .set("font-size", "14px")
+            .set("font-weight", "600")
+            .set("border", "1px solid #fde68a")
+            .set("margin-left", "auto");
+        unsavedChangesBadge.setVisible(false);
+
+        header.add(backButton, titleText, unsavedChangesBadge);
 
         VerticalLayout contentCard = new VerticalLayout();
         contentCard.addClassName("votify-card-static");
@@ -918,7 +931,12 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     }
 
     private void markAsChanged() {
-        hasChanges = true;
+        if (!hasChanges) {
+            hasChanges = true;
+            if (unsavedChangesBadge != null) {
+                unsavedChangesBadge.setVisible(true);
+            }
+        }
     }
 
     private void handleCancel() {
@@ -1031,6 +1049,9 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         try {
             competitionService.save(currentCompetition);
             hasChanges = false;
+            if (unsavedChangesBadge != null) {
+                unsavedChangesBadge.setVisible(false);
+            }
 
             Notification notification = Notification.show("Configuration saved successfully");
             notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
