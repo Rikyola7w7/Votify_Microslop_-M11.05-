@@ -1480,6 +1480,27 @@ a:active {
   opacity: 0.6;
 }
 
+.votify-breadcrumb-non-navigable {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-family: var(--font-main);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.1px;
+  cursor: default;
+  opacity: 0.7;
+  user-select: none;
+}
+
+.votify-breadcrumb-non-navigable .breadcrumb-icon {
+  font-size: 13px;
+  opacity: 0.5;
+}
+
 .votify-breadcrumb-current {
   display: flex;
   align-items: center;

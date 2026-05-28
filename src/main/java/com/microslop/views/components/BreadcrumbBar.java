@@ -41,6 +41,23 @@ public class BreadcrumbBar extends Div {
                 current.add(new Span(item.label));
                 current.getElement().setAttribute("aria-current", "page");
                 itemWrapper.add(current);
+            } else if (!item.navigable) {
+                Span nonNavigable = new Span();
+                nonNavigable.addClassName("votify-breadcrumb-non-navigable");
+                if (item.icon != null) {
+                    Icon icon = new Icon(item.icon);
+                    icon.addClassName("breadcrumb-icon");
+                    icon.setSize("14px");
+                    nonNavigable.add(icon);
+                }
+                nonNavigable.add(new Span(item.label));
+                nonNavigable.getElement().setAttribute("aria-disabled", "true");
+                itemWrapper.add(nonNavigable);
+
+                Span separator = new Span();
+                separator.addClassName("votify-breadcrumb-separator");
+                separator.setText("/");
+                itemWrapper.add(separator);
             } else {
                 Anchor link = new Anchor();
                 link.addClassName("votify-breadcrumb-link");
@@ -74,39 +91,49 @@ public class BreadcrumbBar extends Div {
         final String label;
         final String route;
         final VaadinIcon icon;
+        final boolean navigable;
 
         public BreadcrumbItem(String label, String route, VaadinIcon icon) {
+            this(label, route, icon, true);
+        }
+
+        public BreadcrumbItem(String label, String route, VaadinIcon icon, boolean navigable) {
             this.label = label;
             this.route = route;
             this.icon = icon;
+            this.navigable = navigable;
         }
 
         public BreadcrumbItem(String label, String route) {
-            this(label, route, null);
+            this(label, route, null, true);
         }
 
         public BreadcrumbItem(String label) {
-            this(label, null, null);
+            this(label, null, null, false);
         }
 
         public static BreadcrumbItem home() {
-            return new BreadcrumbItem("Home", "/", VaadinIcon.HOME);
+            return new BreadcrumbItem("Home", "/", VaadinIcon.HOME, true);
         }
 
         public static BreadcrumbItem of(String label, String route) {
-            return new BreadcrumbItem(label, route, null);
+            return new BreadcrumbItem(label, route, null, true);
         }
 
         public static BreadcrumbItem of(String label, String route, VaadinIcon icon) {
-            return new BreadcrumbItem(label, route, icon);
+            return new BreadcrumbItem(label, route, icon, true);
+        }
+
+        public static BreadcrumbItem nonNavigable(String label) {
+            return new BreadcrumbItem(label, null, null, false);
         }
 
         public static BreadcrumbItem current(String label) {
-            return new BreadcrumbItem(label, null, null);
+            return new BreadcrumbItem(label, null, null, false);
         }
 
         public static BreadcrumbItem current(String label, VaadinIcon icon) {
-            return new BreadcrumbItem(label, null, icon);
+            return new BreadcrumbItem(label, null, icon, false);
         }
     }
 }
