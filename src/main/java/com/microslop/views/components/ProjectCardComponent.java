@@ -51,24 +51,26 @@ public class ProjectCardComponent extends Div {
             .set("font-size", "18px")
             .set("color", "var(--text-primary)")
             .set("display", "block")
-            .set("margin-bottom", "8px");
+            .set("margin-bottom", "10px");
 
         Span description = new Span(project.getDescription() != null ? project.getDescription() : "No description provided");
         description.getStyle()
             .set("color", "var(--text-muted)")
             .set("font-size", "14px")
+            .set("line-height", "1.5")
+            .set("height", "42px")
             .set("display", "-webkit-box")
             .set("-webkit-line-clamp", "2")
             .set("-webkit-box-orient", "vertical")
             .set("overflow", "hidden");
 
         HorizontalLayout stats = createStatsLayout(competitionName, totalVotes, position);
-        stats.getStyle().set("margin-top", "4px");
+        stats.getStyle().set("margin-top", "8px");
 
         Button commentsButton = new Button("See comments");
         commentsButton.addClassName("votify-btn-secondary");
         commentsButton.getStyle()
-            .set("margin-top", "4px")
+            .set("margin-top", "8px")
             .set("width", "100%");
         commentsButton.addClickListener(e -> {
             if (onCommentClick != null) {
