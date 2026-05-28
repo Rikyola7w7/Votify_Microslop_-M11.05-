@@ -59,7 +59,7 @@ public class ProjectCardComponent extends Div {
             .set("color", "var(--text-muted)")
             .set("font-size", "14px")
             .set("display", "-webkit-box")
-            .set("-webkit-line-clamp", "3")
+            .set("-webkit-line-clamp", "2")
             .set("-webkit-box-orient", "vertical")
             .set("overflow", "hidden");
 

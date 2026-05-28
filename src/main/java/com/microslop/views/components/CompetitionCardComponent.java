@@ -49,13 +49,15 @@ public class CompetitionCardComponent extends Div {
             .set("font-weight", "700")
             .set("text-align", "center");
 
-        String truncatedDescription = truncateDescription(competition.getDescription(), 100);
-        Span description = new Span(truncatedDescription);
+        Span description = new Span(competition.getDescription() != null ? competition.getDescription() : "");
         description.getStyle()
             .set("color", "var(--text-muted)")
             .set("font-size", "14px")
             .set("text-align", "center")
-            .set("display", "block")
+            .set("display", "-webkit-box")
+            .set("-webkit-line-clamp", "2")
+            .set("-webkit-box-orient", "vertical")
+            .set("overflow", "hidden")
             .set("padding", "0 16px");
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -156,16 +158,6 @@ public class CompetitionCardComponent extends Div {
         badge.addClassName(badgeClass);
         badge.add(new Span(label));
         return badge;
-    }
-
-    private String truncateDescription(String description, int maxLength) {
-        if (description == null || description.isEmpty()) {
-            return "";
-        }
-        if (description.length() > maxLength) {
-            return description.substring(0, maxLength) + "...";
-        }
-        return description;
     }
 
     private Button createViewButton() {
