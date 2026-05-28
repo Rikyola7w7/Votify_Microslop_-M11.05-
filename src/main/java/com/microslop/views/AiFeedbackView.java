@@ -117,15 +117,6 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         mainContainer.setMaxWidth("1200px");
         mainContainer.getStyle().set("margin", "0 auto").set("padding", "24px 40px 40px");
 
-        // Title above the filter panel
-        H2 pageTitle = new H2("AI-Powered Automatic Feedback Generation");
-        pageTitle.getStyle()
-            .set("margin", "0 0 16px 0")
-            .set("color", "var(--dark)")
-            .set("font-weight", "800")
-            .set("font-size", "1.5rem");
-        mainContainer.add(pageTitle);
-
         // Filter panel container with spacing
         VerticalLayout filterWrapper = new VerticalLayout();
         filterWrapper.setPadding(false);

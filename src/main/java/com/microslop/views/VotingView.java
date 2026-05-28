@@ -1,5 +1,6 @@
 package com.microslop.views;
 
+import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Competition;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -19,7 +20,6 @@ import com.microslop.service.VoterService;
 import com.microslop.views.components.ChecklistVotingDialog;
 import com.microslop.views.components.CelebrationAnimation;
 import com.microslop.views.components.CommentAnimation;
-import com.microslop.views.components.ViewHeader;
 import com.microslop.views.components.VoteSuccessAnimation;
 import com.microslop.views.components.VoteQuickAnimation;
 import com.vaadin.flow.component.button.Button;
@@ -28,7 +28,6 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
@@ -50,7 +49,7 @@ import com.vaadin.flow.server.VaadinSession;
 import java.util.List;
 
 @PageTitle("Vote")
-@Route("competition/:competitionId/category/:categoryId/vote")
+@Route(value = "competition/:competitionId/category/:categoryId/vote", layout = MainLayout.class)
 public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
     private final CompetitionService competitionService;
@@ -198,7 +197,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         this.currentUser = userService.getCurrentUser();
         var projects = projectService.listByCompetition(competitionId);
 
-        add(new ViewHeader(localizationService.t("voting.title"), userService, "competition/" + competitionId + "/categories"));
         add(buildBody(projects, currentCompetition.getName()));
     }
 
@@ -253,31 +251,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         body.setWidthFull();
         body.setAlignItems(Alignment.CENTER);
         body.getStyle().set("padding", "2rem 1rem");
-
-        var titleWrapper = new Div();
-        titleWrapper.setWidthFull();
-        titleWrapper.getStyle()
-            .set("max-width", "760px")
-            .set("padding", "0 0 1.5rem 0");
-
-        var title = new H1(localizationService.t("voting.title"));
-        title.getStyle()
-                .set("font-size", "2rem")
-                .set("font-weight", "800")
-                .set("color", "var(--text-primary)")
-                .set("margin", "0 0 0.25rem 0")
-                .set("text-align", "center");
-
-        var subtitle = new Span(localizationService.t("voting.category") + selectedCategory.getName() + " • " + competitionName);
-        subtitle.getStyle()
-                .set("font-size", "1rem")
-                .set("color", "var(--text-muted)")
-                .set("font-style", "italic")
-                .set("margin-bottom", "1rem")
-                .set("display", "block")
-                .set("text-align", "center");
-
-        titleWrapper.add(title, subtitle);
 
         maxVotesLabel = new Span();
         if (selectedCategory.isChecklistVoting()) {
@@ -369,7 +342,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
         updateProjectsList.run();
 
-        body.add(titleWrapper, counterWrapper, projectsContainer);
+        body.add(counterWrapper, projectsContainer);
         return body;
     }
 

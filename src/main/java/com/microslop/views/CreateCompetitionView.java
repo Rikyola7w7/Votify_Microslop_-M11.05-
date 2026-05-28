@@ -98,21 +98,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
             .set("overflow-y", "auto")
             .set("height", "calc(100vh - 64px)");
 
-        HorizontalLayout header = new HorizontalLayout();
-        header.addClassName("votify-header");
-        header.setWidthFull();
-        header.setAlignItems(Alignment.CENTER);
-
-        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
-        backButton.addClassName("votify-btn-secondary");
-        backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        backButton.addClickListener(e -> navigateBack());
-
-        H2 title = new H2("Create Competition");
-        title.getStyle().set("color", "var(--dark)").set("margin", "0").set("font-weight", "800");
-
-        header.add(backButton, title);
-
         VerticalLayout contentCard = new VerticalLayout();
         contentCard.addClassName("votify-card-static");
         contentCard.addClassName("animate-fade-in");
@@ -256,7 +241,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         Button addCategoryButton = new Button("Add Category");
         addCategoryButton.addClassName("votify-btn-primary");
         addCategoryButton.setIcon(new Icon(VaadinIcon.PLUS));
-        addCategoryButton.setTooltipText("Add a new voting category to your competition");
         addCategoryButton.addClickListener(e -> addCategory());
 
         categoryInputLayout.add(categoryNameField, categoryVoterTypeCombo, catImageUpload, addCategoryButton);
@@ -293,7 +277,6 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
         Button addJudgeButton = new Button("Add Judge");
         addJudgeButton.addClassName("votify-btn-primary");
         addJudgeButton.setIcon(new Icon(VaadinIcon.PLUS));
-        addJudgeButton.setTooltipText("Assign a judge to evaluate competition entries");
         addJudgeButton.addClickListener(e -> addJudge());
 
         judgeInputLayout.add(judgeUsernameField, addJudgeButton);
@@ -315,11 +298,9 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
 
         Button cancelButton = new Button("Cancel", e -> navigateBack());
         cancelButton.addClassName("votify-btn-secondary");
-        cancelButton.setTooltipText("Discard changes and return to dashboard");
 
         Button createButton = new Button("Create", e -> createCompetition());
         createButton.addClassName("votify-btn-primary");
-        createButton.setTooltipText("Create and publish your competition");
 
         buttonsLayout.add(cancelButton, createButton);
 
@@ -339,7 +320,7 @@ public class CreateCompetitionView extends VerticalLayout implements BeforeEnter
                 buttonsLayout
         );
 
-        scrollContainer.add(header, contentCard);
+        scrollContainer.add(contentCard);
         add(scrollContainer);
     }
 

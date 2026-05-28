@@ -1,5 +1,6 @@
 package com.microslop.views;
 
+import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.User;
 import com.microslop.service.LocalizationService;
 import com.microslop.service.UserService;
@@ -24,7 +25,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.BeforeEnterEvent;
 
-@Route("profile")
+@Route(value = "profile", layout = MainLayout.class)
 public class UserProfileView extends VerticalLayout implements BeforeEnterObserver {
 
     private final UserService userService;

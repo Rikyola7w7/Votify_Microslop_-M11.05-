@@ -2,11 +2,9 @@ package com.microslop.views.components;
 
 import com.microslop.service.LocalizationService;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.menubar.MenuBar;
-import com.vaadin.flow.component.menubar.MenuBarVariant;
-import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 
 public class LanguageSelectorComponent {
 
@@ -16,36 +14,31 @@ public class LanguageSelectorComponent {
         this.localizationService = localizationService;
     }
 
-    public MenuBar createLanguageSelector() {
-        MenuBar menuBar = new MenuBar();
-        menuBar.addThemeVariants(MenuBarVariant.LUMO_ICON);
-
+    public HorizontalLayout createLanguageSelector() {
         String currentLocale = localizationService.getLocale();
-        String langCode = LocalizationService.ENGLISH.equals(currentLocale) ? "EN" : "ES";
+        boolean isEnglish = LocalizationService.ENGLISH.equals(currentLocale);
 
-        Button langButton = new Button(new Span(langCode));
-        langButton.getElement().setAttribute("title", localizationService.t("language.select"));
-        langButton.getStyle()
-            .set("cursor", "pointer")
-            .set("font-size", "14px")
-            .set("padding", "4px 8px");
+        Button enBtn = new Button("EN", e -> {
+            localizationService.establecerIdioma(LocalizationService.ENGLISH);
+            refreshPage();
+        });
+        enBtn.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        enBtn.addClassName("votify-lang-btn");
+        enBtn.addClassName(isEnglish ? "votify-lang-btn--active" : "votify-lang-btn--inactive");
 
-        var item = menuBar.addItem(langButton);
-        var subMenu = item.getSubMenu();
+        Button esBtn = new Button("ES", e -> {
+            localizationService.establecerIdioma(LocalizationService.SPANISH);
+            refreshPage();
+        });
+        esBtn.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        esBtn.addClassName("votify-lang-btn");
+        esBtn.addClassName(!isEnglish ? "votify-lang-btn--active" : "votify-lang-btn--inactive");
 
-        if (LocalizationService.ENGLISH.equals(currentLocale)) {
-            var spanishItem = subMenu.addItem(localizationService.t("language.spanish"), event -> {
-                localizationService.establecerIdioma(LocalizationService.SPANISH);
-                refreshPage();
-            });
-        } else {
-            var englishItem = subMenu.addItem(localizationService.t("language.english"), event -> {
-                localizationService.establecerIdioma(LocalizationService.ENGLISH);
-                refreshPage();
-            });
-        }
-
-        return menuBar;
+        HorizontalLayout layout = new HorizontalLayout(enBtn, esBtn);
+        layout.setAlignItems(FlexComponent.Alignment.CENTER);
+        layout.setSpacing(false);
+        layout.setPadding(false);
+        return layout;
     }
 
     private void refreshPage() {
