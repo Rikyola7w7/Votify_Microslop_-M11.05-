@@ -91,7 +91,7 @@ public class NotificationView extends VerticalLayout {
         refreshBtn.addClickListener(e -> refreshNotifications());
         actions.add(refreshBtn);
 
-        Button deleteAllBtn = new Button("Delete All");
+        Button deleteAllBtn = new Button("Delete");
         deleteAllBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
         deleteAllBtn.getElement().setAttribute("title", "Delete all notifications");
         deleteAllBtn.addClickListener(e -> {

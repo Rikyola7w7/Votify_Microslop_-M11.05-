@@ -176,7 +176,7 @@ public class CompetitionCardComponent extends Div {
     }
 
     private Button createViewButton() {
-        Button viewButton = new Button(t("card.view"));
+        Button viewButton = new Button("View Details");
         viewButton.setWidth("calc(100% - 32px)");
         viewButton.addClassName("votify-btn-primary");
         viewButton.getStyle()

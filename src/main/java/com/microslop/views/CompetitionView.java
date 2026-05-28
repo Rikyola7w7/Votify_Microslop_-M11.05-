@@ -208,11 +208,13 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             .set("box-shadow", "0 2px 8px rgba(0,0,0,0.3)");
 
         // Back button
-        Button backButton = new Button("\u2190 Back", new Icon(VaadinIcon.ARROW_LEFT));
-        backButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
+        backButton.addClassName("votify-btn-secondary");
         backButton.getStyle()
             .set("color", "white")
-            .set("background", "transparent")
+            .set("background", "rgba(255, 255, 255, 0.15)")
+            .set("border", "1px solid rgba(255, 255, 255, 0.3)")
+            .set("border-radius", "var(--radius-md)")
             .set("cursor", "pointer");
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
 

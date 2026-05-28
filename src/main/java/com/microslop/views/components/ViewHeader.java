@@ -20,16 +20,13 @@ public class ViewHeader extends HorizontalLayout {
         setSpacing(true);
         addClassName("votify-header-dark");
 
-        Button backButton = new Button();
-        backButton.setIcon(new Icon(VaadinIcon.ARROW_LEFT));
-        backButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-        backButton.getElement().setAttribute("aria-label", "Go back");
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
+        backButton.addClassName("votify-btn-secondary");
         backButton.getStyle()
                 .set("color", "white")
-                .set("background", "transparent")
-                .set("border", "none")
-                .set("cursor", "pointer")
-                .set("font-weight", "600");
+                .set("background", "rgba(255, 255, 255, 0.15)")
+                .set("border", "1px solid rgba(255, 255, 255, 0.3)")
+                .set("border-radius", "var(--radius-md)");
         if (backRoute != null && !backRoute.isEmpty()) {
             backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(backRoute)));
         } else {

@@ -110,7 +110,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
                 .set("color", "var(--text-muted)")
                 .set("font-size", "0.95rem");
 
-            Button backBtn = new Button("\u2190 Back to home", new Icon(VaadinIcon.ARROW_LEFT));
+            Button backBtn = new Button("Back to home", new Icon(VaadinIcon.ARROW_LEFT));
             backBtn.addClassName("votify-btn-primary");
             backBtn.addClickListener(ev -> getUI().ifPresent(ui -> ui.navigate("")));
 
@@ -139,7 +139,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         header.addClassName("votify-header-dark");
 
-        Button backButton = new Button("\u2190 Back", new Icon(VaadinIcon.ARROW_LEFT));
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
         backButton.getStyle()
             .set("color", "white")

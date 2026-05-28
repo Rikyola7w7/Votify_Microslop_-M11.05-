@@ -191,12 +191,12 @@ public class RegisterView extends HorizontalLayout {
             }
 
             Dialog confirmDialog = new Dialog();
-            confirmDialog.setHeaderTitle(localizationService.t("register.confirmtitle"));
+            confirmDialog.setHeaderTitle("Confirm Registration");
 
-            Paragraph message = new Paragraph(localizationService.t("register.confirmmessage") +
-                    usernameField.getValue().trim() + "\"");
+            Paragraph message = new Paragraph("Do you want to create your account with the username \"" +
+                    usernameField.getValue().trim() + "\"?");
 
-            Button confirmButton = new Button(localizationService.t("register.yes"), event -> {
+            Button confirmButton = new Button("Confirm", event -> {
                 try {
                     LocalDateTime birthDateLDT = birthDateField.getValue().atStartOfDay();
 
@@ -265,7 +265,7 @@ public class RegisterView extends HorizontalLayout {
             });
             confirmButton.addClassNames("votify-btn-primary");
 
-            Button cancelButton = new Button(localizationService.t("register.no"), event -> confirmDialog.close());
+            Button cancelButton = new Button("Cancel", event -> confirmDialog.close());
             cancelButton.addClassNames("votify-btn-secondary");
 
             confirmDialog.add(message);

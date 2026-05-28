@@ -65,7 +65,7 @@ public class ProjectCardComponent extends Div {
 
         HorizontalLayout stats = createStatsLayout(competitionName, totalVotes, position);
 
-        Button commentsButton = new Button("See comments");
+        Button commentsButton = new Button("View Details");
         commentsButton.addClassName("votify-btn-secondary");
         commentsButton.getStyle()
             .set("margin-top", "8px")
