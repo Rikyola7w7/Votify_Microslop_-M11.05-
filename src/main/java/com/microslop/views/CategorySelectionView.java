@@ -1,5 +1,6 @@
 package com.microslop.views;
 
+import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
 import com.microslop.entity.CompetitionStatus;
@@ -33,7 +34,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @PageTitle("Category Selection")
-@Route("competition/:competitionId/categories")
+@Route(value = "competition/:competitionId/categories", layout = MainLayout.class)
 public class CategorySelectionView extends VerticalLayout implements BeforeEnterObserver {
 
     private final CompetitionService competitionService;

@@ -1,5 +1,6 @@
 package com.microslop.views;
 
+import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
 import com.microslop.entity.Project;
@@ -43,7 +44,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @PageTitle("Ranking")
-@Route("competition/:competitionId/categories/:categoryId/ranking")
+@Route(value = "competition/:competitionId/categories/:categoryId/ranking", layout = MainLayout.class)
 public class RankingView extends VerticalLayout implements BeforeEnterObserver {
 
     private final CompetitionService competitionService;

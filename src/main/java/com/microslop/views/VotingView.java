@@ -1,5 +1,6 @@
 package com.microslop.views;
 
+import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Competition;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -48,7 +49,7 @@ import com.vaadin.flow.server.VaadinSession;
 import java.util.List;
 
 @PageTitle("Vote")
-@Route("competition/:competitionId/category/:categoryId/vote")
+@Route(value = "competition/:competitionId/category/:categoryId/vote", layout = MainLayout.class)
 public class VotingView extends VerticalLayout implements BeforeEnterObserver {
 
     private final CompetitionService competitionService;

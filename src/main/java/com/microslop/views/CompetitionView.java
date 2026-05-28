@@ -1,5 +1,6 @@
 package com.microslop.views;
 
+import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Competition;
 import com.microslop.entity.Project;
 import com.microslop.entity.Category;
@@ -41,7 +42,7 @@ import java.util.Locale;
  * Allows authenticated users to vote for projects.
  */
 @PageTitle("Competition")
-@Route("competition")
+@Route(value = "competition", layout = MainLayout.class)
 public class CompetitionView extends VerticalLayout implements HasUrlParameter<Long> {
 
     // ── Dependencies ─────────────────────────────────────────────────────────

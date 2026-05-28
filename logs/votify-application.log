@@ -11001,3 +11001,27 @@ Caused by: java.lang.IllegalStateException: StandardEngine[Tomcat].StandardHost[
 	at org.springframework.boot.tomcat.TomcatWebServer.rethrowDeferredStartupExceptions(TomcatWebServer.java:206)
 	at org.springframework.boot.tomcat.TomcatWebServer.initialize(TomcatWebServer.java:134)
 	... 13 common frames omitted
+2026-05-28 22:54:57.164 [main] INFO  com.microslop.Application - Starting Application using Java 21.0.6 with PID 9636 (C:\Users\rumuq\OneDrive\Escritorio\votify\Votify_Microslop\target\classes started by rumuq in C:\Users\rumuq\OneDrive\Escritorio\votify\Votify_Microslop)
+2026-05-28 22:54:57.237 [main] INFO  com.microslop.Application - No active profile set, falling back to 1 default profile: "default"
+2026-05-28 22:55:29.901 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-05-28 22:55:29.917 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-28 22:55:30.018 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-05-28 22:56:33.312 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-05-28 22:56:37.215 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@7431b254
+2026-05-28 22:56:37.243 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-05-28 22:56:37.478 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-05-28 22:57:53.395 [main] WARN  o.s.b.s.a.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: df9c41f8-fa66-40bc-9d57-6ed56683fc70
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-05-28 22:57:56.323 [main] INFO  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-05-28 22:58:22.298 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-05-28 22:58:28.379 [http-nio-8080-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-28 22:58:30.221 [main] INFO  com.microslop.Application - Started Application in 221.262 seconds (process running for 232.327)
+2026-05-28 22:58:31.697 [main] WARN  com.microslop.config.SeedRunner - Could not reset sequence judge_id_seq — table judge may not exist yet
+2026-05-28 22:58:32.058 [main] INFO  com.microslop.config.SeedRunner - PostgreSQL sequences reset successfully
+2026-05-28 22:58:32.118 [main] INFO  com.microslop.config.SeedRunner - Fixed NULL votes_left values in voter table
+2026-05-28 22:58:32.147 [main] WARN  com.microslop.config.SeedRunner - neon.session.sql not found on classpath — skipping seed population
+2026-05-28 22:58:33.786 [http-nio-8080-exec-1] WARN  org.apache.catalina.util.SessionIdGeneratorBase - Creation of SecureRandom instance for session ID generation using [SHA1PRNG] took [1,312] milliseconds.
