@@ -45,12 +45,13 @@ public class FaqView extends VerticalLayout {
         header.addClassName("votify-header-dark");
         header.getStyle().set("padding", "0 2rem");
 
-        Button backButton = new Button(new Icon(VaadinIcon.ARROW_LEFT));
-        backButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
+        backButton.addClassName("votify-btn-secondary");
         backButton.getStyle()
             .set("color", "white")
-            .set("background", "transparent")
-            .set("border", "none")
+            .set("background", "rgba(255, 255, 255, 0.15)")
+            .set("border", "1px solid rgba(255, 255, 255, 0.3)")
+            .set("border-radius", "var(--radius-md)")
             .set("cursor", "pointer");
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
 
