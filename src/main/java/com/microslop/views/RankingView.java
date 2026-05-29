@@ -344,6 +344,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         var leftSection = new VerticalLayout();
         leftSection.setPadding(false);
         leftSection.setSpacing(false);
+        leftSection.setHeight("5rem");
 
         var nameRow = new HorizontalLayout();
         nameRow.setAlignItems(FlexComponent.Alignment.START);
