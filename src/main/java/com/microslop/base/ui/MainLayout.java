@@ -73,6 +73,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private Button backButton;
     private Span pageTitle;
     private Div userMenuContainer;
+    private Div notificationBellContainer;
     private HorizontalLayout rightActionsContainer;
     private BreadcrumbBar breadcrumbBar;
     private boolean notificationInitialized;
@@ -618,9 +619,9 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         rightActionsContainer.setPadding(false);
         rightActionsContainer.setVisible(true);
 
-        if (notificationService != null) {
-            rightActionsContainer.add(createNotificationBell());
-        }
+        notificationBellContainer = createNotificationBell();
+        notificationBellContainer.setVisible(false);
+        rightActionsContainer.add(notificationBellContainer);
 
         userMenuContainer = new Div();
         rightActionsContainer.add(userMenuContainer);
@@ -690,6 +691,10 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         userMenuContainer.removeAll();
 
         boolean isLoggedIn = userService.isLoggedIn();
+
+        if (notificationBellContainer != null) {
+            notificationBellContainer.setVisible(isLoggedIn && notificationService != null);
+        }
 
         if (isLoggedIn) {
             User user = userService.getCurrentUser();
