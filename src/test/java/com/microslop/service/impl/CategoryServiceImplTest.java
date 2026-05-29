@@ -87,7 +87,7 @@ class CategoryServiceImplTest {
 
         assertThatThrownBy(() -> categoryService.createCategory(999L, categoryDTO))
                 .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
-                .hasMessage("Competition not found: 999");
+                .hasMessage("Competition not found with identifier: 999");
     }
 
     @Test
@@ -142,6 +142,6 @@ class CategoryServiceImplTest {
 
         assertThatThrownBy(() -> categoryService.getByIdOrFail(999L))
                 .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
-                .hasMessage("Category not found: 999");
+                .hasMessage("Category not found with identifier: 999");
     }
 }

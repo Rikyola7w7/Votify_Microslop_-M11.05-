@@ -108,7 +108,7 @@ class CompetitionServiceImplTest {
 
         assertThatThrownBy(() -> competitionService.createCompetition("nonexistent", competitionDTO))
                 .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
-                .hasMessage("User not found: nonexistent");
+                .hasMessage("User not found with identifier: nonexistent");
     }
 
      @Test
@@ -126,7 +126,7 @@ class CompetitionServiceImplTest {
 
          assertThatThrownBy(() -> competitionService.createCompetition("creator", competitionDTO))
                  .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
-                 .hasMessage("Judge user not found: judge2");
+                 .hasMessage("User (judge) not found with identifier: judge2");
      }
 
     @Test
@@ -201,7 +201,7 @@ class CompetitionServiceImplTest {
 
         assertThatThrownBy(() -> competitionService.getByIdOrFail(999L))
                 .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
-                .hasMessage("Competition not found: 999");
+                .hasMessage("Competition not found with identifier: 999");
     }
 
      @Test

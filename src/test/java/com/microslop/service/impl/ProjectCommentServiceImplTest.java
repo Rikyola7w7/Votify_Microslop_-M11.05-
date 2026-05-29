@@ -168,7 +168,7 @@ class ProjectCommentServiceImplTest {
 
         assertThatThrownBy(() -> projectCommentService.getCommentsByUser("nonexistent"))
                 .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
-                .hasMessage("User not found: nonexistent");
+                .hasMessage("User not found with identifier: nonexistent");
     }
 
     @Test

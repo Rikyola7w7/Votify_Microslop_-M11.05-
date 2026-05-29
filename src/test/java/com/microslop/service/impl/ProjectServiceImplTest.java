@@ -89,7 +89,7 @@ class ProjectServiceImplTest {
 
         assertThatThrownBy(() -> projectService.getById(999L))
                 .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
-                .hasMessage("Project not found: 999");
+                .hasMessage("Project not found with identifier: 999");
     }
 
     @Test
