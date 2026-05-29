@@ -346,28 +346,40 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         leftSection.setSpacing(false);
 
         var nameRow = new HorizontalLayout();
-        nameRow.setAlignItems(FlexComponent.Alignment.CENTER);
+        nameRow.setAlignItems(FlexComponent.Alignment.START);
         nameRow.setSpacing(true);
         nameRow.setPadding(false);
+        nameRow.setMinHeight("3rem");
+        nameRow.setWidth("100%");
 
         var competitionName = new Span(currentCompetition.getName());
         competitionName.getStyle()
             .set("font-size", "1.2rem")
             .set("font-weight", "700")
-            .set("color", "var(--text-primary)");
+            .set("color", "var(--text-primary)")
+            .set("white-space", "nowrap")
+            .set("overflow", "hidden")
+            .set("text-overflow", "ellipsis")
+            .set("max-width", "18ch");
 
         var separator = new Span("\u203A");
         separator.getStyle()
             .set("color", "var(--text-muted)")
-            .set("font-size", "1.2rem");
+            .set("font-size", "1.2rem")
+            .set("flex-shrink", "0");
 
         var categoryName = new Span(currentCategory.getName());
         categoryName.getStyle()
             .set("font-size", "1.2rem")
             .set("font-weight", "600")
-            .set("color", "var(--primary)");
+            .set("color", "var(--primary)")
+            .set("white-space", "nowrap")
+            .set("overflow", "hidden")
+            .set("text-overflow", "ellipsis")
+            .set("max-width", "18ch");
 
         nameRow.add(competitionName, separator, categoryName);
+        nameRow.getStyle().set("flex-wrap", "wrap");
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 

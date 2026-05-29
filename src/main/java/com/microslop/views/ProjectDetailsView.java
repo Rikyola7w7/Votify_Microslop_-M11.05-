@@ -125,7 +125,7 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
             .set("font-weight", "700")
             .set("flex", "1");
 
-        Button aiFeedbackBtn = new Button("Feedback IA", new Icon(VaadinIcon.CHART));
+        Button aiFeedbackBtn = new Button("AI Feedback", new Icon(VaadinIcon.CHART));
         aiFeedbackBtn.addClassName("votify-btn-primary");
         aiFeedbackBtn.setHeight("40px");
         aiFeedbackBtn.setTooltipText("Get AI-powered feedback and suggestions for your project");

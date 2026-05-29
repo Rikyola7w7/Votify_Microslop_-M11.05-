@@ -82,7 +82,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     /** Top-level routes that show nav links instead of back+title */
     private static final List<String> TOP_LEVEL_ROUTES = List.of(
         "", "login", "register", "profile", "notifications",
-        "invitations", "certificates", "ai-feedback", "help"
+        "invitations", "certificates", "help"
     );
 
     public MainLayout() {
@@ -616,6 +616,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         rightActionsContainer.setAlignItems(FlexComponent.Alignment.CENTER);
         rightActionsContainer.setSpacing(false);
         rightActionsContainer.setPadding(false);
+        rightActionsContainer.setVisible(true);
 
         if (notificationService != null) {
             rightActionsContainer.add(createNotificationBell());

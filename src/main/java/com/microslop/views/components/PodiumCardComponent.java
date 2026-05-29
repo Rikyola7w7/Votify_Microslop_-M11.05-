@@ -43,7 +43,7 @@ public class PodiumCardComponent extends Div {
         for (String cls : position.getCssClass().split(" ")) {
             addClassName(cls);
         }
-        int height = position == Position.FIRST ? 220 : 180;
+        int height = position == Position.FIRST ? 240 : 180;
         getStyle()
             .set("border-radius", "16px")
             .set("padding", position == Position.FIRST ? "2rem 1.5rem" : "1.5rem 1.2rem")

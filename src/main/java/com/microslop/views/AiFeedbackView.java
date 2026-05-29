@@ -108,8 +108,6 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         setSpacing(false);
         getStyle().set("background", "var(--background)");
 
-        add(buildHeader());
-
         mainContainer = new VerticalLayout();
         mainContainer.setPadding(false);
         mainContainer.setSpacing(false);
