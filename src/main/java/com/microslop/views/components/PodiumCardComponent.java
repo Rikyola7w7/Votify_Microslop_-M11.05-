@@ -6,80 +6,97 @@ import com.vaadin.flow.component.html.Span;
 import java.text.NumberFormat;
 import java.util.Locale;
 
-/**
- * PodiumCardComponent - Reusable component for podium positions (1st, 2nd, 3rd)
- */
 public class PodiumCardComponent extends Div {
 
     public enum Position {
-        FIRST(0, "🥇", "linear-gradient(145deg, #fff4c2, #d4a017)", "#c9a800", true),
-        SECOND(1, "🥈", "linear-gradient(145deg, #e8e8e8, #c0c0c0)", "#aaa", false),
-        THIRD(2, "🥉", "linear-gradient(145deg, #f4d9b0, #b87333)", "#a0622a", false);
+        FIRST(0, "\uD83E\uDD47", "podium-gold podium-gold-shimmer", "0ms"),
+        SECOND(1, "\uD83E\uDD48", "podium-silver", "150ms"),
+        THIRD(2, "\uD83E\uDD49", "podium-bronze", "300ms");
 
         private final int order;
         private final String medal;
-        private final String bgColor;
-        private final String borderColor;
-        private final boolean isGold;
+        private final String cssClass;
+        private final String animationDelay;
 
-        Position(int order, String medal, String bgColor, String borderColor, boolean isGold) {
+        Position(int order, String medal, String cssClass, String animationDelay) {
             this.order = order;
             this.medal = medal;
-            this.bgColor = bgColor;
-            this.borderColor = borderColor;
-            this.isGold = isGold;
+            this.cssClass = cssClass;
+            this.animationDelay = animationDelay;
         }
 
         public int getOrder() { return order; }
         public String getMedal() { return medal; }
-        public String getBgColor() { return bgColor; }
-        public String getBorderColor() { return borderColor; }
-        public boolean isGold() { return isGold; }
+        public String getCssClass() { return cssClass; }
+        public String getAnimationDelay() { return animationDelay; }
     }
 
     public PodiumCardComponent(Project project, Position position, long totalVotes) {
-        buildCard(project, position, totalVotes);
+        this(project, position, totalVotes, false, false, 0.0);
     }
 
-    private void buildCard(Project project, Position position, long totalVotes) {
+    public PodiumCardComponent(Project project, Position position, long totalVotes, boolean isChecklistMode, boolean isScaleMode, double avgScore) {
+        buildCard(project, position, totalVotes, isChecklistMode, isScaleMode, avgScore);
+    }
+
+    private void buildCard(Project project, Position position, long totalVotes, boolean isChecklistMode, boolean isScaleMode, double avgScore) {
+        for (String cls : position.getCssClass().split(" ")) {
+            addClassName(cls);
+        }
+        int height = position == Position.FIRST ? 240 : 180;
         getStyle()
-            .set("background", position.getBgColor())
-            .set("border", "2px solid " + position.getBorderColor())
             .set("border-radius", "16px")
-            .set("padding", position.isGold() ? "2rem 1.5rem" : "1.5rem 1.2rem")
+            .set("padding", position == Position.FIRST ? "2rem 1.5rem" : "1.5rem 1.2rem")
             .set("text-align", "center")
-            .set("min-width", position.isGold() ? "220px" : "180px")
-            .set("box-shadow", position.isGold()
-                ? "0 8px 24px rgba(212,160,23,0.35)"
-                : "0 4px 12px rgba(0,0,0,0.15)")
-            .set("transform", position.isGold() ? "translateY(-20px)" : "none")
+            .set("width", position == Position.FIRST ? "200px" : "160px")
+            .set("height", height + "px")
+            .set("display", "flex")
+            .set("flex-direction", "column")
+            .set("align-items", "center")
+            .set("justify-content", position == Position.FIRST ? "flex-start" : "center")
+            .set("flex", "0 0 auto")
+            .set("transform", position == Position.FIRST ? "translateY(-20px)" : "none")
             .set("transition", "transform 0.2s ease, box-shadow 0.2s ease")
-            .set("cursor", "default");
+            .set("cursor", "default")
+            .set("animation", "fade-in-scale 0.4s ease forwards")
+            .set("animation-delay", position.getAnimationDelay())
+            .set("opacity", "0");
 
-        var medalSpan = new Span(position.getMedal());
+        Span medalSpan = new Span(position.getMedal());
         medalSpan.getStyle()
-            .set("font-size", position.isGold() ? "3rem" : "2.2rem")
+            .set("font-size", position == Position.FIRST ? "3rem" : "2.2rem")
             .set("display", "block")
-            .set("margin-bottom", "0.5rem");
+            .set("margin-bottom", "0.25rem");
 
-        var nameSpan = new Span(project.getName().toUpperCase());
+        Span nameSpan = new Span(project.getName().toUpperCase());
         nameSpan.getStyle()
             .set("font-weight", "800")
-            .set("font-size", position.isGold() ? "1.1rem" : "0.95rem")
+            .set("font-size", position == Position.FIRST ? "16px" : "14px")
             .set("display", "block")
-            .set("margin-bottom", "0.4rem")
-            .set("color", "#1a1a2e");
+            .set("color", "var(--text-primary)");
 
-        var labelVotes = new Span(position.isGold() ? "Total Votes:" : "Votes:");
+        String votesLabel;
+        String displayValue;
+        if (isScaleMode) {
+            votesLabel = position == Position.FIRST ? "Avg. Score:" : "Score:";
+            displayValue = String.format("%.1f", avgScore);
+        } else if (isChecklistMode) {
+            votesLabel = position == Position.FIRST ? "Total Checks:" : "Checks:";
+            displayValue = formatNumber(totalVotes);
+        } else {
+            votesLabel = position == Position.FIRST ? "Total Votes:" : "Votes:";
+            displayValue = formatNumber(totalVotes);
+        }
+        var labelVotes = new Span(votesLabel);
         labelVotes.getStyle()
             .set("font-size", "0.8rem")
             .set("color", "#444")
             .set("display", "block");
 
-        var numVotes = new Span(formatNumber(totalVotes));
+        var numVotes = new Span(displayValue);
         numVotes.getStyle()
             .set("font-weight", "700")
-            .set("font-size", position.isGold() ? "1.6rem" : "1.2rem")
+            .set("font-size", position == Position.FIRST ? "1.6rem" : "1.2rem")
             .set("color", "#1a1a2e")
             .set("display", "block")
             .set("margin-bottom", "0.8rem");

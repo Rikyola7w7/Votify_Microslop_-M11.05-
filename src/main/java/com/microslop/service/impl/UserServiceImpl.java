@@ -1,10 +1,17 @@
 package com.microslop.service.impl;
 
+import com.microslop.context.VaadinSessionContext;
 import com.microslop.entity.User;
+import com.microslop.exception.BusinessValidationException;
+import com.microslop.exception.EntityNotFoundException;
 import com.microslop.repository.UserRepository;
 import com.microslop.service.UserService;
-import com.vaadin.flow.server.VaadinSession;
+import com.microslop.command.CommandExecutor;
+import com.microslop.command.user.UpdateUserProfileCommand;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.Optional;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,42 +19,49 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Service
 public class UserServiceImpl implements UserService {
 
+    private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CommandExecutor commandExecutor;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                         CommandExecutor commandExecutor) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.commandExecutor = commandExecutor;
     }
 
+    @Transactional
     public void registerUser(User newUser) {
         if (userRepository.existsByUsernameIgnoreCase(newUser.getUsername())) {
-            throw new IllegalArgumentException("Username is already in use. Choose another one.");
+            throw new BusinessValidationException("Username is already in use. Choose another one.");
         }
 
         if (userRepository.existsByEmailIgnoreCase(newUser.getEmail())) {
-            throw new IllegalArgumentException("An account with this email already exists.");
+            throw new BusinessValidationException("An account with this email already exists.");
         }
 
         if (newUser.getPassword() == null) {
-            throw new IllegalArgumentException("Password cannot be null.");
+            throw new BusinessValidationException("Password cannot be null.");
         }
 
         if (newUser.getPassword().length() < 6) {
-            throw new IllegalArgumentException("Password must be at least 6 characters long.");
+            throw new BusinessValidationException("Password must be at least 6 characters long.");
         }
 
         if (LocalDate.now().isBefore(newUser.getBirthDate().toLocalDate())) {
-            throw new IllegalArgumentException("Birth date cannot be in the future.");
+            throw new BusinessValidationException("Birth date cannot be in the future.");
         }
 
         if (LocalDate.now().minusYears(13).isBefore(newUser.getBirthDate().toLocalDate())) {
-            throw new IllegalArgumentException("You must be at least 13 years old to register.");
+            throw new BusinessValidationException("You must be at least 13 years old to register.");
         }
 
         String encryptedPassword = passwordEncoder.encode(newUser.getPassword());
         newUser.setPassword(encryptedPassword);
         userRepository.save(newUser);
+        log.info("User registered successfully: {}", newUser.getUsername());
     }
 
     @Override
@@ -63,84 +77,66 @@ public class UserServiceImpl implements UserService {
     public void login(String username, String password) {
         Optional<User> userOptional = userRepository.findByUsernameIgnoreCase(username);
         if (!userOptional.isPresent()) {
-            throw new IllegalArgumentException("Invalid username or password.");
+            throw new BusinessValidationException("Invalid username or password.");
         }
         
         User user = userOptional.get();
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalArgumentException("Invalid username or password.");
+            throw new BusinessValidationException("Invalid username or password.");
         }
+        log.info("User logged in: {}", username);
     }
 
     @Override
     public User updateProfile(String currentUsername, String newUsername, String email) {
-
-        User user = userRepository.findByUsernameIgnoreCase(currentUsername)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-        User newUser = new User();
-        newUser.setUsername(newUsername);
-        newUser.setEmail(email);
-        newUser.setPassword(user.getPassword());
-        newUser.setBirthDate(user.getBirthDate());
-        newUser.setCreationDate(user.getCreationDate());
-        newUser.setName(user.getName());
-        newUser.setProfilePicture(user.getProfilePicture());
-
-        userRepository.delete(user);
-
-        User savedUser = userRepository.save(newUser);
-        VaadinSession.getCurrent().setAttribute(User.class, savedUser);
-
-        return savedUser;
+        UpdateUserProfileCommand command = new UpdateUserProfileCommand(
+            currentUsername, newUsername, email,
+            userRepository
+        );
+        try {
+            commandExecutor.execute(command);
+            User updatedUser = command.getLastResult();
+            VaadinSessionContext.setCurrentUser(updatedUser);
+            log.info("User profile updated: {}", currentUsername);
+            return updatedUser;
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update user profile", e);
+        }
     }
 
     @Override
     public void deleteUser(String username){
         User user = userRepository.findByUsernameIgnoreCase(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+                .orElseThrow(() -> new EntityNotFoundException("User", username));
         userRepository.deleteById(user.getId());
+        log.info("User deleted: {}", username);
     }
 
     @Override
     public User getCurrentUser() {
-        VaadinSession session = VaadinSession.getCurrent();
-
-        if (session == null) {
-            return null;
-        }
-
-        return session.getAttribute(User.class);
+        return VaadinSessionContext.getCurrentUser();
     }
 
     @Override
     public void logout() {
-        VaadinSession.getCurrent().setAttribute(User.class, null);
+        VaadinSessionContext.logout();
     }
 
     @Override
     public String getUserDisplayName() {
-        VaadinSession session = VaadinSession.getCurrent();
-        if (session != null && session.getAttribute("username") != null) {
-            String user = session.getAttribute("username").toString();
-            return user.substring(0, 1).toUpperCase();
-        }
-        return "G";
+        return VaadinSessionContext.getUserDisplayName();
     }
 
     @Override
     public boolean isLoggedIn() {
-        VaadinSession session = VaadinSession.getCurrent();
-        return session != null && (session.getAttribute("userId") != null || session.getAttribute("username") != null);
+        return VaadinSessionContext.isLoggedIn();
     }
 
     @Override
     public String getCurrentUsername() {
-        VaadinSession session = VaadinSession.getCurrent();
-        if (session != null && session.getAttribute("username") != null) {
-            return session.getAttribute("username").toString();
-        }
-        return "";
+        return VaadinSessionContext.getCurrentUsername();
     }
 
     @Override
@@ -150,5 +146,16 @@ public class UserServiceImpl implements UserService {
             return currentUser.getId();
         }
         throw new IllegalStateException("No user is currently logged in");
+    }
+
+    @Override
+    public boolean verifyCurrentPassword(String password) {
+        String username = getCurrentUsername();
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+        return userRepository.findByUsernameIgnoreCase(username)
+                .map(user -> passwordEncoder.matches(password, user.getPassword()))
+                .orElse(false);
     }
 }

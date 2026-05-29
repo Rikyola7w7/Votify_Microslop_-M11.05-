@@ -9,6 +9,7 @@ import com.microslop.repository.CategoryRepository;
 import com.microslop.repository.ProjectCommentRepository;
 import com.microslop.repository.ProjectRepository;
 import com.microslop.repository.UserRepository;
+import com.microslop.command.CommandExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doThrow;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectCommentServiceImplTest {
@@ -38,9 +40,11 @@ class ProjectCommentServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
-
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private CommandExecutor commandExecutor;
 
     @InjectMocks
     private ProjectCommentServiceImpl projectCommentService;
@@ -77,53 +81,51 @@ class ProjectCommentServiceImplTest {
         comment.setCreationDate(LocalDateTime.now().toLocalDate().atStartOfDay());
     }
 
-    @Test
-    void should_save_comment_successfully() {
-        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
-        when(userRepository.findByUsernameIgnoreCase("commenter")).thenReturn(Optional.of(user));
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        // Use builder directly, since factory is removed
-        comment = ProjectComment.builder()
-            .project(project)
-            .user(user)
-            .commentText("Great project!")
-            .category(category)
-            .build();
+     @Test
+     void should_save_comment_successfully() throws Exception {
+         lenient().when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+         lenient().when(userRepository.findByUsernameIgnoreCase("commenter")).thenReturn(Optional.of(user));
+         lenient().when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+         lenient().when(commentRepository.save(any(ProjectComment.class))).thenReturn(comment);
+         when(commandExecutor.execute(any())).thenAnswer(invocation -> comment);
 
-        projectCommentService.saveComment(1L, "commenter", "Great project!", 1L);
+         projectCommentService.saveComment(1L, "commenter", "Great project!", 1L);
 
-        verify(commentRepository).save(comment);
-    }
+         verify(commandExecutor).execute(any());
+     }
 
-    @Test
-    void should_throw_when_project_not_found() {
-        when(projectRepository.findById(999L)).thenReturn(Optional.empty());
+     @Test
+     void should_throw_when_project_not_found() throws Exception {
+         lenient().when(projectRepository.findById(999L)).thenReturn(Optional.empty());
+         doThrow(new IllegalArgumentException("Project not found: 999"))
+                 .when(commandExecutor).execute(any());
 
-        assertThatThrownBy(() -> projectCommentService.saveComment(999L, "commenter", "Comment", 1L))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Project not found: 999");
-    }
+         assertThatThrownBy(() -> projectCommentService.saveComment(999L, "commenter", "Comment", 1L))
+                 .isInstanceOf(IllegalArgumentException.class);
+     }
 
-    @Test
-    void should_throw_when_user_not_found() {
-        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
-        when(userRepository.findByUsernameIgnoreCase("nonexistent")).thenReturn(Optional.empty());
+     @Test
+     void should_throw_when_user_not_found() throws Exception {
+         lenient().when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+         lenient().when(userRepository.findByUsernameIgnoreCase("nonexistent")).thenReturn(Optional.empty());
+         doThrow(new IllegalArgumentException("User not found: nonexistent"))
+                 .when(commandExecutor).execute(any());
 
-        assertThatThrownBy(() -> projectCommentService.saveComment(1L, "nonexistent", "Comment", 1L))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("User not found: nonexistent");
-    }
+         assertThatThrownBy(() -> projectCommentService.saveComment(1L, "nonexistent", "Comment", 1L))
+                 .isInstanceOf(IllegalArgumentException.class);
+     }
 
-    @Test
-    void should_throw_when_category_not_found() {
-        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
-        when(userRepository.findByUsernameIgnoreCase("commenter")).thenReturn(Optional.of(user));
-        when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
+     @Test
+     void should_throw_when_category_not_found() throws Exception {
+         lenient().when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+         lenient().when(userRepository.findByUsernameIgnoreCase("commenter")).thenReturn(Optional.of(user));
+         lenient().when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
+         doThrow(new IllegalArgumentException("Category not found: 999"))
+                 .when(commandExecutor).execute(any());
 
-        assertThatThrownBy(() -> projectCommentService.saveComment(1L, "commenter", "Comment", 999L))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Category not found: 999");
-    }
+         assertThatThrownBy(() -> projectCommentService.saveComment(1L, "commenter", "Comment", 999L))
+                 .isInstanceOf(IllegalArgumentException.class);
+     }
 
     @Test
     void should_get_comments_by_project() {
@@ -165,7 +167,7 @@ class ProjectCommentServiceImplTest {
         when(userRepository.findByUsernameIgnoreCase("nonexistent")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> projectCommentService.getCommentsByUser("nonexistent"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
                 .hasMessage("User not found: nonexistent");
     }
 

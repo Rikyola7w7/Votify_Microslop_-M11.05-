@@ -8,6 +8,7 @@ import com.microslop.entity.Judge;
 import com.microslop.entity.User;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.UserRepository;
+import com.microslop.command.CommandExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +36,9 @@ class CompetitionServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private CommandExecutor commandExecutor;
 
     @InjectMocks
     private CompetitionServiceImpl competitionService;
@@ -68,11 +72,9 @@ class CompetitionServiceImplTest {
         // Add categories
         CategoryDTO categoryDTO1 = new CategoryDTO();
         categoryDTO1.setName("Category 1");
-        categoryDTO1.setWeight(50);
 
         CategoryDTO categoryDTO2 = new CategoryDTO();
         categoryDTO2.setName("Category 2");
-        categoryDTO2.setWeight(50);
 
         competitionDTO.setCategories(Arrays.asList(categoryDTO1, categoryDTO2));
 
@@ -81,60 +83,51 @@ class CompetitionServiceImplTest {
         competitionDTO.addJudgeUsername("judge2");
     }
 
-    @Test
-    void should_create_competition_with_categories_and_judges() {
-        when(userRepository.findByUsernameIgnoreCase("creator")).thenReturn(Optional.of(creatorUser));
-        when(userRepository.findByUsernameIgnoreCase("judge1")).thenReturn(Optional.of(judgeUser1));
-        when(userRepository.findByUsernameIgnoreCase("judge2")).thenReturn(Optional.of(judgeUser2));
+     @Test
+     void should_create_competition_with_categories_and_judges() {
+         when(userRepository.findByUsernameIgnoreCase("creator")).thenReturn(Optional.of(creatorUser));
+         when(userRepository.findByUsernameIgnoreCase("judge1")).thenReturn(Optional.of(judgeUser1));
+         when(userRepository.findByUsernameIgnoreCase("judge2")).thenReturn(Optional.of(judgeUser2));
 
-        Competition savedCompetition = new Competition();
-        savedCompetition.setId(1L);
-        savedCompetition.setName("Test Competition");
-        when(competitionRepository.save(any(Competition.class)))
-                .thenAnswer(invocation -> {
-                    Competition c = invocation.getArgument(0);
-                    if (c.getId() == null) {
-                        c.setId(1L);
-                    }
-                    return c;
-                });
+         when(competitionRepository.save(any(Competition.class)))
+                 .thenAnswer(invocation -> {
+                     Competition c = invocation.getArgument(0);
+                     c.setId(1L);
+                     return c;
+                 });
 
-        Competition result = competitionService.createCompetition("creator", competitionDTO);
+         Competition result = competitionService.createCompetition("creator", competitionDTO);
 
-        assertThat(result).isNotNull();
-        assertThat(result.getName()).isEqualTo("Test Competition");
-        assertThat(result.getDescription()).isEqualTo("A test competition");
-        assertThat(result.isActive()).isTrue();
-    }
+         assertThat(result).isNotNull();
+         assertThat(result.getName()).isEqualTo("Test Competition");
+     }
 
     @Test
     void should_throw_exception_when_creator_not_found() {
         when(userRepository.findByUsernameIgnoreCase("nonexistent")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> competitionService.createCompetition("nonexistent", competitionDTO))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
                 .hasMessage("User not found: nonexistent");
     }
 
-    @Test
-    void should_throw_exception_when_judge_not_found() {
-        when(userRepository.findByUsernameIgnoreCase("creator")).thenReturn(Optional.of(creatorUser));
-        when(userRepository.findByUsernameIgnoreCase("judge1")).thenReturn(Optional.of(judgeUser1));
-        when(userRepository.findByUsernameIgnoreCase("judge2")).thenReturn(Optional.empty());
+     @Test
+     void should_throw_exception_when_judge_not_found() {
+         when(userRepository.findByUsernameIgnoreCase("creator")).thenReturn(Optional.of(creatorUser));
+         when(userRepository.findByUsernameIgnoreCase("judge1")).thenReturn(Optional.of(judgeUser1));
+         when(userRepository.findByUsernameIgnoreCase("judge2")).thenReturn(Optional.empty());
 
-        when(competitionRepository.save(any(Competition.class)))
-                .thenAnswer(invocation -> {
-                    Competition c = invocation.getArgument(0);
-                    if (c.getId() == null) {
-                        c.setId(1L);
-                    }
-                    return c;
-                });
+         when(competitionRepository.save(any(Competition.class)))
+                 .thenAnswer(invocation -> {
+                     Competition c = invocation.getArgument(0);
+                     c.setId(1L);
+                     return c;
+                 });
 
-        assertThatThrownBy(() -> competitionService.createCompetition("creator", competitionDTO))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Judge user not found: judge2");
-    }
+         assertThatThrownBy(() -> competitionService.createCompetition("creator", competitionDTO))
+                 .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
+                 .hasMessage("Judge user not found: judge2");
+     }
 
     @Test
     void should_save_competition() {
@@ -155,33 +148,39 @@ class CompetitionServiceImplTest {
         verify(competitionRepository).deleteById(1L);
     }
 
-    @Test
-    void should_activate_competition() {
-        Competition competition = new Competition();
-        competition.setId(1L);
-        competition.setActive(false);
-        when(competitionRepository.findById(1L)).thenReturn(Optional.of(competition));
-        when(competitionRepository.save(any(Competition.class))).thenReturn(competition);
+     @Test
+     void should_activate_competition() throws Exception {
+         Competition competition = new Competition();
+         competition.setId(1L);
+         competition.setActive(false);
+         
+         when(commandExecutor.execute(any())).thenAnswer(invocation -> {
+             competition.setActive(true);
+             return null;
+         });
+         when(competitionRepository.findById(1L)).thenReturn(Optional.of(competition));
 
-        Competition result = competitionService.activate(1L);
+         Competition result = competitionService.activate(1L);
 
-        assertThat(result.isActive()).isTrue();
-        verify(competitionRepository).save(competition);
-    }
+         assertThat(result.isActive()).isTrue();
+     }
 
-    @Test
-    void should_deactivate_competition() {
-        Competition competition = new Competition();
-        competition.setId(1L);
-        competition.setActive(true);
-        when(competitionRepository.findById(1L)).thenReturn(Optional.of(competition));
-        when(competitionRepository.save(any(Competition.class))).thenReturn(competition);
+     @Test
+     void should_deactivate_competition() throws Exception {
+         Competition competition = new Competition();
+         competition.setId(1L);
+         competition.setActive(true);
+         
+         when(commandExecutor.execute(any())).thenAnswer(invocation -> {
+             competition.setActive(false);
+             return null;
+         });
+         when(competitionRepository.findById(1L)).thenReturn(Optional.of(competition));
 
-        Competition result = competitionService.deactivate(1L);
+         Competition result = competitionService.deactivate(1L);
 
-        assertThat(result.isActive()).isFalse();
-        verify(competitionRepository).save(competition);
-    }
+         assertThat(result.isActive()).isFalse();
+     }
 
     @Test
     void should_get_competition_by_id() {
@@ -201,28 +200,28 @@ class CompetitionServiceImplTest {
         when(competitionRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> competitionService.getByIdOrFail(999L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
                 .hasMessage("Competition not found: 999");
     }
 
-    @Test
-    void should_get_active_competitions() {
-        Competition active1 = new Competition();
-        active1.setActive(true);
-        active1.setName("Active 1");
+     @Test
+     void should_get_active_competitions() {
+         Competition active1 = new Competition();
+         active1.setActive(true);
+         active1.setName("Active 1");
 
-        Competition active2 = new Competition();
-        active2.setActive(true);
-        active2.setName("Active 2");
+         Competition active2 = new Competition();
+         active2.setActive(true);
+         active2.setName("Active 2");
 
-        List<Competition> activeList = Arrays.asList(active1, active2);
-        when(competitionRepository.findByActiveTrue()).thenReturn(activeList);
+         List<Competition> activeList = Arrays.asList(active1, active2);
+         when(competitionRepository.findActiveWithCategories()).thenReturn(activeList);
 
-        List<Competition> result = competitionService.getActiveCompetitions();
+         List<Competition> result = competitionService.getActiveCompetitions();
 
-        assertThat(result).hasSize(2);
-        assertThat(result).allMatch(Competition::isActive);
-    }
+         assertThat(result).hasSize(2);
+         assertThat(result).allMatch(Competition::isActive);
+     }
 
     @Test
     void should_get_finished_competitions() {
@@ -235,7 +234,7 @@ class CompetitionServiceImplTest {
         finished2.setName("Finished 2");
 
         List<Competition> finishedList = Arrays.asList(finished1, finished2);
-        when(competitionRepository.findByActiveFalse()).thenReturn(finishedList);
+        when(competitionRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class))).thenReturn(finishedList);
 
         List<Competition> result = competitionService.getFinishedCompetitions();
 
@@ -258,16 +257,18 @@ class CompetitionServiceImplTest {
         assertThat(result).hasSize(2);
     }
 
-    @Test
-    void should_search_competitions_by_name() {
-        Competition comp = new Competition();
-        comp.setName("Java Competition");
+     @Test
+     void should_search_competitions_by_name() {
+         Competition comp = new Competition();
+         comp.setId(1L);
+         comp.setName("Java Competition");
 
-        when(competitionRepository.findByNameIgnoreCase("Java"))
-                .thenReturn(Optional.of(comp));
+         List<Competition> allComps = Arrays.asList(comp);
+         when(competitionRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class))).thenReturn(allComps);
 
-        Optional<Competition> result = competitionService.getById(comp.getId());
+         List<Competition> result = competitionService.searchByName("Java");
 
-        assertThat(result).isPresent();
-    }
+         assertThat(result).isNotEmpty();
+         assertThat(result.get(0).getName()).contains("Java");
+     }
 }

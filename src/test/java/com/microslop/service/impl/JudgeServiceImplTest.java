@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,7 +67,7 @@ class JudgeServiceImplTest {
     @Test
     void should_get_judges_by_competition() {
         List<Judge> judges = Arrays.asList(judgeEntity1, judgeEntity2);
-        when(judgeRepository.findByCompetitionId(1L)).thenReturn(judges);
+        when(judgeRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class))).thenReturn(judges);
 
         List<Judge> result = judgeService.getJudgesByCompetition(1L);
 
@@ -76,7 +77,7 @@ class JudgeServiceImplTest {
 
     @Test
     void should_return_empty_list_when_no_judges() {
-        when(judgeRepository.findByCompetitionId(1L)).thenReturn(Arrays.asList());
+        when(judgeRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class))).thenReturn(Arrays.asList());
 
         List<Judge> result = judgeService.getJudgesByCompetition(1L);
 

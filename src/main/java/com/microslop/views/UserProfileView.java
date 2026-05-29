@@ -1,39 +1,53 @@
 package com.microslop.views;
 
+import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.User;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.UserService;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.*;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
+import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.BeforeEnterObserver;
-import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.router.BeforeEnterEvent;
 
-@Route(":username")
+@Route(value = "profile", layout = MainLayout.class)
 public class UserProfileView extends VerticalLayout implements BeforeEnterObserver {
 
     private final UserService userService;
+    private final LocalizationService localizationService;
 
     private Span usernameText;
     private Span emailText;
     private Avatar avatar;
 
-    public UserProfileView(UserService userService) {
+    public UserProfileView(UserService userService, LocalizationService localizationService) {
         this.userService = userService;
+        this.localizationService = localizationService;
 
         setSizeFull();
-        setAlignItems(Alignment.CENTER);
-        setJustifyContentMode(JustifyContentMode.CENTER);
-        addClassNames(LumoUtility.Background.CONTRAST_5);
+        setPadding(false);
+        setSpacing(false);
+        setAlignItems(FlexComponent.Alignment.CENTER);
+        getStyle()
+            .set("background", "var(--background)")
+            .set("font-family", "var(--font-main)");
     }
 
     @Override
@@ -41,7 +55,7 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         User loggedInUser = userService.getCurrentUser();
 
         if (loggedInUser == null) {
-            Notification.show("You must sign in");
+            Notification.show(localizationService.t("profile.mustsignin"));
             event.forwardTo("login");
             return;
         }
@@ -51,58 +65,116 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
     }
 
     private void buildLayout() {
-        removeAll(); // Ensure clean state if navigated to multiple times
+        removeAll();
 
-        VerticalLayout card = new VerticalLayout();
-        card.setMaxWidth("500px");
-        card.addClassNames(
-                LumoUtility.Background.BASE,
-                LumoUtility.Padding.LARGE,
-                LumoUtility.BorderRadius.LARGE,
-                LumoUtility.BoxShadow.MEDIUM
-        );
-        card.setAlignItems(Alignment.CENTER);
+        Div banner = new Div();
+        banner.setWidthFull();
+        banner.setHeight("140px");
+        banner.getStyle()
+            .set("background", "linear-gradient(135deg, var(--primary), var(--secondary))")
+            .set("flex-shrink", "0")
+            .set("position", "relative");
 
-        H2 title = new H2("My Profile");
-        title.addClassNames(LumoUtility.Margin.Top.NONE, LumoUtility.Margin.Bottom.LARGE);
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
+        backButton.addClassName("votify-btn-secondary");
+        backButton.getStyle()
+            .set("position", "absolute")
+            .set("top", "20px")
+            .set("left", "20px")
+            .set("z-index", "10");
+        backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
+        backButton.addClickShortcut(Key.ESCAPE);
+        
+        banner.add(backButton);
+
+        Div contentWrapper = new Div();
+        contentWrapper.setWidthFull();
+        contentWrapper.setMaxWidth("600px");
+        contentWrapper.getStyle()
+            .set("margin", "0 auto")
+            .set("padding", "0 24px 48px");
+
+        Div avatarWrapper = new Div();
+        avatarWrapper.setWidthFull();
+        avatarWrapper.getStyle()
+            .set("display", "flex")
+            .set("align-items", "center")
+            .set("justify-content", "center")
+            .set("margin-top", "-50px")
+            .set("margin-bottom", "16px");
 
         avatar = new Avatar();
-        avatar.setWidth("80px");
-        avatar.setHeight("80px");
-        avatar.addClassNames(LumoUtility.Margin.Bottom.MEDIUM);
+        avatar.setWidth("100px");
+        avatar.setHeight("100px");
+        avatar.getStyle()
+            .set("border", "4px solid var(--surface)")
+            .set("border-radius", "50%")
+            .set("box-shadow", "0 4px 16px rgba(108, 92, 231, 0.25)");
+
+        avatarWrapper.add(avatar);
+
+        Div card = new Div();
+        card.addClassNames("votify-card-static", "animate-slide-up");
+        card.setWidthFull();
+        card.getStyle()
+            .set("padding", "32px")
+            .set("display", "flex")
+            .set("flex-direction", "column")
+            .set("align-items", "center");
 
         usernameText = new Span();
-        usernameText.addClassNames(LumoUtility.FontWeight.SEMIBOLD, LumoUtility.FontSize.LARGE);
+        usernameText.getStyle()
+            .set("font-size", "1.5rem")
+            .set("font-weight", "700")
+            .set("color", "var(--text-primary)")
+            .set("display", "block")
+            .set("margin-bottom", "4px");
 
         emailText = new Span();
-        emailText.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Bottom.LARGE);
+        emailText.getStyle()
+            .set("color", "var(--text-muted)")
+            .set("font-size", "0.95rem")
+            .set("display", "block")
+            .set("margin-bottom", "24px");
 
-        VerticalLayout infoLayout = new VerticalLayout(usernameText, emailText);
-        infoLayout.setAlignItems(Alignment.CENTER);
-        infoLayout.setSpacing(false);
-        infoLayout.setPadding(false);
+        Button editButton = new Button(localizationService.t("profile.edityprofile"), VaadinIcon.EDIT.create(), e -> openEditDialog());
+        editButton.addClassName("votify-btn-primary");
+        editButton.setWidth("100%");
+        editButton.setHeight("48px");
+        editButton.setTooltipText("Update your username or email address");
 
-        Button editButton = new Button("Edit Profile", VaadinIcon.EDIT.create(), e -> openEditDialog());
-        editButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        editButton.setWidthFull();
+        HorizontalLayout secondaryButtons = new HorizontalLayout();
+        secondaryButtons.setWidthFull();
+        secondaryButtons.setSpacing(true);
+        secondaryButtons.getStyle().set("margin-top", "12px");
 
-        Button logoutButton = new Button("Sign Out", VaadinIcon.SIGN_OUT.create(), e -> {
+        Button logoutButton = new Button(localizationService.t("profile.signout"), VaadinIcon.SIGN_OUT.create(), e -> {
             userService.logout();
-            Notification.show("Session closed");
+            Notification.show(localizationService.t("profile.sessionclosed"));
             UI.getCurrent().navigate("login");
         });
-        logoutButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        logoutButton.addClassName("votify-btn-secondary");
+        logoutButton.setHeight("44px");
+        logoutButton.getStyle().set("flex", "1");
+        logoutButton.setTooltipText("End your current session and sign out");
 
-        Button deleteButton = new Button("Delete Account", VaadinIcon.TRASH.create(), e -> openDeleteDialog());
-        deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        Button deleteButton = new Button(localizationService.t("profile.deleteaccount"), VaadinIcon.TRASH.create(), e -> openDeleteDialog());
+        deleteButton.addClassName("votify-btn-danger");
+        deleteButton.setHeight("44px");
+        deleteButton.getStyle().set("flex", "1");
+        deleteButton.setTooltipText("Permanently remove your account and all associated data");
 
-        HorizontalLayout secondaryButtons = new HorizontalLayout(logoutButton, deleteButton);
-        secondaryButtons.setWidthFull();
-        secondaryButtons.setJustifyContentMode(JustifyContentMode.BETWEEN);
-        secondaryButtons.addClassNames(LumoUtility.Margin.Top.MEDIUM);
+        secondaryButtons.add(logoutButton, deleteButton);
 
-        card.add(title, avatar, infoLayout, editButton, secondaryButtons);
-        add(card);
+        Button helpButton = new Button("Help & FAQ", VaadinIcon.QUESTION_CIRCLE_O.create(), e -> getUI().ifPresent(ui -> ui.navigate("help")));
+        helpButton.addClassName("votify-btn-secondary");
+        helpButton.setWidth("100%");
+        helpButton.setHeight("44px");
+        helpButton.getStyle().set("margin-top", "8px");
+
+        card.add(usernameText, emailText, editButton, secondaryButtons, helpButton);
+        contentWrapper.add(avatarWrapper, card);
+        add(banner, contentWrapper);
     }
 
     private void updateData(User user) {
@@ -115,25 +187,32 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         User user = userService.getCurrentUser();
 
         if (user == null) {
-            Notification.show("You must sign in");
+            Notification.show(localizationService.t("profile.mustsignin"));
             return;
         }
 
         Dialog dialog = new Dialog();
-        dialog.setWidth("400px");
+        dialog.setWidth("420px");
+        dialog.addClassNames("votify-card-static");
 
-        H2 title = new H2("Edit Profile");
-        title.addClassNames(LumoUtility.Margin.Top.NONE, LumoUtility.Margin.Bottom.MEDIUM);
+        H2 title = new H2(localizationService.t("profile.edityprofile"));
+        title.getStyle()
+            .set("margin", "0 0 20px 0")
+            .set("font-size", "1.3rem")
+            .set("font-weight", "700")
+            .set("color", "var(--text-primary)");
 
-        TextField usernameField = new TextField("Username");
+        TextField usernameField = new TextField(localizationService.t("login.username"));
         usernameField.setValue(user.getUsername());
         usernameField.setWidthFull();
+        usernameField.addClassName("votify-input");
 
-        EmailField emailField = new EmailField("Email");
+        EmailField emailField = new EmailField(localizationService.t("register.email"));
         emailField.setValue(user.getEmail());
         emailField.setWidthFull();
+        emailField.addClassName("votify-input");
 
-        Button saveButton = new Button("Save", e -> {
+        Button saveButton = new Button(localizationService.t("voting.save"), e -> {
             try {
                 User currentUser = userService.getCurrentUser();
 
@@ -145,24 +224,30 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
 
                 updateData(updatedUser);
 
-                Notification.show("Profile updated");
+                Notification.show(localizationService.t("profile.profileupdated"));
                 dialog.close();
             } catch (Exception ex) {
-                Notification.show("Error updating profile");
+                Notification.show(localizationService.t("profile.errorupdatingprofile"));
             }
         });
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        
-        Button cancelButton = new Button("Cancel", e -> dialog.close());
+        saveButton.addClassName("votify-btn-primary");
+        saveButton.setHeight("44px");
+        saveButton.getStyle().set("flex", "1");
+
+        Button cancelButton = new Button(localizationService.t("profile.cancel"), e -> dialog.close());
+        cancelButton.addClassName("votify-btn-secondary");
+        cancelButton.setHeight("44px");
+        cancelButton.getStyle().set("flex", "1");
 
         HorizontalLayout buttons = new HorizontalLayout(cancelButton, saveButton);
         buttons.setWidthFull();
-        buttons.setJustifyContentMode(JustifyContentMode.END);
-        buttons.addClassNames(LumoUtility.Margin.Top.MEDIUM);
+        buttons.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        buttons.setSpacing(true);
+        buttons.getStyle().set("margin-top", "20px");
 
         VerticalLayout layout = new VerticalLayout(title, usernameField, emailField, buttons);
         layout.setPadding(false);
-        layout.setAlignItems(Alignment.STRETCH);
+        layout.setAlignItems(FlexComponent.Alignment.STRETCH);
 
         dialog.add(layout);
         dialog.open();
@@ -172,40 +257,69 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
         User user = userService.getCurrentUser();
 
         if (user == null) {
-            Notification.show("You must sign in");
+            Notification.show(localizationService.t("profile.mustsignin"));
             return;
         }
 
         Dialog dialog = new Dialog();
-        dialog.setWidth("400px");
+        dialog.setWidth("420px");
 
-        H3 title = new H3("Delete Account");
-        title.addClassNames(LumoUtility.Margin.Top.NONE, LumoUtility.Margin.Bottom.SMALL);
+        H3 title = new H3(localizationService.t("profile.deleteaccount"));
+        title.getStyle()
+            .set("margin", "0 0 12px 0")
+            .set("font-weight", "700")
+            .set("color", "var(--error)");
 
-        Span message = new Span("Are you sure you want to delete your account? This action cannot be undone.");
-        message.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Bottom.MEDIUM);
+        Paragraph message = new Paragraph(localizationService.t("profile.deleteconfirmation"));
+        message.getStyle()
+            .set("color", "var(--text-muted)")
+            .set("font-size", "0.95rem")
+            .set("display", "block")
+            .set("margin-bottom", "16px");
 
-        Button cancelButton = new Button("Cancel", e -> dialog.close());
+        PasswordField passwordField = new PasswordField("Confirm your password");
+        passwordField.setWidthFull();
+        passwordField.addClassName("votify-input");
+        passwordField.setPlaceholder("Enter your password");
+        passwordField.getStyle().set("margin-bottom", "20px");
 
-        Button confirmButton = new Button("Delete", VaadinIcon.TRASH.create(), e -> {
+        Button cancelButton = new Button(localizationService.t("profile.cancel"), e -> dialog.close());
+        cancelButton.addClassName("votify-btn-secondary");
+        cancelButton.setHeight("44px");
+        cancelButton.getStyle().set("flex", "1");
+
+        Button confirmButton = new Button(localizationService.t("profile.delete"), VaadinIcon.TRASH.create(), e -> {
+            if (!userService.verifyCurrentPassword(passwordField.getValue())) {
+                Notification.show("Incorrect password");
+                passwordField.clear();
+                passwordField.focus();
+                return;
+            }
             try {
                 userService.deleteUser(user.getUsername());
-                Notification.show("Account deleted successfully");
+                Notification.show(localizationService.t("profile.accountdeletedsuccess"));
                 userService.logout();
                 dialog.close();
                 UI.getCurrent().navigate("login");
             } catch (Exception ex) {
-                Notification.show("Error deleting account");
+                Notification.show(localizationService.t("profile.errordeletingaccount"));
             }
         });
-        confirmButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_PRIMARY);
+        confirmButton.addClassName("votify-btn-danger");
+        confirmButton.setHeight("44px");
+        confirmButton.getStyle().set("flex", "1");
+        confirmButton.setEnabled(false);
+
+        passwordField.addValueChangeListener(e -> confirmButton.setEnabled(!e.getValue().isBlank()));
 
         HorizontalLayout buttons = new HorizontalLayout(cancelButton, confirmButton);
         buttons.setWidthFull();
-        buttons.setJustifyContentMode(JustifyContentMode.END);
+        buttons.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        buttons.setSpacing(true);
 
-        VerticalLayout layout = new VerticalLayout(title, message, buttons);
+        VerticalLayout layout = new VerticalLayout(title, message, passwordField, buttons);
         layout.setPadding(false);
+        layout.setAlignItems(FlexComponent.Alignment.STRETCH);
 
         dialog.add(layout);
         dialog.open();

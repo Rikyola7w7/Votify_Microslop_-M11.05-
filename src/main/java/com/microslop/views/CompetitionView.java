@@ -1,12 +1,16 @@
 package com.microslop.views;
 
+import com.microslop.base.ui.MainLayout;
+import com.microslop.entity.Competition;
 import com.microslop.entity.Project;
 import com.microslop.entity.Category;
+import com.microslop.service.ChecklistVoteService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.VoteService;
 import com.microslop.views.components.PodiumCardComponent;
 import com.vaadin.flow.component.avatar.Avatar;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -15,6 +19,8 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -37,7 +43,7 @@ import java.util.Locale;
  * Allows authenticated users to vote for projects.
  */
 @PageTitle("Competition")
-@Route("competition")
+@Route(value = "competition", layout = MainLayout.class)
 public class CompetitionView extends VerticalLayout implements HasUrlParameter<Long> {
 
     // ── Dependencies ─────────────────────────────────────────────────────────
@@ -45,6 +51,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     private final CompetitionService competitionService;
     private final ProjectService     projectService;
     private final VoteService        voteService;
+    private final ChecklistVoteService checklistVoteService;
     private final UserService userService;
 
     // ── State ────────────────────────────────────────────────────────────────
@@ -52,6 +59,8 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     private Long competitionId;
     private Long selectedCategoryId;  // null means "General" (all projects)
     private VerticalLayout bodyContainer;  // Reference to the body for easy updates
+    private boolean isChecklistMode = false;
+    private boolean isScaleMode = false;
 
     // ── UI areas that refresh after voting ─────────────────────────────────
 
@@ -63,10 +72,12 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     public CompetitionView(CompetitionService competitionService,
                            ProjectService projectService,
                            VoteService voteService,
+                           ChecklistVoteService checklistVoteService,
                            UserService userService) {
         this.competitionService = competitionService;
         this.projectService     = projectService;
         this.voteService        = voteService;
+        this.checklistVoteService = checklistVoteService;
         this.userService = userService;
 
         setSizeFull();
@@ -92,9 +103,13 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     private void buildUi() {
         var competition = competitionService.getByIdOrFailWithCategories(competitionId);
         selectedCategoryId = null;  // Reset to "General"
-        
+        isChecklistMode = "CHECKLIST".equalsIgnoreCase(competition.getVoteType());
+        isScaleMode = "SCALE".equalsIgnoreCase(competition.getVoteType());
+
         add(buildHeader(competition.getName()));
-        add(buildCategoryFilter(competition.getCategories()));
+        if (!isChecklistMode) {
+            add(buildCategoryFilter(competition.getCategories()));
+        }
         updateRanking();
     }
 
@@ -195,13 +210,16 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             .set("box-shadow", "0 2px 8px rgba(0,0,0,0.3)");
 
         // Back button
-        Button backButton = new Button("← Back");
-        backButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
+        backButton.addClassName("votify-btn-secondary");
         backButton.getStyle()
             .set("color", "white")
-            .set("background", "transparent")
+            .set("background", "rgba(255, 255, 255, 0.15)")
+            .set("border", "1px solid rgba(255, 255, 255, 0.3)")
+            .set("border-radius", "var(--radius-md)")
             .set("cursor", "pointer");
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
+        backButton.addClickShortcut(Key.ESCAPE);
 
         // Title
         var title = new H2(competitionName.toUpperCase());
@@ -231,6 +249,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             .set("background", "white")
             .set("border", "none")
             .set("cursor", "pointer");
+        voteButton.setTooltipText("Go to the voting page for this competition");
         voteButton.addClickListener(e -> {
             if (userService.isLoggedIn()) {
                 getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/vote"));
@@ -258,7 +277,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             userMenu.addItem("My Projects", event -> {
                 String username = userService.getCurrentUsername();
                 if (username != null) {
-                    getUI().ifPresent(ui -> ui.navigate(username + "/projects"));
+                    getUI().ifPresent(ui -> ui.navigate(UserProjectsView.class, new com.vaadin.flow.router.RouteParameters("username", username)));
                 } else {
                     Notification.show("Unable to load your projects.");
                 }
@@ -266,11 +285,12 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             userMenu.addItem("Edit Profile", event -> {
                 String username = userService.getCurrentUsername();
                 if (username != null) {
-                    getUI().ifPresent(ui -> ui.navigate(username));
+                    getUI().ifPresent(ui -> ui.navigate(UserProfileView.class));
                 } else {
                     Notification.show("Unable to load your profile.");
                 }
             });
+            userMenu.addItem("Help", event -> getUI().ifPresent(ui -> ui.navigate(FaqView.class)));
             userMenu.addItem("Sign Out", event -> {
                 VaadinSession session = VaadinSession.getCurrent();
                 if (session != null) {
@@ -280,8 +300,9 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
                 Notification.show("Logged out successfully");
             });
         } else {
-            userMenu.addItem("Sign In", event -> getUI().ifPresent(ui -> ui.navigate("login")));
-            userMenu.addItem("Register", event -> getUI().ifPresent(ui -> ui.navigate("register")));
+            userMenu.addItem("Sign In", event -> getUI().ifPresent(ui -> ui.navigate(LoginView.class)));
+            userMenu.addItem("Register", event -> getUI().ifPresent(ui -> ui.navigate(RegisterView.class)));
+            userMenu.addItem("Help", event -> getUI().ifPresent(ui -> ui.navigate(FaqView.class)));
         }
 
         rightSection.add(voteButton, avatar);
@@ -347,11 +368,22 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             if (idx >= ranking.size()) continue;
 
             Project p = ranking.get(idx);
-            long totalVotes = (categoryId == null) 
-                ? voteService.countVotesByProject(p.getId())
-                : voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+            long totalVotes;
+            double avgScore = 0;
+            if (isChecklistMode) {
+                totalVotes = checklistVoteService.countChecklistVotesByProject(p.getId());
+            } else if (isScaleMode) {
+                avgScore = (categoryId == null)
+                    ? voteService.getAverageScoreByProject(p.getId())
+                    : voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
+                totalVotes = voteService.countVotesByProject(p.getId());
+            } else {
+                totalVotes = (categoryId == null)
+                    ? voteService.countVotesByProject(p.getId())
+                    : voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+            }
 
-            var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes);
+            var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, isChecklistMode, isScaleMode, avgScore);
             podiumSection.add(podiumCard);
         }
     }
@@ -374,16 +406,27 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
 
         for (int i = 3; i < ranking.size(); i++) {
             Project p      = ranking.get(i);
-            long totalVotes = (categoryId == null)
-                ? voteService.countVotesByProject(p.getId())
-                : voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+            long totalVotes;
+            double avgScore = 0;
+            if (isChecklistMode) {
+                totalVotes = checklistVoteService.countChecklistVotesByProject(p.getId());
+            } else if (isScaleMode) {
+                avgScore = (categoryId == null)
+                    ? voteService.getAverageScoreByProject(p.getId())
+                    : voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
+                totalVotes = voteService.countVotesByProject(p.getId());
+            } else {
+                totalVotes = (categoryId == null)
+                    ? voteService.countVotesByProject(p.getId())
+                    : voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+            }
 
-            listSection.add(buildListRow(p, i + 1, totalVotes));
+            listSection.add(buildListRow(p, i + 1, totalVotes, avgScore));
         }
     }
 
     private HorizontalLayout buildListRow(Project p, int position,
-                                             long totalVotes) {
+                                             long totalVotes, double avgScore) {
         var row = new HorizontalLayout();
         row.setWidthFull();
         row.setAlignItems(Alignment.CENTER);
@@ -423,7 +466,16 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
             .set("font-size", "0.95rem")
             .set("color", "#1a1a2e");
 
-        var votes = new Span("Total Votes: " + formatNumber(totalVotes));
+        String voteLabel;
+        if (isChecklistMode) {
+            voteLabel = "Total Checks: " + formatNumber(totalVotes);
+        } else if (isScaleMode) {
+            var competition = competitionService.getByIdOrFail(competitionId);
+            voteLabel = String.format("Avg. Score: %.1f/10", avgScore);
+        } else {
+            voteLabel = "Total Votes: " + formatNumber(totalVotes);
+        }
+        var votes = new Span(voteLabel);
         votes.getStyle()
             .set("font-size", "0.85rem")
             .set("color", "#555");

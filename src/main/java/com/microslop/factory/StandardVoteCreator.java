@@ -7,6 +7,7 @@ import com.microslop.entity.Vote;
 import org.springframework.stereotype.Component;
 
 @Component
+@org.springframework.context.annotation.Primary
 public class StandardVoteCreator extends VoteCreator {
 
     @Override

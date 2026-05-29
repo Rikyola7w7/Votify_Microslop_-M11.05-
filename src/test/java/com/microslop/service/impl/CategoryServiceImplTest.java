@@ -52,12 +52,10 @@ class CategoryServiceImplTest {
         category = new Category();
         category.setId(1L);
         category.setName("Test Category");
-        category.setWeight(100);
         category.setCompetition(competition);
 
         categoryDTO = new CategoryDTO();
         categoryDTO.setName("Test Category");
-        categoryDTO.setWeight(100);
     }
 
     @Test
@@ -81,7 +79,6 @@ class CategoryServiceImplTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getName()).isEqualTo("Test Category");
-        assertThat(result.getWeight()).isEqualTo(100);
     }
 
     @Test
@@ -89,7 +86,7 @@ class CategoryServiceImplTest {
         when(competitionRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> categoryService.createCategory(999L, categoryDTO))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
                 .hasMessage("Competition not found: 999");
     }
 
@@ -99,7 +96,7 @@ class CategoryServiceImplTest {
         when(categoryRepository.findByCompetitionIdAndName(1L, "Test Category")).thenReturn(Optional.of(category));
 
         assertThatThrownBy(() -> categoryService.createCategory(1L, categoryDTO))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.BusinessValidationException.class)
                 .hasMessageContaining("already exist");
     }
 
@@ -144,7 +141,7 @@ class CategoryServiceImplTest {
         when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> categoryService.getByIdOrFail(999L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
                 .hasMessage("Category not found: 999");
     }
 }

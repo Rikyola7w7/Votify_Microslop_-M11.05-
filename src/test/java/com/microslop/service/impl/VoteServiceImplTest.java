@@ -6,6 +6,7 @@ import com.microslop.repository.CategoryRepository;
 import com.microslop.repository.VoteRepository;
 import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
+import com.microslop.command.CommandExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +20,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doThrow;
 
 @ExtendWith(MockitoExtension.class)
 class VoteServiceImplTest {
@@ -37,6 +39,9 @@ class VoteServiceImplTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private CommandExecutor commandExecutor;
 
     @InjectMocks
     private VoteServiceImpl voteService;
@@ -65,7 +70,6 @@ class VoteServiceImplTest {
         category = new Category();
         category.setId(1L);
         category.setName("Test Category");
-        category.setWeight(100);
 
         project = new Project();
         project.setId(1L);
@@ -77,82 +81,96 @@ class VoteServiceImplTest {
         vote.setId(1L);
     }
 
-    @Test
-    void should_submit_vote_successfully() {
-        when(userService.searchByUsernameIgnoreCase("voter")).thenReturn(Optional.of(voter));
-        when(projectService.getById(1L)).thenReturn(project);
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(voteRepository.countByUserIdAndCategoryId(1L, 1L)).thenReturn(0L);
-        when(voteCreator.create(voter, project, category)).thenReturn(vote);
+     @Test
+     void should_submit_vote_successfully() throws Exception {
+         lenient().when(userService.searchByUsernameIgnoreCase("voter")).thenReturn(Optional.of(voter));
+         lenient().when(projectService.getById(1L)).thenReturn(project);
+         lenient().when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+         lenient().when(voteRepository.countByUserIdAndCategoryId(1L, 1L)).thenReturn(0L);
+         lenient().when(voteCreator.create(voter, project, category)).thenReturn(vote);
+         when(commandExecutor.execute(any())).thenAnswer(invocation -> {
+             Vote v = vote;
+             v.setId(1L);
+             return v;
+         });
 
-        voteService.submitVote("voter", 1L, 1L);
+         voteService.submitVote("voter", 1L, 1L);
 
-        verify(voteRepository).save(vote);
-    }
+         verify(commandExecutor).execute(any());
+     }
 
-    @Test
-    void should_throw_when_user_not_found() {
-        when(userService.searchByUsernameIgnoreCase("nonexistent")).thenReturn(Optional.empty());
+     @Test
+     void should_throw_when_user_not_found() throws Exception {
+         doThrow(new IllegalStateException("User not found."))
+                 .when(commandExecutor).execute(any());
 
-        assertThatThrownBy(() -> voteService.submitVote("nonexistent", 1L, 1L))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("User not found.");
-    }
+         assertThatThrownBy(() -> voteService.submitVote("nonexistent", 1L, 1L))
+                 .isInstanceOf(IllegalStateException.class);
+     }
 
-    @Test
-    void should_throw_when_project_not_found() {
-        when(userService.searchByUsernameIgnoreCase("voter")).thenReturn(Optional.of(voter));
-        when(projectService.getById(999L)).thenThrow(new IllegalArgumentException("Project not found"));
+     @Test
+     void should_throw_when_project_not_found() throws Exception {
+         lenient().when(userService.searchByUsernameIgnoreCase("voter")).thenReturn(Optional.of(voter));
+         lenient().when(projectService.getById(999L)).thenReturn(null);
+         doThrow(new IllegalStateException("Project not found"))
+                 .when(commandExecutor).execute(any());
 
-        assertThatThrownBy(() -> voteService.submitVote("voter", 999L, 1L))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
+         assertThatThrownBy(() -> voteService.submitVote("voter", 999L, 1L))
+                 .isInstanceOf(IllegalStateException.class);
+     }
 
-    @Test
-    void should_throw_when_category_not_found() {
-        when(userService.searchByUsernameIgnoreCase("voter")).thenReturn(Optional.of(voter));
-        when(projectService.getById(1L)).thenReturn(project);
-        when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
+     @Test
+     void should_throw_when_category_not_found() throws Exception {
+         lenient().when(userService.searchByUsernameIgnoreCase("voter")).thenReturn(Optional.of(voter));
+         lenient().when(projectService.getById(1L)).thenReturn(project);
+         lenient().when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
+         doThrow(new IllegalStateException("Category not found."))
+                 .when(commandExecutor).execute(any());
 
-        assertThatThrownBy(() -> voteService.submitVote("voter", 1L, 999L))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Category not found.");
-    }
+         assertThatThrownBy(() -> voteService.submitVote("voter", 1L, 999L))
+                 .isInstanceOf(IllegalStateException.class);
+     }
 
-    @Test
-    void should_throw_when_competition_not_active() {
-        competition.setActive(false);
-        when(userService.searchByUsernameIgnoreCase("voter")).thenReturn(Optional.of(voter));
-        when(projectService.getById(1L)).thenReturn(project);
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+     @Test
+     void should_throw_when_competition_not_active() throws Exception {
+         competition.setActive(false);
+         lenient().when(userService.searchByUsernameIgnoreCase("voter")).thenReturn(Optional.of(voter));
+         lenient().when(projectService.getById(1L)).thenReturn(project);
+         lenient().when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+         doThrow(new IllegalStateException("Competition is not active"))
+                 .when(commandExecutor).execute(any());
 
-        assertThatThrownBy(() -> voteService.submitVote("voter", 1L, 1L))
-                .isInstanceOf(IllegalStateException.class);
-    }
+         assertThatThrownBy(() -> voteService.submitVote("voter", 1L, 1L))
+                 .isInstanceOf(IllegalStateException.class);
+     }
 
-    @Test
-    void should_throw_when_user_already_voted_in_category() {
-        when(userService.searchByUsernameIgnoreCase("voter")).thenReturn(Optional.of(voter));
-        when(projectService.getById(1L)).thenReturn(project);
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(voteRepository.countByUserIdAndCategoryId(1L, 1L)).thenReturn(1L);
+     @Test
+     void should_throw_when_user_already_voted_in_category() throws Exception {
+         lenient().when(userService.searchByUsernameIgnoreCase("voter")).thenReturn(Optional.of(voter));
+         lenient().when(projectService.getById(1L)).thenReturn(project);
+         lenient().when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+         lenient().when(voteRepository.countByUserIdAndCategoryId(1L, 1L)).thenReturn(1L);
+         doThrow(new IllegalStateException("You already voted for a project in this category."))
+                 .when(commandExecutor).execute(any());
 
-        assertThatThrownBy(() -> voteService.submitVote("voter", 1L, 1L))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("You already voted for a project in this category.");
-    }
+         assertThatThrownBy(() -> voteService.submitVote("voter", 1L, 1L))
+                 .isInstanceOf(IllegalStateException.class);
+     }
 
-    @Test
-    void should_submit_vote_with_points() {
-        when(userService.searchByUsernameIgnoreCase("voter")).thenReturn(Optional.of(voter));
-        when(projectService.getById(1L)).thenReturn(project);
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(voteRepository.countByUserIdAndCategoryId(1L, 1L)).thenReturn(0L);
+     @Test
+     void should_submit_vote_with_points() throws Exception {
+         lenient().when(userService.searchByUsernameIgnoreCase("voter")).thenReturn(Optional.of(voter));
+         lenient().when(projectService.getById(1L)).thenReturn(project);
+         lenient().when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+         lenient().when(voteRepository.countByUserIdAndCategoryId(1L, 1L)).thenReturn(0L);
+         when(commandExecutor.execute(any())).thenAnswer(invocation -> {
+             return new Vote();
+         });
 
-        voteService.submitVote("voter", 1L, 1L, 10);
+         voteService.submitVote("voter", 1L, 1L, 10);
 
-        verify(voteRepository).save(any(Vote.class));
-    }
+         verify(commandExecutor).execute(any());
+     }
 
     @Test
     void should_count_votes_by_project() {

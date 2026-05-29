@@ -2,13 +2,30 @@ package com.microslop.views;
 
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Competition;
+import com.microslop.entity.CompetitionStatus;
+import com.microslop.entity.Invitation;
+import com.microslop.entity.PendingProjectSubmission;
+import com.microslop.entity.Project;
+import com.microslop.entity.User;
+import com.microslop.exception.ErrorHandler;
+import com.microslop.repository.CategoryRepository;
+import com.microslop.repository.PendingProjectSubmissionRepository;
+import com.microslop.repository.UserRepository;
 import com.microslop.service.CompetitionService;
+import com.microslop.service.InvitationService;
+import com.microslop.service.NotificationService;
+import com.microslop.service.ProjectService;
 import com.microslop.service.UserService;
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.KeyModifier;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Div;
+
+import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -23,13 +40,20 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Route(value = ":username/competitions/manage/:competitionId", layout = MainLayout.class)
-@PageTitle("Manage Voting Phase | Votify")
+@PageTitle("Manage Competition | Votify")
 public class ManageCompetitionView extends VerticalLayout implements BeforeEnterObserver {
 
     private final CompetitionService competitionService;
     private final UserService userService;
+    private final ProjectService projectService;
+    private final PendingProjectSubmissionRepository pendingSubmissionRepository;
+    private final CategoryRepository categoryRepository;
+    private final NotificationService notificationService;
+    private final InvitationService invitationService;
+    private final UserRepository userRepository;
 
     private String currentUsername;
     private Long competitionId;
@@ -39,19 +63,34 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     private Span statusBadge;
     private DateTimePicker startDatePicker;
     private DateTimePicker endDatePicker;
-    
-    private Button pauseButton;
-    private Button resumeButton;
+
+    private Button activateButton;
+    private Button votingToggle;
+    private Button pauseToggle;
     private Button endNowButton;
     private Button reopenButton;
 
-    public ManageCompetitionView(CompetitionService competitionService, UserService userService) {
+    public ManageCompetitionView(CompetitionService competitionService, UserService userService,
+                                  ProjectService projectService,
+                                  PendingProjectSubmissionRepository pendingSubmissionRepository,
+                                  CategoryRepository categoryRepository,
+                                  NotificationService notificationService,
+                                  InvitationService invitationService,
+                                  UserRepository userRepository) {
         this.competitionService = competitionService;
         this.userService = userService;
+        this.projectService = projectService;
+        this.pendingSubmissionRepository = pendingSubmissionRepository;
+        this.categoryRepository = categoryRepository;
+        this.notificationService = notificationService;
+        this.invitationService = invitationService;
+        this.userRepository = userRepository;
         setSizeFull();
-        setPadding(true);
-        setSpacing(true);
-        getStyle().set("background", "#f0f2f5").set("font-family", "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif");
+        setPadding(false);
+        setSpacing(false);
+        getStyle()
+            .set("background", "var(--background)")
+            .set("overflow-y", "auto");
     }
 
     @Override
@@ -89,188 +128,243 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
 
     private void buildUI() {
         removeAll();
-        setAlignItems(Alignment.CENTER);
+        setAlignItems(FlexComponent.Alignment.CENTER);
 
-        // Header Layout
+        Div scrollContainer = new Div();
+        scrollContainer.setWidthFull();
+        scrollContainer.getStyle()
+            .set("overflow-y", "auto")
+            .set("height", "calc(100vh - 64px)");
+
         HorizontalLayout header = new HorizontalLayout();
+        header.addClassName("votify-header");
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setMaxWidth("800px");
-        header.getStyle()
-            .set("margin-top", "20px")
-            .set("margin-bottom", "10px");
 
-        Button backButton = new Button("← Back to Dashboard");
-        backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        backButton.getStyle().set("color", "#5e6c84").set("font-weight", "600");
+        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
+        backButton.addClassName("votify-btn-secondary");
+        backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/competitions")));
+        backButton.addClickShortcut(Key.ESCAPE);
 
         header.add(backButton);
 
-        // Main Content Card
         mainContent = new VerticalLayout();
+        mainContent.addClassName("votify-card-static");
+        mainContent.addClassName("animate-fade-in");
         mainContent.setMaxWidth("800px");
-        mainContent.setWidth("100%");
+        mainContent.setWidthFull();
+        mainContent.setPadding(true);
+        mainContent.setSpacing(true);
         mainContent.getStyle()
-                .set("background", "linear-gradient(to bottom, #ffffff, #fdfdfd)")
-                .set("border-radius", "16px")
-                .set("box-shadow", "0 10px 30px rgba(0,0,0,0.08)")
-                .set("padding", "40px")
-                .set("box-sizing", "border-box")
-                .set("border", "1px solid #eaeaea");
-
-        // Competition Title & Info
-        H1 title = new H1(competition.getName());
-        title.getStyle()
-            .set("color", "#1a3a5c")
-            .set("margin", "0 0 10px 0")
-            .set("font-size", "2.5rem")
-            .set("font-weight", "800")
-            .set("line-height", "1.2")
-            .set("word-break", "break-word");
+            .set("margin", "20px auto 40px auto")
+            .set("box-sizing", "border-box");
 
         Span description = new Span(competition.getDescription() != null && !competition.getDescription().isEmpty() ? competition.getDescription() : "No description available.");
         description.getStyle()
-            .set("color", "#6b778c")
-            .set("font-size", "1.1rem")
-            .set("margin-bottom", "20px")
-            .set("display", "block")
-            .set("line-height", "1.6")
-            .set("word-break", "break-word");
+                .set("color", "var(--text-muted)")
+                .set("font-size", "1rem")
+                .set("margin-bottom", "20px")
+                .set("display", "block")
+                .set("line-height", "1.6")
+                .set("word-break", "break-word");
 
-        // Status Badge Layout
         statusBadge = new Span();
-        statusBadge.getStyle()
-                .set("padding", "8px 16px")
-                .set("border-radius", "30px")
-                .set("font-weight", "bold")
-                .set("font-size", "14px")
-                .set("color", "white")
-                .set("letter-spacing", "0.5px")
-                .set("text-transform", "uppercase")
-                .set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)");
+        statusBadge.addClassName("votify-badge");
 
         Span statusLabel = new Span("Voting Status: ");
-        statusLabel.getStyle().set("font-weight", "600").set("color", "#172b4d");
-        
+        statusLabel.getStyle().set("font-weight", "600").set("color", "var(--text-primary)");
+
         HorizontalLayout statusLayout = new HorizontalLayout(statusLabel, statusBadge);
         statusLayout.setAlignItems(Alignment.CENTER);
         statusLayout.getStyle()
-            .set("background", "#f4f5f7")
-            .set("padding", "15px 20px")
-            .set("border-radius", "10px")
-            .set("margin-bottom", "30px");
+                .set("background", "var(--background)")
+                .set("padding", "15px 20px")
+                .set("border-radius", "var(--radius-sm)")
+                .set("margin-bottom", "30px");
 
-        // Settings Section
-        H2 sectionTitle = new H2("Voting Window Settings");
+        H4 sectionTitle = new H4("Voting Window Settings");
         sectionTitle.getStyle()
-            .set("color", "#2c3e50")
-            .set("font-size", "1.5rem")
-            .set("border-bottom", "2px solid #edf1f5")
-            .set("padding-bottom", "10px")
-            .set("margin-top", "10px")
-            .set("margin-bottom", "20px");
+                .set("color", "var(--dark)")
+                .set("font-size", "1.2rem")
+                .set("margin", "10px 0 20px 0")
+                .set("font-weight", "700");
 
-        // Dates Layout (Responsive)
         HorizontalLayout datesLayout = new HorizontalLayout();
         datesLayout.setWidthFull();
         datesLayout.getStyle().set("flex-wrap", "wrap").set("gap", "20px");
-        
+
         startDatePicker = new DateTimePicker("Start Date & Time");
+        startDatePicker.addClassName("votify-input");
         startDatePicker.getStyle().set("flex", "1 1 250px");
         startDatePicker.setValue(competition.getStartDate());
 
         endDatePicker = new DateTimePicker("End Date & Time");
+        endDatePicker.addClassName("votify-input");
         endDatePicker.getStyle().set("flex", "1 1 250px");
         endDatePicker.setValue(competition.getEndDate());
 
         datesLayout.add(startDatePicker, endDatePicker);
 
-        Button saveDatesButton = new Button("Update Dates", new Icon(VaadinIcon.CALENDAR_CLOCK));
-        saveDatesButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        saveDatesButton.getStyle()
-            .set("margin-top", "20px")
-            .set("background", "#1e5ba8")
-            .set("border-radius", "8px")
-            .set("padding", "0 25px");
+        Button saveDatesButton = new Button("Save", new Icon(VaadinIcon.CALENDAR_CLOCK));
+        saveDatesButton.addClassName("votify-btn-primary");
+        saveDatesButton.getStyle().set("margin-top", "20px");
+        saveDatesButton.setTooltipText("Save changes to the voting window dates");
         saveDatesButton.addClickListener(e -> saveDates());
+        saveDatesButton.addClickShortcut(Key.ENTER);
 
         VerticalLayout datesContainer = new VerticalLayout(datesLayout, saveDatesButton);
         datesContainer.setPadding(false);
         datesContainer.setAlignItems(Alignment.END);
 
-        // Actions Section
         HorizontalLayout actionsLayout = new HorizontalLayout();
         actionsLayout.getStyle()
-            .set("margin-top", "40px")
-            .set("padding-top", "30px")
-            .set("border-top", "1px solid #edf1f5")
-            .set("flex-wrap", "wrap")
-            .set("gap", "15px");
+                .set("margin-top", "30px")
+                .set("padding-top", "30px")
+                .set("border-top", "1px solid var(--border)")
+                .set("flex-wrap", "wrap")
+                .set("gap", "15px");
         actionsLayout.setWidthFull();
         actionsLayout.setJustifyContentMode(JustifyContentMode.START);
 
-        pauseButton = new Button("Pause Voting", new Icon(VaadinIcon.PAUSE));
-        pauseButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_PRIMARY);
-        pauseButton.getStyle().set("border-radius", "8px").set("flex", "1 1 auto");
-        pauseButton.addClickListener(e -> togglePause(true));
+        activateButton = new Button("Activate Competition", new Icon(VaadinIcon.ROCKET));
+        activateButton.addClassName("votify-btn-primary");
+        activateButton.getStyle().set("flex", "1 1 auto");
+        activateButton.setTooltipText("Make the competition live and visible to participants");
+        activateButton.addClickListener(e -> activateCompetition());
 
-        resumeButton = new Button("Resume Voting", new Icon(VaadinIcon.PLAY));
-        resumeButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
-        resumeButton.getStyle().set("border-radius", "8px").set("flex", "1 1 auto");
-        resumeButton.addClickListener(e -> togglePause(false));
+        votingToggle = new Button("Voting: OFF", new Icon(VaadinIcon.BAN));
+        votingToggle.addClassName("votify-btn-secondary");
+        votingToggle.getStyle().set("flex", "1 1 auto");
+        votingToggle.setTooltipText("Toggle voting open or closed for participants");
+        votingToggle.addClickListener(e -> toggleVoting());
+
+        pauseToggle = new Button("Pause Competition", new Icon(VaadinIcon.PAUSE));
+        pauseToggle.addClassName("votify-btn-danger");
+        pauseToggle.getStyle().set("flex", "1 1 auto");
+        pauseToggle.setTooltipText("Temporarily halt the competition, stopping all activity");
+        pauseToggle.addClickListener(e -> togglePause());
 
         endNowButton = new Button("End Voting Now", new Icon(VaadinIcon.STOP));
-        endNowButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        endNowButton.getStyle().set("border-radius", "8px").set("flex", "1 1 auto");
+        endNowButton.addClassName("votify-btn-danger");
+        endNowButton.getStyle().set("flex", "1 1 auto");
+        endNowButton.setTooltipText("Immediately conclude the voting period");
         endNowButton.addClickListener(e -> endVotingNow());
-        
+
         reopenButton = new Button("Reopen Voting", new Icon(VaadinIcon.REFRESH));
-        reopenButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
-        reopenButton.getStyle().set("border-radius", "8px").set("flex", "1 1 auto");
+        reopenButton.addClassName("votify-btn-primary");
+        reopenButton.getStyle().set("flex", "1 1 auto");
+        reopenButton.setTooltipText("Start a new voting period for a concluded competition");
         reopenButton.addClickListener(e -> reopenVoting());
 
-        actionsLayout.add(pauseButton, resumeButton, endNowButton, reopenButton);
+        actionsLayout.add(activateButton, votingToggle, pauseToggle, endNowButton, reopenButton);
 
-        mainContent.add(title, description, statusLayout, sectionTitle, datesContainer, actionsLayout);
-        add(header, mainContent);
+        mainContent.add(description, statusLayout, sectionTitle, datesContainer, actionsLayout);
+
+        // Pending projects section
+        VerticalLayout pendingSection = buildPendingProjectsSection();
+        if (pendingSection != null) {
+            mainContent.add(pendingSection);
+        }
+
+        scrollContainer.add(header, mainContent);
+        add(scrollContainer);
     }
 
     private void updateUIState() {
-        LocalDateTime now = LocalDateTime.now();
-        boolean hasEnded = competition.getEndDate() != null && now.isAfter(competition.getEndDate());
-        boolean hasStarted = competition.getStartDate() == null || !now.isBefore(competition.getStartDate());
+        CompetitionStatus status = competition.getStatus();
 
-        boolean isEffectivelyEnded = hasEnded || (!competition.isActive() && hasEnded);
-
-        if (isEffectivelyEnded) {
-            statusBadge.setText("Ended");
-            statusBadge.getStyle().set("background-color", "#e74c3c");
-            pauseButton.setVisible(false);
-            resumeButton.setVisible(false);
-            endNowButton.setVisible(false);
-            reopenButton.setVisible(true);
-        } else if (!competition.isActive()) {
-            statusBadge.setText("Paused");
-            statusBadge.getStyle().set("background-color", "#f39c12");
-            pauseButton.setVisible(false);
-            resumeButton.setVisible(true);
-            endNowButton.setVisible(true);
-            reopenButton.setVisible(false);
-        } else {
-            if (!hasStarted) {
-                statusBadge.setText("Scheduled (Not Started)");
-                statusBadge.getStyle().set("background-color", "#3498db");
-                pauseButton.setVisible(false);
-                resumeButton.setVisible(false);
+        switch (status) {
+            case DRAFT -> {
+                statusBadge.setText("DRAFT");
+                statusBadge.removeClassName("votify-badge-active");
+                statusBadge.removeClassName("votify-badge-paused");
+                statusBadge.removeClassName("votify-badge-finished");
+                statusBadge.addClassName("votify-badge-draft");
+                activateButton.setVisible(true);
+                votingToggle.setVisible(false);
+                pauseToggle.setVisible(false);
+                endNowButton.setVisible(false);
+                reopenButton.setVisible(false);
+            }
+            case VOTING_OPEN -> {
+                statusBadge.setText("VOTING OPEN");
+                statusBadge.removeClassName("votify-badge-draft");
+                statusBadge.removeClassName("votify-badge-paused");
+                statusBadge.removeClassName("votify-badge-finished");
+                statusBadge.addClassName("votify-badge-active");
+                activateButton.setVisible(false);
+                votingToggle.setText("Voting: ON");
+                votingToggle.setIcon(new Icon(VaadinIcon.CHECK_CIRCLE));
+                votingToggle.removeClassName("votify-btn-secondary");
+                votingToggle.addClassName("votify-btn-primary");
+                votingToggle.setVisible(true);
+                pauseToggle.setText("Pause Competition");
+                pauseToggle.setIcon(new Icon(VaadinIcon.PAUSE));
+                pauseToggle.removeClassName("votify-btn-primary");
+                pauseToggle.addClassName("votify-btn-danger");
+                pauseToggle.setVisible(true);
                 endNowButton.setVisible(true);
                 reopenButton.setVisible(false);
-            } else {
-                statusBadge.setText("Active");
-                statusBadge.getStyle().set("background-color", "#2ecc71");
-                pauseButton.setVisible(true);
-                resumeButton.setVisible(false);
+            }
+            case ACTIVE -> {
+                statusBadge.setText("ACTIVE");
+                statusBadge.removeClassName("votify-badge-draft");
+                statusBadge.removeClassName("votify-badge-paused");
+                statusBadge.removeClassName("votify-badge-finished");
+                statusBadge.addClassName("votify-badge-active");
+                activateButton.setVisible(false);
+                votingToggle.setText("Voting: OFF");
+                votingToggle.setIcon(new Icon(VaadinIcon.BAN));
+                votingToggle.setVisible(true);
+                pauseToggle.setText("Pause Competition");
+                pauseToggle.setIcon(new Icon(VaadinIcon.PAUSE));
+                pauseToggle.removeClassName("votify-btn-primary");
+                pauseToggle.addClassName("votify-btn-danger");
+                pauseToggle.setVisible(true);
                 endNowButton.setVisible(true);
+                reopenButton.setVisible(false);
+            }
+            case PAUSED -> {
+                statusBadge.setText("PAUSED");
+                statusBadge.removeClassName("votify-badge-draft");
+                statusBadge.removeClassName("votify-badge-active");
+                statusBadge.removeClassName("votify-badge-finished");
+                statusBadge.addClassName("votify-badge-paused");
+                activateButton.setVisible(false);
+                votingToggle.setText("Voting: OFF");
+                votingToggle.setIcon(new Icon(VaadinIcon.BAN));
+                votingToggle.setVisible(true);
+                pauseToggle.setText("Resume Competition");
+                pauseToggle.setIcon(new Icon(VaadinIcon.PLAY));
+                pauseToggle.removeClassName("votify-btn-danger");
+                pauseToggle.addClassName("votify-btn-primary");
+                pauseToggle.setVisible(true);
+                endNowButton.setVisible(true);
+                reopenButton.setVisible(false);
+            }
+            case CONCLUDED -> {
+                statusBadge.setText("CONCLUDED");
+                statusBadge.removeClassName("votify-badge-draft");
+                statusBadge.removeClassName("votify-badge-active");
+                statusBadge.removeClassName("votify-badge-paused");
+                statusBadge.addClassName("votify-badge-finished");
+                activateButton.setVisible(false);
+                votingToggle.setVisible(false);
+                pauseToggle.setVisible(false);
+                endNowButton.setVisible(false);
+                reopenButton.setVisible(true);
+            }
+            case ARCHIVED -> {
+                statusBadge.setText("ARCHIVED");
+                statusBadge.removeClassName("votify-badge-active");
+                statusBadge.removeClassName("votify-badge-paused");
+                statusBadge.removeClassName("votify-badge-finished");
+                statusBadge.addClassName("votify-badge-draft");
+                activateButton.setVisible(false);
+                votingToggle.setVisible(false);
+                pauseToggle.setVisible(false);
+                endNowButton.setVisible(false);
                 reopenButton.setVisible(false);
             }
         }
@@ -279,7 +373,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     private void saveDates() {
         LocalDateTime start = startDatePicker.getValue();
         LocalDateTime end = endDatePicker.getValue();
-        
+
         if (end != null && start != null && end.isBefore(start)) {
             Notification.show("End date cannot be before start date", 3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
@@ -295,35 +389,284 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         updateUIState();
     }
 
-    private void togglePause(boolean pause) {
-        competition.setActive(!pause);
-        competitionService.save(competition);
-        String msg = pause ? "Voting paused." : "Voting resumed.";
-        Notification.show(msg, 3000, Notification.Position.TOP_CENTER)
+    private void activateCompetition() {
+        competitionService.activate(competitionId);
+        competition = competitionService.getByIdOrFail(competitionId);
+        Notification.show("Competition activated.", 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         updateUIState();
     }
 
-    private void endVotingNow() {
-        competition.setActive(false);
-        competition.setEndDate(LocalDateTime.now());
-        endDatePicker.setValue(competition.getEndDate());
-        competitionService.save(competition);
-        Notification.show("Voting has been ended.", 3000, Notification.Position.TOP_CENTER)
-                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+    private void toggleVoting() {
+        CompetitionStatus status = competition.getStatus();
+        if (status == CompetitionStatus.VOTING_OPEN) {
+            competitionService.pauseVoting(competitionId);
+            competition = competitionService.getByIdOrFail(competitionId);
+            Notification.show("Voting closed.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        } else {
+            competitionService.openVoting(competitionId);
+            competition = competitionService.getByIdOrFail(competitionId);
+            Notification.show("Voting opened.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        }
         updateUIState();
     }
-    
-    private void reopenVoting() {
-        competition.setActive(true);
-        if (competition.getEndDate() != null && LocalDateTime.now().isAfter(competition.getEndDate())) {
-            // Extend by 1 day if it was past
-            competition.setEndDate(LocalDateTime.now().plusDays(1));
-            endDatePicker.setValue(competition.getEndDate());
+
+    private void togglePause() {
+        CompetitionStatus status = competition.getStatus();
+        if (status == CompetitionStatus.PAUSED) {
+            competitionService.openVoting(competitionId);
+            competition = competitionService.getByIdOrFail(competitionId);
+            Notification.show("Competition resumed.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        } else {
+            competitionService.pauseVoting(competitionId);
+            competition = competitionService.getByIdOrFail(competitionId);
+            Notification.show("Competition paused.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         }
-        competitionService.save(competition);
-        Notification.show("Voting reopened.", 3000, Notification.Position.TOP_CENTER)
-                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         updateUIState();
+    }
+
+    private void endVotingNow() {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("End Voting Now");
+
+        VerticalLayout content = new VerticalLayout();
+        content.setSpacing(true);
+        content.setPadding(false);
+
+        Span message = new Span(
+            "Are you sure you want to end voting now? " +
+            "No more votes will be accepted until voting is reopened. " +
+            "You can reopen voting manually at any time."
+        );
+        message.getStyle().set("color", "var(--text-muted)").set("font-size", "0.95rem");
+
+        Button confirmBtn = new Button("Confirm", e -> {
+            competitionService.conclude(competitionId);
+            competition = competitionService.getByIdOrFail(competitionId);
+            endDatePicker.setValue(competition.getEndDate());
+            dialog.close();
+            Notification.show("Voting has been ended.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            updateUIState();
+        });
+        confirmBtn.addClassName("votify-btn-danger");
+
+        Button cancelBtn = new Button("Cancel", e -> dialog.close());
+        cancelBtn.addClassName("votify-btn-secondary");
+
+        dialog.getFooter().add(cancelBtn, confirmBtn);
+        content.add(message);
+        dialog.add(content);
+        dialog.open();
+    }
+
+    private void reopenVoting() {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Reopen Voting");
+
+        VerticalLayout content = new VerticalLayout();
+        content.setSpacing(true);
+        content.setPadding(false);
+
+        Span message = new Span("Set a new end date for the voting period:");
+        message.getStyle().set("color", "var(--text-muted)").set("font-size", "0.9rem");
+
+        DateTimePicker newEndDatePicker = new DateTimePicker("New End Date & Time");
+        newEndDatePicker.addClassName("votify-input");
+        newEndDatePicker.setValue(LocalDateTime.now().plusDays(7));
+        newEndDatePicker.setWidthFull();
+
+        Button confirmBtn = new Button("Confirm", e -> {
+            LocalDateTime newEndDate = newEndDatePicker.getValue();
+            if (newEndDate == null || newEndDate.isBefore(LocalDateTime.now())) {
+                Notification.show("Please select a valid future date", 3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_WARNING);
+                return;
+            }
+            competition.setEndDate(newEndDate);
+            competitionService.save(competition);
+            competitionService.reopen(competitionId);
+            competition = competitionService.getByIdOrFail(competitionId);
+            endDatePicker.setValue(competition.getEndDate());
+            dialog.close();
+            Notification.show("Voting reopened until " + newEndDate.toLocalDate(), 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            updateUIState();
+        });
+        confirmBtn.addClassName("votify-btn-primary");
+
+        Button cancelBtn = new Button("Cancel", e -> dialog.close());
+        cancelBtn.addClassName("votify-btn-secondary");
+
+        dialog.getFooter().add(cancelBtn, confirmBtn);
+        content.add(message, newEndDatePicker);
+        dialog.add(content);
+        dialog.open();
+    }
+
+    private VerticalLayout buildPendingProjectsSection() {
+        List<PendingProjectSubmission> pendingSubmissions =
+            pendingSubmissionRepository.findByCompetitionId(competitionId);
+
+        if (pendingSubmissions.isEmpty()) {
+            return null;
+        }
+
+        VerticalLayout section = new VerticalLayout();
+        section.setWidthFull();
+        section.getStyle()
+            .set("margin-top", "30px")
+            .set("padding-top", "30px")
+            .set("border-top", "1px solid var(--border)");
+
+        H3 sectionTitle = new H3("Pending Project Submissions");
+        sectionTitle.getStyle()
+            .set("color", "var(--dark)")
+            .set("font-size", "1.2rem")
+            .set("font-weight", "700")
+            .set("margin", "0 0 16px 0");
+
+        section.add(sectionTitle);
+
+        for (PendingProjectSubmission submission : pendingSubmissions) {
+            HorizontalLayout card = new HorizontalLayout();
+            card.setWidthFull();
+            card.setAlignItems(FlexComponent.Alignment.CENTER);
+            card.getStyle()
+                .set("padding", "12px 16px")
+                .set("background", "var(--background)")
+                .set("border-radius", "8px")
+                .set("margin-bottom", "8px");
+
+            VerticalLayout info = new VerticalLayout();
+            info.setPadding(false);
+            info.setSpacing(false);
+            info.getStyle().set("flex", "1");
+
+            Span projectName = new Span(submission.getProjectName());
+            projectName.getStyle()
+                .set("font-weight", "600")
+                .set("font-size", "1rem");
+
+            String submitterName = submission.getSubmitter() != null
+                ? submission.getSubmitter().getUsername() : "Unknown";
+            Span meta = new Span("Submitted by: " + submitterName);
+            meta.getStyle()
+                .set("font-size", "0.85rem")
+                .set("color", "var(--text-muted)");
+
+            info.add(projectName, meta);
+
+            Button acceptBtn = new Button("Confirm", new Icon(VaadinIcon.CHECK));
+            acceptBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+            acceptBtn.getStyle().set("cursor", "pointer");
+            acceptBtn.addClickListener(e -> acceptSubmission(submission));
+
+            Button declineBtn = new Button("Reject", new Icon(VaadinIcon.CLOSE_SMALL));
+            declineBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
+            declineBtn.getStyle().set("cursor", "pointer");
+            declineBtn.addClickListener(e -> declineSubmission(submission));
+
+            HorizontalLayout actions = new HorizontalLayout(acceptBtn, declineBtn);
+            actions.setSpacing(true);
+
+            card.add(info, actions);
+            section.add(card);
+        }
+
+        return section;
+    }
+
+    private void acceptSubmission(PendingProjectSubmission submission) {
+        try {
+            Project project = new Project(submission.getProjectName(), submission.getDescription(), submission.getCompetition());
+            project.addParticipant(submission.getSubmitter());
+
+            if (submission.getCategoryIds() != null && !submission.getCategoryIds().isEmpty()) {
+                for (String idStr : submission.getCategoryIds().split(",")) {
+                    try {
+                        Long catId = Long.parseLong(idStr.trim());
+                        categoryRepository.findById(catId).ifPresent(project::addCategory);
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+
+            projectService.save(project);
+
+            // Create invitations for invited participants
+            if (submission.getInvitedParticipantIds() != null && !submission.getInvitedParticipantIds().isEmpty()) {
+                for (String idStr : submission.getInvitedParticipantIds().split(",")) {
+                    try {
+                        Long userId = Long.parseLong(idStr.trim());
+                        userRepository.findById(userId).ifPresent(invitedUser -> {
+                            try {
+                                Invitation invitation = invitationService.createInvitation(
+                                    invitedUser,
+                                    project.getId(),
+                                    project.getName(),
+                                    submission.getCompetition().getId(),
+                                    submission.getSubmitter()
+                                );
+
+                                notificationService.saveAndPublish(new com.microslop.factory.notification.ProjectInvitationNotificationCreator().createWithInvitation(
+                                    invitedUser,
+                                    "Project Invitation",
+                                    submission.getSubmitter().getUsername() + " invited you to join \"" + submission.getProjectName() + "\" in \"" + competition.getName() + "\".",
+                                    invitation.getId()
+                                ));
+                            } catch (Exception ex) {
+                                System.err.println("Error creating invitation for user " + userId + ": " + ex.getMessage());
+                            }
+                        });
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+
+            notifyUser(new com.microslop.factory.notification.ProjectAcceptedNotificationCreator().create(
+                submission.getSubmitter(),
+                "Project Accepted",
+                "Your project \"" + submission.getProjectName() + "\" has been accepted to \"" + competition.getName() + "\"!"
+            ));
+
+            pendingSubmissionRepository.delete(submission);
+
+            buildUI();
+            updateUIState();
+            Notification.show("Project accepted.", 3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        } catch (Exception ex) {
+            ErrorHandler.handleException(ex, "accept-submission", "Error accepting project");
+        }
+    }
+
+    private void declineSubmission(PendingProjectSubmission submission) {
+        try {
+            notifyUser(new com.microslop.factory.notification.ProjectDeclinedNotificationCreator().create(
+                submission.getSubmitter(),
+                "Project Declined",
+                "Your project \"" + submission.getProjectName() + "\" has been declined for \"" + competition.getName() + "\"."
+            ));
+
+            pendingSubmissionRepository.delete(submission);
+
+            buildUI();
+            updateUIState();
+            Notification.show("Project declined and removed.", 3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        } catch (Exception ex) {
+            ErrorHandler.handleException(ex, "decline-submission", "Error declining project");
+        }
+    }
+
+    private void notifyUser(com.microslop.entity.Notification notification) {
+        try {
+            if (notificationService != null && notification.getUser() != null) {
+                notificationService.saveAndPublish(notification);
+            }
+        } catch (Exception ignored) {}
     }
 }

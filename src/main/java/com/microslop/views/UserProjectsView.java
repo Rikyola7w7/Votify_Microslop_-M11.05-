@@ -1,14 +1,19 @@
 package com.microslop.views;
 
+import com.microslop.entity.Competition;
 import com.microslop.entity.Project;
 import com.microslop.entity.User;
+import com.microslop.service.ProjectCommentService;
 import com.microslop.service.ProjectService;
+import com.microslop.service.VoteService;
+import com.microslop.service.LocalizationService;
 import com.microslop.views.components.ProjectCardComponent;
 import com.microslop.base.ui.MainLayout;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -21,26 +26,34 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @PageTitle("My Projects | Votify")
 @Route(value = ":username/projects", layout = MainLayout.class)
 public class UserProjectsView extends VerticalLayout implements BeforeEnterObserver {
 
     private final ProjectService projectService;
+    private final VoteService voteService;
+    private final LocalizationService localizationService;
     private String currentUsername;
     private Div projectsContainer;
 
-    public UserProjectsView(ProjectService projectService) {
+    public UserProjectsView(ProjectService projectService, VoteService voteService, LocalizationService localizationService) {
         this.projectService = projectService;
+        this.voteService = voteService;
+        this.localizationService = localizationService;
         initializeView();
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         String username = event.getRouteParameters().get("username").orElse(null);
-        
+
         if (username == null || username.isEmpty()) {
             event.forwardTo("");
             return;
@@ -48,22 +61,18 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
 
         currentUsername = username;
 
-        // Check if the user is logged in and they are accessing their own projects
         String loggedInUsername = getLoggedInUsername();
         if (loggedInUsername == null) {
-            // Not logged in - redirect to login
             event.forwardTo("login");
             return;
         }
 
         if (!loggedInUsername.equalsIgnoreCase(currentUsername)) {
-            // Trying to access another user's projects
             showAccessDeniedNotification();
             event.forwardTo("");
             return;
         }
 
-        // User is authenticated and authorized - load their projects
         loadUserProjects();
     }
 
@@ -72,54 +81,23 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
         setPadding(false);
         setSpacing(false);
         getStyle()
-            .set("background", "#f0f2f5")
-            .set("font-family", "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif");
-
-        add(buildHeader());
+            .set("background", "var(--background)")
+            .set("overflow-y", "auto");
 
         projectsContainer = new Div();
         projectsContainer.setWidthFull();
+        projectsContainer.addClassName("animate-fade-in");
         projectsContainer.getStyle()
-            .set("padding", "20px 40px")
-            .set("display", "flex")
-            .set("flex-wrap", "wrap")
-            .set("gap", "30px")
-            .set("justify-content", "center")
-            .set("align-items", "flex-start");
+            .set("padding", "32px 40px")
+            .set("max-width", "1200px")
+            .set("margin", "0 auto")
+            .set("display", "grid")
+            .set("grid-template-columns", "repeat(auto-fill, minmax(300px, 1fr))")
+            .set("gap", "24px");
 
         add(projectsContainer);
     }
 
-    private HorizontalLayout buildHeader() {
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        header.getStyle()
-            .set("background", "#ffffff")
-            .set("padding", "20px 40px")
-            .set("box-shadow", "0 2px 4px rgba(0, 0, 0, 0.1)");
-
-        HorizontalLayout titleSection = new HorizontalLayout();
-        titleSection.setAlignItems(FlexComponent.Alignment.CENTER);
-        titleSection.setSpacing(true);
-
-        Button backButton = new Button(new Icon(VaadinIcon.ARROW_LEFT));
-        backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
-
-        H1 title = new H1("My Projects");
-        title.getStyle()
-            .set("margin", "0")
-            .set("color", "#1a3a5c")
-            .set("font-size", "28px")
-            .set("font-weight", "600");
-
-        titleSection.add(backButton, title);
-
-        header.add(titleSection);
-        return header;
-    }
 
     private void loadUserProjects() {
         try {
@@ -128,39 +106,78 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
 
             if (projects.isEmpty()) {
                 showNoProjectsMessage();
-            } else {
-                projects.forEach(project -> {
-                    projectsContainer.add(createProjectCard(project));
-                });
+                return;
+            }
+
+            List<Long> projectIds = projects.stream().map(Project::getId).toList();
+            Map<Long, Long> voteCounts = voteService.countVotesByProjectIds(projectIds);
+
+            Map<Long, Map<Long, Integer>> positionsByCompetition = new HashMap<>();
+            Map<Long, String> competitionNames = new HashMap<>();
+
+            for (Project p : projects) {
+                if (p.getCompetition() != null) {
+                    Long compId = p.getCompetition().getId();
+                    competitionNames.put(compId, p.getCompetition().getName());
+                }
+            }
+
+            for (Long compId : competitionNames.keySet()) {
+                List<Project> ranking = projectService.getRanking(compId);
+                Map<Long, Integer> positions = new HashMap<>();
+                for (int i = 0; i < ranking.size(); i++) {
+                    positions.put(ranking.get(i).getId(), i + 1);
+                }
+                positionsByCompetition.put(compId, positions);
+            }
+
+            int[] index = {0};
+            for (Project project : projects) {
+                Long compId = project.getCompetition() != null ? project.getCompetition().getId() : null;
+                String compName = compId != null ? competitionNames.getOrDefault(compId, "Unknown") : "Unknown";
+                long votes = voteCounts.getOrDefault(project.getId(), 0L);
+                int position = compId != null && positionsByCompetition.containsKey(compId)
+                    ? positionsByCompetition.get(compId).getOrDefault(project.getId(), 0)
+                    : 0;
+
+                Div cardWrapper = new Div(new ProjectCardComponent(
+                    project,
+                    compName,
+                    votes,
+                    position,
+                    () -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/projects/" + project.getId()))
+                ));
+                cardWrapper.addClassName("animate-fade-in");
+                cardWrapper.addClassName("stagger-" + Math.min(++index[0], 8));
+                projectsContainer.add(cardWrapper);
             }
         } catch (Exception e) {
-            showErrorNotification("Error loading projects: " + e.getMessage());
+            showErrorNotification(localizationService.t("projects.errorloading") + e.getMessage());
         }
     }
 
-    private Div createProjectCard(Project project) {
-        return new ProjectCardComponent(
-            project,
-            currentUsername,
-            projectService,
-            () -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/projects/" + project.getId()))
-        );
-    }
-
     private void showNoProjectsMessage() {
-        Div noDataDiv = new Div();
-        noDataDiv.setText("You have no projects yet.");
-        noDataDiv.getStyle()
-            .set("text-align", "center")
-            .set("font-size", "18px")
-            .set("color", "#666")
-            .set("padding", "60px 20px");
-        projectsContainer.add(noDataDiv);
+        Div emptyState = new Div();
+        emptyState.addClassName("empty-state");
+
+        Span icon = new Span();
+        icon.addClassName("empty-state-icon");
+        icon.addClassName("animate-float");
+        icon.setText("\uD83D\uDCCB");
+
+        Span title = new Span(localizationService.t("projects.noprojectsyet"));
+        title.addClassName("empty-state-title");
+
+        Span message = new Span(localizationService.t("projects.submitappear"));
+        message.addClassName("empty-state-message");
+
+        emptyState.add(icon, title, message);
+        projectsContainer.add(emptyState);
     }
 
     private void showAccessDeniedNotification() {
-        Notification notification = new Notification("Access Denied", 0, Notification.Position.TOP_CENTER);
-        notification.setText("You can only view your own projects.");
+        Notification notification = new Notification(localizationService.t("projects.accessdenied"), 0, Notification.Position.TOP_CENTER);
+        notification.setText(localizationService.t("projects.onlyviewown"));
         notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
         notification.setDuration(3000);
         notification.open();

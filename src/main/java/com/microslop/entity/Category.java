@@ -1,7 +1,6 @@
 package com.microslop.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,11 +23,17 @@ public class Category {
     @Column(nullable = false, name = "name")
     private String name;
 
-    @Column(nullable = false, name = "weight")
-    @Min(value = 1, message = "Category weight must be at least 1")
-    private Integer weight;
+    @Column(name = "voter_type", length = 50)
+    private String voterType = "NORMAL";
 
-    @ManyToOne
+    @Column(name = "vote_type", length = 50)
+    private String voteType = "NORMAL"; // NORMAL, CHECKLIST, SCALE
+
+    @Lob
+    @Column(name = "image")
+    private byte[] image;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "competition_id", nullable = false)
     private Competition competition;
 
@@ -37,4 +42,11 @@ public class Category {
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<ProjectComment> projectComments = new ArrayList<>();
+
+    /**
+     * Check if this category uses checklist-based voting.
+     */
+    public boolean isChecklistVoting() {
+        return "CHECKLIST".equalsIgnoreCase(voteType);
+    }
 }

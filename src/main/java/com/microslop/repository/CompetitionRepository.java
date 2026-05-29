@@ -1,7 +1,9 @@
 package com.microslop.repository;
 
 import com.microslop.entity.Competition;
+import com.microslop.entity.CompetitionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -9,23 +11,35 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CompetitionRepository extends JpaRepository<Competition, Long> {
+public interface CompetitionRepository extends JpaRepository<Competition, Long>, JpaSpecificationExecutor<Competition> {
 
-    // All active competitions
     List<Competition> findByActiveTrue();
 
     List<Competition> findByActiveFalse();
 
-    // Find competition by name
+    List<Competition> findByStatus(CompetitionStatus status);
+
+    @Query("SELECT c FROM Competition c WHERE c.status = com.microslop.entity.CompetitionStatus.ACTIVE OR c.status = com.microslop.entity.CompetitionStatus.VOTING_OPEN OR c.status = com.microslop.entity.CompetitionStatus.PAUSED")
+    List<Competition> findActiveAndVotingOpen();
+
+    List<Competition> findByStatusIn(List<CompetitionStatus> statuses);
+
     Optional<Competition> findByNameIgnoreCase(String name);
 
-    // Active competitions with their projects eager-loaded
-    @Query("SELECT DISTINCT c FROM Competition c LEFT JOIN FETCH c.projects WHERE c.active = true")
+    @Query("SELECT DISTINCT c FROM Competition c LEFT JOIN FETCH c.projects WHERE c.status = com.microslop.entity.CompetitionStatus.ACTIVE OR c.status = com.microslop.entity.CompetitionStatus.PAUSED")
     List<Competition> findActiveWithProjects();
 
     @Query("SELECT c FROM Competition c LEFT JOIN FETCH c.categories WHERE c.id = :id")
     Optional<Competition> findByIdWithCategories(Long id);
 
-    // Find competitions by creator
+    @Query("SELECT c FROM Competition c LEFT JOIN FETCH c.categories WHERE c.status = com.microslop.entity.CompetitionStatus.ACTIVE OR c.status = com.microslop.entity.CompetitionStatus.PAUSED")
+    List<Competition> findActiveWithCategories();
+
     List<Competition> findByCreatedByIgnoreCase(String createdBy);
+
+    @Query("SELECT c FROM Competition c WHERE c.id = :id")
+    Optional<Competition> findByIdBasic(Long id);
+
+    @Query("SELECT c FROM Competition c")
+    List<Competition> findAllBasic();
 }

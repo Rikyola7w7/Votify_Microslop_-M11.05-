@@ -5,25 +5,19 @@ import com.microslop.entity.User;
 import com.microslop.entity.Vote;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
 
-/**
- * CommentCardComponent - A reusable card component displaying a comment/vote on a project.
- * Used in ProjectDetailsView to show all comments associated with a project.
- */
 public class CommentCardComponent extends Div {
 
     private final String username;
     private final String commentText;
 
-    // Constructor for Vote (with user object)
     public CommentCardComponent(Vote vote) {
         this.username = vote.getUser().getUsername();
         this.commentText = vote.getComment();
         buildCard(vote.getUser());
     }
 
-    // Constructor for ProjectComment (username only, no user object)
     public CommentCardComponent(ProjectComment projectComment) {
         this.username = projectComment.getUsername();
         this.commentText = projectComment.getCommentText();
@@ -32,19 +26,13 @@ public class CommentCardComponent extends Div {
 
     private void buildCard(User user) {
         setWidthFull();
+        addClassName("chat-bubble");
         getStyle()
-            .set("background", "#ffffff")
-            .set("border-radius", "8px")
-            .set("padding", "20px")
-            .set("margin-bottom", "16px")
-            .set("box-shadow", "0 2px 6px rgba(0, 0, 0, 0.08)")
             .set("display", "flex")
-            .set("gap", "16px");
+            .set("gap", "12px")
+            .set("margin-bottom", "12px");
 
-        // Avatar
         Avatar avatar = createAvatar(user);
-
-        // Content
         Div content = createContentDiv(user);
 
         add(avatar, content);
@@ -58,8 +46,8 @@ public class CommentCardComponent extends Div {
             avatar.setName(username);
         }
         avatar.getStyle()
-            .set("width", "48px")
-            .set("height", "48px")
+            .set("width", "40px")
+            .set("height", "40px")
             .set("flex-shrink", "0");
         return avatar;
     }
@@ -68,29 +56,28 @@ public class CommentCardComponent extends Div {
         Div content = new Div();
         content.getStyle().set("flex", "1");
 
-        // User name
         String displayName = username;
         if (user != null && user.getName() != null) {
             displayName = user.getName();
         }
-        
-        H2 userName = new H2(displayName);
-        userName.getStyle()
-            .set("margin", "0 0 8px 0")
-            .set("color", "#1a3a5c")
-            .set("font-size", "16px")
-            .set("font-weight", "600");
 
-        // Comment text
-        Div commentTextDiv = new Div();
-        commentTextDiv.setText(commentText);
-        commentTextDiv.getStyle()
-            .set("color", "#333")
+        Span userNameSpan = new Span(displayName);
+        userNameSpan.getStyle()
+            .set("color", "var(--primary)")
+            .set("font-size", "14px")
+            .set("font-weight", "600")
+            .set("display", "block")
+            .set("margin-bottom", "4px");
+
+        Span commentTextSpan = new Span(commentText);
+        commentTextSpan.getStyle()
+            .set("color", "var(--text-primary)")
             .set("font-size", "14px")
             .set("line-height", "1.5")
+            .set("display", "block")
             .set("word-wrap", "break-word");
 
-        content.add(userName, commentTextDiv);
+        content.add(userNameSpan, commentTextSpan);
         return content;
     }
 }

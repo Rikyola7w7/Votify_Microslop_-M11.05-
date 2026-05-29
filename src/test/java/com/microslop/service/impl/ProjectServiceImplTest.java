@@ -3,6 +3,7 @@ package com.microslop.service.impl;
 import com.microslop.entity.Competition;
 import com.microslop.entity.Project;
 import com.microslop.entity.User;
+import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.ProjectRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,6 +27,9 @@ class ProjectServiceImplTest {
 
     @Mock
     private ProjectRepository projectRepository;
+
+    @Mock
+    private CompetitionRepository competitionRepository;
 
     @InjectMocks
     private ProjectServiceImpl projectService;
@@ -83,7 +88,7 @@ class ProjectServiceImplTest {
         when(projectRepository.findByIdWithVotesAndUsers(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> projectService.getById(999L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(com.microslop.exception.EntityNotFoundException.class)
                 .hasMessage("Project not found: 999");
     }
 
@@ -100,7 +105,7 @@ class ProjectServiceImplTest {
         project2.setCompetition(competition);
 
         List<Project> projects = Arrays.asList(project1, project2);
-        when(projectRepository.findByCompetitionId(1L)).thenReturn(projects);
+        when(projectRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class))).thenReturn(projects);
 
         List<Project> result = projectService.listByCompetition(1L);
 
@@ -120,6 +125,7 @@ class ProjectServiceImplTest {
 
         List<Project> ranking = Arrays.asList(project1, project2);
         when(projectRepository.findRankingByCompetition(1L)).thenReturn(ranking);
+        when(competitionRepository.findById(1L)).thenReturn(Optional.of(competition));
 
         List<Project> result = projectService.getRanking(1L);
 

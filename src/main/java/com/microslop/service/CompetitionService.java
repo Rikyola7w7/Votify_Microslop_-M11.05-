@@ -3,11 +3,18 @@ package com.microslop.service;
 import com.microslop.dto.CompetitionDTO;
 import com.microslop.dto.CategoryDTO;
 import com.microslop.entity.Competition;
+import com.microslop.entity.CompetitionStatus;
+import com.microslop.observer.subject.CompetitionEventSubject;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-public interface CompetitionService {
+/**
+ * Service interface for competition management.
+ * Extends CompetitionEventSubject to support observer pattern for competition events.
+ * Handles competition lifecycle, creation, and state transitions.
+ */
+public interface CompetitionService extends CompetitionEventSubject {
     
     /**
      * Save an existing competition.
@@ -30,6 +37,16 @@ public interface CompetitionService {
 
     Competition deactivate(Long id);
 
+    Competition openVoting(Long id);
+
+    Competition pauseVoting(Long id);
+
+    Competition conclude(Long id);
+
+    Competition archive(Long id);
+
+    Competition reopen(Long id);
+
     Optional<Competition> getById(Long id);
 
     Competition getByIdOrFail(Long id);
@@ -41,6 +58,8 @@ public interface CompetitionService {
     List<Competition> getFinishedCompetitions();
 
     List<Competition> findAll();
+
+    List<Competition> findAllWithoutProjects();
 
     List<Competition> searchByName(String searchTerm);
 
@@ -54,6 +73,14 @@ public interface CompetitionService {
     List<Competition> getCompetitionsByCreator(String username);
 
     /**
+     * Get active competitions created by a specific user.
+     * Uses composed Specification pattern for DB-level filtering.
+     * @param username the username of the creator
+     * @return list of active competitions created by this user
+     */
+    List<Competition> getActiveCompetitionsByCreator(String username);
+
+    /**
      * Validate competition creation input.
      * @param competitionName the competition name
      * @param eventType the event type
@@ -62,7 +89,23 @@ public interface CompetitionService {
      * @param categories the list of categories
      * @return a list of error messages (empty if valid)
      */
-    List<String> validateCompetitionCreation(String competitionName, String eventType, 
-                                            LocalDate startDate, LocalDate endDate, 
+    List<String> validateCompetitionCreation(String competitionName, String eventType,
+                                            LocalDate startDate, LocalDate endDate,
                                             List<CategoryDTO> categories);
+
+    /**
+     * Validate competition creation input including vote type and checklist items.
+     * @param competitionName the competition name
+     * @param eventType the event type
+     * @param startDate the start date
+     * @param endDate the end date
+     * @param categories the list of categories
+     * @param voteType the vote type (NORMAL or CHECKLIST)
+     * @param checklistItems the list of checklist item texts
+     * @return a list of error messages (empty if valid)
+     */
+    List<String> validateCompetitionCreation(String competitionName, String eventType,
+                                            LocalDate startDate, LocalDate endDate,
+                                            List<CategoryDTO> categories,
+                                            String voteType, List<String> checklistItems);
 }

@@ -25,7 +25,7 @@ public class Vote {
     private String comment;
 
     @Column(name = "points", nullable = false)
-    @Min(value = 1, message = "Points per vote must be at least 1")
+    @Min(value = 0, message = "Points per vote must be at least 0")
     private Integer points = 1;
 
     @ManyToOne(fetch = FetchType.LAZY)

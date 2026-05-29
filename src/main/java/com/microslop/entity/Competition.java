@@ -1,10 +1,11 @@
 package com.microslop.entity;
 
+import com.microslop.state.CompetitionState;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.BatchSize;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @ToString(exclude = {"projects", "categories", "judges"})
+@BatchSize(size = 50)
 public class Competition {
 
     @Id 
@@ -35,6 +37,10 @@ public class Competition {
     @Column(nullable = false, name = "active")
     private boolean active = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private CompetitionStatus status = CompetitionStatus.DRAFT;
+
     @Column(name = "event_type", length = 100)
     private String eventType;
 
@@ -48,15 +54,14 @@ public class Competition {
     @Column(name = "auto_vote", columnDefinition = "boolean default false")
     private Boolean autoVote = false;
 
-    @Column(name = "max_votes_per_person", columnDefinition = "integer default 1")
-    @Min(value = 1, message = "Max votes per person must be at least 1")
-    private Integer maxVotesPerPerson = 1;
-
     @Column(name = "judge_weight_multiplier", columnDefinition = "double default 1.0")
     private Double judgeWeightMultiplier = 1.0;
 
     @Column(name = "standard_user_weight_multiplier", columnDefinition = "double default 1.0")
     private Double standardUserWeightMultiplier = 1.0;
+
+    @Embedded
+    private VotingConfiguration votingConfiguration = new VotingConfiguration();
 
     public static com.microslop.builder.CompetitionBuilder builder() {
         return com.microslop.builder.CompetitionBuilder.builder();
@@ -70,18 +75,33 @@ public class Competition {
     private Boolean commentsRequired = false;
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<Project> projects = new ArrayList<>();
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<Category> categories = new ArrayList<>();
 
     @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<Judge> judges = new ArrayList<>();
+
+    @OneToMany(mappedBy = "competition", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChecklistItem> checklistItems = new ArrayList<>();
+
+    @Column(name = "cover_image")
+    private byte[] coverImage;
 
     @Column(nullable = false, name = "max_votes")
     private int maxVotes = 1;
 
-    public Competition(String name, String description,
+     @Column(name = "end_notification_sent", columnDefinition = "boolean default false")
+     private boolean endNotificationSent = false;
+
+     @Column(name = "closing_soon_notification_sent", columnDefinition = "boolean default false")
+     private boolean closingSoonNotificationSent = false;
+
+     public Competition(String name, String description,
                        LocalDateTime startDate, LocalDateTime endDate) {
         this.name      = name;
         this.description = description;
@@ -119,6 +139,81 @@ public class Competition {
         judge.setCompetition(null);
     }
 
+public void addChecklistItem(ChecklistItem item) {
+        checklistItems.add(item);
+        item.setCompetition(this);
+    }
+
+    public void removeChecklistItem(ChecklistItem item) {
+        checklistItems.remove(item);
+        item.setCompetition(null);
+    }
+
+    // ── State Pattern Methods ─────────────────────────────────────────────
+
+    public void activate() {
+        this.status.getState().activate(this);
+    }
+
+    public void deactivate() {
+        this.status.getState().deactivate(this);
+    }
+
+    public void openVoting() {
+        this.status.getState().openVoting(this);
+    }
+
+    public void pauseVoting() {
+        this.status.getState().pauseVoting(this);
+    }
+
+    public void conclude() {
+        this.status.getState().conclude(this);
+    }
+
+    public void archive() {
+        this.status.getState().archive(this);
+    }
+
+    public void reopen() {
+        this.status.getState().reopen(this);
+    }
+
+    public boolean canVote() {
+        return status != null && status.getState().canVote();
+    }
+
+    public boolean canSubmitProjects() {
+        return status != null && status.getState().canSubmitProjects();
+    }
+
+    public boolean canEditConfiguration() {
+        return status != null && status.getState().canEditConfiguration();
+    }
+
+    public boolean isTerminal() {
+        return status != null && status.getState().isTerminal();
+    }
+
+    public boolean isActive() {
+        return status != null && status.getState().isActiveLegacy();
+    }
+
+    @Deprecated
+    public void setActive(boolean active) {
+        if (active) {
+            if (this.status == null || this.status == CompetitionStatus.DRAFT
+                    || this.status == CompetitionStatus.CONCLUDED) {
+                this.status = CompetitionStatus.ACTIVE;
+            }
+        } else {
+            if (this.status == CompetitionStatus.ACTIVE
+                    || this.status == CompetitionStatus.VOTING_OPEN) {
+                this.status = CompetitionStatus.DRAFT;
+            }
+        }
+    }
+
     // ── Getters and Setters for Voting Configuration ────────────────────
     public String getVoterType() {
         return voterType;
@@ -136,12 +231,20 @@ public class Competition {
         this.autoVote = autoVote;
     }
 
+    public VotingConfiguration getVotingConfiguration() {
+        return votingConfiguration;
+    }
+
+    public void setVotingConfiguration(VotingConfiguration votingConfiguration) {
+        this.votingConfiguration = votingConfiguration;
+    }
+
     public Integer getMaxVotesPerPerson() {
-        return maxVotesPerPerson;
+        return votingConfiguration.getMaxVotesPerPerson();
     }
 
     public void setMaxVotesPerPerson(Integer maxVotesPerPerson) {
-        this.maxVotesPerPerson = maxVotesPerPerson;
+        this.votingConfiguration.setMaxVotesPerPerson(maxVotesPerPerson);
     }
 
     public Double getJudgeWeightMultiplier() {
@@ -158,5 +261,45 @@ public class Competition {
 
     public void setStandardUserWeightMultiplier(Double standardUserWeightMultiplier) {
         this.standardUserWeightMultiplier = standardUserWeightMultiplier;
+    }
+
+    public String getVoteType() {
+        return votingConfiguration.getVoteType();
+    }
+
+    public void setVoteType(String voteType) {
+        this.votingConfiguration.setVoteType(voteType);
+    }
+
+    public Integer getScaleMin() {
+        return votingConfiguration.getScaleMin();
+    }
+
+    public void setScaleMin(Integer scaleMin) {
+        this.votingConfiguration.setScaleMin(scaleMin);
+    }
+
+    public Integer getScaleMax() {
+        return votingConfiguration.getScaleMax();
+    }
+
+    public void setScaleMax(Integer scaleMax) {
+        this.votingConfiguration.setScaleMax(scaleMax);
+    }
+
+    public String getVotingStrategyType() {
+        return votingConfiguration.getVotingStrategyType();
+    }
+
+    public void setVotingStrategyType(String votingStrategyType) {
+        this.votingConfiguration.setVotingStrategyType(votingStrategyType);
+    }
+
+    public String getRankingStrategyType() {
+        return votingConfiguration.getRankingStrategyType();
+    }
+
+    public void setRankingStrategyType(String rankingStrategyType) {
+        this.votingConfiguration.setRankingStrategyType(rankingStrategyType);
     }
 }
