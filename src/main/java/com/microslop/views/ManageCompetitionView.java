@@ -2,7 +2,6 @@ package com.microslop.views;
 
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
 import com.microslop.entity.Invitation;
 import com.microslop.entity.PendingProjectSubmission;
 import com.microslop.entity.Project;
@@ -272,10 +271,10 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     }
 
     private void updateUIState() {
-        CompetitionStatus status = competition.getStatus();
+        String status = competition.getStatus();
 
         switch (status) {
-            case DRAFT -> {
+            case "DRAFT" -> {
                 statusBadge.setText("DRAFT");
                 statusBadge.removeClassName("votify-badge-active");
                 statusBadge.removeClassName("votify-badge-paused");
@@ -287,7 +286,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 endNowButton.setVisible(false);
                 reopenButton.setVisible(false);
             }
-            case VOTING_OPEN -> {
+            case "VOTING_OPEN" -> {
                 statusBadge.setText("VOTING OPEN");
                 statusBadge.removeClassName("votify-badge-draft");
                 statusBadge.removeClassName("votify-badge-paused");
@@ -307,7 +306,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 endNowButton.setVisible(true);
                 reopenButton.setVisible(false);
             }
-            case ACTIVE -> {
+            case "ACTIVE" -> {
                 statusBadge.setText("ACTIVE");
                 statusBadge.removeClassName("votify-badge-draft");
                 statusBadge.removeClassName("votify-badge-paused");
@@ -325,7 +324,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 endNowButton.setVisible(true);
                 reopenButton.setVisible(false);
             }
-            case PAUSED -> {
+            case "PAUSED" -> {
                 statusBadge.setText("PAUSED");
                 statusBadge.removeClassName("votify-badge-draft");
                 statusBadge.removeClassName("votify-badge-active");
@@ -343,7 +342,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 endNowButton.setVisible(true);
                 reopenButton.setVisible(false);
             }
-            case CONCLUDED -> {
+            case "CONCLUDED" -> {
                 statusBadge.setText("CONCLUDED");
                 statusBadge.removeClassName("votify-badge-draft");
                 statusBadge.removeClassName("votify-badge-active");
@@ -355,7 +354,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 endNowButton.setVisible(false);
                 reopenButton.setVisible(true);
             }
-            case ARCHIVED -> {
+            case "ARCHIVED" -> {
                 statusBadge.setText("ARCHIVED");
                 statusBadge.removeClassName("votify-badge-active");
                 statusBadge.removeClassName("votify-badge-paused");
@@ -398,8 +397,8 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     }
 
     private void toggleVoting() {
-        CompetitionStatus status = competition.getStatus();
-        if (status == CompetitionStatus.VOTING_OPEN) {
+        String status = competition.getStatus();
+        if (com.microslop.state.CompetitionStates.STATUS_VOTING_OPEN.equals(status)) {
             competitionService.pauseVoting(competitionId);
             competition = competitionService.getByIdOrFail(competitionId);
             Notification.show("Voting closed.", 3000, Notification.Position.TOP_CENTER)
@@ -414,8 +413,8 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     }
 
     private void togglePause() {
-        CompetitionStatus status = competition.getStatus();
-        if (status == CompetitionStatus.PAUSED) {
+        String status = competition.getStatus();
+        if (com.microslop.state.CompetitionStates.STATUS_PAUSED.equals(status)) {
             competitionService.openVoting(competitionId);
             competition = competitionService.getByIdOrFail(competitionId);
             Notification.show("Competition resumed.", 3000, Notification.Position.TOP_CENTER)

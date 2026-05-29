@@ -1,8 +1,8 @@
 package com.microslop.strategy.voting;
 
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
 import com.microslop.entity.User;
+import com.microslop.state.CompetitionStates;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -76,14 +76,14 @@ class AllVotingStrategyTest {
     private Competition createActiveCompetition() {
         Competition competition = new Competition();
         competition.setId(1L);
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
         return competition;
     }
 
     private Competition createConcludedCompetition() {
         Competition competition = new Competition();
         competition.setId(1L);
-        competition.setStatus(CompetitionStatus.CONCLUDED);
+        competition.setStatus(CompetitionStates.STATUS_CONCLUDED);
         return competition;
     }
 }

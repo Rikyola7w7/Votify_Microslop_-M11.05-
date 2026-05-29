@@ -59,7 +59,7 @@ public class ChecklistVoteServiceImpl implements ChecklistVoteService {
         Project project = projectService.getById(projectId);
         var competition = project.getCompetition();
         if (!competition.isActive()) {
-            throw new CompetitionStateException(competition.getStatus().name(), "vote with checklist");
+            throw new CompetitionStateException(competition.getStatus(), "vote with checklist");
         }
 
         if (!"CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {

@@ -10,6 +10,9 @@ import java.util.HashMap;
 @Component
 public class StrategyRegistry {
 
+    private static final String DEFAULT_VOTING_FALLBACK = "AllVotingStrategy";
+    private static final String DEFAULT_RANKING_FALLBACK = "AverageScoreRankingStrategy";
+
     private final Map<String, VotingStrategy> votingStrategies;
     private final Map<String, RankingStrategy> rankingStrategies;
 
@@ -26,21 +29,27 @@ public class StrategyRegistry {
     }
 
     public VotingStrategy resolveVotingStrategy(String type) {
-        StrategyType strategyType = StrategyType.fromVotingType(type);
-        VotingStrategy strategy = votingStrategies.get(strategyType.getBeanName());
-        if (strategy == null && !votingStrategies.isEmpty()) {
-            strategy = votingStrategies.values().iterator().next();
+        if (type != null && !type.isBlank()) {
+            for (VotingStrategy strategy : votingStrategies.values()) {
+                if (strategy.getStrategyName().equalsIgnoreCase(type.trim())) {
+                    return strategy;
+                }
+            }
         }
-        return strategy != null ? strategy : new com.microslop.strategy.voting.AllVotingStrategy();
+        return votingStrategies.getOrDefault(DEFAULT_VOTING_FALLBACK,
+            new com.microslop.strategy.voting.AllVotingStrategy());
     }
 
     public RankingStrategy resolveRankingStrategy(String type) {
-        StrategyType strategyType = StrategyType.fromRankingType(type);
-        RankingStrategy strategy = rankingStrategies.get(strategyType.getBeanName());
-        if (strategy == null && !rankingStrategies.isEmpty()) {
-            strategy = rankingStrategies.values().iterator().next();
+        if (type != null && !type.isBlank()) {
+            for (RankingStrategy strategy : rankingStrategies.values()) {
+                if (strategy.getStrategyName().equalsIgnoreCase(type.trim())) {
+                    return strategy;
+                }
+            }
         }
-        return strategy != null ? strategy : new com.microslop.strategy.ranking.AverageScoreRankingStrategy();
+        return rankingStrategies.getOrDefault(DEFAULT_RANKING_FALLBACK,
+            new com.microslop.strategy.ranking.AverageScoreRankingStrategy());
     }
 
     public VotingStrategy getVotingStrategyByName(String name) {

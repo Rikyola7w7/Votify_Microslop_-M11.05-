@@ -1,7 +1,7 @@
 package com.microslop.builder;
 
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
+import com.microslop.state.CompetitionStates;
 import java.time.LocalDateTime;
 
 public class CompetitionBuilder {
@@ -9,7 +9,7 @@ public class CompetitionBuilder {
     private String description;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
-    private CompetitionStatus status = CompetitionStatus.DRAFT;
+    private String status = CompetitionStates.defaultStatus();
     private String eventType;
     private String createdBy;
     private String voterType = "ALL";
@@ -41,13 +41,13 @@ public class CompetitionBuilder {
         this.endDate = endDate;
         return this;
     }
-    public CompetitionBuilder status(CompetitionStatus status) {
+    public CompetitionBuilder status(String status) {
         this.status = status;
         return this;
     }
     @Deprecated
     public CompetitionBuilder active(boolean active) {
-        this.status = active ? CompetitionStatus.ACTIVE : CompetitionStatus.DRAFT;
+        this.status = active ? CompetitionStates.STATUS_ACTIVE : CompetitionStates.STATUS_DRAFT;
         return this;
     }
     public CompetitionBuilder eventType(String eventType) {

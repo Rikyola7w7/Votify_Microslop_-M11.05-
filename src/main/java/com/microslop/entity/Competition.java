@@ -37,9 +37,8 @@ public class Competition {
     @Column(nullable = false, name = "active")
     private boolean active = true;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private CompetitionStatus status = CompetitionStatus.DRAFT;
+    private String status = com.microslop.state.CompetitionStates.defaultStatus();
 
     @Column(name = "event_type", length = 100)
     private String eventType;
@@ -152,64 +151,65 @@ public void addChecklistItem(ChecklistItem item) {
     // ── State Pattern Methods ─────────────────────────────────────────────
 
     public void activate() {
-        this.status.getState().activate(this);
+        com.microslop.state.CompetitionStates.getState(this.status).activate(this);
     }
 
     public void deactivate() {
-        this.status.getState().deactivate(this);
+        com.microslop.state.CompetitionStates.getState(this.status).deactivate(this);
     }
 
     public void openVoting() {
-        this.status.getState().openVoting(this);
+        com.microslop.state.CompetitionStates.getState(this.status).openVoting(this);
     }
 
     public void pauseVoting() {
-        this.status.getState().pauseVoting(this);
+        com.microslop.state.CompetitionStates.getState(this.status).pauseVoting(this);
     }
 
     public void conclude() {
-        this.status.getState().conclude(this);
+        com.microslop.state.CompetitionStates.getState(this.status).conclude(this);
     }
 
     public void archive() {
-        this.status.getState().archive(this);
+        com.microslop.state.CompetitionStates.getState(this.status).archive(this);
     }
 
     public void reopen() {
-        this.status.getState().reopen(this);
+        com.microslop.state.CompetitionStates.getState(this.status).reopen(this);
     }
 
     public boolean canVote() {
-        return status != null && status.getState().canVote();
+        return status != null && com.microslop.state.CompetitionStates.getState(this.status).canVote();
     }
 
     public boolean canSubmitProjects() {
-        return status != null && status.getState().canSubmitProjects();
+        return status != null && com.microslop.state.CompetitionStates.getState(this.status).canSubmitProjects();
     }
 
     public boolean canEditConfiguration() {
-        return status != null && status.getState().canEditConfiguration();
+        return status != null && com.microslop.state.CompetitionStates.getState(this.status).canEditConfiguration();
     }
 
     public boolean isTerminal() {
-        return status != null && status.getState().isTerminal();
+        return status != null && com.microslop.state.CompetitionStates.getState(this.status).isTerminal();
     }
 
     public boolean isActive() {
-        return status != null && status.getState().isActiveLegacy();
+        return status != null && com.microslop.state.CompetitionStates.getState(this.status).isActiveLegacy();
     }
 
     @Deprecated
     public void setActive(boolean active) {
         if (active) {
-            if (this.status == null || this.status == CompetitionStatus.DRAFT
-                    || this.status == CompetitionStatus.CONCLUDED) {
-                this.status = CompetitionStatus.ACTIVE;
+            if (this.status == null
+                    || this.status.equals(com.microslop.state.CompetitionStates.STATUS_DRAFT)
+                    || this.status.equals(com.microslop.state.CompetitionStates.STATUS_CONCLUDED)) {
+                this.status = com.microslop.state.CompetitionStates.STATUS_ACTIVE;
             }
         } else {
-            if (this.status == CompetitionStatus.ACTIVE
-                    || this.status == CompetitionStatus.VOTING_OPEN) {
-                this.status = CompetitionStatus.DRAFT;
+            if (this.status.equals(com.microslop.state.CompetitionStates.STATUS_ACTIVE)
+                    || this.status.equals(com.microslop.state.CompetitionStates.STATUS_VOTING_OPEN)) {
+                this.status = com.microslop.state.CompetitionStates.STATUS_DRAFT;
             }
         }
     }

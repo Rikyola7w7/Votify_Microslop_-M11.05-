@@ -1,8 +1,6 @@
 package com.microslop.state;
 
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
-
 public class ActiveCompetitionState implements CompetitionState {
 
     @Override
@@ -12,22 +10,22 @@ public class ActiveCompetitionState implements CompetitionState {
 
     @Override
     public void deactivate(Competition competition) {
-        competition.setStatus(CompetitionStatus.DRAFT);
+        competition.setStatus(CompetitionStates.STATUS_DRAFT);
     }
 
     @Override
     public void openVoting(Competition competition) {
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
+        competition.setStatus(CompetitionStates.STATUS_VOTING_OPEN);
     }
 
     @Override
     public void pauseVoting(Competition competition) {
-        competition.setStatus(CompetitionStatus.PAUSED);
+        competition.setStatus(CompetitionStates.STATUS_PAUSED);
     }
 
     @Override
     public void conclude(Competition competition) {
-        competition.setStatus(CompetitionStatus.CONCLUDED);
+        competition.setStatus(CompetitionStates.STATUS_CONCLUDED);
     }
 
     @Override

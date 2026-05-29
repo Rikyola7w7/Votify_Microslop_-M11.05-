@@ -4,7 +4,6 @@ import com.microslop.dto.CategoryDTO;
 import com.microslop.dto.CompetitionDTO;
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
 import com.microslop.entity.Judge;
 import com.microslop.entity.User;
 import com.microslop.event.CompetitionActivatedEvent;

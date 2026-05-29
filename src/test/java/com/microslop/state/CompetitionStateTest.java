@@ -1,7 +1,7 @@
 package com.microslop.state;
 
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
+import com.microslop.state.CompetitionStates;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,16 +17,16 @@ class CompetitionStateTest {
     void setUp() {
         competition = new Competition("Test Comp", "Description",
                 LocalDateTime.now(), LocalDateTime.now().plusDays(7));
-        competition.setStatus(CompetitionStatus.DRAFT);
+        competition.setStatus(CompetitionStates.STATUS_DRAFT);
     }
 
     // ── DRAFT State Tests ────────────────────────────────────────────────
 
     @Test
     void draftState_canActivate() {
-        assertEquals(CompetitionStatus.DRAFT, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_DRAFT, competition.getStatus());
         competition.activate();
-        assertEquals(CompetitionStatus.ACTIVE, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_ACTIVE, competition.getStatus());
     }
 
     @Test
@@ -83,58 +83,58 @@ class CompetitionStateTest {
 
     @Test
     void activeState_canDeactivate() {
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
         competition.deactivate();
-        assertEquals(CompetitionStatus.DRAFT, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_DRAFT, competition.getStatus());
     }
 
     @Test
     void activeState_canOpenVoting() {
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
         competition.openVoting();
-        assertEquals(CompetitionStatus.VOTING_OPEN, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_VOTING_OPEN, competition.getStatus());
     }
 
     @Test
     void activeState_canConclude() {
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
         competition.conclude();
-        assertEquals(CompetitionStatus.CONCLUDED, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_CONCLUDED, competition.getStatus());
     }
 
     @Test
     void activeState_cannotActivate() {
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
         assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.activate());
     }
 
     @Test
     void activeState_cannotArchive() {
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
         assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.archive());
     }
 
     @Test
     void activeState_canSubmitProjects() {
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
         assertTrue(competition.canSubmitProjects());
     }
 
     @Test
     void activeState_canEditConfiguration() {
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
         assertTrue(competition.canEditConfiguration());
     }
 
     @Test
     void activeState_canVote() {
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
         assertTrue(competition.canVote());
     }
 
     @Test
     void activeState_isActiveLegacy() {
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
         assertTrue(competition.isActive());
     }
 
@@ -142,57 +142,57 @@ class CompetitionStateTest {
 
     @Test
     void votingOpenState_canPauseVoting() {
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
+        competition.setStatus(CompetitionStates.STATUS_VOTING_OPEN);
         competition.pauseVoting();
-        assertEquals(CompetitionStatus.PAUSED, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_PAUSED, competition.getStatus());
     }
 
     @Test
     void votingOpenState_canConclude() {
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
+        competition.setStatus(CompetitionStates.STATUS_VOTING_OPEN);
         competition.conclude();
-        assertEquals(CompetitionStatus.CONCLUDED, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_CONCLUDED, competition.getStatus());
     }
 
     @Test
     void votingOpenState_cannotActivate() {
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
+        competition.setStatus(CompetitionStates.STATUS_VOTING_OPEN);
         assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.activate());
     }
 
     @Test
     void votingOpenState_cannotDeactivate() {
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
+        competition.setStatus(CompetitionStates.STATUS_VOTING_OPEN);
         assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.deactivate());
     }
 
     @Test
     void votingOpenState_cannotOpenVoting() {
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
+        competition.setStatus(CompetitionStates.STATUS_VOTING_OPEN);
         assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.openVoting());
     }
 
     @Test
     void votingOpenState_canVote() {
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
+        competition.setStatus(CompetitionStates.STATUS_VOTING_OPEN);
         assertTrue(competition.canVote());
     }
 
     @Test
     void votingOpenState_cannotSubmitProjects() {
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
+        competition.setStatus(CompetitionStates.STATUS_VOTING_OPEN);
         assertFalse(competition.canSubmitProjects());
     }
 
     @Test
     void votingOpenState_cannotEditConfiguration() {
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
+        competition.setStatus(CompetitionStates.STATUS_VOTING_OPEN);
         assertFalse(competition.canEditConfiguration());
     }
 
     @Test
     void votingOpenState_isActiveLegacy() {
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
+        competition.setStatus(CompetitionStates.STATUS_VOTING_OPEN);
         assertTrue(competition.isActive());
     }
 
@@ -200,39 +200,39 @@ class CompetitionStateTest {
 
     @Test
     void concludedState_canArchive() {
-        competition.setStatus(CompetitionStatus.CONCLUDED);
+        competition.setStatus(CompetitionStates.STATUS_CONCLUDED);
         competition.archive();
-        assertEquals(CompetitionStatus.ARCHIVED, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_ARCHIVED, competition.getStatus());
     }
 
     @Test
     void concludedState_canReopen() {
-        competition.setStatus(CompetitionStatus.CONCLUDED);
+        competition.setStatus(CompetitionStates.STATUS_CONCLUDED);
         competition.reopen();
-        assertEquals(CompetitionStatus.ACTIVE, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_ACTIVE, competition.getStatus());
     }
 
     @Test
     void concludedState_cannotActivate() {
-        competition.setStatus(CompetitionStatus.CONCLUDED);
+        competition.setStatus(CompetitionStates.STATUS_CONCLUDED);
         assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.activate());
     }
 
     @Test
     void concludedState_cannotVote() {
-        competition.setStatus(CompetitionStatus.CONCLUDED);
+        competition.setStatus(CompetitionStates.STATUS_CONCLUDED);
         assertFalse(competition.canVote());
     }
 
     @Test
     void concludedState_isNotActiveLegacy() {
-        competition.setStatus(CompetitionStatus.CONCLUDED);
+        competition.setStatus(CompetitionStates.STATUS_CONCLUDED);
         assertFalse(competition.isActive());
     }
 
     @Test
     void concludedState_isNotTerminal() {
-        competition.setStatus(CompetitionStatus.CONCLUDED);
+        competition.setStatus(CompetitionStates.STATUS_CONCLUDED);
         assertFalse(competition.isTerminal());
     }
 
@@ -240,49 +240,49 @@ class CompetitionStateTest {
 
     @Test
     void archivedState_isTerminal() {
-        competition.setStatus(CompetitionStatus.ARCHIVED);
+        competition.setStatus(CompetitionStates.STATUS_ARCHIVED);
         assertTrue(competition.isTerminal());
     }
 
     @Test
     void archivedState_cannotActivate() {
-        competition.setStatus(CompetitionStatus.ARCHIVED);
+        competition.setStatus(CompetitionStates.STATUS_ARCHIVED);
         assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.activate());
     }
 
     @Test
     void archivedState_cannotDeactivate() {
-        competition.setStatus(CompetitionStatus.ARCHIVED);
+        competition.setStatus(CompetitionStates.STATUS_ARCHIVED);
         assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.deactivate());
     }
 
     @Test
     void archivedState_cannotOpenVoting() {
-        competition.setStatus(CompetitionStatus.ARCHIVED);
+        competition.setStatus(CompetitionStates.STATUS_ARCHIVED);
         assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.openVoting());
     }
 
     @Test
     void archivedState_cannotConclude() {
-        competition.setStatus(CompetitionStatus.ARCHIVED);
+        competition.setStatus(CompetitionStates.STATUS_ARCHIVED);
         assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.conclude());
     }
 
     @Test
     void archivedState_cannotReopen() {
-        competition.setStatus(CompetitionStatus.ARCHIVED);
+        competition.setStatus(CompetitionStates.STATUS_ARCHIVED);
         assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.reopen());
     }
 
     @Test
     void archivedState_cannotArchive() {
-        competition.setStatus(CompetitionStatus.ARCHIVED);
+        competition.setStatus(CompetitionStates.STATUS_ARCHIVED);
         assertThrows(com.microslop.state.UnsupportedStateTransition.class, () -> competition.archive());
     }
 
     @Test
     void archivedState_isNotActiveLegacy() {
-        competition.setStatus(CompetitionStatus.ARCHIVED);
+        competition.setStatus(CompetitionStates.STATUS_ARCHIVED);
         assertFalse(competition.isActive());
     }
 
@@ -290,55 +290,55 @@ class CompetitionStateTest {
 
     @Test
     void fullLifecycle_draftToArchived() {
-        assertEquals(CompetitionStatus.DRAFT, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_DRAFT, competition.getStatus());
 
         competition.activate();
-        assertEquals(CompetitionStatus.ACTIVE, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_ACTIVE, competition.getStatus());
         assertTrue(competition.isActive());
 
         competition.openVoting();
-        assertEquals(CompetitionStatus.VOTING_OPEN, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_VOTING_OPEN, competition.getStatus());
         assertTrue(competition.canVote());
 
         competition.conclude();
-        assertEquals(CompetitionStatus.CONCLUDED, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_CONCLUDED, competition.getStatus());
         assertFalse(competition.isActive());
 
         competition.archive();
-        assertEquals(CompetitionStatus.ARCHIVED, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_ARCHIVED, competition.getStatus());
         assertTrue(competition.isTerminal());
     }
 
     @Test
     void lifecycle_pauseAndResumeVoting() {
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
+        competition.setStatus(CompetitionStates.STATUS_VOTING_OPEN);
 
         competition.pauseVoting();
-        assertEquals(CompetitionStatus.PAUSED, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_PAUSED, competition.getStatus());
         assertTrue(competition.isActive());
 
         competition.openVoting();
-        assertEquals(CompetitionStatus.VOTING_OPEN, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_VOTING_OPEN, competition.getStatus());
         assertTrue(competition.canVote());
     }
 
     @Test
     void lifecycle_reopenFromConcluded() {
-        competition.setStatus(CompetitionStatus.CONCLUDED);
+        competition.setStatus(CompetitionStates.STATUS_CONCLUDED);
         assertFalse(competition.isActive());
 
         competition.reopen();
-        assertEquals(CompetitionStatus.ACTIVE, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_ACTIVE, competition.getStatus());
         assertTrue(competition.isActive());
     }
 
     @Test
     void lifecycle_deactivateFromActive() {
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
         assertTrue(competition.isActive());
 
         competition.deactivate();
-        assertEquals(CompetitionStatus.DRAFT, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_DRAFT, competition.getStatus());
         assertFalse(competition.isActive());
     }
 
@@ -346,46 +346,46 @@ class CompetitionStateTest {
 
     @Test
     void legacySetActive_trueFromDraft() {
-        competition.setStatus(CompetitionStatus.DRAFT);
+        competition.setStatus(CompetitionStates.STATUS_DRAFT);
         competition.setActive(true);
-        assertEquals(CompetitionStatus.ACTIVE, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_ACTIVE, competition.getStatus());
     }
 
     @Test
     void legacySetActive_falseFromActive() {
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
         competition.setActive(false);
-        assertEquals(CompetitionStatus.DRAFT, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_DRAFT, competition.getStatus());
     }
 
     @Test
     void legacySetActive_falseFromVotingOpen() {
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
+        competition.setStatus(CompetitionStates.STATUS_VOTING_OPEN);
         competition.setActive(false);
-        assertEquals(CompetitionStatus.DRAFT, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_DRAFT, competition.getStatus());
     }
 
     @Test
     void legacySetActive_trueFromConcluded() {
-        competition.setStatus(CompetitionStatus.CONCLUDED);
+        competition.setStatus(CompetitionStates.STATUS_CONCLUDED);
         competition.setActive(true);
-        assertEquals(CompetitionStatus.ACTIVE, competition.getStatus());
+        assertEquals(CompetitionStates.STATUS_ACTIVE, competition.getStatus());
     }
 
-    // ── CompetitionStatus Enum Tests ─────────────────────────────────────
+    // ── CompetitionStates Registry Tests ───────────────────────────────────
 
     @Test
-    void enum_getState_returnsCorrectState() {
-        assertNotNull(CompetitionStatus.DRAFT.getState());
-        assertNotNull(CompetitionStatus.ACTIVE.getState());
-        assertNotNull(CompetitionStatus.VOTING_OPEN.getState());
-        assertNotNull(CompetitionStatus.CONCLUDED.getState());
-        assertNotNull(CompetitionStatus.ARCHIVED.getState());
+    void registry_getState_returnsCorrectState() {
+        assertNotNull(CompetitionStates.getState(CompetitionStates.STATUS_DRAFT));
+        assertNotNull(CompetitionStates.getState(CompetitionStates.STATUS_ACTIVE));
+        assertNotNull(CompetitionStates.getState(CompetitionStates.STATUS_VOTING_OPEN));
+        assertNotNull(CompetitionStates.getState(CompetitionStates.STATUS_CONCLUDED));
+        assertNotNull(CompetitionStates.getState(CompetitionStates.STATUS_ARCHIVED));
     }
 
     @Test
-    void enum_statesAreSingletons() {
-        assertSame(CompetitionStatus.DRAFT.getState(), CompetitionStatus.DRAFT.getState());
-        assertSame(CompetitionStatus.ACTIVE.getState(), CompetitionStatus.ACTIVE.getState());
+    void registry_statesAreSingletons() {
+        assertSame(CompetitionStates.getState(CompetitionStates.STATUS_DRAFT), CompetitionStates.getState(CompetitionStates.STATUS_DRAFT));
+        assertSame(CompetitionStates.getState(CompetitionStates.STATUS_ACTIVE), CompetitionStates.getState(CompetitionStates.STATUS_ACTIVE));
     }
 }

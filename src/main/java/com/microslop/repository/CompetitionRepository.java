@@ -1,7 +1,6 @@
 package com.microslop.repository;
 
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -17,22 +16,22 @@ public interface CompetitionRepository extends JpaRepository<Competition, Long>,
 
     List<Competition> findByActiveFalse();
 
-    List<Competition> findByStatus(CompetitionStatus status);
+    List<Competition> findByStatus(String status);
 
-    @Query("SELECT c FROM Competition c WHERE c.status = com.microslop.entity.CompetitionStatus.ACTIVE OR c.status = com.microslop.entity.CompetitionStatus.VOTING_OPEN OR c.status = com.microslop.entity.CompetitionStatus.PAUSED")
+    @Query("SELECT c FROM Competition c WHERE c.status = 'ACTIVE' OR c.status = 'VOTING_OPEN' OR c.status = 'PAUSED'")
     List<Competition> findActiveAndVotingOpen();
 
-    List<Competition> findByStatusIn(List<CompetitionStatus> statuses);
+    List<Competition> findByStatusIn(List<String> statuses);
 
     Optional<Competition> findByNameIgnoreCase(String name);
 
-    @Query("SELECT DISTINCT c FROM Competition c LEFT JOIN FETCH c.projects WHERE c.status = com.microslop.entity.CompetitionStatus.ACTIVE OR c.status = com.microslop.entity.CompetitionStatus.PAUSED")
+    @Query("SELECT DISTINCT c FROM Competition c LEFT JOIN FETCH c.projects WHERE c.status = 'ACTIVE' OR c.status = 'PAUSED'")
     List<Competition> findActiveWithProjects();
 
     @Query("SELECT c FROM Competition c LEFT JOIN FETCH c.categories WHERE c.id = :id")
     Optional<Competition> findByIdWithCategories(Long id);
 
-    @Query("SELECT c FROM Competition c LEFT JOIN FETCH c.categories WHERE c.status = com.microslop.entity.CompetitionStatus.ACTIVE OR c.status = com.microslop.entity.CompetitionStatus.PAUSED")
+    @Query("SELECT c FROM Competition c LEFT JOIN FETCH c.categories WHERE c.status = 'ACTIVE' OR c.status = 'PAUSED'")
     List<Competition> findActiveWithCategories();
 
     List<Competition> findByCreatedByIgnoreCase(String createdBy);

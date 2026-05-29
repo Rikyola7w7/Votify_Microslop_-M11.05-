@@ -3,7 +3,6 @@ package com.microslop.views;
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
 import com.microslop.service.CategoryService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.LocalizationService;
@@ -236,14 +235,15 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         String badgeClass;
         String label;
 
-        CompetitionStatus status = currentCompetition.getStatus();
+        String status = currentCompetition.getStatus();
         boolean hasEnded = currentCompetition.getEndDate() != null
                 && java.time.LocalDateTime.now().isAfter(currentCompetition.getEndDate());
 
-        if (status == CompetitionStatus.VOTING_OPEN || status == CompetitionStatus.ACTIVE) {
+        if (com.microslop.state.CompetitionStates.STATUS_VOTING_OPEN.equals(status)
+                || com.microslop.state.CompetitionStates.STATUS_ACTIVE.equals(status)) {
                 label = "ACTIVE";
             badgeClass = "votify-badge-active";
-        } else if (status == CompetitionStatus.CONCLUDED || hasEnded) {
+        } else if (com.microslop.state.CompetitionStates.STATUS_CONCLUDED.equals(status) || hasEnded) {
             label = "FINISHED";
             badgeClass = "votify-badge-finished";
         } else {

@@ -2,7 +2,7 @@ package com.microslop.command.competition;
 
 import com.microslop.command.AbstractCommand;
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
+import com.microslop.state.CompetitionStates;
 import com.microslop.repository.CompetitionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +78,7 @@ public class CreateCompetitionCommand extends AbstractCommand<Competition> {
         createdCompetition = new Competition(name, description, startDate, endDate);
         createdCompetition.setEventType(eventType);
         createdCompetition.setCreatedBy(createdBy);
-        createdCompetition.setStatus(CompetitionStatus.DRAFT);
+        createdCompetition.setStatus(CompetitionStates.STATUS_DRAFT);
         if (coverImage != null) {
             createdCompetition.setCoverImage(coverImage);
         }

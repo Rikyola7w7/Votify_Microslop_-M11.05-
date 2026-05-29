@@ -2,7 +2,6 @@ package com.microslop.command.competition;
 
 import com.microslop.command.AbstractCommand;
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
 import com.microslop.repository.CompetitionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +13,7 @@ public class DeactivateCompetitionCommand extends AbstractCommand<Void> {
     private final Long competitionId;
     private final CompetitionRepository competitionRepository;
 
-    private CompetitionStatus previousStatus;
+    private String previousStatus;
 
     public DeactivateCompetitionCommand(Long competitionId, CompetitionRepository competitionRepository) {
         this.competitionId = competitionId;

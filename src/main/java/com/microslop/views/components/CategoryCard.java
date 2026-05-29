@@ -2,7 +2,6 @@ package com.microslop.views.components;
 
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
 import com.microslop.service.LocalizationService;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
@@ -159,14 +158,14 @@ public class CategoryCard extends Div {
         String label;
         String badgeClass;
 
-        CompetitionStatus status = competition.getStatus();
+        String status = competition.getStatus();
         boolean hasEnded = competition.getEndDate() != null
                 && LocalDateTime.now().isAfter(competition.getEndDate());
 
-        if (status == CompetitionStatus.ACTIVE) {
+        if (com.microslop.state.CompetitionStates.STATUS_ACTIVE.equals(status)) {
             label = "OPEN";
             badgeClass = "votify-badge-active";
-        } else if (status == CompetitionStatus.CONCLUDED || hasEnded) {
+        } else if (com.microslop.state.CompetitionStates.STATUS_CONCLUDED.equals(status) || hasEnded) {
             label = "FINISHED";
             badgeClass = "votify-badge-finished";
         } else {

@@ -1,7 +1,6 @@
 package com.microslop.state;
 
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
 
 /**
  * PAUSED state: voting is paused (temporarily stopped).
@@ -17,12 +16,12 @@ public class PausedCompetitionState implements CompetitionState {
 
     @Override
     public void openVoting(Competition competition) {
-        competition.setStatus(CompetitionStatus.VOTING_OPEN);
+        competition.setStatus(CompetitionStates.STATUS_VOTING_OPEN);
     }
 
     @Override
     public void conclude(Competition competition) {
-        competition.setStatus(CompetitionStatus.CONCLUDED);
+        competition.setStatus(CompetitionStates.STATUS_CONCLUDED);
     }
 
     @Override

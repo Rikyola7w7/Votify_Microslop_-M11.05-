@@ -1,7 +1,7 @@
 package com.microslop.state;
 
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
+import com.microslop.state.CompetitionStates;
 import com.microslop.event.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +19,7 @@ class CompetitionStateEventTest {
         competition = new Competition("Test Comp", "Description",
                 LocalDateTime.now(), LocalDateTime.now().plusDays(7));
         competition.setId(1L);
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
     }
 
     @Test

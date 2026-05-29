@@ -1,12 +1,7 @@
 package com.microslop.state;
 
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
 
-/**
- * DRAFT state: competition is being configured, not yet active.
- * Can submit projects and edit configuration. Cannot vote.
- */
 public class DraftCompetitionState implements CompetitionState {
 
     @Override
@@ -16,7 +11,7 @@ public class DraftCompetitionState implements CompetitionState {
 
     @Override
     public void activate(Competition competition) {
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
     }
 
     @Override

@@ -1,7 +1,6 @@
 package com.microslop.service.impl;
 
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
 import com.microslop.factory.notification.CompetitionEndTimeNotificationCreator;
 import com.microslop.repository.CompetitionRepository;
 import com.microslop.repository.UserRepository;
@@ -46,7 +45,7 @@ public class CompetitionCheckServiceImpl implements CompetitionCheckService {
             LocalDateTime oneHourFromNow = now.plusHours(1);
 
             List<Competition> openCompetitions = competitionRepository.findByStatusIn(
-                List.of(CompetitionStatus.VOTING_OPEN, CompetitionStatus.ACTIVE)
+                List.of("VOTING_OPEN", "ACTIVE")
             );
 
             for (Competition competition : openCompetitions) {

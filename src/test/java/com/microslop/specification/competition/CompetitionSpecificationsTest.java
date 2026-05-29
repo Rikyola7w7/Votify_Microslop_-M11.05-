@@ -1,6 +1,6 @@
 package com.microslop.specification.competition;
 
-import com.microslop.entity.CompetitionStatus;
+import com.microslop.state.CompetitionStates;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -66,8 +66,8 @@ class CompetitionSpecificationsTest {
 
     @Test
     void testCompetitionByStatusEnumSpecificationCreation() {
-        CompetitionByStatusEnumSpecification draftSpec = new CompetitionByStatusEnumSpecification(CompetitionStatus.DRAFT);
-        CompetitionByStatusEnumSpecification activeSpec = new CompetitionByStatusEnumSpecification(CompetitionStatus.ACTIVE);
+        CompetitionByStatusEnumSpecification draftSpec = new CompetitionByStatusEnumSpecification(CompetitionStates.STATUS_DRAFT);
+        CompetitionByStatusEnumSpecification activeSpec = new CompetitionByStatusEnumSpecification(CompetitionStates.STATUS_ACTIVE);
         assertNotNull(draftSpec);
         assertNotNull(activeSpec);
     }
@@ -79,8 +79,8 @@ class CompetitionSpecificationsTest {
 
     @Test
     void testCompetitionByStatusEnumSpecificationComposition() {
-        CompetitionByStatusEnumSpecification activeSpec = new CompetitionByStatusEnumSpecification(CompetitionStatus.ACTIVE);
-        CompetitionByStatusEnumSpecification pausedSpec = new CompetitionByStatusEnumSpecification(CompetitionStatus.PAUSED);
+        CompetitionByStatusEnumSpecification activeSpec = new CompetitionByStatusEnumSpecification(CompetitionStates.STATUS_ACTIVE);
+        CompetitionByStatusEnumSpecification pausedSpec = new CompetitionByStatusEnumSpecification(CompetitionStates.STATUS_PAUSED);
         var orSpec = activeSpec.or(pausedSpec);
         assertNotNull(orSpec);
     }

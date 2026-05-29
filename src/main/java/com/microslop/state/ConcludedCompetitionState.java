@@ -1,7 +1,6 @@
 package com.microslop.state;
 
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
 
 /**
  * CONCLUDED state: competition has ended.
@@ -16,12 +15,12 @@ public class ConcludedCompetitionState implements CompetitionState {
 
     @Override
     public void archive(Competition competition) {
-        competition.setStatus(CompetitionStatus.ARCHIVED);
+        competition.setStatus(CompetitionStates.STATUS_ARCHIVED);
     }
 
     @Override
     public void reopen(Competition competition) {
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
     }
 
     @Override

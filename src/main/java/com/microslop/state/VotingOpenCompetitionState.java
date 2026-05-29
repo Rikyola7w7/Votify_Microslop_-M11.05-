@@ -1,7 +1,6 @@
 package com.microslop.state;
 
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
 
 /**
  * VOTING_OPEN state: voting is active and accepting votes.
@@ -16,12 +15,12 @@ public class VotingOpenCompetitionState implements CompetitionState {
 
     @Override
     public void pauseVoting(Competition competition) {
-        competition.setStatus(CompetitionStatus.PAUSED);
+        competition.setStatus(CompetitionStates.STATUS_PAUSED);
     }
 
     @Override
     public void conclude(Competition competition) {
-        competition.setStatus(CompetitionStatus.CONCLUDED);
+        competition.setStatus(CompetitionStates.STATUS_CONCLUDED);
     }
 
     @Override

@@ -1,8 +1,8 @@
 package com.microslop.strategy.voting;
 
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
 import com.microslop.entity.User;
+import com.microslop.state.CompetitionStates;
 import com.microslop.repository.JudgeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,7 +62,7 @@ class JudgesOnlyVotingStrategyTest {
     void canVote_returnsFalseWhenCompetitionCannotVote() {
         Competition concluded = new Competition();
         concluded.setId(1L);
-        concluded.setStatus(CompetitionStatus.CONCLUDED);
+        concluded.setStatus(CompetitionStates.STATUS_CONCLUDED);
 
         assertFalse(strategy.canVote(user, concluded));
     }
@@ -88,7 +88,7 @@ class JudgesOnlyVotingStrategyTest {
     private Competition createActiveCompetition() {
         Competition competition = new Competition();
         competition.setId(1L);
-        competition.setStatus(CompetitionStatus.ACTIVE);
+        competition.setStatus(CompetitionStates.STATUS_ACTIVE);
         return competition;
     }
 }

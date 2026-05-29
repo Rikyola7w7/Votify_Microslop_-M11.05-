@@ -1,7 +1,7 @@
 package com.microslop.specification.competition;
 
 import com.microslop.entity.Competition;
-import com.microslop.entity.CompetitionStatus;
+import com.microslop.state.CompetitionStates;
 import com.microslop.specification.AbstractSpecification;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -20,9 +20,12 @@ public class CompetitionByStatusSpecification extends AbstractSpecification<Comp
     @Override
     protected Predicate getPredicates(Root<Competition> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
         if (active) {
-            return root.get("status").in(List.of(CompetitionStatus.ACTIVE, CompetitionStatus.PAUSED));
+            return root.get("status").in(List.of(
+                CompetitionStates.STATUS_ACTIVE, CompetitionStates.STATUS_PAUSED));
         } else {
-            return root.get("status").in(List.of(CompetitionStatus.DRAFT, CompetitionStatus.CONCLUDED, CompetitionStatus.ARCHIVED));
+            return root.get("status").in(List.of(
+                CompetitionStates.STATUS_DRAFT, CompetitionStates.STATUS_CONCLUDED,
+                CompetitionStates.STATUS_ARCHIVED));
         }
     }
 }
