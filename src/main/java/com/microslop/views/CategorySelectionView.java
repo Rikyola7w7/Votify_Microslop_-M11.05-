@@ -86,6 +86,8 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             return;
         }
 
+        getUI().ifPresent(ui -> ui.getPage().executeJs("window.scrollTo(0, 0);"));
+
         try {
             this.currentCompetition = competitionService.getByIdOrFail(competitionId);
         } catch (Exception e) {
@@ -362,8 +364,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             .set("display", "flex")
             .set("flex-wrap", "wrap")
             .set("gap", "24px")
-            .set("justify-content", "center")
-            .set("opacity", "0");
+            .set("justify-content", "center");
 
         for (int i = 0; i < allCategories.size(); i++) {
             Category category = allCategories.get(i);
@@ -378,17 +379,19 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         }
         gridContainer.add(grid);
 
-        // Fade out loading and reveal grid
+        // Reveal: CSS :has(> .votify-loading) already hides siblings.
         getElement().executeJs(
             "setTimeout(function() {" +
-            "  var loadings = document.querySelectorAll('.votify-loading');" +
-            "  loadings.forEach(function(l) { l.style.opacity = '0'; l.style.transition = 'opacity 0.15s ease'; });" +
-            "  var grids = document.querySelectorAll('#cat-cards-grid');" +
-            "  grids.forEach(function(g) { g.style.opacity = '1'; g.style.transition = 'opacity 0.3s ease'; });" +
-            "  setTimeout(function() {" +
-            "    var loadings = document.querySelectorAll('.votify-loading');" +
-            "    loadings.forEach(function(l) { l.style.display = 'none'; });" +
-            "  }, 150);" +
+            "  var l = document.querySelector('.votify-loading');" +
+            "  var g = document.getElementById('cat-cards-grid');" +
+            "  if (l) {" +
+            "    l.classList.add('is-hiding');" +
+            "    setTimeout(function() {" +
+            "      l.remove();" +
+            "      if (g) g.classList.add('votify-content-ready');" +
+            "      window.scrollTo(0, 0);" +
+            "    }, 200);" +
+            "  }" +
             "}, 750)");
 
         gridWrapper.add(gridContainer);

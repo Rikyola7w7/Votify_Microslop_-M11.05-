@@ -362,7 +362,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("width", "100%")
                 .set("box-sizing", "border-box")
                 .set("border-left", isFirst ? "4px solid var(--secondary)" : "4px solid var(--primary)")
-                .set("text-align", isFirst ? "center" : "left");
+                .set("text-align", "left");
 
         var info = new VerticalLayout();
         info.setPadding(false);
@@ -379,9 +379,11 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         desc.getStyle()
                 .set("font-size", "14px")
                 .set("color", "var(--text-muted)")
-                .set("margin-top", "0.25rem")
+                .set("margin-top", "0.6rem")
+                .set("margin-bottom", "0.6rem")
+                .set("line-height", "1.6")
                 .set("display", "-webkit-box")
-                .set("-webkit-line-clamp", "2")
+                .set("-webkit-line-clamp", "4")
                 .set("-webkit-box-orient", "vertical")
                 .set("overflow", "hidden");
 
@@ -389,7 +391,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         votesLabel.getStyle()
                 .set("font-size", "0.85rem")
                 .set("color", "var(--text-muted)")
-                .set("margin-top", "0.75rem");
+                .set("margin-top", "0.4rem");
 
         info.add(name, desc, votesLabel);
 
@@ -458,12 +460,12 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         var actions = new VerticalLayout(voteInterface, commentsBtn);
         actions.setPadding(false);
         actions.setSpacing(true);
-        actions.setAlignItems(isFirst ? Alignment.CENTER : Alignment.END);
+        actions.setAlignItems(Alignment.END);
 
         var row = new HorizontalLayout(info, actions);
         row.setWidthFull();
         row.setAlignItems(Alignment.CENTER);
-        row.setJustifyContentMode(isFirst ? FlexComponent.JustifyContentMode.CENTER : FlexComponent.JustifyContentMode.BETWEEN);
+        row.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         row.setSpacing(true);
         row.setPadding(false);
 

@@ -9,20 +9,12 @@ import com.microslop.service.ProjectService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.VoteService;
 import com.microslop.views.components.PodiumCardComponent;
-import com.vaadin.flow.component.avatar.Avatar;
-import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEvent;
@@ -106,7 +98,6 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         isChecklistMode = "CHECKLIST".equalsIgnoreCase(competition.getVoteType());
         isScaleMode = "SCALE".equalsIgnoreCase(competition.getVoteType());
 
-        add(buildHeader(competition.getName()));
         if (!isChecklistMode) {
             add(buildCategoryFilter(competition.getCategories()));
         }
@@ -196,59 +187,18 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         add(bodyContainer);
     }
 
-    // ── Header ────────────────────────────────────────────────────────────────
+    // ── Main Body ──────────────────────────────────────────────────────
 
-    private HorizontalLayout buildHeader(String competitionName) {
-        var header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(Alignment.CENTER);
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        header.getStyle()
-            .set("background", "#1a3a5c")
-            .set("padding", "0 2rem")
-            .set("height", "64px")
-            .set("box-shadow", "0 2px 8px rgba(0,0,0,0.3)");
+    private VerticalLayout buildBody(List<Project> ranking) {
+        var body = new VerticalLayout();
+        body.setWidthFull();
+        body.setAlignItems(Alignment.CENTER);
+        body.getStyle().set("padding", "2rem 1rem");
 
-        // Back button
-        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
-        backButton.addClassName("votify-btn-secondary");
-        backButton.getStyle()
-            .set("color", "white")
-            .set("background", "rgba(255, 255, 255, 0.15)")
-            .set("border", "1px solid rgba(255, 255, 255, 0.3)")
-            .set("border-radius", "var(--radius-md)")
-            .set("cursor", "pointer");
-        backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("")));
-        backButton.addClickShortcut(Key.ESCAPE);
-
-        // Title
-        var title = new H2(competitionName.toUpperCase());
-        title.getStyle()
-            .set("color", "white")
-            .set("margin", "0")
-            .set("font-size", "1.3rem")
-            .set("font-weight", "700")
-            .set("letter-spacing", "0.05em")
-            .set("flex", "1")
-            .set("text-align", "center");
-
-        // Right section: Vote button and avatar
-        var rightSection = new HorizontalLayout();
-        rightSection.setAlignItems(Alignment.CENTER);
-        rightSection.setSpacing(true);
-        rightSection.setMargin(false);
-        rightSection.setPadding(false);
-
-        // Vote for Projects button
-        boolean isLoggedIn = userService.isLoggedIn();
-        Button voteButton = new Button("Vote");
-        voteButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-        voteButton.getStyle()
-            .set("font-weight", "600")
-            .set("color", "#1a3a5c")
-            .set("background", "white")
-            .set("border", "none")
-            .set("cursor", "pointer");
+        // ── Vote button ─────────────────────────────────────────────────────
+        Button voteButton = new Button("Vote for Projects", new Icon(VaadinIcon.THUMBS_UP));
+        voteButton.addClassName("votify-btn-primary");
+        voteButton.getStyle().set("margin-bottom", "1rem");
         voteButton.setTooltipText("Go to the voting page for this competition");
         voteButton.addClickListener(e -> {
             if (userService.isLoggedIn()) {
@@ -261,70 +211,6 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
                 getUI().ifPresent(ui -> ui.navigate("login"));
             }
         });
-
-        // Avatar with dropdown menu
-        var avatar = new Avatar();
-        avatar.setName(userService.getUserDisplayName());
-        avatar.getStyle()
-            .set("cursor", "pointer")
-            .set("background", "#2d6a9f");
-
-        // Profile Dropdown Menu
-        ContextMenu userMenu = new ContextMenu(avatar);
-        userMenu.setOpenOnClick(true);
-        
-        if (isLoggedIn) {
-            userMenu.addItem("My Projects", event -> {
-                String username = userService.getCurrentUsername();
-                if (username != null) {
-                    getUI().ifPresent(ui -> ui.navigate(UserProjectsView.class, new com.vaadin.flow.router.RouteParameters("username", username)));
-                } else {
-                    Notification.show("Unable to load your projects.");
-                }
-            });
-            userMenu.addItem("Edit Profile", event -> {
-                String username = userService.getCurrentUsername();
-                if (username != null) {
-                    getUI().ifPresent(ui -> ui.navigate(UserProfileView.class));
-                } else {
-                    Notification.show("Unable to load your profile.");
-                }
-            });
-            userMenu.addItem("Help", event -> getUI().ifPresent(ui -> ui.navigate(FaqView.class)));
-            userMenu.addItem("Sign Out", event -> {
-                VaadinSession session = VaadinSession.getCurrent();
-                if (session != null) {
-                    session.getSession().invalidate();
-                }
-                getUI().ifPresent(ui -> ui.navigate(""));
-                Notification.show("Logged out successfully");
-            });
-        } else {
-            userMenu.addItem("Sign In", event -> getUI().ifPresent(ui -> ui.navigate(LoginView.class)));
-            userMenu.addItem("Register", event -> getUI().ifPresent(ui -> ui.navigate(RegisterView.class)));
-            userMenu.addItem("Help", event -> getUI().ifPresent(ui -> ui.navigate(FaqView.class)));
-        }
-
-        rightSection.add(voteButton, avatar);
-        header.add(backButton, title, rightSection);
-        return header;
-    }
-
-    // ── Main Body ──────────────────────────────────────────────────────
-
-    private VerticalLayout buildBody(List<Project> ranking) {
-        var body = new VerticalLayout();
-        body.setWidthFull();
-        body.setAlignItems(Alignment.CENTER);
-        body.getStyle().set("padding", "2rem 1rem");
-
-        var title = new H1("Project Ranking");
-        title.getStyle()
-            .set("font-size", "1.8rem")
-            .set("font-weight", "700")
-            .set("color", "#1a1a2e")
-            .set("margin-bottom", "2rem")
-            .set("text-align", "center");
 
         // ── Podium (top 3) ────────────────────────────────────────────────────
         podiumSection = new Div();
@@ -346,7 +232,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         listSection.setSpacing(false);
         renderList(ranking, selectedCategoryId);
 
-        body.add(title, podiumSection, listSection);
+        body.add(voteButton, podiumSection, listSection);
         return body;
     }
 

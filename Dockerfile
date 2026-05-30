@@ -8,6 +8,9 @@ RUN mkdir -p $HOME
 WORKDIR $HOME
 COPY . $HOME
 
+# CORRECCIÓN: Devolver permisos de ejecución a Maven Wrapper
+RUN chmod +x ./mvnw
+
 # Compilar omitiendo tests y preparando el frontend de Vaadin
 RUN --mount=type=cache,target=/root/.m2 \
     ./mvnw clean package -DskipTests

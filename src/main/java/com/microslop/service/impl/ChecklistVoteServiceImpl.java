@@ -1,5 +1,6 @@
 package com.microslop.service.impl;
 
+import com.microslop.entity.Category;
 import com.microslop.entity.ChecklistItem;
 import com.microslop.entity.ChecklistVote;
 import com.microslop.entity.Project;
@@ -62,8 +63,10 @@ public class ChecklistVoteServiceImpl implements ChecklistVoteService {
             throw new CompetitionStateException(competition.getStatus(), "vote with checklist");
         }
 
-        if (!"CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
-            throw new CompetitionStateException("This competition does not use checklist voting.");
+        boolean hasChecklistCategory = competition.getCategories().stream()
+                .anyMatch(Category::isChecklistVoting);
+        if (!hasChecklistCategory) {
+            throw new CompetitionStateException("This competition does not have any category using checklist voting.");
         }
 
         List<ChecklistItem> items = checklistItemRepository.findAllById(checklistItemIds);

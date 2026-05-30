@@ -101,7 +101,11 @@ public class PodiumCardComponent extends Div {
             .set("display", "block")
             .set("margin-bottom", "0.8rem");
 
-        add(medalSpan, nameSpan, labelVotes, numVotes);
+        if (isChecklistMode) {
+            add(medalSpan, nameSpan);
+        } else {
+            add(medalSpan, nameSpan, labelVotes, numVotes);
+        }
     }
 
     private static String formatNumber(long num) {

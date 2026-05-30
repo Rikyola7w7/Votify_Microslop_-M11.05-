@@ -453,8 +453,25 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         boolean loggedIn = userService != null && userService.isLoggedIn();
         String username = loggedIn ? userService.getCurrentUsername() : null;
 
-        // competition/{id}/... → competitions list
         if ("competition".equals(segments[0]) && segments.length >= 2) {
+            String compId = segments[1];
+
+            // competition/{id}/categories/{catId}/ranking → categories page
+            if (segments.length >= 5 && "categories".equals(segments[2])) {
+                return "competition/" + compId + "/categories";
+            }
+
+            // competition/{id}/category/{catId}/vote → categories page
+            if (segments.length >= 5 && "category".equals(segments[2])) {
+                return "competition/" + compId + "/categories";
+            }
+
+            // competition/{id}/categories (base) → competition details
+            if (segments.length == 3 && "categories".equals(segments[2])) {
+                return "competition/" + compId;
+            }
+
+            // competition/{id} → competitions list
             return username != null ? username + "/competitions" : "";
         }
 

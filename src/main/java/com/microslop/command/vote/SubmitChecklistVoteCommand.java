@@ -82,10 +82,6 @@ public class SubmitChecklistVoteCommand extends AbstractCommand<Void> {
             throw new IllegalStateException("Competition not found for project: " + projectId);
         }
 
-        if (!"CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
-            throw new IllegalStateException("This competition does not use checklist voting.");
-        }
-
         if (!competition.isActive()) {
             throw new IllegalStateException("Competition is not active.");
         }

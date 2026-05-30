@@ -616,6 +616,34 @@ a:active {
 .votify-loading-dots span:nth-child(2) { animation-delay: 0.3s; }
 .votify-loading-dots span:nth-child(3) { animation-delay: 0.6s; }
 
+/* ── Loading: hide sibling content while spinner is active ─── */
+/*
+ * When a container has a .votify-loading child, every OTHER direct child
+ * is hidden with visibility:hidden (keeps layout space) + opacity:0.
+ * The JS in each view removes .votify-loading to trigger the reveal.
+ *
+ * :has() is supported in all modern browsers (Chrome 105+, Firefox 121+, Safari 15.4+).
+ */
+:has(> .votify-loading) > *:not(.votify-loading) {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Smooth reveal: once loading is removed, children fade in */
+:not(:has(> .votify-loading)) > .votify-content-ready {
+  animation: fade-in 0.35s ease forwards;
+}
+
+/* Loading fade-out transition */
+.votify-loading {
+  transition: opacity 0.2s ease;
+}
+
+.votify-loading.is-hiding {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* ── Skeleton Shimmer ───────────────────────────────────── */
 @keyframes skeleton-shimmer {
   0% { background-position: -400px 0; }
