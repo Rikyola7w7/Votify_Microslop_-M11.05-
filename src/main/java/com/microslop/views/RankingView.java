@@ -333,17 +333,21 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         var card = new Div();
         card.addClassName("votify-card-static");
         card.setWidthFull();
-        card.getStyle().set("padding", "1.5rem 2rem");
+        card.getStyle()
+            .set("padding", "1.5rem 2rem")
+            .set("overflow", "visible");
 
         var content = new HorizontalLayout();
         content.setWidthFull();
         content.setAlignItems(FlexComponent.Alignment.CENTER);
         content.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         content.setPadding(false);
+        content.getStyle().set("overflow", "visible");
 
         var leftSection = new VerticalLayout();
         leftSection.setPadding(false);
         leftSection.setSpacing(false);
+        leftSection.getStyle().set("overflow", "visible");
 
         var nameRow = new HorizontalLayout();
         nameRow.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -352,28 +356,31 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         nameRow.setWidth("100%");
         nameRow.getStyle()
             .set("flex-wrap", "wrap")
-            .set("padding-bottom", "6px")
+            .set("overflow", "visible")
             .set("height", "auto");
 
         var competitionName = new Span(currentCompetition.getName());
         competitionName.getStyle()
             .set("font-size", "1.2rem")
             .set("font-weight", "700")
-            .set("line-height", "1.4")
+            .set("line-height", "1.5")
+            .set("overflow", "visible")
             .set("color", "var(--text-primary)");
 
         var separator = new Span("\u203A");
         separator.getStyle()
             .set("color", "var(--text-muted)")
             .set("font-size", "1.2rem")
-            .set("line-height", "1.4")
+            .set("line-height", "1.5")
+            .set("overflow", "visible")
             .set("flex-shrink", "0");
 
         var categoryName = new Span(currentCategory.getName());
         categoryName.getStyle()
             .set("font-size", "1.2rem")
             .set("font-weight", "600")
-            .set("line-height", "1.4")
+            .set("line-height", "1.5")
+            .set("overflow", "visible")
             .set("color", "var(--primary)");
 
         nameRow.add(competitionName, separator, categoryName);
@@ -393,24 +400,28 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         datesRow.setPadding(false);
         datesRow.getStyle()
             .set("margin-top", "0.5rem")
-            .set("height", "auto");
+            .set("height", "auto")
+            .set("overflow", "visible");
 
         var startDate = new Span(localizationService.t("ranking.start") + startDateStr);
         startDate.getStyle()
             .set("font-size", "0.9rem")
-            .set("line-height", "1.4")
+            .set("line-height", "1.5")
+            .set("overflow", "visible")
             .set("color", "var(--text-muted)");
 
         var dateSeparator = new Span("|");
         dateSeparator.getStyle()
             .set("color", "var(--border)")
-            .set("line-height", "1.4")
+            .set("line-height", "1.5")
+            .set("overflow", "visible")
             .set("font-size", "0.9rem");
 
         var endDate = new Span(localizationService.t("ranking.end") + endDateStr);
         endDate.getStyle()
             .set("font-size", "0.9rem")
-            .set("line-height", "1.4")
+            .set("line-height", "1.5")
+            .set("overflow", "visible")
             .set("color", "var(--text-muted)");
 
         datesRow.add(startDate, dateSeparator, endDate);

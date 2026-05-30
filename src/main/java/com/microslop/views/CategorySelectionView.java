@@ -86,7 +86,19 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             return;
         }
 
-        getUI().ifPresent(ui -> ui.getPage().executeJs("window.scrollTo(0, 0);"));
+        getUI().ifPresent(ui -> ui.getPage().executeJs(
+            "var targets = [window, document.documentElement, document.body];" +
+            "targets.forEach(function(t) { if (t) { if (typeof t.scrollTo === 'function') t.scrollTo(0, 0); t.scrollTop = 0; } });" +
+            "var al = document.querySelector('vaadin-app-layout');" +
+            "if (al) {" +
+            "  al.scrollTop = 0;" +
+            "  if (typeof al.scrollTo === 'function') al.scrollTo(0, 0);" +
+            "  if (al.shadowRoot) {" +
+            "    var part = al.shadowRoot.querySelector('[part=\"content\"]');" +
+            "    if (part) { part.scrollTop = 0; if (typeof part.scrollTo === 'function') part.scrollTo(0, 0); }" +
+            "  }" +
+            "}"
+        ));
 
         try {
             this.currentCompetition = competitionService.getByIdOrFail(competitionId);
@@ -389,7 +401,17 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             "    setTimeout(function() {" +
             "      l.remove();" +
             "      if (g) g.classList.add('votify-content-ready');" +
-            "      window.scrollTo(0, 0);" +
+            "      var targets = [window, document.documentElement, document.body];" +
+            "      targets.forEach(function(t) { if (t) { if (typeof t.scrollTo === 'function') t.scrollTo(0, 0); t.scrollTop = 0; } });" +
+            "      var al = document.querySelector('vaadin-app-layout');" +
+            "      if (al) {" +
+            "        al.scrollTop = 0;" +
+            "        if (typeof al.scrollTo === 'function') al.scrollTo(0, 0);" +
+            "        if (al.shadowRoot) {" +
+            "          var part = al.shadowRoot.querySelector('[part=\"content\"]');" +
+            "          if (part) { part.scrollTop = 0; if (typeof part.scrollTo === 'function') part.scrollTo(0, 0); }" +
+            "        }" +
+            "      }" +
             "    }, 200);" +
             "  }" +
             "}, 750)");
