@@ -118,11 +118,9 @@ public interface VoteRepository extends JpaRepository<Vote, Long>, JpaSpecificat
 
     @Query("""
         SELECT v.project.id, COALESCE(SUM(v.points), 0) FROM Vote v
+        JOIN com.microslop.entity.Judge j ON j.user = v.user AND j.competition.id = :competitionId
         WHERE v.project.id IN :projectIds
         AND v.category.id = :categoryId
-        AND v.user.id IN (
-            SELECT j.user.id FROM Judge j WHERE j.competition.id = :competitionId
-        )
         GROUP BY v.project.id
         """)
     List<Object[]> countJudgeVotesByProjectIdsAndCategory(@Param("projectIds") List<Long> projectIds,
@@ -131,11 +129,10 @@ public interface VoteRepository extends JpaRepository<Vote, Long>, JpaSpecificat
 
     @Query("""
         SELECT v.project.id, COALESCE(SUM(v.points), 0) FROM Vote v
+        LEFT JOIN com.microslop.entity.Judge j ON j.user = v.user AND j.competition.id = :competitionId
         WHERE v.project.id IN :projectIds
         AND v.category.id = :categoryId
-        AND v.user.id NOT IN (
-            SELECT j.user.id FROM Judge j WHERE j.competition.id = :competitionId
-        )
+        AND j.id IS NULL
         GROUP BY v.project.id
         """)
     List<Object[]> countPopularVotesByProjectIdsAndCategory(@Param("projectIds") List<Long> projectIds,
@@ -144,11 +141,9 @@ public interface VoteRepository extends JpaRepository<Vote, Long>, JpaSpecificat
 
     @Query("""
         SELECT COALESCE(SUM(v.points), 0) FROM Vote v
+        JOIN com.microslop.entity.Judge j ON j.user = v.user AND j.competition.id = :competitionId
         WHERE v.project.id = :projectId
         AND v.category.id = :categoryId
-        AND v.user.id IN (
-            SELECT j.user.id FROM Judge j WHERE j.competition.id = :competitionId
-        )
         """)
     long countJudgeVotesByProjectAndCategory(@Param("projectId") Long projectId,
                                              @Param("categoryId") Long categoryId,
@@ -156,11 +151,10 @@ public interface VoteRepository extends JpaRepository<Vote, Long>, JpaSpecificat
 
     @Query("""
         SELECT COALESCE(SUM(v.points), 0) FROM Vote v
+        LEFT JOIN com.microslop.entity.Judge j ON j.user = v.user AND j.competition.id = :competitionId
         WHERE v.project.id = :projectId
         AND v.category.id = :categoryId
-        AND v.user.id NOT IN (
-            SELECT j.user.id FROM Judge j WHERE j.competition.id = :competitionId
-        )
+        AND j.id IS NULL
         """)
     long countPopularVotesByProjectAndCategory(@Param("projectId") Long projectId,
                                                @Param("categoryId") Long categoryId,
