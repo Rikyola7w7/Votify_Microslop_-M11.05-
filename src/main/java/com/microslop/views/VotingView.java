@@ -569,17 +569,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             int remainingVotes = getAvailableVotes(selectedCategory);
             boolean isLastVote = remainingVotes <= 0;
 
-            if (!isLastVote) {
-                if (remainingVotes <= 0) {
-                    maxVotesLabel.setText(localizationService.t("voting.no votes remaining"));
-                } else {
-                    String votesText = remainingVotes == 1
-                        ? localizationService.t("voting.votesleft")
-                        : localizationService.t("voting.votesleft.plural");
-                    maxVotesLabel.setText(localizationService.t("voting.youhave") + remainingVotes + votesText);
-                }
-                maxVotesLabel.getStyle().set("animation", "vote-success-pulse 0.4s ease");
-            }
+            updateMaxVotesLabel(selectedCategory);
 
             Runnable afterAnimation = () -> {
                 if (isLastVote) {
@@ -593,7 +583,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 VoteSuccessAnimation overlay = new VoteSuccessAnimation(afterAnimation);
                 getUI().ifPresent(ui -> ui.add(overlay));
             } else {
-                updateMaxVotesLabel(selectedCategory);
                 VoteQuickAnimation quick = new VoteQuickAnimation(remainingVotes, afterAnimation);
                 getUI().ifPresent(ui -> ui.add(quick));
             }
@@ -656,7 +645,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 () -> {
                     removeAll();
                     buildUi();
-                }
+                },
+                localizationService
             );
             dialog.open();
 

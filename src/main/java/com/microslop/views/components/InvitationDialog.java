@@ -2,6 +2,7 @@ package com.microslop.views.components;
 
 import com.microslop.entity.Invitation;
 import com.microslop.service.InvitationService;
+import com.microslop.service.LocalizationService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -17,19 +18,22 @@ public class InvitationDialog extends Dialog {
     private final InvitationService invitationService;
     private final Long invitationId;
     private final Runnable onComplete;
+    private final LocalizationService localizationService;
 
-    public InvitationDialog(InvitationService invitationService, Long invitationId, Runnable onComplete) {
+    public InvitationDialog(InvitationService invitationService, Long invitationId, Runnable onComplete,
+                            LocalizationService localizationService) {
         this.invitationService = invitationService;
         this.invitationId = invitationId;
         this.onComplete = onComplete;
+        this.localizationService = localizationService;
 
-        setHeaderTitle("Project Invitation");
+        setHeaderTitle(localizationService.t("dialog.invitation.title"));
         setWidth("400px");
         getElement().getStyle().set("animation", "fade-in-scale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards");
 
         Invitation invitation = invitationService.getInvitation(invitationId).orElse(null);
         if (invitation == null) {
-            add("Invitation not found.");
+            add(localizationService.t("dialog.invitation.notfound"));
             return;
         }
 
@@ -43,7 +47,7 @@ public class InvitationDialog extends Dialog {
         content.setSpacing(true);
         content.setWidthFull();
 
-        Span projectLabel = new Span("Project");
+        Span projectLabel = new Span(localizationService.t("dialog.invitation.project"));
         projectLabel.getStyle()
             .set("font-weight", "600")
             .set("font-size", "0.85rem")
@@ -54,7 +58,7 @@ public class InvitationDialog extends Dialog {
             .set("font-size", "1.1rem")
             .set("font-weight", "700");
 
-        Span fromLabel = new Span("Invited by");
+        Span fromLabel = new Span(localizationService.t("dialog.invitation.invitedby"));
         fromLabel.getStyle()
             .set("font-weight", "600")
             .set("font-size", "0.85rem")
@@ -64,7 +68,7 @@ public class InvitationDialog extends Dialog {
         fromName.getStyle()
             .set("font-size", "1rem");
 
-        Span competitionLabel = new Span("Competition");
+        Span competitionLabel = new Span(localizationService.t("dialog.invitation.competition"));
         competitionLabel.getStyle()
             .set("font-weight", "600")
             .set("font-size", "0.85rem")
@@ -104,15 +108,15 @@ public class InvitationDialog extends Dialog {
         footer.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
         footer.setSpacing(true);
 
-        Button closeBtn = new Button("Cancel", e -> close());
+        Button closeBtn = new Button(localizationService.t("dialog.invitation.cancel"), e -> close());
         closeBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         if (invitation.isPending()) {
-            Button acceptBtn = new Button("Accept", e -> handleAction(true));
+            Button acceptBtn = new Button(localizationService.t("dialog.invitation.accept"), e -> handleAction(true));
             acceptBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
             acceptBtn.getStyle().set("cursor", "pointer");
 
-            Button refuseBtn = new Button("Reject", e -> handleAction(false));
+            Button refuseBtn = new Button(localizationService.t("dialog.invitation.reject"), e -> handleAction(false));
             refuseBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
             refuseBtn.getStyle().set("cursor", "pointer");
 
@@ -128,11 +132,11 @@ public class InvitationDialog extends Dialog {
         try {
             if (accept) {
                 invitationService.acceptInvitation(invitationId);
-                Notification.show("Invitation accepted!", 3000, Notification.Position.MIDDLE)
+                Notification.show(localizationService.t("dialog.invitation.accepted"), 3000, Notification.Position.MIDDLE)
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             } else {
                 invitationService.refuseInvitation(invitationId);
-                Notification.show("Invitation refused.", 3000, Notification.Position.MIDDLE)
+                Notification.show(localizationService.t("dialog.invitation.refused"), 3000, Notification.Position.MIDDLE)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
             close();
@@ -140,7 +144,7 @@ public class InvitationDialog extends Dialog {
                 onComplete.run();
             }
         } catch (Exception e) {
-            Notification.show("Error: " + e.getMessage(), 4000, Notification.Position.MIDDLE)
+            Notification.show(localizationService.t("dialog.invitation.error") + e.getMessage(), 4000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }

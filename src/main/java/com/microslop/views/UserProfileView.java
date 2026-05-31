@@ -75,7 +75,7 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
             .set("flex-shrink", "0")
             .set("position", "relative");
 
-        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
+        Button backButton = new Button(localizationService.t("profile.back"), new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
         backButton.getStyle()
             .set("position", "absolute")
@@ -166,7 +166,7 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
 
         secondaryButtons.add(logoutButton, deleteButton);
 
-        Button helpButton = new Button("Help & FAQ", VaadinIcon.QUESTION_CIRCLE_O.create(), e -> getUI().ifPresent(ui -> ui.navigate("help")));
+        Button helpButton = new Button(localizationService.t("profile.helpfaq"), VaadinIcon.QUESTION_CIRCLE_O.create(), e -> getUI().ifPresent(ui -> ui.navigate("help")));
         helpButton.addClassName("votify-btn-secondary");
         helpButton.setWidth("100%");
         helpButton.setHeight("44px");
@@ -277,10 +277,10 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
             .set("display", "block")
             .set("margin-bottom", "16px");
 
-        PasswordField passwordField = new PasswordField("Confirm your password");
+        PasswordField passwordField = new PasswordField(localizationService.t("profile.confirmpassword"));
         passwordField.setWidthFull();
         passwordField.addClassName("votify-input");
-        passwordField.setPlaceholder("Enter your password");
+        passwordField.setPlaceholder(localizationService.t("profile.enterpassword"));
         passwordField.getStyle().set("margin-bottom", "20px");
 
         Button cancelButton = new Button(localizationService.t("profile.cancel"), e -> dialog.close());
@@ -290,7 +290,7 @@ public class UserProfileView extends VerticalLayout implements BeforeEnterObserv
 
         Button confirmButton = new Button(localizationService.t("profile.delete"), VaadinIcon.TRASH.create(), e -> {
             if (!userService.verifyCurrentPassword(passwordField.getValue())) {
-                Notification.show("Incorrect password");
+                Notification.show(localizationService.t("profile.incorrectpassword"));
                 passwordField.clear();
                 passwordField.focus();
                 return;

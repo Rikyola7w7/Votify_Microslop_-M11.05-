@@ -8,6 +8,7 @@ import com.microslop.service.ChecklistVoteService;
 import com.microslop.service.ProjectService;
 import com.microslop.service.CompetitionService;
 import com.microslop.service.VoteService;
+import com.microslop.service.LocalizationService;
 import com.microslop.views.components.PodiumCardComponent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -45,6 +46,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     private final VoteService        voteService;
     private final ChecklistVoteService checklistVoteService;
     private final UserService userService;
+    private final LocalizationService localizationService;
 
     // ── State ────────────────────────────────────────────────────────────────
 
@@ -65,12 +67,14 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
                            ProjectService projectService,
                            VoteService voteService,
                            ChecklistVoteService checklistVoteService,
-                           UserService userService) {
+                           UserService userService,
+                           LocalizationService localizationService) {
         this.competitionService = competitionService;
         this.projectService     = projectService;
         this.voteService        = voteService;
         this.checklistVoteService = checklistVoteService;
         this.userService = userService;
+        this.localizationService = localizationService;
 
         setSizeFull();
         setPadding(false);
@@ -95,12 +99,10 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
     private void buildUi() {
         var competition = competitionService.getByIdOrFailWithCategories(competitionId);
         selectedCategoryId = null;  // Reset to "General"
-        isChecklistMode = "CHECKLIST".equalsIgnoreCase(competition.getVoteType());
-        isScaleMode = "SCALE".equalsIgnoreCase(competition.getVoteType());
-
-        if (!isChecklistMode) {
-            add(buildCategoryFilter(competition.getCategories()));
-        }
+        isChecklistMode = false;
+        isScaleMode = false;
+ 
+        add(buildCategoryFilter(competition.getCategories()));
         updateRanking();
     }
 
@@ -117,7 +119,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         filterContainer.setPadding(true);
         filterContainer.setSpacing(false);
 
-        var label = new Span("Category:");
+        var label = new Span(localizationService.t("compview.category"));
         label.getStyle()
             .set("font-weight", "600")
             .set("color", "#333")
@@ -125,29 +127,33 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
 
         var comboBox = new ComboBox<String>();
         comboBox.setWidth("300px");
-        comboBox.setPlaceholder("Select a category");
+        comboBox.setPlaceholder(localizationService.t("compview.selectcategory"));
         comboBox.setClearButtonVisible(false);
 
         // Build category items: "General" + all categories
+        String general = localizationService.t("compview.general");
         List<String> items = new java.util.ArrayList<>();
-        items.add("General");  // First item is "General"
+        items.add(general);  // First item is "General"
         for (Category cat : categories) {
             items.add(cat.getName());
         }
         comboBox.setItems(items);
-        comboBox.setValue("General");
+        comboBox.setValue(general);
 
-        // When selection changes, update ranking
         comboBox.addValueChangeListener(event -> {
             String selectedValue = event.getValue();
-            if (selectedValue == null || "General".equals(selectedValue)) {
+            if (selectedValue == null || general.equals(selectedValue)) {
                 selectedCategoryId = null;
-                comboBox.setValue("General");  // Ensure General is always selected if null
+                isChecklistMode = false;
+                isScaleMode = false;
+                comboBox.setValue(general);  // Ensure General is always selected if null
             } else {
                 // Find category ID by name
                 for (Category cat : categories) {
                     if (cat.getName().equals(selectedValue)) {
                         selectedCategoryId = cat.getId();
+                        isChecklistMode = "CHECKLIST".equalsIgnoreCase(cat.getVoteType());
+                        isScaleMode = "SCALE".equalsIgnoreCase(cat.getVoteType());
                         break;
                     }
                 }
@@ -196,10 +202,10 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
         body.getStyle().set("padding", "2rem 1rem");
 
         // ── Vote button ─────────────────────────────────────────────────────
-        Button voteButton = new Button("Vote for Projects", new Icon(VaadinIcon.THUMBS_UP));
+        Button voteButton = new Button(localizationService.t("compview.vote"), new Icon(VaadinIcon.THUMBS_UP));
         voteButton.addClassName("votify-btn-primary");
         voteButton.getStyle().set("margin-bottom", "1rem");
-        voteButton.setTooltipText("Go to the voting page for this competition");
+        voteButton.setTooltipText(localizationService.t("compview.votetooltip"));
         voteButton.addClickListener(e -> {
             if (userService.isLoggedIn()) {
                 getUI().ifPresent(ui -> ui.navigate("competition/" + competitionId + "/vote"));
@@ -269,7 +275,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
                     : voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
             }
 
-            var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, isChecklistMode, isScaleMode, avgScore);
+            var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, isChecklistMode, isScaleMode, avgScore, localizationService);
             podiumSection.add(podiumCard);
         }
     }
@@ -281,7 +287,7 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
 
         if (ranking.size() <= 3) return;
 
-        var labelPosition4 = new Span("Position 4");
+        var labelPosition4 = new Span(localizationService.t("compview.position4"));
         labelPosition4.getStyle()
             .set("font-weight", "700")
             .set("font-size", "1rem")
@@ -354,12 +360,12 @@ public class CompetitionView extends VerticalLayout implements HasUrlParameter<L
 
         String voteLabel;
         if (isChecklistMode) {
-            voteLabel = "Total Checks: " + formatNumber(totalVotes);
+            voteLabel = localizationService.t("compview.totalchecks") + formatNumber(totalVotes);
         } else if (isScaleMode) {
             var competition = competitionService.getByIdOrFail(competitionId);
-            voteLabel = String.format("Avg. Score: %.1f/10", avgScore);
+            voteLabel = String.format(localizationService.t("compview.avgscore"), avgScore);
         } else {
-            voteLabel = "Total Votes: " + formatNumber(totalVotes);
+            voteLabel = localizationService.t("compview.totalvotes") + formatNumber(totalVotes);
         }
         var votes = new Span(voteLabel);
         votes.getStyle()

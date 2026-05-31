@@ -5,6 +5,7 @@ import com.microslop.entity.Certificate;
 import com.microslop.entity.User;
 import com.microslop.service.CertificateService;
 import com.microslop.service.CertificatePdfGenerator;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.UserService;
 import com.microslop.views.components.CertificateCardComponent;
 import com.vaadin.flow.component.button.Button;
@@ -38,16 +39,18 @@ public class CertificatesView extends VerticalLayout implements BeforeEnterObser
     private final CertificateService certificateService;
     private final CertificatePdfGenerator pdfGenerator;
     private final UserService userService;
+    private final LocalizationService localizationService;
     private Div certificatesContainer;
     private List<Certificate> allCertificates;
     private ComboBox<String> typeFilter;
     private ComboBox<String> competitionFilter;
     private TextField searchField;
 
-    public CertificatesView(CertificateService certificateService, CertificatePdfGenerator pdfGenerator, UserService userService) {
+    public CertificatesView(CertificateService certificateService, CertificatePdfGenerator pdfGenerator, UserService userService, LocalizationService localizationService) {
         this.certificateService = certificateService;
         this.pdfGenerator = pdfGenerator;
         this.userService = userService;
+        this.localizationService = localizationService;
         this.allCertificates = new ArrayList<>();
         initializeView();
     }
@@ -72,18 +75,18 @@ public class CertificatesView extends VerticalLayout implements BeforeEnterObser
             .set("background", "var(--surface)")
             .set("border-bottom", "1px solid var(--border-color)");
 
-        typeFilter = new ComboBox<>("Certificate Type");
-        typeFilter.setItems("All", "Participant", "Winner");
-        typeFilter.setValue("All");
+        typeFilter = new ComboBox<>(localizationService.t("cert.type"));
+        typeFilter.setItems(localizationService.t("cert.all"), localizationService.t("cert.participant"), localizationService.t("cert.winner"));
+        typeFilter.setValue(localizationService.t("cert.all"));
         typeFilter.setWidth("200px");
         typeFilter.addValueChangeListener(e -> filterAndDisplayCertificates());
 
-        competitionFilter = new ComboBox<>("Competition");
+        competitionFilter = new ComboBox<>(localizationService.t("cert.competition"));
         competitionFilter.setWidth("200px");
         competitionFilter.addValueChangeListener(e -> filterAndDisplayCertificates());
 
-        searchField = new TextField("Search");
-        searchField.setPlaceholder("Search by competition or project...");
+        searchField = new TextField(localizationService.t("cert.search"));
+        searchField.setPlaceholder(localizationService.t("cert.search.placeholder"));
         searchField.setPrefixComponent(new Icon(VaadinIcon.SEARCH));
         searchField.getStyle().set("flex", "1");
         searchField.addValueChangeListener(e -> filterAndDisplayCertificates());
@@ -101,8 +104,8 @@ public class CertificatesView extends VerticalLayout implements BeforeEnterObser
 
         Button refreshBtn = new Button(new Icon(VaadinIcon.REFRESH));
         refreshBtn.addThemeVariants(ButtonVariant.LUMO_ICON);
-        refreshBtn.getElement().setAttribute("aria-label", "Refresh certificates");
-        refreshBtn.getElement().setAttribute("title", "Refresh");
+        refreshBtn.getElement().setAttribute("aria-label", localizationService.t("cert.refresh.label"));
+        refreshBtn.getElement().setAttribute("title", localizationService.t("cert.refresh.title"));
         refreshBtn.addClickListener(e -> loadCertificates());
         refreshBtn.getStyle().set("margin-bottom", "8px");
 
@@ -124,7 +127,7 @@ public class CertificatesView extends VerticalLayout implements BeforeEnterObser
         try {
             User currentUser = getCurrentUser();
             if (currentUser == null) {
-                showError("Unable to load current user");
+                showError(localizationService.t("cert.erroruser"));
                 return;
             }
 
@@ -132,18 +135,18 @@ public class CertificatesView extends VerticalLayout implements BeforeEnterObser
             
             // Update competition filter options
             List<String> competitions = new ArrayList<>();
-            competitions.add("All");
+            competitions.add(localizationService.t("cert.all"));
             allCertificates.stream()
                 .map(cert -> cert.getCompetition().getName())
                 .distinct()
                 .forEach(competitions::add);
             competitionFilter.setItems(competitions);
-            competitionFilter.setValue("All");
+            competitionFilter.setValue(localizationService.t("cert.all"));
 
             filterAndDisplayCertificates();
-            showSuccess("Certificates loaded successfully");
+            showSuccess(localizationService.t("cert.loaded"));
         } catch (Exception e) {
-            showError("Error loading certificates: " + e.getMessage());
+            showError(localizationService.t("cert.errorloading") + e.getMessage());
         }
     }
 
@@ -152,12 +155,16 @@ public class CertificatesView extends VerticalLayout implements BeforeEnterObser
         String competitionValue = competitionFilter.getValue();
         String searchValue = searchField.getValue().toLowerCase();
 
+        String allStr = localizationService.t("cert.all");
+        String winnerStr = localizationService.t("cert.winner");
+        String participantStr = localizationService.t("cert.participant");
+
         List<Certificate> filtered = allCertificates.stream()
             .filter(cert -> {
                 // Type filter
-                if (typeValue != null && !typeValue.equals("All")) {
-                    boolean isWinnerFilter = typeValue.equals("Winner");
-                    boolean isParticipantFilter = typeValue.equals("Participant");
+                if (typeValue != null && !typeValue.equals(allStr)) {
+                    boolean isWinnerFilter = typeValue.equals(winnerStr);
+                    boolean isParticipantFilter = typeValue.equals(participantStr);
                     
                     if (isWinnerFilter && !cert.isWinnerCertificate()) {
                         return false;
@@ -167,7 +174,7 @@ public class CertificatesView extends VerticalLayout implements BeforeEnterObser
                 }
                 
                 // Competition filter
-                if (competitionValue != null && !competitionValue.equals("All")) {
+                if (competitionValue != null && !competitionValue.equals(allStr)) {
                     if (!cert.getCompetition().getName().equals(competitionValue)) {
                         return false;
                     }
@@ -200,7 +207,7 @@ public class CertificatesView extends VerticalLayout implements BeforeEnterObser
             Span icon = new Span("📜");
             icon.getStyle().set("font-size", "3rem").set("display", "block").set("margin-bottom", "1rem");
 
-            Span message = new Span("No certificates found");
+            Span message = new Span(localizationService.t("cert.none"));
             message.getStyle()
                 .set("color", "var(--text-muted)")
                 .set("font-size", "16px");
@@ -211,7 +218,8 @@ public class CertificatesView extends VerticalLayout implements BeforeEnterObser
             for (Certificate certificate : certificates) {
                 CertificateCardComponent card = new CertificateCardComponent(
                     certificate,
-                    pdfGenerator
+                    pdfGenerator,
+                    localizationService
                 );
                 certificatesContainer.add(card);
             }

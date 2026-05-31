@@ -463,6 +463,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     private void loadRanking(boolean isJudgesRanking) {
+        this.isJudgesRanking = isJudgesRanking;
         if (rankingContainer == null) return;
 
         rankingContainer.removeAll();
@@ -510,7 +511,11 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             content.add(emptyWrapper);
         } else {
             List<Long> projectIds = ranking.stream().map(Project::getId).toList();
-            voteCounts = voteService.countVotesByProjectIds(projectIds);
+            if (isJudgesRanking) {
+                voteCounts = voteService.countJudgeVotesByProjectIdsAndCategory(projectIds, categoryId, competitionId);
+            } else {
+                voteCounts = voteService.countPopularVotesByProjectIdsAndCategory(projectIds, categoryId, competitionId);
+            }
 
             var podiumSection = new Div();
             podiumSection.setWidthFull();
@@ -539,16 +544,16 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                     podiumSection.add(buildModifiablePodiumWrapper(p, positions[slot], votes));
                 } else if (isChecklistMode) {
                     long totalVotes = checklistVoteService.countChecklistVotesByProject(p.getId());
-                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, true, false, 0.0);
+                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, true, false, 0.0, localizationService);
                     podiumSection.add(podiumCard);
                 } else if (isScaleMode) {
                     long totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
                     double avgScore = voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
-                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, false, true, avgScore);
+                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, false, true, avgScore, localizationService);
                     podiumSection.add(podiumCard);
                 } else {
-                    long totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
-                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes);
+                    long totalVotes = voteCounts.getOrDefault(p.getId(), 0L);
+                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, localizationService);
                     podiumSection.add(podiumCard);
                 }
             }
@@ -576,7 +581,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                           double scaleAvg = voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
                           listSection.add(buildListRow(p, i + 1, staggerIndex, scaleVotes, scaleAvg));
                       } else {
-                          long normalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+                          long normalVotes = voteCounts.getOrDefault(p.getId(), 0L);
                           listSection.add(buildListRow(p, i + 1, staggerIndex, normalVotes));
                       }
                   }
@@ -608,7 +613,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("align-items", "center")
             .set("position", "relative");
 
-        var podiumCard = new PodiumCardComponent(project, position, votes);
+        var podiumCard = new PodiumCardComponent(project, position, votes, localizationService);
         wrapper.add(podiumCard);
         wrapper.add(buildActionButtons(project));
 

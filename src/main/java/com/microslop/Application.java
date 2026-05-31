@@ -9,7 +9,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.page.AppShellConfigurator;
+import com.vaadin.flow.component.page.Push;
 
+@Push
 @SpringBootApplication
 @EnableScheduling
 @EnableCaching

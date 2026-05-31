@@ -68,7 +68,7 @@ public class NotificationView extends VerticalLayout {
 
         long unreadCount = notificationService.getUnreadCountForCurrentUser();
         if (unreadCount > 0) {
-            Button markAllReadBtn = new Button("Mark all as read");
+            Button markAllReadBtn = new Button(localizationService.t("notifview.markallread"));
             markAllReadBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
             markAllReadBtn.addClickListener(e -> {
                 notificationService.markAllAsReadForCurrentUser();
@@ -79,14 +79,14 @@ public class NotificationView extends VerticalLayout {
 
         Button refreshBtn = new Button(new Icon(VaadinIcon.REFRESH));
         refreshBtn.addThemeVariants(ButtonVariant.LUMO_ICON);
-        refreshBtn.getElement().setAttribute("aria-label", "Refresh notifications");
-        refreshBtn.getElement().setAttribute("title", "Refresh");
+        refreshBtn.getElement().setAttribute("aria-label", localizationService.t("notifview.refreshlabel"));
+        refreshBtn.getElement().setAttribute("title", localizationService.t("notifview.refresh"));
         refreshBtn.addClickListener(e -> refreshNotifications());
         actions.add(refreshBtn);
 
-        Button deleteAllBtn = new Button("Delete");
+        Button deleteAllBtn = new Button(localizationService.t("notifview.delete"));
         deleteAllBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        deleteAllBtn.getElement().setAttribute("title", "Delete all notifications");
+        deleteAllBtn.getElement().setAttribute("title", localizationService.t("notifview.deleteall"));
         deleteAllBtn.addClickListener(e -> {
             notificationService.deleteAllNotificationsForCurrentUser();
             refreshNotifications();
@@ -113,7 +113,7 @@ public class NotificationView extends VerticalLayout {
                 .set("border-radius", "4px")
                 .set("font-weight", "600");
 
-            String unreadText = unreadCount > 1 ? "unread notifications" : "unread notification";
+            String unreadText = unreadCount > 1 ? localizationService.t("notifview.unread.plural") : localizationService.t("notifview.unread.singular");
             Span unreadLabel = new Span(unreadText);
             unreadLabel.getStyle()
                 .set("color", "var(--text-muted)");
@@ -181,7 +181,7 @@ public class NotificationView extends VerticalLayout {
             .set("font-weight", "500")
             .set("margin-bottom", "8px");
 
-        Span emptySubtext = new Span("You'll see your notifications here when you have any");
+        Span emptySubtext = new Span(localizationService.t("notifview.empty"));
         emptySubtext.getStyle()
             .set("font-size", "14px")
             .set("color", "var(--text-secondary)");

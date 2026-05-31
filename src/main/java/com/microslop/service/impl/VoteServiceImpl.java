@@ -313,6 +313,34 @@ public class VoteServiceImpl implements VoteService, VoteEventSubject {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Long> countJudgeVotesByProjectIdsAndCategory(List<Long> projectIds, Long categoryId, Long competitionId) {
+        if (projectIds == null || projectIds.isEmpty()) return Map.of();
+        return voteRepository.countJudgeVotesByProjectIdsAndCategory(projectIds, categoryId, competitionId).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Long> countPopularVotesByProjectIdsAndCategory(List<Long> projectIds, Long categoryId, Long competitionId) {
+        if (projectIds == null || projectIds.isEmpty()) return Map.of();
+        return voteRepository.countPopularVotesByProjectIdsAndCategory(projectIds, categoryId, competitionId).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countJudgeVotesByProjectAndCategory(Long projectId, Long categoryId, Long competitionId) {
+        return voteRepository.countJudgeVotesByProjectAndCategory(projectId, categoryId, competitionId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countPopularVotesByProjectAndCategory(Long projectId, Long categoryId, Long competitionId) {
+        return voteRepository.countPopularVotesByProjectAndCategory(projectId, categoryId, competitionId);
+    }
+
+    @Override
     public StrategyRegistry getStrategyRegistry() {
         return strategyRegistry;
     }

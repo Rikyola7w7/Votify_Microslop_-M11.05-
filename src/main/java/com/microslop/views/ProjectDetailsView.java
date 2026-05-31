@@ -89,13 +89,13 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
         setSpacing(false);
         getStyle().set("background", "var(--background)");
 
-        Button aiFeedbackBtn = new Button("AI Feedback", new Icon(VaadinIcon.CHART));
+        Button aiFeedbackBtn = new Button(localizationService.t("project.details.aifeedback"), new Icon(VaadinIcon.CHART));
         aiFeedbackBtn.addClassName("votify-btn-primary");
         aiFeedbackBtn.setHeight("40px");
         aiFeedbackBtn.getStyle()
             .set("margin", "16px 40px 0")
             .set("align-self", "flex-start");
-        aiFeedbackBtn.setTooltipText("Get AI-powered feedback and suggestions for your project");
+        aiFeedbackBtn.setTooltipText(localizationService.t("project.details.aifeedback.tooltip"));
         aiFeedbackBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("ai-feedback")));
         add(aiFeedbackBtn);
 

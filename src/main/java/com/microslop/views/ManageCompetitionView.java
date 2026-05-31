@@ -41,6 +41,8 @@ import com.vaadin.flow.router.Route;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.microslop.service.LocalizationService;
+
 @Route(value = ":username/competitions/manage/:competitionId", layout = MainLayout.class)
 @PageTitle("Manage Competition | Votify")
 public class ManageCompetitionView extends VerticalLayout implements BeforeEnterObserver {
@@ -53,6 +55,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     private final NotificationService notificationService;
     private final InvitationService invitationService;
     private final UserRepository userRepository;
+    private final LocalizationService localizationService;
 
     private String currentUsername;
     private Long competitionId;
@@ -75,7 +78,8 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                                   CategoryRepository categoryRepository,
                                   NotificationService notificationService,
                                   InvitationService invitationService,
-                                  UserRepository userRepository) {
+                                  UserRepository userRepository,
+                                  LocalizationService localizationService) {
         this.competitionService = competitionService;
         this.userService = userService;
         this.projectService = projectService;
@@ -84,6 +88,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         this.notificationService = notificationService;
         this.invitationService = invitationService;
         this.userRepository = userRepository;
+        this.localizationService = localizationService;
         setSizeFull();
         setPadding(false);
         setSpacing(false);
@@ -105,7 +110,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         currentUsername = username;
         String loggedInUsername = userService.getCurrentUsername();
         if (loggedInUsername == null || !loggedInUsername.equalsIgnoreCase(currentUsername)) {
-            Notification.show("Access denied.", 3000, Notification.Position.TOP_CENTER)
+            Notification.show(localizationService.t("manage.accessdenied"), 3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
             event.forwardTo("");
             return;
@@ -115,7 +120,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
             competitionId = Long.parseLong(compIdStr);
             competition = competitionService.getByIdOrFail(competitionId);
         } catch (Exception e) {
-            Notification.show("Competition not found", 3000, Notification.Position.TOP_CENTER)
+            Notification.show(localizationService.t("manage.notfound"), 3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
             event.forwardTo(currentUsername + "/competitions");
             return;
@@ -140,7 +145,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
+        Button backButton = new Button(localizationService.t("manage.back"), new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/competitions")));
@@ -159,7 +164,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
             .set("margin", "20px auto 40px auto")
             .set("box-sizing", "border-box");
 
-        Span description = new Span(competition.getDescription() != null && !competition.getDescription().isEmpty() ? competition.getDescription() : "No description available.");
+        Span description = new Span(competition.getDescription() != null && !competition.getDescription().isEmpty() ? competition.getDescription() : localizationService.t("manage.nodescription"));
         description.getStyle()
                 .set("color", "var(--text-muted)")
                 .set("font-size", "1rem")
@@ -171,7 +176,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         statusBadge = new Span();
         statusBadge.addClassName("votify-badge");
 
-        Span statusLabel = new Span("Voting Status: ");
+        Span statusLabel = new Span(localizationService.t("manage.votingstatus"));
         statusLabel.getStyle().set("font-weight", "600").set("color", "var(--text-primary)");
 
         HorizontalLayout statusLayout = new HorizontalLayout(statusLabel, statusBadge);
@@ -182,7 +187,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 .set("border-radius", "var(--radius-sm)")
                 .set("margin-bottom", "30px");
 
-        H4 sectionTitle = new H4("Voting Window Settings");
+        H4 sectionTitle = new H4(localizationService.t("manage.votingwindow"));
         sectionTitle.getStyle()
                 .set("color", "var(--dark)")
                 .set("font-size", "1.2rem")
@@ -193,22 +198,22 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         datesLayout.setWidthFull();
         datesLayout.getStyle().set("flex-wrap", "wrap").set("gap", "20px");
 
-        startDatePicker = new DateTimePicker("Start Date & Time");
+        startDatePicker = new DateTimePicker(localizationService.t("manage.startdatetime"));
         startDatePicker.addClassName("votify-input");
         startDatePicker.getStyle().set("flex", "1 1 250px");
         startDatePicker.setValue(competition.getStartDate());
 
-        endDatePicker = new DateTimePicker("End Date & Time");
+        endDatePicker = new DateTimePicker(localizationService.t("manage.enddatetime"));
         endDatePicker.addClassName("votify-input");
         endDatePicker.getStyle().set("flex", "1 1 250px");
         endDatePicker.setValue(competition.getEndDate());
 
         datesLayout.add(startDatePicker, endDatePicker);
 
-        Button saveDatesButton = new Button("Save", new Icon(VaadinIcon.CALENDAR_CLOCK));
+        Button saveDatesButton = new Button(localizationService.t("manage.save"), new Icon(VaadinIcon.CALENDAR_CLOCK));
         saveDatesButton.addClassName("votify-btn-primary");
         saveDatesButton.getStyle().set("margin-top", "20px");
-        saveDatesButton.setTooltipText("Save changes to the voting window dates");
+        saveDatesButton.setTooltipText(localizationService.t("manage.savetooltip"));
         saveDatesButton.addClickListener(e -> saveDates());
         saveDatesButton.addClickShortcut(Key.ENTER);
 
@@ -226,34 +231,34 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         actionsLayout.setWidthFull();
         actionsLayout.setJustifyContentMode(JustifyContentMode.START);
 
-        activateButton = new Button("Activate Competition", new Icon(VaadinIcon.ROCKET));
+        activateButton = new Button(localizationService.t("manage.activate"), new Icon(VaadinIcon.ROCKET));
         activateButton.addClassName("votify-btn-primary");
         activateButton.getStyle().set("flex", "1 1 auto");
-        activateButton.setTooltipText("Make the competition live and visible to participants");
+        activateButton.setTooltipText(localizationService.t("manage.activatetooltip"));
         activateButton.addClickListener(e -> activateCompetition());
 
-        votingToggle = new Button("Voting: OFF", new Icon(VaadinIcon.BAN));
+        votingToggle = new Button(localizationService.t("manage.votingoff"), new Icon(VaadinIcon.BAN));
         votingToggle.addClassName("votify-btn-secondary");
         votingToggle.getStyle().set("flex", "1 1 auto");
-        votingToggle.setTooltipText("Toggle voting open or closed for participants");
+        votingToggle.setTooltipText(localizationService.t("manage.votingtooltip"));
         votingToggle.addClickListener(e -> toggleVoting());
 
-        pauseToggle = new Button("Pause Competition", new Icon(VaadinIcon.PAUSE));
+        pauseToggle = new Button(localizationService.t("manage.pause"), new Icon(VaadinIcon.PAUSE));
         pauseToggle.addClassName("votify-btn-danger");
         pauseToggle.getStyle().set("flex", "1 1 auto");
-        pauseToggle.setTooltipText("Temporarily halt the competition, stopping all activity");
+        pauseToggle.setTooltipText(localizationService.t("manage.pausetooltip"));
         pauseToggle.addClickListener(e -> togglePause());
 
-        endNowButton = new Button("End Voting Now", new Icon(VaadinIcon.STOP));
+        endNowButton = new Button(localizationService.t("manage.endvoting"), new Icon(VaadinIcon.STOP));
         endNowButton.addClassName("votify-btn-danger");
         endNowButton.getStyle().set("flex", "1 1 auto");
-        endNowButton.setTooltipText("Immediately conclude the voting period");
+        endNowButton.setTooltipText(localizationService.t("manage.endvotingtooltip"));
         endNowButton.addClickListener(e -> endVotingNow());
 
-        reopenButton = new Button("Reopen Voting", new Icon(VaadinIcon.REFRESH));
+        reopenButton = new Button(localizationService.t("manage.reopenvoting"), new Icon(VaadinIcon.REFRESH));
         reopenButton.addClassName("votify-btn-primary");
         reopenButton.getStyle().set("flex", "1 1 auto");
-        reopenButton.setTooltipText("Start a new voting period for a concluded competition");
+        reopenButton.setTooltipText(localizationService.t("manage.reopentooltip"));
         reopenButton.addClickListener(e -> reopenVoting());
 
         actionsLayout.add(activateButton, votingToggle, pauseToggle, endNowButton, reopenButton);
@@ -275,7 +280,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
 
         switch (status) {
             case "DRAFT" -> {
-                statusBadge.setText("DRAFT");
+                statusBadge.setText(localizationService.t("manage.status.draft"));
                 statusBadge.removeClassName("votify-badge-active");
                 statusBadge.removeClassName("votify-badge-paused");
                 statusBadge.removeClassName("votify-badge-finished");
@@ -287,18 +292,18 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 reopenButton.setVisible(false);
             }
             case "VOTING_OPEN" -> {
-                statusBadge.setText("VOTING OPEN");
+                statusBadge.setText(localizationService.t("manage.status.votingopen"));
                 statusBadge.removeClassName("votify-badge-draft");
                 statusBadge.removeClassName("votify-badge-paused");
                 statusBadge.removeClassName("votify-badge-finished");
                 statusBadge.addClassName("votify-badge-active");
                 activateButton.setVisible(false);
-                votingToggle.setText("Voting: ON");
+                votingToggle.setText(localizationService.t("manage.votingon"));
                 votingToggle.setIcon(new Icon(VaadinIcon.CHECK_CIRCLE));
                 votingToggle.removeClassName("votify-btn-secondary");
                 votingToggle.addClassName("votify-btn-primary");
                 votingToggle.setVisible(true);
-                pauseToggle.setText("Pause Competition");
+                pauseToggle.setText(localizationService.t("manage.pause"));
                 pauseToggle.setIcon(new Icon(VaadinIcon.PAUSE));
                 pauseToggle.removeClassName("votify-btn-primary");
                 pauseToggle.addClassName("votify-btn-danger");
@@ -307,16 +312,16 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 reopenButton.setVisible(false);
             }
             case "ACTIVE" -> {
-                statusBadge.setText("ACTIVE");
+                statusBadge.setText(localizationService.t("manage.status.active"));
                 statusBadge.removeClassName("votify-badge-draft");
                 statusBadge.removeClassName("votify-badge-paused");
                 statusBadge.removeClassName("votify-badge-finished");
                 statusBadge.addClassName("votify-badge-active");
                 activateButton.setVisible(false);
-                votingToggle.setText("Voting: OFF");
+                votingToggle.setText(localizationService.t("manage.votingoff"));
                 votingToggle.setIcon(new Icon(VaadinIcon.BAN));
                 votingToggle.setVisible(true);
-                pauseToggle.setText("Pause Competition");
+                pauseToggle.setText(localizationService.t("manage.pause"));
                 pauseToggle.setIcon(new Icon(VaadinIcon.PAUSE));
                 pauseToggle.removeClassName("votify-btn-primary");
                 pauseToggle.addClassName("votify-btn-danger");
@@ -325,16 +330,16 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 reopenButton.setVisible(false);
             }
             case "PAUSED" -> {
-                statusBadge.setText("PAUSED");
+                statusBadge.setText(localizationService.t("manage.status.paused"));
                 statusBadge.removeClassName("votify-badge-draft");
                 statusBadge.removeClassName("votify-badge-active");
                 statusBadge.removeClassName("votify-badge-finished");
                 statusBadge.addClassName("votify-badge-paused");
                 activateButton.setVisible(false);
-                votingToggle.setText("Voting: OFF");
+                votingToggle.setText(localizationService.t("manage.votingoff"));
                 votingToggle.setIcon(new Icon(VaadinIcon.BAN));
                 votingToggle.setVisible(true);
-                pauseToggle.setText("Resume Competition");
+                pauseToggle.setText(localizationService.t("manage.resume"));
                 pauseToggle.setIcon(new Icon(VaadinIcon.PLAY));
                 pauseToggle.removeClassName("votify-btn-danger");
                 pauseToggle.addClassName("votify-btn-primary");
@@ -343,7 +348,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 reopenButton.setVisible(false);
             }
             case "CONCLUDED" -> {
-                statusBadge.setText("CONCLUDED");
+                statusBadge.setText(localizationService.t("manage.status.concluded"));
                 statusBadge.removeClassName("votify-badge-draft");
                 statusBadge.removeClassName("votify-badge-active");
                 statusBadge.removeClassName("votify-badge-paused");
@@ -355,7 +360,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 reopenButton.setVisible(true);
             }
             case "ARCHIVED" -> {
-                statusBadge.setText("ARCHIVED");
+                statusBadge.setText(localizationService.t("manage.status.archived"));
                 statusBadge.removeClassName("votify-badge-active");
                 statusBadge.removeClassName("votify-badge-paused");
                 statusBadge.removeClassName("votify-badge-finished");
@@ -374,7 +379,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         LocalDateTime end = endDatePicker.getValue();
 
         if (end != null && start != null && end.isBefore(start)) {
-            Notification.show("End date cannot be before start date", 3000, Notification.Position.TOP_CENTER)
+            Notification.show(localizationService.t("manage.enddatebeforestart"), 3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
@@ -383,7 +388,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         competition.setEndDate(end);
 
         competitionService.save(competition);
-        Notification.show("Voting window updated successfully.", 3000, Notification.Position.TOP_CENTER)
+        Notification.show(localizationService.t("manage.votingupdated"), 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         updateUIState();
     }
@@ -391,7 +396,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
     private void activateCompetition() {
         competitionService.activate(competitionId);
         competition = competitionService.getByIdOrFail(competitionId);
-        Notification.show("Competition activated.", 3000, Notification.Position.TOP_CENTER)
+        Notification.show(localizationService.t("manage.activated"), 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         updateUIState();
     }
@@ -401,12 +406,12 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         if (com.microslop.state.CompetitionStates.STATUS_VOTING_OPEN.equals(status)) {
             competitionService.pauseVoting(competitionId);
             competition = competitionService.getByIdOrFail(competitionId);
-            Notification.show("Voting closed.", 3000, Notification.Position.TOP_CENTER)
+            Notification.show(localizationService.t("manage.votingclosed"), 3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         } else {
             competitionService.openVoting(competitionId);
             competition = competitionService.getByIdOrFail(competitionId);
-            Notification.show("Voting opened.", 3000, Notification.Position.TOP_CENTER)
+            Notification.show(localizationService.t("manage.votingopened"), 3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         }
         updateUIState();
@@ -417,12 +422,12 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
         if (com.microslop.state.CompetitionStates.STATUS_PAUSED.equals(status)) {
             competitionService.openVoting(competitionId);
             competition = competitionService.getByIdOrFail(competitionId);
-            Notification.show("Competition resumed.", 3000, Notification.Position.TOP_CENTER)
+            Notification.show(localizationService.t("manage.resumed"), 3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         } else {
             competitionService.pauseVoting(competitionId);
             competition = competitionService.getByIdOrFail(competitionId);
-            Notification.show("Competition paused.", 3000, Notification.Position.TOP_CENTER)
+            Notification.show(localizationService.t("manage.paused"), 3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         }
         updateUIState();
@@ -430,31 +435,27 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
 
     private void endVotingNow() {
         Dialog dialog = new Dialog();
-        dialog.setHeaderTitle("End Voting Now");
+        dialog.setHeaderTitle(localizationService.t("manage.endvotingconfirm"));
 
         VerticalLayout content = new VerticalLayout();
         content.setSpacing(true);
         content.setPadding(false);
 
-        Span message = new Span(
-            "Are you sure you want to end voting now? " +
-            "No more votes will be accepted until voting is reopened. " +
-            "You can reopen voting manually at any time."
-        );
+        Span message = new Span(localizationService.t("manage.endvotingmsg"));
         message.getStyle().set("color", "var(--text-muted)").set("font-size", "0.95rem");
 
-        Button confirmBtn = new Button("Confirm", e -> {
+        Button confirmBtn = new Button(localizationService.t("manage.confirm"), e -> {
             competitionService.conclude(competitionId);
             competition = competitionService.getByIdOrFail(competitionId);
             endDatePicker.setValue(competition.getEndDate());
             dialog.close();
-            Notification.show("Voting has been ended.", 3000, Notification.Position.TOP_CENTER)
+            Notification.show(localizationService.t("manage.votingended"), 3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             updateUIState();
         });
         confirmBtn.addClassName("votify-btn-danger");
 
-        Button cancelBtn = new Button("Cancel", e -> dialog.close());
+        Button cancelBtn = new Button(localizationService.t("manage.cancel"), e -> dialog.close());
         cancelBtn.addClassName("votify-btn-secondary");
 
         dialog.getFooter().add(cancelBtn, confirmBtn);
@@ -465,24 +466,24 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
 
     private void reopenVoting() {
         Dialog dialog = new Dialog();
-        dialog.setHeaderTitle("Reopen Voting");
+        dialog.setHeaderTitle(localizationService.t("manage.reopenvotingconfirm"));
 
         VerticalLayout content = new VerticalLayout();
         content.setSpacing(true);
         content.setPadding(false);
 
-        Span message = new Span("Set a new end date for the voting period:");
+        Span message = new Span(localizationService.t("manage.setnewend"));
         message.getStyle().set("color", "var(--text-muted)").set("font-size", "0.9rem");
 
-        DateTimePicker newEndDatePicker = new DateTimePicker("New End Date & Time");
+        DateTimePicker newEndDatePicker = new DateTimePicker(localizationService.t("manage.newenddatetime"));
         newEndDatePicker.addClassName("votify-input");
         newEndDatePicker.setValue(LocalDateTime.now().plusDays(7));
         newEndDatePicker.setWidthFull();
 
-        Button confirmBtn = new Button("Confirm", e -> {
+        Button confirmBtn = new Button(localizationService.t("manage.confirm"), e -> {
             LocalDateTime newEndDate = newEndDatePicker.getValue();
             if (newEndDate == null || newEndDate.isBefore(LocalDateTime.now())) {
-                Notification.show("Please select a valid future date", 3000, Notification.Position.TOP_CENTER)
+                Notification.show(localizationService.t("manage.validdate"), 3000, Notification.Position.TOP_CENTER)
                         .addThemeVariants(NotificationVariant.LUMO_WARNING);
                 return;
             }
@@ -492,13 +493,13 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
             competition = competitionService.getByIdOrFail(competitionId);
             endDatePicker.setValue(competition.getEndDate());
             dialog.close();
-            Notification.show("Voting reopened until " + newEndDate.toLocalDate(), 3000, Notification.Position.TOP_CENTER)
+            Notification.show(localizationService.t("manage.reopeneduntil") + newEndDate.toLocalDate(), 3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             updateUIState();
         });
         confirmBtn.addClassName("votify-btn-primary");
 
-        Button cancelBtn = new Button("Cancel", e -> dialog.close());
+        Button cancelBtn = new Button(localizationService.t("manage.cancel"), e -> dialog.close());
         cancelBtn.addClassName("votify-btn-secondary");
 
         dialog.getFooter().add(cancelBtn, confirmBtn);
@@ -522,7 +523,7 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
             .set("padding-top", "30px")
             .set("border-top", "1px solid var(--border)");
 
-        H3 sectionTitle = new H3("Pending Project Submissions");
+        H3 sectionTitle = new H3(localizationService.t("manage.pendingsubmissions"));
         sectionTitle.getStyle()
             .set("color", "var(--dark)")
             .set("font-size", "1.2rem")
@@ -552,20 +553,20 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 .set("font-size", "1rem");
 
             String submitterName = submission.getSubmitter() != null
-                ? submission.getSubmitter().getUsername() : "Unknown";
-            Span meta = new Span("Submitted by: " + submitterName);
+                ? submission.getSubmitter().getUsername() : localizationService.t("manage.unknown");
+            Span meta = new Span(localizationService.t("manage.submittedby") + submitterName);
             meta.getStyle()
                 .set("font-size", "0.85rem")
                 .set("color", "var(--text-muted)");
 
             info.add(projectName, meta);
 
-            Button acceptBtn = new Button("Confirm", new Icon(VaadinIcon.CHECK));
+            Button acceptBtn = new Button(localizationService.t("manage.confirm"), new Icon(VaadinIcon.CHECK));
             acceptBtn.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
             acceptBtn.getStyle().set("cursor", "pointer");
             acceptBtn.addClickListener(e -> acceptSubmission(submission));
 
-            Button declineBtn = new Button("Reject", new Icon(VaadinIcon.CLOSE_SMALL));
+            Button declineBtn = new Button(localizationService.t("dialog.invitation.reject"), new Icon(VaadinIcon.CLOSE_SMALL));
             declineBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
             declineBtn.getStyle().set("cursor", "pointer");
             declineBtn.addClickListener(e -> declineSubmission(submission));
@@ -611,10 +612,17 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                                     submission.getSubmitter()
                                 );
 
+                                String notifBody = String.format(
+                                    localizationService.t("manage.projectinvitation.body"),
+                                    submission.getSubmitter().getUsername(),
+                                    submission.getProjectName(),
+                                    competition.getName()
+                                );
+
                                 notificationService.saveAndPublish(new com.microslop.factory.notification.ProjectInvitationNotificationCreator().createWithInvitation(
                                     invitedUser,
-                                    "Project Invitation",
-                                    submission.getSubmitter().getUsername() + " invited you to join \"" + submission.getProjectName() + "\" in \"" + competition.getName() + "\".",
+                                    localizationService.t("manage.projectinvitation"),
+                                    notifBody,
                                     invitation.getId()
                                 ));
                             } catch (Exception ex) {
@@ -625,39 +633,51 @@ public class ManageCompetitionView extends VerticalLayout implements BeforeEnter
                 }
             }
 
+            String acceptedBody = String.format(
+                localizationService.t("manage.projectaccepted.body"),
+                submission.getProjectName(),
+                competition.getName()
+            );
+
             notifyUser(new com.microslop.factory.notification.ProjectAcceptedNotificationCreator().create(
                 submission.getSubmitter(),
-                "Project Accepted",
-                "Your project \"" + submission.getProjectName() + "\" has been accepted to \"" + competition.getName() + "\"!"
+                localizationService.t("manage.projectaccepted.title"),
+                acceptedBody
             ));
 
             pendingSubmissionRepository.delete(submission);
 
             buildUI();
             updateUIState();
-            Notification.show("Project accepted.", 3000, Notification.Position.TOP_CENTER)
+            Notification.show(localizationService.t("manage.acceptedsuccess"), 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         } catch (Exception ex) {
-            ErrorHandler.handleException(ex, "accept-submission", "Error accepting project");
+            ErrorHandler.handleException(ex, "accept-submission", localizationService.t("manage.erroraccept"));
         }
     }
 
     private void declineSubmission(PendingProjectSubmission submission) {
         try {
+            String declinedBody = String.format(
+                localizationService.t("manage.projectdeclined.body"),
+                submission.getProjectName(),
+                competition.getName()
+            );
+
             notifyUser(new com.microslop.factory.notification.ProjectDeclinedNotificationCreator().create(
                 submission.getSubmitter(),
-                "Project Declined",
-                "Your project \"" + submission.getProjectName() + "\" has been declined for \"" + competition.getName() + "\"."
+                localizationService.t("manage.projectdeclined.title"),
+                declinedBody
             ));
 
             pendingSubmissionRepository.delete(submission);
 
             buildUI();
             updateUIState();
-            Notification.show("Project declined and removed.", 3000, Notification.Position.TOP_CENTER)
+            Notification.show(localizationService.t("manage.declinedsuccess"), 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         } catch (Exception ex) {
-            ErrorHandler.handleException(ex, "decline-submission", "Error declining project");
+            ErrorHandler.handleException(ex, "decline-submission", localizationService.t("manage.errordecline"));
         }
     }
 

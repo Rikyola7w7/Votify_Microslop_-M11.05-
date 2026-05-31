@@ -35,6 +35,8 @@ import com.vaadin.flow.server.VaadinSession;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import com.microslop.service.LocalizationService;
+
 @PageTitle("AI Feedback | Votify")
 @Route(value = "ai-feedback", layout = MainLayout.class)
 public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserver, AfterNavigationObserver {
@@ -43,6 +45,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
     private final CompetitionService competitionService;
     private final AiFeedbackService aiFeedbackService;
     private final ProjectCommentService commentService;
+    private final LocalizationService localizationService;
 
     private String loggedInUsername;
     private User loggedInUser;
@@ -63,11 +66,13 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
     public AiFeedbackView(ProjectService projectService,
                           CompetitionService competitionService,
                           AiFeedbackService aiFeedbackService,
-                          ProjectCommentService commentService) {
+                          ProjectCommentService commentService,
+                          LocalizationService localizationService) {
         this.projectService = projectService;
         this.competitionService = competitionService;
         this.aiFeedbackService = aiFeedbackService;
         this.commentService = commentService;
+        this.localizationService = localizationService;
         initializeView();
     }
 
@@ -142,7 +147,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
-        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
+        Button backButton = new Button(localizationService.t("aifeedback.back"), new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addClassName("votify-btn-secondary");
         backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(loggedInUsername + "/projects")));
@@ -162,7 +167,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("padding", "20px 24px")
             .set("border-radius", "var(--radius-lg)");
 
-        competitionCombo = new ComboBox<>("Competition");
+        competitionCombo = new ComboBox<>(localizationService.t("aifeedback.competition"));
         competitionCombo.setItemLabelGenerator(Competition::getName);
         competitionCombo.setWidth("240px");
         competitionCombo.addClassName("votify-input");
@@ -172,7 +177,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             }
         });
 
-        projectCombo = new ComboBox<>("Project");
+        projectCombo = new ComboBox<>(localizationService.t("aifeedback.project"));
         projectCombo.setItemLabelGenerator(Project::getName);
         projectCombo.setWidth("240px");
         projectCombo.addClassName("votify-input");
@@ -189,13 +194,13 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         leftGroup.setAlignItems(FlexComponent.Alignment.CENTER);
         leftGroup.add(competitionCombo, projectCombo);
 
-        generateButton = new Button("Generate Feedback");
+        generateButton = new Button(localizationService.t("aifeedback.generate"));
         generateButton.setIcon(new Icon(VaadinIcon.MAGIC));
         generateButton.addClassName("votify-btn-primary");
         generateButton.setHeight("44px");
         generateButton.addClickListener(e -> onGenerateFeedback());
 
-        lastGenerationLabel = new Span("Last generated: --/--/----");
+        lastGenerationLabel = new Span(localizationService.t("aifeedback.lastgenerated.empty"));
         lastGenerationLabel.getStyle()
             .set("font-size", "0.85rem")
             .set("color", "var(--text-muted)");
@@ -234,7 +239,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("overflow-y", "auto")
             .set("max-height", "calc(100vh - 220px)");
 
-        H3 sidebarTitle = new H3("Projects");
+        H3 sidebarTitle = new H3(localizationService.t("aifeedback.projects"));
         sidebarTitle.getStyle()
             .set("margin", "0 0 12px 0")
             .set("font-size", "1.1rem")
@@ -252,7 +257,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("padding", "24px")
             .set("border-radius", "var(--radius-lg)");
 
-        H3 dashboardTitle = new H3("Overview");
+        H3 dashboardTitle = new H3(localizationService.t("aifeedback.overview"));
         dashboardTitle.getStyle()
             .set("margin", "0 0 16px 0")
             .set("font-size", "1.1rem")
@@ -279,7 +284,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("color", "var(--primary-light)")
             .set("margin-bottom", "16px");
 
-        Span title = new Span("No feedback generated");
+        Span title = new Span(localizationService.t("aifeedback.nofeedback"));
         title.getStyle()
             .set("display", "block")
             .set("font-size", "1.2rem")
@@ -287,7 +292,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("color", "var(--text-primary)")
             .set("margin-bottom", "8px");
 
-        Span message = new Span("Select a project and click \"Generate Feedback\" to analyze comments with AI.");
+        Span message = new Span(localizationService.t("aifeedback.selectproject.hint"));
         message.getStyle()
             .set("color", "var(--text-muted)")
             .set("font-size", "0.95rem");
@@ -319,7 +324,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         if (loggedInUser == null) return;
         sidebarPanel.removeAll();
 
-        H3 sidebarTitle = new H3("Projects");
+        H3 sidebarTitle = new H3(localizationService.t("aifeedback.projects"));
         sidebarTitle.getStyle()
             .set("margin", "0 0 12px 0")
             .set("font-size", "1.1rem")
@@ -332,7 +337,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             Div empty = new Div();
             empty.setWidthFull();
             empty.getStyle().set("text-align", "center").set("padding", "40px 10px");
-            Span noProjects = new Span("You have no assigned projects.");
+            Span noProjects = new Span(localizationService.t("aifeedback.noprojects"));
             noProjects.getStyle().set("color", "var(--text-muted)");
             empty.add(noProjects);
             sidebarPanel.add(empty);
@@ -433,7 +438,10 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("border-radius", "var(--radius-sm)")
             .set("flex-shrink", "0");
 
-        Span votesBadge = new Span("\ud83d\udd4a " + project.getTotalVotes() + " vote" + (project.getTotalVotes() != 1 ? "s" : ""));
+        String voteLabel = project.getTotalVotes() == 1
+            ? localizationService.t("card.project.vote.singular")
+            : localizationService.t("card.project.vote.plural");
+        Span votesBadge = new Span("\ud83d\udd4a " + project.getTotalVotes() + voteLabel);
         votesBadge.getStyle()
             .set("font-size", "0.8rem")
             .set("font-weight", "600")
@@ -471,7 +479,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
     private void showEmptyDashboardForProject(Project project) {
         dashboardPanel.removeAll();
 
-        H3 title = new H3("Overview");
+        H3 title = new H3(localizationService.t("aifeedback.overview"));
         title.getStyle()
             .set("margin", "0 0 16px 0")
             .set("font-size", "1.1rem")
@@ -480,32 +488,32 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         dashboardPanel.add(title);
         dashboardPanel.add(buildEmptyDashboard());
 
-        lastGenerationLabel.setText("Last generated: --/--/----");
+        lastGenerationLabel.setText(localizationService.t("aifeedback.lastgenerated.empty"));
     }
 
     private void onGenerateFeedback() {
         if (selectedProject == null) {
-            showError("Please select a project first.");
+            showError(localizationService.t("aifeedback.selectfirst"));
             return;
         }
 
         generateButton.setEnabled(false);
-        generateButton.setText("Generating...");
+        generateButton.setText(localizationService.t("aifeedback.generating"));
         generateButton.setIcon(new Icon(VaadinIcon.HOURGLASS));
 
         try {
             AiFeedbackResult result = aiFeedbackService.generateFeedbackForProject(selectedProject.getId());
             renderFeedback(result);
-            showSuccess("Feedback generated successfully.");
+            showSuccess(localizationService.t("aifeedback.success"));
         } catch (Exception ex) {
             if (ex.getMessage() != null && ex.getMessage().contains("limit reached")) {
-                showError("AI request limit reached. Please wait a moment and try again.");
+                showError(localizationService.t("aifeedback.ratelimit"));
             } else {
-                showError("Error generating feedback: " + ex.getMessage());
+                showError(localizationService.t("aifeedback.error") + ex.getMessage());
             }
         } finally {
             generateButton.setEnabled(true);
-            generateButton.setText("Generate Feedback");
+            generateButton.setText(localizationService.t("aifeedback.generate"));
             generateButton.setIcon(new Icon(VaadinIcon.MAGIC));
         }
     }
@@ -513,7 +521,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
     private void renderFeedback(AiFeedbackResult result) {
         dashboardPanel.removeAll();
 
-        H3 title = new H3("Overview");
+        H3 title = new H3(localizationService.t("aifeedback.overview"));
         title.getStyle()
             .set("margin", "0 0 16px 0")
             .set("font-size", "1.1rem")
@@ -524,7 +532,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         // Extract with bulletproof null-safe defaults so the UI NEVER shows empty
         String summary = result.getSummary();
         if (summary == null || summary.isBlank()) {
-            summary = "AI analysis could not be completed. The service may be temporarily unavailable. Please try again later.";
+            summary = localizationService.t("aifeedback.unavailable");
         }
         List<String> positivePoints = result.getPositivePoints() != null ? result.getPositivePoints() : List.of();
         List<String> negativePoints = result.getNegativePoints() != null ? result.getNegativePoints() : List.of();
@@ -534,7 +542,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         int neutralCount = result.getNeutralCount();
         int negativeCount = result.getNegativeCount();
 
-        boolean isErrorResult = summary.contains("could not be completed");
+        boolean isErrorResult = summary.contains("could not be completed") || summary.contains("no pudo completarse");
 
         // 1. Summary paragraph - ALWAYS shows text
         Div summaryBox = new Div();
@@ -544,7 +552,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("margin-bottom", "16px")
             .set("border-left", isErrorResult ? "4px solid var(--error)" : "4px solid var(--primary)");
 
-        Span summaryLabel = new Span("AI Analysis");
+        Span summaryLabel = new Span(localizationService.t("aifeedback.section"));
         summaryLabel.getStyle()
             .set("font-size", "0.75rem")
             .set("font-weight", "700")
@@ -571,8 +579,8 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         insights.setSpacing(true);
         insights.getStyle().set("margin-bottom", "16px");
 
-        insights.add(createInsightCard("Positive Aspects", positivePoints, "var(--success)", new Icon(VaadinIcon.CHECK_CIRCLE)));
-        insights.add(createInsightCard("Negative Aspects", negativePoints, "var(--error)", new Icon(VaadinIcon.EXCLAMATION_CIRCLE)));
+        insights.add(createInsightCard(localizationService.t("aifeedback.positive"), positivePoints, "var(--success)", new Icon(VaadinIcon.CHECK_CIRCLE)));
+        insights.add(createInsightCard(localizationService.t("aifeedback.negative"), negativePoints, "var(--error)", new Icon(VaadinIcon.EXCLAMATION_CIRCLE)));
         insights.getChildren().forEach(child -> insights.setFlexGrow(1, child));
         dashboardPanel.add(insights);
 
@@ -588,11 +596,11 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         metricsBox.setPadding(true);
         metricsBox.getStyle().set("padding", "20px").set("flex", "1");
 
-        metricsBox.add(createMetricItem("Overall Sentiment", String.format("%.1f/5", sentimentScore), "var(--primary)", new Icon(VaadinIcon.HEART)));
-        metricsBox.add(createMetricItem("Comments Analyzed", String.valueOf(positiveCount + neutralCount + negativeCount), "var(--text-primary)", new Icon(VaadinIcon.COMMENT)));
-        metricsBox.add(createMetricItem("Positive Comments", String.valueOf(positiveCount), "var(--success)", new Icon(VaadinIcon.THUMBS_UP)));
-        metricsBox.add(createMetricItem("Neutral Comments", String.valueOf(neutralCount), "var(--text-muted)", new Icon(VaadinIcon.MINUS_CIRCLE_O)));
-        metricsBox.add(createMetricItem("Negative Comments", String.valueOf(negativeCount), "var(--error)", new Icon(VaadinIcon.THUMBS_DOWN)));
+        metricsBox.add(createMetricItem(localizationService.t("aifeedback.sentiment"), String.format("%.1f/5", sentimentScore), "var(--primary)", new Icon(VaadinIcon.HEART)));
+        metricsBox.add(createMetricItem(localizationService.t("aifeedback.analyzed"), String.valueOf(positiveCount + neutralCount + negativeCount), "var(--text-primary)", new Icon(VaadinIcon.COMMENT)));
+        metricsBox.add(createMetricItem(localizationService.t("aifeedback.positivecomments"), String.valueOf(positiveCount), "var(--success)", new Icon(VaadinIcon.THUMBS_UP)));
+        metricsBox.add(createMetricItem(localizationService.t("aifeedback.neutralcomments"), String.valueOf(neutralCount), "var(--text-muted)", new Icon(VaadinIcon.MINUS_CIRCLE_O)));
+        metricsBox.add(createMetricItem(localizationService.t("aifeedback.negativecomments"), String.valueOf(negativeCount), "var(--error)", new Icon(VaadinIcon.THUMBS_DOWN)));
 
         VerticalLayout chartBox = new VerticalLayout();
         chartBox.addClassName("votify-card-static");
@@ -600,7 +608,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         chartBox.setJustifyContentMode(JustifyContentMode.CENTER);
         chartBox.getStyle().set("padding", "20px").set("flex", "1");
 
-        Span chartTitle = new Span("Sentiment Distribution");
+        Span chartTitle = new Span(localizationService.t("aifeedback.distribution"));
         chartTitle.getStyle()
             .set("font-weight", "700")
             .set("font-size", "0.95rem")
@@ -609,7 +617,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             .set("display", "block");
         chartBox.add(chartTitle);
 
-        donutChart = new SentimentDonutChartComponent();
+        donutChart = new SentimentDonutChartComponent(localizationService);
         donutChart.updateValues(positiveCount, neutralCount, negativeCount);
         chartBox.add(donutChart);
 
@@ -622,7 +630,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         wordsBox.addClassName("votify-card-static");
         wordsBox.getStyle().set("padding", "20px");
 
-        Span wordsTitle = new Span("Frequent Words");
+        Span wordsTitle = new Span(localizationService.t("aifeedback.frequentwords"));
         wordsTitle.getStyle()
             .set("font-weight", "700")
             .set("font-size", "0.95rem")
@@ -652,8 +660,8 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
             wordsBox.add(wordsLayout);
         } else {
             String wordsMessage = isErrorResult
-                ? "AI analysis could not be completed. No frequent words available."
-                : "No significant frequent words were identified in the analyzed comments.";
+                ? localizationService.t("aifeedback.nowords.unavailable")
+                : localizationService.t("aifeedback.nowords");
             Span noWords = new Span(wordsMessage);
             noWords.getStyle()
                 .set("color", "var(--text-muted)")
@@ -663,7 +671,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         }
         dashboardPanel.add(wordsBox);
 
-        lastGenerationLabel.setText("Last generated: " +
+        lastGenerationLabel.setText(localizationService.t("aifeedback.lastgenerated") +
             java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
     }
 
@@ -692,7 +700,7 @@ public class AiFeedbackView extends VerticalLayout implements BeforeEnterObserve
         card.add(header);
 
         if (points == null || points.isEmpty()) {
-            Span none = new Span("No points identified.");
+            Span none = new Span(localizationService.t("aifeedback.nopoints"));
             none.getStyle().set("color", "var(--text-muted)").set("font-size", "0.85rem");
             card.add(none);
         } else {

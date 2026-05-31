@@ -2,6 +2,7 @@ package com.microslop.views.components;
 
 import com.microslop.entity.ChecklistItem;
 import com.microslop.service.ChecklistVoteService;
+import com.microslop.service.LocalizationService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -31,19 +32,22 @@ public class ChecklistVotingDialog extends Dialog {
     private final ChecklistVoteService checklistVoteService;
     private final String username;
     private final Runnable onVoteSuccess;
+    private final LocalizationService localizationService;
     private final Map<Long, Checkbox> checkboxes = new HashMap<>();
 
     public ChecklistVotingDialog(Long projectId, String projectName,
                                  List<ChecklistItem> checklistItems,
                                  ChecklistVoteService checklistVoteService,
                                  String username,
-                                 Runnable onVoteSuccess) {
+                                 Runnable onVoteSuccess,
+                                 LocalizationService localizationService) {
         this.projectId = projectId;
         this.checklistVoteService = checklistVoteService;
         this.username = username;
         this.onVoteSuccess = onVoteSuccess;
+        this.localizationService = localizationService;
 
-        setHeaderTitle("Checklist Voting: " + projectName);
+        setHeaderTitle(localizationService.t("dialog.checklist.title") + projectName);
         setModal(true);
         getElement().getStyle().set("animation", "fade-in-scale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards");
         setCloseOnEsc(true);
@@ -58,7 +62,7 @@ public class ChecklistVotingDialog extends Dialog {
         content.setSpacing(true);
 
         // Instructions
-        var instructions = new Paragraph("Select the criteria that apply to this project:");
+        var instructions = new Paragraph(localizationService.t("dialog.checklist.instructions"));
         instructions.getStyle().set("font-size", "0.9rem").set("color", "var(--text-muted)");
         content.add(instructions);
 
@@ -88,12 +92,12 @@ public class ChecklistVotingDialog extends Dialog {
         content.add(itemsLayout);
 
         // Buttons
-        var submitBtn = new Button("Confirm", e -> handleSubmitVotes());
+        var submitBtn = new Button(localizationService.t("dialog.checklist.confirm"), e -> handleSubmitVotes());
         submitBtn.addClassName("votify-btn-primary");
         submitBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         submitBtn.setWidth("auto");
 
-        var cancelBtn = new Button("Cancel", e -> this.close());
+        var cancelBtn = new Button(localizationService.t("dialog.checklist.cancel"), e -> this.close());
         cancelBtn.addClassName("votify-btn-secondary");
         cancelBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
@@ -108,7 +112,7 @@ public class ChecklistVotingDialog extends Dialog {
 
     private void handleSubmitVotes() {
         if (checkboxes.values().stream().noneMatch(Checkbox::getValue)) {
-            Notification.show("Please select at least one item", 3000, Notification.Position.TOP_CENTER)
+            Notification.show(localizationService.t("dialog.checklist.selectone"), 3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_WARNING);
             return;
         }
@@ -142,7 +146,7 @@ public class ChecklistVotingDialog extends Dialog {
             Notification error = Notification.show(ex.getMessage(), 3000, Notification.Position.TOP_CENTER);
             error.addThemeVariants(NotificationVariant.LUMO_ERROR);
         } catch (Exception ex) {
-            Notification error = Notification.show("Error submitting votes: " + ex.getMessage(), 3000, Notification.Position.TOP_CENTER);
+            Notification error = Notification.show(localizationService.t("dialog.checklist.error") + ex.getMessage(), 3000, Notification.Position.TOP_CENTER);
             error.addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }

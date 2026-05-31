@@ -128,10 +128,10 @@ public class VoteQuickAnimation extends Div {
 
         UI ui = UI.getCurrent();
         if (ui != null) {
-            ui.accessLater(v -> {
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
                 try { Thread.sleep(2200); } catch (InterruptedException ignored) {}
-                onComplete.run();
-            }, () -> {});
+                ui.access(onComplete::run);
+            });
         }
     }
 }

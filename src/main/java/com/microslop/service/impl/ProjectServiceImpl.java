@@ -88,13 +88,6 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public List<Project> getRanking(Long competitionId) {
-        var competition = competitionRepository.findById(competitionId).orElse(null);
-        if (competition != null && "CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
-            return projectRepository.findRankingByChecklistCompetition(competitionId);
-        }
-        if (competition != null && "SCALE".equalsIgnoreCase(competition.getVoteType())) {
-            return projectRepository.findRankingByScaleCompetition(competitionId);
-        }
         return projectRepository.findRankingByCompetition(competitionId);
     }
 

@@ -3,6 +3,7 @@ package com.microslop.views.components;
 import com.microslop.entity.Category;
 import com.microslop.entity.Competition;
 import com.microslop.entity.User;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.NotificationService;
 import com.microslop.service.PendingProjectSubmissionService;
 import com.microslop.service.UserService;
@@ -33,6 +34,7 @@ public class CreateProjectDialog extends Dialog {
     private final Competition competition;
     private final List<Category> categories;
     private final Runnable onSuccess;
+    private final LocalizationService localizationService;
 
     private TextField nameField;
     private TextArea descriptionField;
@@ -44,7 +46,8 @@ public class CreateProjectDialog extends Dialog {
     public CreateProjectDialog(PendingProjectSubmissionService pendingProjectSubmissionService,
                                 UserService userService,
                                 NotificationService notificationService, Competition competition,
-                                List<Category> categories, Runnable onSuccess) {
+                                List<Category> categories, Runnable onSuccess,
+                                LocalizationService localizationService) {
         this.pendingProjectSubmissionService = pendingProjectSubmissionService;
         this.userService = userService;
         this.notificationService = notificationService;
@@ -52,13 +55,18 @@ public class CreateProjectDialog extends Dialog {
         this.categories = categories;
         this.onSuccess = onSuccess;
         this.invitedParticipants = new HashMap<>();
+        this.localizationService = localizationService;
 
-        setHeaderTitle("Submit Project");
+        setHeaderTitle(t("dialog.createproject.title"));
         setWidth("450px");
         getElement().getStyle().set("animation", "fade-in-scale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards");
 
         add(buildContent());
         add(buildFooter());
+    }
+
+    private String t(String key) {
+        return localizationService != null ? localizationService.t(key) : key;
     }
 
     private VerticalLayout buildContent() {
@@ -67,17 +75,17 @@ public class CreateProjectDialog extends Dialog {
         content.setSpacing(true);
         content.setWidthFull();
 
-        nameField = new TextField("Project Name");
+        nameField = new TextField(t("dialog.createproject.name"));
         nameField.setWidthFull();
         nameField.setRequired(true);
-        nameField.setPlaceholder("Enter project name");
+        nameField.setPlaceholder(t("dialog.createproject.name.placeholder"));
 
-        descriptionField = new TextArea("Description");
+        descriptionField = new TextArea(t("dialog.createproject.description"));
         descriptionField.setWidthFull();
         descriptionField.setHeight("120px");
-        descriptionField.setPlaceholder("Describe your project...");
+        descriptionField.setPlaceholder(t("dialog.createproject.description.placeholder"));
 
-        Span categoriesLabel = new Span("Categories");
+        Span categoriesLabel = new Span(t("dialog.createproject.categories"));
         categoriesLabel.getStyle()
             .set("font-weight", "600")
             .set("font-size", "0.9rem")
@@ -96,7 +104,7 @@ public class CreateProjectDialog extends Dialog {
         VerticalLayout userInvite = new VerticalLayout();
         userInvite.setPadding(false);
         userInvite.setSpacing(true);
-        Span inviteLabel = new Span("Invite Collaborators");
+        Span inviteLabel = new Span(t("dialog.createproject.collaborators"));
         inviteLabel.getStyle()
             .set("font-weight", "600")
             .set("font-size", "0.9rem")
@@ -104,9 +112,9 @@ public class CreateProjectDialog extends Dialog {
         
         inviteField = new TextField();
         inviteField.setWidthFull();
-        inviteField.setPlaceholder("Enter username to invite");
+        inviteField.setPlaceholder(t("dialog.createproject.invite.placeholder"));
         
-        Button inviteBtn = new Button("Invite", e -> handleAddParticipant());
+        Button inviteBtn = new Button(t("dialog.createproject.invite"), e -> handleAddParticipant());
         inviteBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         
         HorizontalLayout inviteLayout = new HorizontalLayout(inviteField, inviteBtn);
@@ -128,7 +136,7 @@ public class CreateProjectDialog extends Dialog {
         String username = inviteField.getValue().trim();
         
         if (username.isEmpty()) {
-            Notification.show("Please enter a username", 3000, Notification.Position.MIDDLE)
+            Notification.show(t("dialog.createproject.enterusername"), 3000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
@@ -136,7 +144,7 @@ public class CreateProjectDialog extends Dialog {
         var userOpt = userService.searchByUsernameIgnoreCase(username);
         
         if (userOpt.isEmpty()) {
-            Notification.show("User '" + username + "' does not exist", 3000, Notification.Position.MIDDLE)
+            Notification.show("'" + username + "'" + t("dialog.createproject.usernotexist"), 3000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
@@ -145,7 +153,7 @@ public class CreateProjectDialog extends Dialog {
         
         // Check if already invited
         if (invitedParticipants.containsKey(user.getId())) {
-            Notification.show("This user is already invited", 3000, Notification.Position.MIDDLE)
+            Notification.show(t("dialog.createproject.alreadyinvited"), 3000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_WARNING);
             return;
         }
@@ -155,7 +163,7 @@ public class CreateProjectDialog extends Dialog {
         inviteField.clear();
         updateInvitedParticipantsDisplay();
         
-        Notification.show("User '" + username + "' invited successfully", 3000, Notification.Position.MIDDLE)
+        Notification.show("'" + username + "'" + t("dialog.createproject.invitedsuccess"), 3000, Notification.Position.MIDDLE)
             .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
     }
 
@@ -166,7 +174,7 @@ public class CreateProjectDialog extends Dialog {
             return;
         }
 
-        Span participantsLabel = new Span("Added Participants (" + invitedParticipants.size() + ")");
+        Span participantsLabel = new Span(t("dialog.createproject.participants") + invitedParticipants.size() + ")");
         participantsLabel.getStyle()
             .set("font-size", "0.85rem")
             .set("color", "var(--text-secondary)");
@@ -182,7 +190,7 @@ public class CreateProjectDialog extends Dialog {
             Span participantName = new Span(participant.getUsername());
             participantName.getStyle().set("flex-grow", "1");
             
-            Button removeBtn = new Button("Delete", e -> removeParticipant(participant.getId()));
+            Button removeBtn = new Button(t("dialog.createproject.delete"), e -> removeParticipant(participant.getId()));
             removeBtn.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
             removeBtn.getStyle().set("cursor", "pointer");
             
@@ -195,7 +203,7 @@ public class CreateProjectDialog extends Dialog {
         User removedUser = invitedParticipants.remove(userId);
         if (removedUser != null) {
             updateInvitedParticipantsDisplay();
-            Notification.show("Removed " + removedUser.getUsername(), 3000, Notification.Position.MIDDLE)
+            Notification.show(t("dialog.createproject.removed") + removedUser.getUsername(), 3000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         }
     }
@@ -206,10 +214,10 @@ public class CreateProjectDialog extends Dialog {
         footer.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
         footer.setSpacing(true);
 
-        Button cancelBtn = new Button("Cancel", e -> close());
+        Button cancelBtn = new Button(t("dialog.createproject.cancel"), e -> close());
         cancelBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        Button submitBtn = new Button("Submit", e -> handleSubmit());
+        Button submitBtn = new Button(t("dialog.createproject.submit"), e -> handleSubmit());
         submitBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         submitBtn.addClassName("votify-btn-primary");
 
@@ -220,18 +228,18 @@ public class CreateProjectDialog extends Dialog {
     private void handleSubmit() {
         String name = nameField.getValue().trim();
         if (name.isEmpty()) {
-            Notification.show("Project name is required", 3000, Notification.Position.MIDDLE)
+            Notification.show(t("dialog.createproject.namerequired"), 3000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
         if(name.length() > 20 || name.length() < 6) {
-            Notification.show("Project name must be between 6 and 20 characters", 3000, Notification.Position.MIDDLE)
+            Notification.show(t("dialog.createproject.namelength"), 3000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
 
         if (!userService.isLoggedIn()) {
-            Notification.show("You must be signed in to submit a project", 3000, Notification.Position.MIDDLE)
+            Notification.show(t("dialog.createproject.mustsignin"), 3000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
@@ -244,7 +252,7 @@ public class CreateProjectDialog extends Dialog {
         }
 
         if (selectedCategories.isEmpty()) {
-            Notification.show("Select at least one category", 3000, Notification.Position.MIDDLE)
+            Notification.show(t("dialog.createproject.selectcategory"), 3000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
@@ -275,7 +283,7 @@ public class CreateProjectDialog extends Dialog {
                     creator.ifPresent(user ->
                         notificationService.saveAndPublish(new com.microslop.factory.notification.ProjectSubmissionNotificationCreator().create(
                             user,
-                            "New Project Submission",
+                            t("dialog.createproject.notif.title"),
                             userService.getCurrentUsername() + " submitted project \"" + name + "\" to \"" + competition.getName() + "\""
                         ))
                     );
@@ -283,11 +291,11 @@ public class CreateProjectDialog extends Dialog {
             }
 
             close();
-            Notification.show("Project submitted for review!", 3000, Notification.Position.MIDDLE)
+            Notification.show(t("dialog.createproject.success"), 3000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             if (onSuccess != null) onSuccess.run();
         } catch (Exception e) {
-            Notification.show("Error submitting project: " + e.getMessage(), 4000, Notification.Position.MIDDLE)
+            Notification.show(t("dialog.createproject.error") + e.getMessage(), 4000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }

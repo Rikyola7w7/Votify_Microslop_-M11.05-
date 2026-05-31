@@ -461,14 +461,15 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
                 return "competition/" + compId + "/categories";
             }
 
-            // competition/{id}/category/{catId}/vote → categories page
+            // competition/{id}/category/{catId}/vote → ranking page of that category
             if (segments.length >= 5 && "category".equals(segments[2])) {
-                return "competition/" + compId + "/categories";
+                String catId = segments[3];
+                return "competition/" + compId + "/categories/" + catId + "/ranking";
             }
 
-            // competition/{id}/categories (base) → competition details
+            // competition/{id}/categories (base) → home
             if (segments.length == 3 && "categories".equals(segments[2])) {
-                return "competition/" + compId;
+                return "";
             }
 
             // competition/{id} → competitions list
@@ -502,9 +503,10 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     private void updateBreadcrumbs(BeforeEnterEvent event) {
         if (breadcrumbBar == null) return;
+        breadcrumbBar.setLocalizationService(localizationService);
 
         List<BreadcrumbBar.BreadcrumbItem> items = new ArrayList<>();
-        items.add(BreadcrumbBar.BreadcrumbItem.home());
+        items.add(breadcrumbBar.homeItem());
 
         String route = event.getLocation().getPath();
         if (route == null || route.isEmpty()) {

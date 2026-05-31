@@ -231,23 +231,17 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
      * @param competitionDTO the competition data transfer object
      */
     private void configureCompetitionVoteSettings(Competition savedCompetition, CompetitionDTO competitionDTO) {
-        savedCompetition.setVoteType(
-            competitionDTO.getVoteType() != null ? competitionDTO.getVoteType() : "NORMAL"
-        );
+        savedCompetition.setVoteType("NORMAL");
         savedCompetition.setVotingStrategyType(competitionDTO.getVoterType() != null
             ? ("ALL".equalsIgnoreCase(competitionDTO.getVoterType()) ? "ALL" : "JUDGES_ONLY")
             : "ALL"
         );
 
-        if ("SCALE".equalsIgnoreCase(savedCompetition.getVoteType())) {
-            savedCompetition.setScaleMin(competitionDTO.getScaleMin() != null
-                ? competitionDTO.getScaleMin()
-                : 0
-            );
-            savedCompetition.setScaleMax(competitionDTO.getScaleMax() != null
-                ? competitionDTO.getScaleMax()
-                : 10
-            );
+        boolean hasScaleCategory = competitionDTO.getCategories().stream()
+                .anyMatch(cat -> "SCALE".equalsIgnoreCase(cat.getVoteType()));
+        if (hasScaleCategory) {
+            savedCompetition.setScaleMin(0);
+            savedCompetition.setScaleMax(10);
         }
     }
 
@@ -296,7 +290,9 @@ public class CompetitionServiceImpl implements CompetitionService, CompetitionEv
      * @param competitionDTO the competition data transfer object containing checklist items
      */
     private void createAndAddChecklistItems(Competition competition, CompetitionDTO competitionDTO) {
-        if ("CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
+        boolean hasChecklistCategory = competitionDTO.getCategories().stream()
+                .anyMatch(cat -> "CHECKLIST".equalsIgnoreCase(cat.getVoteType()));
+        if (hasChecklistCategory) {
             for (var itemDTO : competitionDTO.getChecklistItems()) {
                 var item = new com.microslop.entity.ChecklistItem();
                 item.setText(itemDTO.getText());

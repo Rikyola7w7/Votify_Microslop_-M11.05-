@@ -14,10 +14,14 @@ import java.util.Map;
 @Repository
 public interface VoteRepository extends JpaRepository<Vote, Long>, JpaSpecificationExecutor<Vote> {
 
-    long countByProjectId(Long projectId);
+    @Query("""
+        SELECT COALESCE(SUM(v.points), 0) FROM Vote v
+        WHERE v.project.id = :projectId
+        """)
+    long countByProjectId(@Param("projectId") Long projectId);
 
     @Query("""
-        SELECT COUNT(v) FROM Vote v
+        SELECT COALESCE(SUM(v.points), 0) FROM Vote v
         WHERE v.project.id = :projectId
         AND v.category.id = :categoryId
         """)
@@ -86,14 +90,14 @@ public interface VoteRepository extends JpaRepository<Vote, Long>, JpaSpecificat
     List<Vote> findByProjectIdWithUserAndCategory(@Param("projectId") Long projectId);
 
     @Query("""
-        SELECT v.project.id, COUNT(v) FROM Vote v
+        SELECT v.project.id, COALESCE(SUM(v.points), 0) FROM Vote v
         WHERE v.project.id IN :projectIds
         GROUP BY v.project.id
         """)
     List<Object[]> countVotesByProjectIds(@Param("projectIds") List<Long> projectIds);
 
     @Query("""
-        SELECT v.project.id, COUNT(v) FROM Vote v
+        SELECT v.project.id, COALESCE(SUM(v.points), 0) FROM Vote v
         WHERE v.project.id IN :projectIds
         AND v.category.id = :categoryId
         GROUP BY v.project.id
@@ -102,7 +106,7 @@ public interface VoteRepository extends JpaRepository<Vote, Long>, JpaSpecificat
                                                        @Param("categoryId") Long categoryId);
 
     @Query("""
-        SELECT v.project.id, COUNT(v) FROM Vote v
+        SELECT v.project.id, COALESCE(SUM(v.points), 0) FROM Vote v
         WHERE v.project.id IN :projectIds
         AND v.user.id = :userId
         AND v.category.id = :categoryId
@@ -137,4 +141,28 @@ public interface VoteRepository extends JpaRepository<Vote, Long>, JpaSpecificat
     List<Object[]> countPopularVotesByProjectIdsAndCategory(@Param("projectIds") List<Long> projectIds,
                                                               @Param("categoryId") Long categoryId,
                                                               @Param("competitionId") Long competitionId);
+
+    @Query("""
+        SELECT COALESCE(SUM(v.points), 0) FROM Vote v
+        WHERE v.project.id = :projectId
+        AND v.category.id = :categoryId
+        AND v.user.id IN (
+            SELECT j.user.id FROM Judge j WHERE j.competition.id = :competitionId
+        )
+        """)
+    long countJudgeVotesByProjectAndCategory(@Param("projectId") Long projectId,
+                                             @Param("categoryId") Long categoryId,
+                                             @Param("competitionId") Long competitionId);
+
+    @Query("""
+        SELECT COALESCE(SUM(v.points), 0) FROM Vote v
+        WHERE v.project.id = :projectId
+        AND v.category.id = :categoryId
+        AND v.user.id NOT IN (
+            SELECT j.user.id FROM Judge j WHERE j.competition.id = :competitionId
+        )
+        """)
+    long countPopularVotesByProjectAndCategory(@Param("projectId") Long projectId,
+                                               @Param("categoryId") Long categoryId,
+                                               @Param("competitionId") Long competitionId);
 }

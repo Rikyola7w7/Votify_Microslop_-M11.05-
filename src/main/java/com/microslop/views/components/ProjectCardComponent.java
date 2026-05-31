@@ -1,6 +1,7 @@
 package com.microslop.views.components;
 
 import com.microslop.entity.Project;
+import com.microslop.service.LocalizationService;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
@@ -12,7 +13,10 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 
 public class ProjectCardComponent extends Div {
 
-    public ProjectCardComponent(Project project, String competitionName, long totalVotes, int position, Runnable onCommentClick) {
+    private final LocalizationService localizationService;
+
+    public ProjectCardComponent(Project project, String competitionName, long totalVotes, int position, Runnable onCommentClick, LocalizationService localizationService) {
+        this.localizationService = localizationService;
         setWidth("100%");
         addClassName("votify-card");
         getStyle()
@@ -53,7 +57,7 @@ public class ProjectCardComponent extends Div {
             .set("display", "block")
             .set("margin-bottom", "10px");
 
-        Span description = new Span(project.getDescription() != null ? project.getDescription() : "No description provided");
+        Span description = new Span(project.getDescription() != null ? project.getDescription() : localizationService.t("card.project.nodescription"));
         description.getStyle()
             .set("color", "var(--text-muted)")
             .set("font-size", "14px")
@@ -67,7 +71,7 @@ public class ProjectCardComponent extends Div {
         HorizontalLayout stats = createStatsLayout(competitionName, totalVotes, position);
         stats.getStyle().set("margin-top", "8px");
 
-        Button commentsButton = new Button("View Details");
+        Button commentsButton = new Button(localizationService.t("card.project.viewdetails"));
         commentsButton.addClassName("votify-btn-secondary");
         commentsButton.getStyle()
             .set("margin-top", "8px")
@@ -90,7 +94,7 @@ public class ProjectCardComponent extends Div {
             .set("flex-wrap", "wrap")
             .set("gap", "6px");
 
-        Span competitionBadge = new Span("Competition: " + competitionName);
+        Span competitionBadge = new Span(localizationService.t("card.project.competition") + competitionName);
         competitionBadge.getStyle()
             .set("color", "var(--text-muted)")
             .set("font-size", "12px")
@@ -103,7 +107,7 @@ public class ProjectCardComponent extends Div {
             .set("text-overflow", "ellipsis")
             .set("flex-shrink", "0");
 
-        Span votesBadge = new Span(totalVotes + " vote" + (totalVotes != 1 ? "s" : ""));
+        Span votesBadge = new Span(totalVotes + (totalVotes != 1 ? localizationService.t("card.project.vote.plural") : localizationService.t("card.project.vote.singular")));
         votesBadge.getStyle()
             .set("color", "var(--primary)")
             .set("font-size", "12px")

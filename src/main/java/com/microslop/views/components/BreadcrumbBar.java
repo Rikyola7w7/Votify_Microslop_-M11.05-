@@ -1,5 +1,6 @@
 package com.microslop.views.components;
 
+import com.microslop.service.LocalizationService;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
@@ -9,8 +10,14 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 public class BreadcrumbBar extends Div {
 
     private final Div inner;
+    private LocalizationService localizationService;
 
     public BreadcrumbBar() {
+        this(null);
+    }
+
+    public BreadcrumbBar(LocalizationService localizationService) {
+        this.localizationService = localizationService;
         addClassName("votify-breadcrumbs");
         getElement().setAttribute("role", "navigation");
         getElement().setAttribute("aria-label", "Breadcrumb");
@@ -18,6 +25,16 @@ public class BreadcrumbBar extends Div {
         inner = new Div();
         inner.addClassName("votify-breadcrumbs-inner");
         add(inner);
+    }
+
+    public void setLocalizationService(LocalizationService localizationService) {
+        this.localizationService = localizationService;
+    }
+
+    /** Convenience factory for the home breadcrumb item using the localized label. */
+    public BreadcrumbItem homeItem() {
+        String label = (localizationService != null) ? localizationService.t("breadcrumb.home") : "Home";
+        return new BreadcrumbItem(label, "/", VaadinIcon.HOME, true);
     }
 
     public void setItems(BreadcrumbItem... items) {
@@ -110,10 +127,6 @@ public class BreadcrumbBar extends Div {
 
         public BreadcrumbItem(String label) {
             this(label, null, null, false);
-        }
-
-        public static BreadcrumbItem home() {
-            return new BreadcrumbItem("Home", "/", VaadinIcon.HOME, true);
         }
 
         public static BreadcrumbItem of(String label, String route) {
