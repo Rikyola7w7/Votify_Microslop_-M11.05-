@@ -71,7 +71,7 @@ public class CompetitionCardComponent extends Div {
             .set("flex", "1");
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        Span startDate = new Span("Start: " + competition.getStartDate().format(dateFormatter));
+        Span startDate = new Span(t("card.competition.start") + competition.getStartDate().format(dateFormatter));
         startDate.getStyle()
             .set("color", "var(--text-muted)")
             .set("font-size", "13px")
@@ -79,7 +79,7 @@ public class CompetitionCardComponent extends Div {
             .set("padding", "0 16px")
             .set("margin-top", "8px");
 
-        Span endDate = new Span("End: " + competition.getEndDate().format(dateFormatter));
+        Span endDate = new Span(t("card.competition.end") + competition.getEndDate().format(dateFormatter));
         endDate.getStyle()
             .set("color", "var(--text-muted)")
             .set("font-size", "13px")
@@ -146,16 +146,16 @@ public class CompetitionCardComponent extends Div {
         String badgeClass;
 
         if (competition.isActive()) {
-            label = "Active";
+            label = t("card.competition.active");
             badgeClass = "votify-badge-active";
         } else {
             boolean hasEnded = competition.getEndDate() != null
                     && java.time.LocalDateTime.now().isAfter(competition.getEndDate());
             if (hasEnded) {
-                label = "Finished";
+                label = t("card.competition.finished");
                 badgeClass = "votify-badge-finished";
             } else {
-                label = "Paused";
+                label = t("card.competition.paused");
                 badgeClass = "votify-badge-paused";
             }
         }
@@ -166,7 +166,7 @@ public class CompetitionCardComponent extends Div {
     }
 
     private Button createViewButton() {
-        Button viewButton = new Button("View Details");
+        Button viewButton = new Button(t("card.competition.viewdetails"));
         viewButton.setWidth("calc(100% - 32px)");
         viewButton.addClassName("votify-btn-primary");
         viewButton.getStyle()

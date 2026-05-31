@@ -35,6 +35,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
+import com.microslop.service.LocalizationService;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -55,6 +56,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private final CategoryService categoryService;
     private final JudgeService judgeService;
     private final ChecklistItemRepository checklistItemRepository;
+    private final LocalizationService localizationService;
 
     private Competition currentCompetition;
     private Competition originalCompetition;
@@ -76,8 +78,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private List<Category> categoriesToRemove;
     private List<Category> categoriesToAdd;
 
-    // VOTE TYPE Section
-    private ComboBox<String> voteTypeCombo;
+
 
     // CHECKLIST Section
     private VerticalLayout checklistItemsContainer;
@@ -96,16 +97,19 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private Span unsavedChangesBadge;
     private boolean hasChanges = false;
 
-    public ConfigureCompetitionView(CompetitionService competitionService, UserService userService, CategoryService categoryService, JudgeService judgeService, ChecklistItemRepository checklistItemRepository) {
+    public ConfigureCompetitionView(CompetitionService competitionService, UserService userService, CategoryService categoryService, JudgeService judgeService, ChecklistItemRepository checklistItemRepository, LocalizationService localizationService) {
         this.competitionService = competitionService;
         this.userService = userService;
         this.categoryService = categoryService;
         this.judgeService = judgeService;
         this.checklistItemRepository = checklistItemRepository;
+        this.localizationService = localizationService;
         this.judgesToRemove = new java.util.ArrayList<>();
         this.judgesToAdd = new java.util.ArrayList<>();
         this.categoriesToRemove = new java.util.ArrayList<>();
         this.categoriesToAdd = new java.util.ArrayList<>();
+        this.checklistItemsToRemove = new java.util.ArrayList<>();
+        this.checklistItemsToAdd = new java.util.ArrayList<>();
 
         setSizeFull();
         setPadding(false);
@@ -130,7 +134,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
             String loggedInUsername = userService.getCurrentUsername();
             if (loggedInUsername == null || !loggedInUsername.equals(currentCompetition.getCreatedBy())) {
-                Notification.show("Access denied. Only the competition creator can configure it.");
+                Notification.show(localizationService.t("configure.accessdenied"));
                 event.forwardTo("");
                 return;
             }
@@ -139,7 +143,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             initializeView();
         } catch (NumberFormatException e) {
             event.forwardTo("");
-            Notification.show("Invalid competition ID.");
+            Notification.show(localizationService.t("configure.invalidid"));
         }
     }
 
@@ -179,19 +183,18 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         VerticalLayout generalSection = buildGeneralSection();
         VerticalLayout participationSection = buildParticipationSection();
         VerticalLayout judgesSection = buildJudgesSection();
-        VerticalLayout voteTypeSection = buildVoteTypeSection();
         checklistSection = buildChecklistSection();
         scaleConfigSection = buildScaleConfigSection();
         VerticalLayout commentsSection = buildCommentsSection();
         HorizontalLayout buttonsLayout = buildButtonsLayout();
 
-        contentCard.add(generalSection, participationSection, judgesSection, voteTypeSection, checklistSection, scaleConfigSection, commentsSection, buttonsLayout);
+        contentCard.add(generalSection, participationSection, judgesSection, checklistSection, scaleConfigSection, commentsSection, buttonsLayout);
         scrollContainer.add(contentCard);
         add(scrollContainer);
 
-        // Set initial visibility based on current vote type
-        checklistSection.setVisible("CHECKLIST".equalsIgnoreCase(currentCompetition.getVoteType()));
-        scaleConfigSection.setVisible("SCALE".equalsIgnoreCase(currentCompetition.getVoteType()));
+        // Set initial visibility based on current vote type or category vote types
+        checklistSection.setVisible(shouldShowChecklistSection());
+        scaleConfigSection.setVisible(shouldShowScaleSection());
     }
 
     private VerticalLayout buildGeneralSection() {
@@ -205,7 +208,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 .set("padding", "20px")
                 .set("margin-bottom", "16px");
 
-        Span sectionTitle = new Span("GENERAL");
+        Span sectionTitle = new Span(localizationService.t("configure.general"));
         sectionTitle.getStyle()
                 .set("font-weight", "700")
                 .set("color", "var(--dark)")
@@ -218,7 +221,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 new FormLayout.ResponsiveStep("0px", 4)
         );
 
-        startDatePicker = new DatePicker("START DATE");
+        startDatePicker = new DatePicker(localizationService.t("configure.startdate"));
         startDatePicker.addClassName("votify-input");
         if (currentCompetition.getStartDate() != null) {
             startDatePicker.setValue(currentCompetition.getStartDate().toLocalDate());
@@ -226,7 +229,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         startDatePicker.setWidth("100%");
         startDatePicker.addValueChangeListener(e -> markAsChanged());
 
-        startTimePicker = new TimePicker("START TIME");
+        startTimePicker = new TimePicker(localizationService.t("configure.starttime"));
         startTimePicker.addClassName("votify-input");
         if (currentCompetition.getStartDate() != null) {
             startTimePicker.setValue(currentCompetition.getStartDate().toLocalTime());
@@ -234,7 +237,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         startTimePicker.setWidth("100%");
         startTimePicker.addValueChangeListener(e -> markAsChanged());
 
-        endDatePicker = new DatePicker("END DATE");
+        endDatePicker = new DatePicker(localizationService.t("configure.enddate"));
         endDatePicker.addClassName("votify-input");
         if (currentCompetition.getEndDate() != null) {
             endDatePicker.setValue(currentCompetition.getEndDate().toLocalDate());
@@ -242,7 +245,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         endDatePicker.setWidth("100%");
         endDatePicker.addValueChangeListener(e -> markAsChanged());
 
-        endTimePicker = new TimePicker("END TIME");
+        endTimePicker = new TimePicker(localizationService.t("configure.endtime"));
         endTimePicker.addClassName("votify-input");
         if (currentCompetition.getEndDate() != null) {
             endTimePicker.setValue(currentCompetition.getEndDate().toLocalTime());
@@ -253,7 +256,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         dateTimeLayout.add(startDatePicker, startTimePicker, endDatePicker, endTimePicker);
 
         // Cover image upload
-        H4 coverImageTitle = new H4("COVER IMAGE");
+        H4 coverImageTitle = new H4(localizationService.t("configure.coverimage"));
         coverImageTitle.getStyle().set("margin", "16px 0 10px 0").set("color", "var(--dark)").set("font-weight", "700");
 
         var compImageBuffer = new MemoryBuffer();
@@ -274,7 +277,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         // Show current cover image if exists
         if (currentCompetition.getCoverImage() != null && currentCompetition.getCoverImage().length > 0) {
             String base64 = java.util.Base64.getEncoder().encodeToString(currentCompetition.getCoverImage());
-            var preview = new com.vaadin.flow.component.html.Image("data:image/png;base64," + base64, "Current cover");
+            var preview = new com.vaadin.flow.component.html.Image("data:image/png;base64," + base64, localizationService.t("configure.currentcover"));
             preview.setWidth("200px");
             preview.setHeight("120px");
             preview.getStyle().set("object-fit", "cover").set("border-radius", "var(--radius-md)");
@@ -289,18 +292,18 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 markAsChanged();
                 compImagePreview.removeAll();
                 String base64 = java.util.Base64.getEncoder().encodeToString(currentCompetition.getCoverImage());
-                var preview = new com.vaadin.flow.component.html.Image("data:image/png;base64," + base64, "Cover preview");
+                var preview = new com.vaadin.flow.component.html.Image("data:image/png;base64," + base64, localizationService.t("configure.coverpreview"));
                 preview.setWidth("200px");
                 preview.setHeight("120px");
                 preview.getStyle().set("object-fit", "cover").set("border-radius", "var(--radius-md)");
                 compImagePreview.add(preview);
             } catch (Exception ex) {
-                Notification.show("Error reading image", 3000, Notification.Position.BOTTOM_CENTER)
+                Notification.show(localizationService.t("configure.errorimage"), 3000, Notification.Position.BOTTOM_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
         });
 
-        H4 categoriesTitle = new H4("CATEGORIES");
+        H4 categoriesTitle = new H4(localizationService.t("configure.categories"));
         categoriesTitle.getStyle().set("margin", "16px 0 10px 0").set("color", "var(--dark)").set("font-weight", "700");
 
         categoriesContainer = new VerticalLayout();
@@ -313,7 +316,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             categoriesContainer.add(buildCategoryRow(category));
         }
 
-        Button addCategoryButton = new Button("Add Category");
+        Button addCategoryButton = new Button(localizationService.t("configure.addcategory"));
         addCategoryButton.addClassName("votify-btn-secondary");
         addCategoryButton.setIcon(new Icon(VaadinIcon.PLUS));
         addCategoryButton.addClickListener(e -> showAddCategoryDialog());
@@ -336,7 +339,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         categoryName.getStyle().set("flex", "1").set("font-weight", "500").set("color", "var(--text-primary)");
 
         String voterType = category.getVoterType() != null ? category.getVoterType() : "NORMAL";
-        String label = "NORMAL".equals(voterType) ? "Normal" : "SCALE".equals(voterType) ? "Scale" : "Checklist";
+        String label = "NORMAL".equals(voterType) ? localizationService.t("configure.type.normal") : "SCALE".equals(voterType) ? localizationService.t("configure.type.scale") : localizationService.t("configure.type.checklist");
         Span typeBadge = new Span(label);
         typeBadge.getStyle()
                 .set("font-size", "11px")
@@ -369,8 +372,14 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         deleteButton.getElement().setAttribute("aria-label", "Delete category");
         deleteButton.addClickListener(e -> {
             categoriesContainer.remove(row);
+            if (category.getId() != null) {
+                categoriesToRemove.add(category);
+            } else {
+                categoriesToAdd.remove(category);
+            }
             markAsChanged();
-            Notification.show("Category removed", 2000, Notification.Position.BOTTOM_CENTER);
+            updateSectionsVisibility();
+            Notification.show(localizationService.t("configure.categoryremoved"), 2000, Notification.Position.BOTTOM_CENTER);
         });
 
         row.add(categoryName, typeBadge, deleteButton);
@@ -379,24 +388,28 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
     private void showAddCategoryDialog() {
         Dialog dialog = new Dialog();
-        dialog.setHeaderTitle("Add New Category");
+        dialog.setHeaderTitle(localizationService.t("configure.addnewcategory"));
 
         VerticalLayout content = new VerticalLayout();
         content.setSpacing(true);
 
-        TextField nameField = new TextField("Category Name");
+        TextField nameField = new TextField(localizationService.t("configure.categoryname"));
         nameField.addClassName("votify-input");
         nameField.setWidth("100%");
 
-        ComboBox<String> voterTypeCombo = new ComboBox<>("Voting Type");
-        voterTypeCombo.setItems("Normal", "Scale", "Checklist");
-        voterTypeCombo.setValue("Normal");
+        ComboBox<String> voterTypeCombo = new ComboBox<>(localizationService.t("configure.votingtype"));
+        voterTypeCombo.setItems(
+                localizationService.t("configure.type.normal"),
+                localizationService.t("configure.type.scale"),
+                localizationService.t("configure.type.checklist")
+        );
+        voterTypeCombo.setValue(localizationService.t("configure.type.normal"));
         voterTypeCombo.addClassName("votify-input");
         voterTypeCombo.setWidth("100%");
 
-        Button saveBtn = new Button("Save", e -> {
+        Button saveBtn = new Button(localizationService.t("configure.save"), e -> {
             if (nameField.getValue().isEmpty()) {
-                Notification.show("Category name is required");
+                Notification.show(localizationService.t("configure.categoryrequired"));
                 return;
             }
 
@@ -404,9 +417,9 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             newCategory.setName(nameField.getValue());
             newCategory.setCompetition(currentCompetition);
             String vtValue = voterTypeCombo.getValue();
-            if ("Scale".equals(vtValue)) {
+            if (localizationService.t("configure.type.scale").equals(vtValue) || "Scale".equals(vtValue)) {
                 newCategory.setVoterType("SCALE");
-            } else if ("Checklist".equals(vtValue)) {
+            } else if (localizationService.t("configure.type.checklist").equals(vtValue) || "Checklist".equals(vtValue)) {
                 newCategory.setVoterType("CHECKLIST");
             } else {
                 newCategory.setVoterType("NORMAL");
@@ -415,12 +428,13 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             categoriesToAdd.add(newCategory);
             categoriesContainer.add(buildCategoryRow(newCategory));
             markAsChanged();
+            updateSectionsVisibility();
             dialog.close();
-            Notification.show("Category added (pending save)", 2000, Notification.Position.BOTTOM_CENTER);
+            Notification.show(localizationService.t("configure.categoryadded"), 2000, Notification.Position.BOTTOM_CENTER);
         });
         saveBtn.addClassName("votify-btn-primary");
 
-        Button cancelBtn = new Button("Cancel", e -> dialog.close());
+        Button cancelBtn = new Button(localizationService.t("configure.cancel"), e -> dialog.close());
         cancelBtn.addClassName("votify-btn-secondary");
 
         content.add(nameField, voterTypeCombo);
@@ -440,7 +454,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 .set("padding", "20px")
                 .set("margin-bottom", "16px");
 
-        Span sectionTitle = new Span("PARTICIPATION");
+        Span sectionTitle = new Span(localizationService.t("configure.participation"));
         sectionTitle.getStyle()
                 .set("font-weight", "700")
                 .set("color", "var(--dark)")
@@ -453,24 +467,30 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 new FormLayout.ResponsiveStep("0px", 2)
         );
 
-        voterTypeCombo = new ComboBox<>("WHO CAN VOTE");
+        voterTypeCombo = new ComboBox<>(localizationService.t("configure.whocanvote"));
         voterTypeCombo.addClassName("votify-input");
-        voterTypeCombo.setItems("Judges", "Everyone");
+        voterTypeCombo.setItems(
+                localizationService.t("configure.option.judges"),
+                localizationService.t("configure.option.everyone")
+        );
         voterTypeCombo.setValue(currentCompetition.getVoterType() != null &&
-                currentCompetition.getVoterType().equals("ALL") ? "Everyone" : "Judges");
+                currentCompetition.getVoterType().equals("ALL") ? localizationService.t("configure.option.everyone") : localizationService.t("configure.option.judges"));
         voterTypeCombo.setWidth("100%");
         voterTypeCombo.addValueChangeListener(e -> markAsChanged());
 
-        autoVoteCombo = new ComboBox<>("AUTO VOTE");
+        autoVoteCombo = new ComboBox<>(localizationService.t("configure.autovote"));
         autoVoteCombo.addClassName("votify-input");
-        autoVoteCombo.setItems("OFF", "ON");
-        autoVoteCombo.setValue(currentCompetition.isAutoVote() ? "ON" : "OFF");
+        autoVoteCombo.setItems(
+                localizationService.t("configure.option.off"),
+                localizationService.t("configure.option.on")
+        );
+        autoVoteCombo.setValue(currentCompetition.isAutoVote() ? localizationService.t("configure.option.on") : localizationService.t("configure.option.off"));
         autoVoteCombo.setWidth("100%");
         autoVoteCombo.addValueChangeListener(e -> markAsChanged());
 
         formLayout.add(voterTypeCombo, autoVoteCombo);
 
-        maxVotesPerPersonField = new IntegerField("VOTES PER PERSON");
+        maxVotesPerPersonField = new IntegerField(localizationService.t("configure.votesperperson"));
         maxVotesPerPersonField.addClassName("votify-input");
         maxVotesPerPersonField.setValue(currentCompetition.getMaxVotesPerPerson() != null
                 ? currentCompetition.getMaxVotesPerPerson()
@@ -496,7 +516,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 .set("padding", "20px")
                 .set("margin-bottom", "16px");
 
-        Span sectionTitle = new Span("ADD JUDGES");
+        Span sectionTitle = new Span(localizationService.t("configure.addjudges"));
         sectionTitle.getStyle()
                 .set("font-weight", "700")
                 .set("color", "var(--dark)")
@@ -514,7 +534,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             judgesContainer.add(buildJudgeRow(judge));
         }
 
-        Button addJudgeButton = new Button("Add Judge");
+        Button addJudgeButton = new Button(localizationService.t("configure.addjudge"));
         addJudgeButton.addClassName("votify-btn-secondary");
         addJudgeButton.setIcon(new Icon(VaadinIcon.PLUS));
         addJudgeButton.addClickListener(e -> showAddJudgeDialog());
@@ -555,28 +575,28 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
     private void showAddJudgeDialog() {
         Dialog dialog = new Dialog();
-        dialog.setHeaderTitle("Add New Judge");
+        dialog.setHeaderTitle(localizationService.t("configure.addnewjudge"));
 
         VerticalLayout content = new VerticalLayout();
         content.setSpacing(true);
 
-        TextField judgeUsernameField = new TextField("Judge Username");
+        TextField judgeUsernameField = new TextField(localizationService.t("configure.judgeusername"));
         judgeUsernameField.addClassName("votify-input");
-        judgeUsernameField.setPlaceholder("Enter username");
+        judgeUsernameField.setPlaceholder(localizationService.t("configure.enterusername"));
         judgeUsernameField.setWidth("100%");
 
-        Button saveBtn = new Button("Save", e -> {
+        Button saveBtn = new Button(localizationService.t("configure.save"), e -> {
             String judgeUsername = judgeUsernameField.getValue().trim();
 
             if (judgeUsername.isEmpty()) {
-                Notification notification = Notification.show("Please enter a judge username");
+                Notification notification = Notification.show(localizationService.t("configure.judgerequired"));
                 notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
                 return;
             }
 
             Optional<com.microslop.entity.User> userOptional = userService.searchByUsernameIgnoreCase(judgeUsername);
             if (userOptional.isEmpty()) {
-                Notification notification = Notification.show("User not found: " + judgeUsername);
+                Notification notification = Notification.show(localizationService.t("configure.usernotfound") + judgeUsername);
                 notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
                 return;
             }
@@ -595,7 +615,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                     .forEach(judgeUserIds::remove);
 
             if (judgeUserIds.contains(selectedUser.getId())) {
-                Notification notification = Notification.show("This user is already a judge in this competition");
+                Notification notification = Notification.show(localizationService.t("configure.alreadyjudge"));
                 notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
                 return;
             }
@@ -608,15 +628,15 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 judgesContainer.add(buildJudgeRowForNewJudge(tempJudge));
                 markAsChanged();
                 dialog.close();
-                Notification.show("Judge pending save", 2000, Notification.Position.BOTTOM_CENTER);
+                Notification.show(localizationService.t("configure.judgepending"), 2000, Notification.Position.BOTTOM_CENTER);
             } else {
-                Notification notification = Notification.show("This user has already been added");
+                Notification notification = Notification.show(localizationService.t("configure.alreadyadded"));
                 notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
             }
         });
         saveBtn.addClassName("votify-btn-primary");
 
-        Button cancelBtn = new Button("Cancel", e -> dialog.close());
+        Button cancelBtn = new Button(localizationService.t("configure.cancel"), e -> dialog.close());
         cancelBtn.addClassName("votify-btn-secondary");
 
         content.add(judgeUsernameField);
@@ -641,7 +661,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         Span judgeEmail = new Span(judge.getUser().getEmail());
         judgeEmail.getStyle().set("color", "var(--text-muted)").set("margin-right", "15px");
 
-        Span badgeSpan = new Span("(Pending)");
+        Span badgeSpan = new Span(localizationService.t("configure.pending"));
         badgeSpan.getStyle()
                 .set("color", "var(--secondary)")
                 .set("font-size", "12px")
@@ -663,48 +683,6 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     }
 
 
-     private VerticalLayout buildVoteTypeSection() {
-         VerticalLayout section = new VerticalLayout();
-         section.setPadding(true);
-         section.setSpacing(true);
-         section.setWidth("100%");
-         section.getStyle()
-             .set("background", "var(--background)")
-             .set("border-radius", "var(--radius-sm)")
-             .set("padding", "20px")
-             .set("margin-bottom", "16px");
-
-         Span sectionTitle = new Span("VOTE TYPE");
-         sectionTitle.getStyle()
-             .set("font-weight", "700")
-             .set("color", "var(--dark)")
-             .set("font-size", "14px")
-             .set("letter-spacing", "0.5px")
-             .set("margin-bottom", "12px");
-
-         voteTypeCombo = new ComboBox<>("VOTING MODE");
-         voteTypeCombo.setItems("Normal", "Checklist", "Scale (0-10)");
-         String currentVoteType = currentCompetition.getVoteType();
-         if ("SCALE".equalsIgnoreCase(currentVoteType)) {
-             voteTypeCombo.setValue("Scale (0-10)");
-         } else if ("CHECKLIST".equalsIgnoreCase(currentVoteType)) {
-             voteTypeCombo.setValue("Checklist");
-         } else {
-             voteTypeCombo.setValue("Normal");
-         }
-         voteTypeCombo.setWidth("100%");
-         voteTypeCombo.addValueChangeListener(e -> {
-             markAsChanged();
-             boolean isChecklist = "Checklist".equals(e.getValue());
-             boolean isScale = e.getValue() != null && e.getValue().startsWith("Scale");
-             checklistSection.setVisible(isChecklist);
-             scaleConfigSection.setVisible(isScale);
-         });
-
-         section.add(sectionTitle, voteTypeCombo);
-         return section;
-     }
-
      private VerticalLayout buildChecklistSection() {
          VerticalLayout section = new VerticalLayout();
          section.setPadding(true);
@@ -716,7 +694,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
              .set("padding", "20px")
              .set("margin-bottom", "16px");
 
-         Span sectionTitle = new Span("CHECKLIST ITEMS");
+         Span sectionTitle = new Span(localizationService.t("configure.checklistitems"));
          sectionTitle.getStyle()
              .set("font-weight", "700")
              .set("color", "var(--dark)")
@@ -734,7 +712,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
              checklistItemsContainer.add(buildChecklistItemRow(item));
          }
 
-         Button addItemButton = new Button("Add Checklist Item");
+         Button addItemButton = new Button(localizationService.t("configure.addchecklistitem"));
          addItemButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
          addItemButton.setIcon(new Icon(VaadinIcon.PLUS));
          addItemButton.addClickListener(e -> showAddChecklistItemDialog());
@@ -762,7 +740,13 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
          deleteButton.getElement().setAttribute("aria-label", "Delete checklist item");
          deleteButton.addClickListener(e -> {
              checklistItemsContainer.remove(row);
+             if (item.getId() != null) {
+                 checklistItemsToRemove.add(item);
+             } else {
+                 checklistItemsToAdd.remove(item);
+             }
              markAsChanged();
+             Notification.show(localizationService.t("dialog.createproject.removed"), 2000, Notification.Position.BOTTOM_CENTER);
          });
 
          row.add(itemText, deleteButton);
@@ -771,17 +755,17 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
      private void showAddChecklistItemDialog() {
          Dialog dialog = new Dialog();
-         dialog.setHeaderTitle("Add New Checklist Item");
+         dialog.setHeaderTitle(localizationService.t("configure.addnewchecklistitem"));
 
          VerticalLayout content = new VerticalLayout();
          content.setSpacing(true);
 
-         TextField textField = new TextField("Item Description");
+         TextField textField = new TextField(localizationService.t("configure.itemdescription"));
          textField.setWidth("100%");
 
-         Button saveButton = new Button("Save", e -> {
+         Button saveButton = new Button(localizationService.t("configure.save"), e -> {
              if (textField.getValue().trim().isEmpty()) {
-                 Notification.show("Item description is required");
+                 Notification.show(localizationService.t("configure.itemrequired"));
                  return;
              }
 
@@ -795,7 +779,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
              dialog.close();
          });
 
-         Button cancelButton = new Button("Cancel", e -> dialog.close());
+         Button cancelButton = new Button(localizationService.t("configure.cancel"), e -> dialog.close());
 
          content.add(textField);
          dialog.add(content);
@@ -814,7 +798,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
              .set("padding", "20px")
              .set("margin-bottom", "16px");
 
-         Span sectionTitle = new Span("SCALE CONFIGURATION");
+         Span sectionTitle = new Span(localizationService.t("configure.scaleconfig"));
          sectionTitle.getStyle()
              .set("font-weight", "700")
              .set("color", "var(--dark)")
@@ -822,7 +806,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
              .set("letter-spacing", "0.5px")
              .set("margin-bottom", "12px");
 
-         Span scaleInfo = new Span("Scale range is fixed: 0 - 10");
+         Span scaleInfo = new Span(localizationService.t("configure.scalefixed"));
          scaleInfo.getStyle()
              .set("font-size", "0.95rem")
              .set("color", "var(--text-muted)");
@@ -842,7 +826,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 .set("padding", "20px")
                 .set("margin-bottom", "16px");
 
-        Span sectionTitle = new Span("COMMENTS");
+        Span sectionTitle = new Span(localizationService.t("configure.comments"));
         sectionTitle.getStyle()
                 .set("font-weight", "700")
                 .set("color", "var(--dark)")
@@ -855,28 +839,34 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 new FormLayout.ResponsiveStep("0px", 2)
         );
 
-        commentsEnabledCombo = new ComboBox<>("ALLOW COMMENTS");
+        commentsEnabledCombo = new ComboBox<>(localizationService.t("configure.allowcomments"));
         commentsEnabledCombo.addClassName("votify-input");
-        commentsEnabledCombo.setItems("YES", "NO");
+        commentsEnabledCombo.setItems(
+                localizationService.t("configure.option.yes"),
+                localizationService.t("configure.option.no")
+        );
         commentsEnabledCombo.setValue(currentCompetition.getCommentsEnabled() != null &&
-                currentCompetition.getCommentsEnabled() ? "YES" : "NO");
+                currentCompetition.getCommentsEnabled() ? localizationService.t("configure.option.yes") : localizationService.t("configure.option.no"));
         commentsEnabledCombo.setWidth("100%");
         commentsEnabledCombo.addValueChangeListener(e -> {
             markAsChanged();
-            boolean enabled = "YES".equals(e.getValue());
+            boolean enabled = localizationService.t("configure.option.yes").equals(e.getValue()) || "YES".equals(e.getValue());
             commentsRequiredCombo.setEnabled(enabled);
             if (!enabled) {
-                commentsRequiredCombo.setValue("NO");
+                commentsRequiredCombo.setValue(localizationService.t("configure.option.no"));
             }
         });
 
-        commentsRequiredCombo = new ComboBox<>("REQUIRED COMMENTS");
+        commentsRequiredCombo = new ComboBox<>(localizationService.t("configure.requiredcomments"));
         commentsRequiredCombo.addClassName("votify-input");
-        commentsRequiredCombo.setItems("YES", "NO");
+        commentsRequiredCombo.setItems(
+                localizationService.t("configure.option.yes"),
+                localizationService.t("configure.option.no")
+        );
         commentsRequiredCombo.setValue(currentCompetition.getCommentsRequired() != null &&
-                currentCompetition.getCommentsRequired() ? "YES" : "NO");
+                currentCompetition.getCommentsRequired() ? localizationService.t("configure.option.yes") : localizationService.t("configure.option.no"));
         commentsRequiredCombo.setWidth("100%");
-        commentsRequiredCombo.setEnabled("YES".equals(commentsEnabledCombo.getValue()));
+        commentsRequiredCombo.setEnabled(localizationService.t("configure.option.yes").equals(commentsEnabledCombo.getValue()));
         commentsRequiredCombo.addValueChangeListener(e -> markAsChanged());
 
         formLayout.add(commentsEnabledCombo, commentsRequiredCombo);
@@ -892,13 +882,13 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         layout.setWidth("100%");
         layout.getStyle().set("margin-top", "10px");
 
-        cancelButton = new Button("Cancel");
+        cancelButton = new Button(localizationService.t("configure.cancel"));
         cancelButton.addClassName("votify-btn-secondary");
         cancelButton.setIcon(new Icon(VaadinIcon.CLOSE));
         cancelButton.addClickListener(e -> handleCancel());
         cancelButton.addClickShortcut(Key.ESCAPE);
 
-        saveButton = new Button("Save");
+        saveButton = new Button(localizationService.t("configure.save"));
         saveButton.addClassName("votify-btn-primary");
         saveButton.setIcon(new Icon(VaadinIcon.CHECK));
         saveButton.addClickListener(e -> handleSave());
@@ -920,23 +910,25 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
     private void handleCancel() {
         if (hasChanges) {
             Dialog confirmDialog = new Dialog();
-            confirmDialog.setHeaderTitle("Confirm Exit");
+            confirmDialog.setHeaderTitle(localizationService.t("configure.confirmexit"));
 
             VerticalLayout content = new VerticalLayout();
-            content.add(new Span("Are you sure you want to exit without saving changes?"));
+            content.add(new Span(localizationService.t("configure.exitmsg")));
             confirmDialog.add(content);
 
-            Button confirmButton = new Button("Exit Without Saving", e -> {
+            Button confirmButton = new Button(localizationService.t("configure.exitwithout"), e -> {
                 confirmDialog.close();
                 judgesToRemove.clear();
                 judgesToAdd.clear();
                 categoriesToRemove.clear();
                 categoriesToAdd.clear();
+                checklistItemsToRemove.clear();
+                checklistItemsToAdd.clear();
                 navigateBack();
             });
             confirmButton.addClassName("votify-btn-danger");
 
-            Button keepWorkingButton = new Button("Continue Editing", e -> confirmDialog.close());
+            Button keepWorkingButton = new Button(localizationService.t("configure.continueediting"), e -> confirmDialog.close());
             keepWorkingButton.addClassName("votify-btn-primary");
 
             confirmDialog.getFooter().add(keepWorkingButton, confirmButton);
@@ -948,7 +940,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
 
     private void handleSave() {
         if (maxVotesPerPersonField.getValue() == null || maxVotesPerPersonField.getValue() < 1) {
-            Notification notification = Notification.show("Error: Max votes per person must be at least 1.");
+            Notification notification = Notification.show(localizationService.t("configure.minvotes"));
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
@@ -961,7 +953,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             }
             categoriesToRemove.clear();
         } catch (Exception e) {
-            Notification notification = Notification.show("Error deleting categories: " + e.getMessage());
+            Notification notification = Notification.show(localizationService.t("configure.errordeletecategories") + e.getMessage());
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
@@ -972,7 +964,35 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             }
             categoriesToAdd.clear();
         } catch (Exception e) {
-            Notification notification = Notification.show("Error processing category changes: " + e.getMessage());
+            Notification notification = Notification.show(localizationService.t("configure.errorprocesscategories") + e.getMessage());
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
+        try {
+            if (checklistItemsToRemove != null && !checklistItemsToRemove.isEmpty()) {
+                for (ChecklistItem itemToRemove : checklistItemsToRemove) {
+                    if (itemToRemove.getId() != null) {
+                        checklistItemRepository.deleteById(itemToRemove.getId());
+                    }
+                }
+                checklistItemsToRemove.clear();
+            }
+        } catch (Exception e) {
+            Notification notification = Notification.show("Error deleting checklist items: " + e.getMessage());
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
+        try {
+            if (checklistItemsToAdd != null && !checklistItemsToAdd.isEmpty()) {
+                for (ChecklistItem newItem : checklistItemsToAdd) {
+                    checklistItemRepository.save(newItem);
+                }
+                checklistItemsToAdd.clear();
+            }
+        } catch (Exception e) {
+            Notification notification = Notification.show("Error processing checklist items: " + e.getMessage());
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
@@ -989,20 +1009,19 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
             );
         }
 
-        currentCompetition.setVoterType("Everyone".equals(voterTypeCombo.getValue()) ? "ALL" : "JUDGES");
-         currentCompetition.setAutoVote("ON".equals(autoVoteCombo.getValue()));
-         currentCompetition.setMaxVotesPerPerson(maxVotesPerPersonField.getValue());
-         currentCompetition.setVoteType("Checklist".equals(voteTypeCombo.getValue()) ? "CHECKLIST" :
-                 (voteTypeCombo.getValue() != null && voteTypeCombo.getValue().startsWith("Scale") ? "SCALE" : "NORMAL"));
+        currentCompetition.setVoterType(localizationService.t("configure.option.everyone").equals(voterTypeCombo.getValue()) || "Everyone".equals(voterTypeCombo.getValue()) ? "ALL" : "JUDGES");
+        currentCompetition.setAutoVote(localizationService.t("configure.option.on").equals(autoVoteCombo.getValue()) || "ON".equals(autoVoteCombo.getValue()));
+        currentCompetition.setMaxVotesPerPerson(maxVotesPerPersonField.getValue());
+        boolean hasScaleCategory = categoryService.getCategoriesByCompetition(currentCompetition.getId()).stream()
+                .anyMatch(cat -> "SCALE".equalsIgnoreCase(cat.getVoterType()))
+                || categoriesToAdd.stream().anyMatch(cat -> "SCALE".equalsIgnoreCase(cat.getVoterType()));
+        if (hasScaleCategory) {
+            currentCompetition.setScaleMin(0);
+            currentCompetition.setScaleMax(10);
+        }
 
-         // Update scale configuration
-         if ("SCALE".equalsIgnoreCase(currentCompetition.getVoteType())) {
-             currentCompetition.setScaleMin(0);
-             currentCompetition.setScaleMax(10);
-         }
-
-         currentCompetition.setCommentsEnabled("YES".equals(commentsEnabledCombo.getValue()));
-        currentCompetition.setCommentsRequired("YES".equals(commentsRequiredCombo.getValue()));
+        currentCompetition.setCommentsEnabled(localizationService.t("configure.option.yes").equals(commentsEnabledCombo.getValue()) || "YES".equals(commentsEnabledCombo.getValue()));
+        currentCompetition.setCommentsRequired(localizationService.t("configure.option.yes").equals(commentsRequiredCombo.getValue()) || "YES".equals(commentsRequiredCombo.getValue()));
 
         try {
             if (!judgesToRemove.isEmpty()) {
@@ -1019,7 +1038,7 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 judgesToAdd.clear();
             }
         } catch (Exception e) {
-            Notification notification = Notification.show("Error processing judge changes: " + e.getMessage());
+            Notification notification = Notification.show(localizationService.t("configure.errorprocessjudges") + e.getMessage());
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
@@ -1031,12 +1050,12 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
                 unsavedChangesBadge.setVisible(false);
             }
 
-            Notification notification = Notification.show("Configuration saved successfully");
+            Notification notification = Notification.show(localizationService.t("configure.saved"));
             notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
             navigateBack();
         } catch (Exception e) {
-            Notification notification = Notification.show("Error saving configuration: " + e.getMessage());
+            Notification notification = Notification.show(localizationService.t("configure.errorsave") + e.getMessage());
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
@@ -1048,5 +1067,46 @@ public class ConfigureCompetitionView extends VerticalLayout implements BeforeEn
         } else {
             getUI().ifPresent(ui -> ui.navigate(""));
         }
+    }
+
+    private void updateSectionsVisibility() {
+        if (checklistSection != null) {
+            checklistSection.setVisible(shouldShowChecklistSection());
+        }
+        if (scaleConfigSection != null) {
+            scaleConfigSection.setVisible(shouldShowScaleSection());
+        }
+    }
+
+    private boolean shouldShowChecklistSection() {
+        List<Category> existingCategories = categoryService.getCategoriesByCompetition(currentCompetition.getId());
+        for (Category cat : existingCategories) {
+            if (!categoriesToRemove.contains(cat) && "CHECKLIST".equalsIgnoreCase(cat.getVoterType())) {
+                return true;
+            }
+        }
+        for (Category cat : categoriesToAdd) {
+            if ("CHECKLIST".equalsIgnoreCase(cat.getVoterType())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean shouldShowScaleSection() {
+        List<Category> existingCategories = categoryService.getCategoriesByCompetition(currentCompetition.getId());
+        for (Category cat : existingCategories) {
+            if (!categoriesToRemove.contains(cat) && "SCALE".equalsIgnoreCase(cat.getVoterType())) {
+                return true;
+            }
+        }
+        for (Category cat : categoriesToAdd) {
+            if ("SCALE".equalsIgnoreCase(cat.getVoterType())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

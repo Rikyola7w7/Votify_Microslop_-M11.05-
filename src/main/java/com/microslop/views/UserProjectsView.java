@@ -134,7 +134,7 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
             int[] index = {0};
             for (Project project : projects) {
                 Long compId = project.getCompetition() != null ? project.getCompetition().getId() : null;
-                String compName = compId != null ? competitionNames.getOrDefault(compId, "Unknown") : "Unknown";
+                String compName = compId != null ? competitionNames.getOrDefault(compId, localizationService.t("projects.unknown")) : localizationService.t("projects.unknown");
                 long votes = voteCounts.getOrDefault(project.getId(), 0L);
                 int position = compId != null && positionsByCompetition.containsKey(compId)
                     ? positionsByCompetition.get(compId).getOrDefault(project.getId(), 0)
@@ -145,7 +145,8 @@ public class UserProjectsView extends VerticalLayout implements BeforeEnterObser
                     compName,
                     votes,
                     position,
-                    () -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/projects/" + project.getId()))
+                    () -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/projects/" + project.getId())),
+                    localizationService
                 ));
                 cardWrapper.addClassName("animate-fade-in");
                 cardWrapper.addClassName("stagger-" + Math.min(++index[0], 8));

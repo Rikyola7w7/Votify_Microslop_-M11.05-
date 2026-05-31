@@ -16,6 +16,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.EntityManager;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +31,9 @@ import java.util.Optional;
 public class CategoryServiceImpl implements CategoryService {
 
     private static final Logger log = LoggerFactory.getLogger(CategoryServiceImpl.class);
+ 
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private final CategoryRepository categoryRepository;
     private final CompetitionRepository competitionRepository;
@@ -96,6 +101,21 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     @CacheEvict(value = {"categories", "categoriesAll", "categoriesByCompetition", "projectsByCompetitionAndCategory", "rankings"}, allEntries = true)
     public void deleteWithCascade(Long categoryId) {
+        // Delete all project_category associations first (foreign key constraint)
+        entityManager.createNativeQuery("DELETE FROM project_category WHERE category_id = :categoryId")
+                .setParameter("categoryId", categoryId)
+                .executeUpdate();
+
+        // Delete all certificates associated with this category
+        entityManager.createNativeQuery("DELETE FROM certificate WHERE category_id = :categoryId")
+                .setParameter("categoryId", categoryId)
+                .executeUpdate();
+
+        // Delete all voter records associated with this category
+        entityManager.createNativeQuery("DELETE FROM voter WHERE category_id = :categoryId")
+                .setParameter("categoryId", categoryId)
+                .executeUpdate();
+
         // Delete all project comments for this category first (foreign key constraint)
         projectCommentRepository.deleteByCategory_Id(categoryId);
         // Delete all votes for this category

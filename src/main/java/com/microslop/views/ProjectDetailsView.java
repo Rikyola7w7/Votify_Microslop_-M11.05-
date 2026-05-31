@@ -12,16 +12,12 @@ import com.microslop.service.ProjectService;
 import com.microslop.views.components.CommentCardComponent;
 import com.microslop.base.ui.MainLayout;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -93,7 +89,15 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
         setSpacing(false);
         getStyle().set("background", "var(--background)");
 
-        add(buildHeader());
+        Button aiFeedbackBtn = new Button(localizationService.t("project.details.aifeedback"), new Icon(VaadinIcon.CHART));
+        aiFeedbackBtn.addClassName("votify-btn-primary");
+        aiFeedbackBtn.setHeight("40px");
+        aiFeedbackBtn.getStyle()
+            .set("margin", "16px 40px 0")
+            .set("align-self", "flex-start");
+        aiFeedbackBtn.setTooltipText(localizationService.t("project.details.aifeedback.tooltip"));
+        aiFeedbackBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("ai-feedback")));
+        add(aiFeedbackBtn);
 
         commentsContainer = new Div();
         commentsContainer.setWidthFull();
@@ -103,36 +107,6 @@ public class ProjectDetailsView extends VerticalLayout implements BeforeEnterObs
             .set("margin", "0 auto");
 
         add(commentsContainer);
-    }
-
-    private HorizontalLayout buildHeader() {
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setSpacing(true);
-        header.addClassName("votify-header");
-
-        Button backButton = new Button("Back", new Icon(VaadinIcon.ARROW_LEFT));
-        backButton.addClassName("votify-btn-secondary");
-        backButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(currentUsername + "/projects")));
-
-        H2 title = new H2(localizationService.t("projects.details.title"));
-        title.getStyle()
-            .set("margin", "0")
-            .set("color", "var(--text-primary)")
-            .set("font-size", "1.4rem")
-            .set("font-weight", "700")
-            .set("flex", "1");
-
-        Button aiFeedbackBtn = new Button("AI Feedback", new Icon(VaadinIcon.CHART));
-        aiFeedbackBtn.addClassName("votify-btn-primary");
-        aiFeedbackBtn.setHeight("40px");
-        aiFeedbackBtn.setTooltipText("Get AI-powered feedback and suggestions for your project");
-        aiFeedbackBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("ai-feedback")));
-
-        header.add(backButton, title, aiFeedbackBtn);
-        return header;
     }
 
     private void loadProjectAndComments() {

@@ -88,13 +88,6 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public List<Project> getRanking(Long competitionId) {
-        var competition = competitionRepository.findById(competitionId).orElse(null);
-        if (competition != null && "CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
-            return projectRepository.findRankingByChecklistCompetition(competitionId);
-        }
-        if (competition != null && "SCALE".equalsIgnoreCase(competition.getVoteType())) {
-            return projectRepository.findRankingByScaleCompetition(competitionId);
-        }
         return projectRepository.findRankingByCompetition(competitionId);
     }
 
@@ -141,8 +134,25 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         List<Long> projectIds = baseRanking.stream().map(Project::getId).toList();
-        Map<Long, Long> batchCounts = voteRepository.countVotesByProjectIds(projectIds).stream()
-                .collect(java.util.stream.Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+
+        Long competitionId = null;
+        if (!baseRanking.isEmpty() && baseRanking.get(0).getCompetition() != null) {
+            competitionId = baseRanking.get(0).getCompetition().getId();
+        }
+
+        Map<Long, Long> batchCounts;
+        if (competitionId != null) {
+            if (isJudgesRanking) {
+                batchCounts = voteRepository.countJudgeVotesByProjectIdsAndCategory(projectIds, categoryId, competitionId).stream()
+                        .collect(java.util.stream.Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+            } else {
+                batchCounts = voteRepository.countPopularVotesByProjectIdsAndCategory(projectIds, categoryId, competitionId).stream()
+                        .collect(java.util.stream.Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+            }
+        } else {
+            batchCounts = voteRepository.countVotesByProjectIdsAndCategory(projectIds, categoryId).stream()
+                    .collect(java.util.stream.Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+        }
 
         Map<Long, Integer> effectiveVoteCounts = new HashMap<>();
         for (Project p : baseRanking) {

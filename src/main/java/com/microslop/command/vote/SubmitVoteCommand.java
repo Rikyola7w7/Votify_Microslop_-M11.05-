@@ -79,8 +79,14 @@ public class SubmitVoteCommand extends AbstractCommand<Void> {
             throw new IllegalStateException("Competition not found for project: " + projectId);
         }
 
-if ("CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
-            throw new IllegalStateException("This competition uses checklist voting. Please use the checklist voting interface.");
+        var category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new IllegalStateException("Category not found: " + categoryId));
+
+        if ("CHECKLIST".equalsIgnoreCase(category.getVoteType())) {
+            throw new IllegalStateException("This category uses checklist voting. Please use the checklist voting interface.");
+        }
+        if ("SCALE".equalsIgnoreCase(category.getVoteType())) {
+            throw new IllegalStateException("This category uses scale voting. Please use the scale voting interface.");
         }
 
         VotingStrategy votingStrategy = strategyRegistry.resolveVotingStrategy(competition.getVotingStrategyType());
@@ -99,9 +105,6 @@ if ("CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
                     "This competition is currently paused. Try again later.");
             }
         }
-
-        var category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalStateException("Category not found: " + categoryId));
 
         // Check votes_left from Voter record
         var voter = voterRepository.findByUserIdAndCompetitionIdAndCategoryId(

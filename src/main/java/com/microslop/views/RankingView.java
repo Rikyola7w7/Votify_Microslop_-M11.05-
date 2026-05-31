@@ -117,8 +117,8 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             this.currentCompetition = competitionService.getByIdOrFail(competitionId);
             this.currentCategory = categoryService.getByIdOrFail(categoryId);
 
-            isChecklistMode = "CHECKLIST".equalsIgnoreCase(currentCompetition.getVoteType());
-            isScaleMode = "SCALE".equalsIgnoreCase(currentCompetition.getVoteType());
+            isChecklistMode = "CHECKLIST".equalsIgnoreCase(currentCategory.getVoteType());
+            isScaleMode = "SCALE".equalsIgnoreCase(currentCategory.getVoteType());
         } catch (Exception e) {
             removeAll();
             VerticalLayout errorState = new VerticalLayout();
@@ -333,54 +333,57 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         var card = new Div();
         card.addClassName("votify-card-static");
         card.setWidthFull();
-        card.getStyle().set("padding", "1.5rem 2rem");
+        card.getStyle()
+            .set("padding", "1.5rem 2rem")
+            .set("overflow", "visible");
 
         var content = new HorizontalLayout();
         content.setWidthFull();
         content.setAlignItems(FlexComponent.Alignment.CENTER);
         content.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         content.setPadding(false);
+        content.getStyle().set("overflow", "visible");
 
         var leftSection = new VerticalLayout();
         leftSection.setPadding(false);
         leftSection.setSpacing(false);
-        leftSection.setHeight("5rem");
+        leftSection.getStyle().set("overflow", "visible");
 
         var nameRow = new HorizontalLayout();
-        nameRow.setAlignItems(FlexComponent.Alignment.START);
+        nameRow.setAlignItems(FlexComponent.Alignment.CENTER);
         nameRow.setSpacing(true);
         nameRow.setPadding(false);
-        nameRow.setMinHeight("3rem");
         nameRow.setWidth("100%");
+        nameRow.getStyle()
+            .set("flex-wrap", "wrap")
+            .set("overflow", "visible")
+            .set("height", "auto");
 
         var competitionName = new Span(currentCompetition.getName());
         competitionName.getStyle()
             .set("font-size", "1.2rem")
             .set("font-weight", "700")
-            .set("color", "var(--text-primary)")
-            .set("white-space", "nowrap")
-            .set("overflow", "hidden")
-            .set("text-overflow", "ellipsis")
-            .set("max-width", "18ch");
+            .set("line-height", "1.5")
+            .set("overflow", "visible")
+            .set("color", "var(--text-primary)");
 
         var separator = new Span("\u203A");
         separator.getStyle()
             .set("color", "var(--text-muted)")
             .set("font-size", "1.2rem")
+            .set("line-height", "1.5")
+            .set("overflow", "visible")
             .set("flex-shrink", "0");
 
         var categoryName = new Span(currentCategory.getName());
         categoryName.getStyle()
             .set("font-size", "1.2rem")
             .set("font-weight", "600")
-            .set("color", "var(--primary)")
-            .set("white-space", "nowrap")
-            .set("overflow", "hidden")
-            .set("text-overflow", "ellipsis")
-            .set("max-width", "18ch");
+            .set("line-height", "1.5")
+            .set("overflow", "visible")
+            .set("color", "var(--primary)");
 
         nameRow.add(competitionName, separator, categoryName);
-        nameRow.getStyle().set("flex-wrap", "wrap");
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -395,21 +398,30 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         datesRow.setAlignItems(FlexComponent.Alignment.CENTER);
         datesRow.setSpacing(true);
         datesRow.setPadding(false);
-        datesRow.getStyle().set("margin-top", "0.5rem");
+        datesRow.getStyle()
+            .set("margin-top", "0.5rem")
+            .set("height", "auto")
+            .set("overflow", "visible");
 
         var startDate = new Span(localizationService.t("ranking.start") + startDateStr);
         startDate.getStyle()
             .set("font-size", "0.9rem")
+            .set("line-height", "1.5")
+            .set("overflow", "visible")
             .set("color", "var(--text-muted)");
 
         var dateSeparator = new Span("|");
         dateSeparator.getStyle()
             .set("color", "var(--border)")
+            .set("line-height", "1.5")
+            .set("overflow", "visible")
             .set("font-size", "0.9rem");
 
         var endDate = new Span(localizationService.t("ranking.end") + endDateStr);
         endDate.getStyle()
             .set("font-size", "0.9rem")
+            .set("line-height", "1.5")
+            .set("overflow", "visible")
             .set("color", "var(--text-muted)");
 
         datesRow.add(startDate, dateSeparator, endDate);
@@ -451,6 +463,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     private void loadRanking(boolean isJudgesRanking) {
+        this.isJudgesRanking = isJudgesRanking;
         if (rankingContainer == null) return;
 
         rankingContainer.removeAll();
@@ -473,8 +486,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         content.addClassName("animate-fade-in");
         content.getStyle()
             .set("max-width", "760px")
-            .set("margin", "0 auto")
-            .set("opacity", "0");
+            .set("margin", "0 auto");
 
         String rankingTitle = isJudgesRanking
             ? localizationService.t("ranking.judgesranking")
@@ -499,7 +511,11 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             content.add(emptyWrapper);
         } else {
             List<Long> projectIds = ranking.stream().map(Project::getId).toList();
-            voteCounts = voteService.countVotesByProjectIds(projectIds);
+            if (isJudgesRanking) {
+                voteCounts = voteService.countJudgeVotesByProjectIdsAndCategory(projectIds, categoryId, competitionId);
+            } else {
+                voteCounts = voteService.countPopularVotesByProjectIdsAndCategory(projectIds, categoryId, competitionId);
+            }
 
             var podiumSection = new Div();
             podiumSection.setWidthFull();
@@ -528,16 +544,16 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                     podiumSection.add(buildModifiablePodiumWrapper(p, positions[slot], votes));
                 } else if (isChecklistMode) {
                     long totalVotes = checklistVoteService.countChecklistVotesByProject(p.getId());
-                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, true, false, 0.0);
+                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, true, false, 0.0, localizationService);
                     podiumSection.add(podiumCard);
                 } else if (isScaleMode) {
                     long totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
                     double avgScore = voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
-                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, false, true, avgScore);
+                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, false, true, avgScore, localizationService);
                     podiumSection.add(podiumCard);
                 } else {
-                    long totalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
-                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes);
+                    long totalVotes = voteCounts.getOrDefault(p.getId(), 0L);
+                    var podiumCard = new PodiumCardComponent(p, positions[slot], totalVotes, localizationService);
                     podiumSection.add(podiumCard);
                 }
             }
@@ -565,7 +581,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
                           double scaleAvg = voteService.getAverageScoreByProjectAndCategory(p.getId(), categoryId);
                           listSection.add(buildListRow(p, i + 1, staggerIndex, scaleVotes, scaleAvg));
                       } else {
-                          long normalVotes = voteService.countVotesByProjectAndCategory(p.getId(), categoryId);
+                          long normalVotes = voteCounts.getOrDefault(p.getId(), 0L);
                           listSection.add(buildListRow(p, i + 1, staggerIndex, normalVotes));
                       }
                   }
@@ -574,17 +590,18 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
         }
         rankingContainer.add(content);
 
-        // Fade out loading and reveal content
+        // Reveal: CSS :has(> .votify-loading) already hides siblings.
         getElement().executeJs(
             "setTimeout(function() {" +
-            "  var loadings = document.querySelectorAll('.votify-loading');" +
-            "  loadings.forEach(function(l) { l.style.opacity = '0'; l.style.transition = 'opacity 0.15s ease'; });" +
-            "  var contents = document.querySelectorAll('#ranking-content');" +
-            "  contents.forEach(function(c) { c.style.opacity = '1'; c.style.transition = 'opacity 0.3s ease'; });" +
-            "  setTimeout(function() {" +
-            "    var loadings = document.querySelectorAll('.votify-loading');" +
-            "    loadings.forEach(function(l) { l.style.display = 'none'; });" +
-            "  }, 150);" +
+            "  var l = document.querySelector('.votify-loading');" +
+            "  var c = document.getElementById('ranking-content');" +
+            "  if (l) {" +
+            "    l.classList.add('is-hiding');" +
+            "    setTimeout(function() {" +
+            "      l.remove();" +
+            "      if (c) c.classList.add('votify-content-ready');" +
+            "    }, 200);" +
+            "  }" +
             "}, 750)");
     }
 
@@ -596,7 +613,7 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
             .set("align-items", "center")
             .set("position", "relative");
 
-        var podiumCard = new PodiumCardComponent(project, position, votes);
+        var podiumCard = new PodiumCardComponent(project, position, votes, localizationService);
         wrapper.add(podiumCard);
         wrapper.add(buildActionButtons(project));
 
@@ -691,71 +708,77 @@ public class RankingView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     private HorizontalLayout buildListRow(Project p, int position, int staggerIndex, long voteCount) {
-         var wrapper = new VerticalLayout();
-         wrapper.setPadding(false);
-         wrapper.setSpacing(false);
-         wrapper.setWidthFull();
+        var row = buildListRowBase(p, position, staggerIndex);
 
-         var row = buildListRowBase(p, position, staggerIndex);
+        if (isChecklistMode) {
+            return row;
+        }
 
-          long votes = p.getManualVoteCount() != null
-              ? p.getManualVoteCount()
-              : voteCount;
+        // voteCount is already resolved by loadRanking (manual or real), use it directly
+        String voteText = voteCount + " vote" + (voteCount != 1 ? "s" : "");
+        var votesLabel = new Span(voteText);
+        votesLabel.getStyle()
+            .set("font-size", "0.85rem")
+            .set("font-weight", "600")
+            .set("color", "var(--secondary)")
+            .set("background", "rgba(0, 206, 201, 0.1)")
+            .set("padding", "2px 10px")
+            .set("border-radius", "var(--radius-pill)");
 
-         var votesSpan = new Span(votes + " vote" + (votes != 1 ? "s" : ""));
-         votesSpan.getStyle()
-             .set("font-size", "0.8rem")
-             .set("color", "var(--text-muted)")
-             .set("margin-top", "0.15rem");
+        row.getChildren()
+            .filter(c -> c instanceof VerticalLayout)
+            .findFirst()
+            .ifPresent(info -> ((VerticalLayout) info).add(votesLabel));
 
-         row.getChildren()
-             .filter(c -> c instanceof VerticalLayout)
-             .findFirst()
-             .ifPresent(info -> ((VerticalLayout) info).add(votesSpan));
+        if (modifyMode) {
+            // Wrap row + action buttons in a vertical container
+            var wrapper = new VerticalLayout();
+            wrapper.setPadding(false);
+            wrapper.setSpacing(false);
+            wrapper.setWidthFull();
+            wrapper.add(row, buildActionButtons(p));
 
-         wrapper.add(row);
+            var result = new HorizontalLayout();
+            result.setWidthFull();
+            result.setPadding(false);
+            result.setSpacing(false);
+            result.add(wrapper);
+            return result;
+        }
 
-         if (modifyMode) {
-             wrapper.add(buildActionButtons(p));
-         }
+        return row;
+    }
 
-         // Cast to HorizontalLayout for compatibility - wrapper is returned as HorizontalLayout-like
-         var result = new HorizontalLayout();
-         result.setWidthFull();
-         result.setPadding(false);
-         result.setSpacing(false);
-         result.add(wrapper);
-         return result;
-     }
+      private HorizontalLayout buildListRow(Project p, int position, int staggerIndex, long totalVotes, double avgScore) {
+          var row = buildListRowBase(p, position, staggerIndex);
 
-     private HorizontalLayout buildListRow(Project p, int position, int staggerIndex, long totalVotes, double avgScore) {
-         var row = buildListRowBase(p, position, staggerIndex);
+          if (isChecklistMode) {
+              return row;
+          }
 
-         String voteText;
-         if (isChecklistMode) {
-             voteText = totalVotes + " checks";
-         } else if (isScaleMode) {
-             voteText = String.format("Score: %.1f", avgScore);
-         } else {
-             voteText = totalVotes + " votes";
-         }
+          String voteText;
+          if (isScaleMode) {
+              voteText = String.format("Score: %.1f", avgScore);
+          } else {
+              voteText = totalVotes + " votes";
+          }
 
-         var votesLabel = new Span(voteText);
-         votesLabel.getStyle()
-             .set("font-size", "0.85rem")
-             .set("font-weight", "600")
-             .set("color", "var(--secondary)")
-             .set("background", "rgba(0, 206, 201, 0.1)")
-             .set("padding", "2px 10px")
-             .set("border-radius", "var(--radius-pill)");
+          var votesLabel = new Span(voteText);
+          votesLabel.getStyle()
+              .set("font-size", "0.85rem")
+              .set("font-weight", "600")
+              .set("color", "var(--secondary)")
+              .set("background", "rgba(0, 206, 201, 0.1)")
+              .set("padding", "2px 10px")
+              .set("border-radius", "var(--radius-pill)");
 
-         row.getChildren()
-             .filter(c -> c instanceof VerticalLayout)
-             .findFirst()
-             .ifPresent(info -> ((VerticalLayout) info).add(votesLabel));
+          row.getChildren()
+              .filter(c -> c instanceof VerticalLayout)
+              .findFirst()
+              .ifPresent(info -> ((VerticalLayout) info).add(votesLabel));
 
-         return row;
-     }
+          return row;
+      }
 
     private void showReclassifyDialog(Project project) {
         var dialog = new Dialog();

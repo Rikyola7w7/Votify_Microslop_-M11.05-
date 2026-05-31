@@ -160,7 +160,7 @@ public class NotificationCardComponent extends Div {
         // Expiration info if exists
         if (notification.getExpirationDate() != null) {
             String expiresIn = calculateExpiresIn(notification.getExpirationDate());
-            Span expiresSpan = new Span("Expires: " + expiresIn);
+            Span expiresSpan = new Span(t("card.notification.expires") + expiresIn);
             expiresSpan.getStyle()
                 .set("color", "var(--warning, #ff9800)")
                 .set("font-size", "12px");
@@ -176,7 +176,7 @@ public class NotificationCardComponent extends Div {
 
         // Add type-specific action buttons
         if (new ProjectSubmissionNotificationCreator().getNotificationType().equals(notification.getType()) && competition != null) {
-            Button viewProjectBtn = new Button("View Project");
+            Button viewProjectBtn = new Button(t("card.notification.viewproject"));
             viewProjectBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
             viewProjectBtn.getStyle().set("cursor", "pointer");
             viewProjectBtn.addClickListener(e -> {
@@ -190,11 +190,11 @@ public class NotificationCardComponent extends Div {
         }
 
         if ("PROJECT_INVITATION".equals(notification.getType()) && notification.getInvitationId() != null) {
-            Button viewBtn = new Button("View Details");
+            Button viewBtn = new Button(t("card.notification.viewdetails"));
             viewBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
             viewBtn.getStyle().set("cursor", "pointer");
             viewBtn.addClickListener(e -> {
-                InvitationDialog dialog = new InvitationDialog(invitationService, notification.getInvitationId(), refreshCallback);
+                InvitationDialog dialog = new InvitationDialog(invitationService, notification.getInvitationId(), refreshCallback, localizationService);
                 dialog.open();
             });
             actions.add(viewBtn);
@@ -202,7 +202,7 @@ public class NotificationCardComponent extends Div {
 
         // Certificate-related notifications
         if (new CertificateSentNotificationCreator().getNotificationType().equals(notification.getType())) {
-            Button viewCertificatesBtn = new Button("View Certificates");
+            Button viewCertificatesBtn = new Button(t("card.notification.viewcerts"));
             viewCertificatesBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
             viewCertificatesBtn.getStyle().set("cursor", "pointer");
             viewCertificatesBtn.addClickListener(e -> {
@@ -213,11 +213,11 @@ public class NotificationCardComponent extends Div {
 
         // End-time competition notifications
         if (new CompetitionEndTimeNotificationCreator().getNotificationType().equals(notification.getType())) {
-            Button yesBtn = new Button("YES - Generate Certificates");
+            Button yesBtn = new Button(t("card.notification.generatecerts"));
             yesBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_SUCCESS);
             yesBtn.getStyle().set("cursor", "pointer");
             
-            Button noBtn = new Button("Cancel");
+            Button noBtn = new Button(t("card.notification.cancel"));
             noBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);
             noBtn.getStyle().set("cursor", "pointer");
             
@@ -226,12 +226,12 @@ public class NotificationCardComponent extends Div {
                     if (certificateService != null && competition != null) {
                         certificateService.generateCertificatesForCompetition(competition.getId());
                         com.vaadin.flow.component.notification.Notification.show(
-                            "Certificates generated successfully for " + competition.getName())
+                            t("card.notification.certsgenerated") + competition.getName())
                             .addThemeVariants(com.vaadin.flow.component.notification.NotificationVariant.LUMO_SUCCESS);
                     }
                 } catch (Exception ex) {
                     com.vaadin.flow.component.notification.Notification.show(
-                        "Error generating certificates: " + ex.getMessage())
+                        t("card.notification.certserror") + ex.getMessage())
                         .addThemeVariants(com.vaadin.flow.component.notification.NotificationVariant.LUMO_ERROR);
                 } finally {
                     yesBtn.setEnabled(false);
@@ -292,13 +292,13 @@ public class NotificationCardComponent extends Div {
         long days = java.time.temporal.ChronoUnit.DAYS.between(dateTime, now);
 
         if (minutes < 1) {
-            return "Just now";
+            return t("card.notification.justnow");
         } else if (minutes < 60) {
-            return minutes + " minute" + (minutes > 1 ? "s" : "") + " ago";
+            return minutes + (minutes > 1 ? t("card.notification.minutes.ago") : t("card.notification.minute.ago"));
         } else if (hours < 24) {
-            return hours + " hour" + (hours > 1 ? "s" : "") + " ago";
+            return hours + (hours > 1 ? t("card.notification.hours.ago") : t("card.notification.hour.ago"));
         } else if (days < 7) {
-            return days + " day" + (days > 1 ? "s" : "") + " ago";
+            return days + (days > 1 ? t("card.notification.days.ago") : t("card.notification.day.ago"));
         } else {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
             return dateTime.format(formatter);
@@ -308,7 +308,7 @@ public class NotificationCardComponent extends Div {
     private String calculateExpiresIn(LocalDateTime expirationDate) {
         LocalDateTime now = LocalDateTime.now();
         if (expirationDate.isBefore(now)) {
-            return "Expired";
+            return t("card.notification.expired");
         }
         
         long minutes = java.time.temporal.ChronoUnit.MINUTES.between(now, expirationDate);
@@ -316,13 +316,13 @@ public class NotificationCardComponent extends Div {
         long days = java.time.temporal.ChronoUnit.DAYS.between(now, expirationDate);
 
         if (minutes < 1) {
-            return "in moments";
+            return t("card.notification.inmoments");
         } else if (minutes < 60) {
-            return "in " + minutes + " minute" + (minutes > 1 ? "s" : "");
+            return t("card.notification.in") + minutes + (minutes > 1 ? t("card.notification.minutes") : t("card.notification.minute"));
         } else if (hours < 24) {
-            return "in " + hours + " hour" + (hours > 1 ? "s" : "");
+            return t("card.notification.in") + hours + (hours > 1 ? t("card.notification.hours") : t("card.notification.hour"));
         } else {
-            return "in " + days + " day" + (days > 1 ? "s" : "");
+            return t("card.notification.in") + days + (days > 1 ? t("card.notification.days") : t("card.notification.day"));
         }
     }
 }

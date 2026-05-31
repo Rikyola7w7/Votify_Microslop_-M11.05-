@@ -1,6 +1,7 @@
 package com.microslop.views;
 
 import com.microslop.base.ui.MainLayout;
+import com.microslop.service.LocalizationService;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -15,7 +16,10 @@ import java.util.Map;
 @PageTitle("Help & FAQ | Votify")
 public class FaqView extends VerticalLayout {
 
-    public FaqView() {
+    private final LocalizationService localizationService;
+
+    public FaqView(LocalizationService localizationService) {
+        this.localizationService = localizationService;
         setSizeFull();
         setPadding(false);
         setSpacing(false);
@@ -37,54 +41,18 @@ public class FaqView extends VerticalLayout {
         content.getStyle().set("padding", "2rem 1rem 4rem");
 
         List<Map.Entry<String, String>> faqs = List.of(
-            new AbstractMap.SimpleEntry<>(
-                "What is Votify?",
-                "Votify is a modern voting and competition management platform that allows users to create competitions, submit projects, and vote on their favorites. It's designed to make community-driven selection processes transparent, engaging, and easy to manage."
-            ),
-            new AbstractMap.SimpleEntry<>(
-                "How does voting work?",
-                "When a competition is active, authenticated users can browse submitted projects and cast their votes. Depending on the competition's vote type, you can vote using a simple upvote system, a checklist-based evaluation, or a scale rating (1-10). Each competition can define its own voting rules and limits."
-            ),
-            new AbstractMap.SimpleEntry<>(
-                "What are the different vote types?",
-                "Votify supports three vote types: (1) Simple Voting - cast a vote for projects you like; (2) Checklist Voting - evaluate projects against a set of criteria; (3) Scale Rating - rate projects on a numerical scale from 1 to 10. The competition creator chooses the vote type when setting up the competition."
-            ),
-            new AbstractMap.SimpleEntry<>(
-                "How do I create a competition?",
-                "Navigate to your dashboard and click on 'Create Competition'. Fill in the competition details including name, description, vote type, and dates. You can also define categories to organize projects. Once created, share the competition link with participants to collect submissions."
-            ),
-            new AbstractMap.SimpleEntry<>(
-                "How do I submit a project?",
-                "Browse to a competition's category selection page and click 'Submit Project'. Fill in the project name, description, and any required details. Your project will then appear in the competition for others to view and vote on."
-            ),
-            new AbstractMap.SimpleEntry<>(
-                "What are categories?",
-                "Categories help organize projects within a competition. For example, a hackathon competition might have categories like 'Best Design', 'Most Innovative', and 'Best Technical Implementation'. Users can filter the ranking by category to see top projects in each area."
-            ),
-            new AbstractMap.SimpleEntry<>(
-                "How is the ranking calculated?",
-                "Rankings are calculated based on the votes each project receives. The podium shows the top 3 projects, while the full list displays all remaining entries. Rankings update in real-time as votes are cast, ensuring the leaderboard always reflects the latest results."
-            ),
-            new AbstractMap.SimpleEntry<>(
-                "What are invitations?",
-                "Competition organizers can invite specific users to participate or judge competitions. When you receive an invitation, it will appear in your notifications and in the 'Invitations' section of your user menu. You can accept or decline invitations from there."
-            ),
-            new AbstractMap.SimpleEntry<>(
-                "Can I manage multiple projects?",
-                "Yes! Votify allows you to create and manage multiple projects across different competitions. Visit 'My Projects' from your user menu to view, edit, and track all your submissions in one place."
-            ),
-            new AbstractMap.SimpleEntry<>(
-                "How do notifications work?",
-                "You'll receive notifications for important events like new invitations, vote activity on your projects, and competition updates. The bell icon in the top navigation bar shows your unread notification count. Click it to preview notifications, or visit the full notifications page."
-            ),
-            new AbstractMap.SimpleEntry<>(
-                "Is Votify free to use?",
-                "Yes, Votify is free to use. You can create an account, join competitions, submit projects, and vote without any cost. Competition organizers have full access to creation and management tools at no charge."
-            ),
-            new AbstractMap.SimpleEntry<>(
-                "How do I edit my profile?",
-                "Click on your avatar in the top-right corner and select 'Edit Profile'. From there, you can update your display name, email, profile picture, and other personal information."
-            )
+            new AbstractMap.SimpleEntry<>(localizationService.t("faq.q1"),  localizationService.t("faq.a1")),
+            new AbstractMap.SimpleEntry<>(localizationService.t("faq.q2"),  localizationService.t("faq.a2")),
+            new AbstractMap.SimpleEntry<>(localizationService.t("faq.q3"),  localizationService.t("faq.a3")),
+            new AbstractMap.SimpleEntry<>(localizationService.t("faq.q4"),  localizationService.t("faq.a4")),
+            new AbstractMap.SimpleEntry<>(localizationService.t("faq.q5"),  localizationService.t("faq.a5")),
+            new AbstractMap.SimpleEntry<>(localizationService.t("faq.q6"),  localizationService.t("faq.a6")),
+            new AbstractMap.SimpleEntry<>(localizationService.t("faq.q7"),  localizationService.t("faq.a7")),
+            new AbstractMap.SimpleEntry<>(localizationService.t("faq.q8"),  localizationService.t("faq.a8")),
+            new AbstractMap.SimpleEntry<>(localizationService.t("faq.q9"),  localizationService.t("faq.a9")),
+            new AbstractMap.SimpleEntry<>(localizationService.t("faq.q10"), localizationService.t("faq.a10")),
+            new AbstractMap.SimpleEntry<>(localizationService.t("faq.q11"), localizationService.t("faq.a11")),
+            new AbstractMap.SimpleEntry<>(localizationService.t("faq.q12"), localizationService.t("faq.a12"))
         );
 
         for (int i = 0; i < faqs.size(); i++) {

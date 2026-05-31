@@ -454,8 +454,26 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         boolean loggedIn = userService != null && userService.isLoggedIn();
         String username = loggedIn ? userService.getCurrentUsername() : null;
 
-        // competition/{id}/... → competitions list
         if ("competition".equals(segments[0]) && segments.length >= 2) {
+            String compId = segments[1];
+
+            // competition/{id}/categories/{catId}/ranking → categories page
+            if (segments.length >= 5 && "categories".equals(segments[2])) {
+                return "competition/" + compId + "/categories";
+            }
+
+            // competition/{id}/category/{catId}/vote → ranking page of that category
+            if (segments.length >= 5 && "category".equals(segments[2])) {
+                String catId = segments[3];
+                return "competition/" + compId + "/categories/" + catId + "/ranking";
+            }
+
+            // competition/{id}/categories (base) → home
+            if (segments.length == 3 && "categories".equals(segments[2])) {
+                return "";
+            }
+
+            // competition/{id} → competitions list
             return username != null ? username + "/competitions" : "";
         }
 
@@ -486,9 +504,10 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     private void updateBreadcrumbs(BeforeEnterEvent event) {
         if (breadcrumbBar == null) return;
+        breadcrumbBar.setLocalizationService(localizationService);
 
         List<BreadcrumbBar.BreadcrumbItem> items = new ArrayList<>();
-        items.add(BreadcrumbBar.BreadcrumbItem.home());
+        items.add(breadcrumbBar.homeItem());
 
         String route = event.getLocation().getPath();
         if (route == null || route.isEmpty()) {

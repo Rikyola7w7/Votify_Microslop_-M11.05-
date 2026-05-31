@@ -64,7 +64,7 @@ public class CategoryCard extends Div {
             .set("margin", "12px 16px 4px");
 
         String vt = category.getVoteType() != null ? category.getVoteType() : "NORMAL";
-        String label = "NORMAL".equals(vt) ? "Normal" : "SCALE".equals(vt) ? "Scale" : "Checklist";
+        String label = "NORMAL".equals(vt) ? t("card.category.normal") : "SCALE".equals(vt) ? t("card.category.scale") : t("card.category.checklist");
         Span voterBadge = new Span(label);
         voterBadge.getStyle()
             .set("font-size", "11px")
@@ -91,7 +91,7 @@ public class CategoryCard extends Div {
                 .set("border", "1px solid rgba(245, 158, 11, 0.3)");
         }
 
-        Span compName = new Span("Competition: " + competition.getName());
+        Span compName = new Span(t("card.category.competition") + competition.getName());
         compName.getStyle()
             .set("color", "var(--text-muted)")
             .set("font-size", "13px")
@@ -163,13 +163,13 @@ public class CategoryCard extends Div {
                 && LocalDateTime.now().isAfter(competition.getEndDate());
 
         if (com.microslop.state.CompetitionStates.STATUS_ACTIVE.equals(status)) {
-            label = "OPEN";
+            label = t("card.category.open");
             badgeClass = "votify-badge-active";
         } else if (com.microslop.state.CompetitionStates.STATUS_CONCLUDED.equals(status) || hasEnded) {
-            label = "FINISHED";
+            label = t("card.category.finished");
             badgeClass = "votify-badge-finished";
         } else {
-            label = "CLOSED";
+            label = t("card.category.closed");
             badgeClass = "votify-badge-draft";
         }
 
@@ -179,7 +179,7 @@ public class CategoryCard extends Div {
     }
 
     private Button createViewButton() {
-        Button viewButton = new Button("View Details");
+        Button viewButton = new Button(t("card.category.viewdetails"));
         viewButton.setWidth("calc(100% - 32px)");
         viewButton.addClassName("votify-btn-primary");
         viewButton.getStyle()

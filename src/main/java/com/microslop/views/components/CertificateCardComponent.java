@@ -2,6 +2,7 @@ package com.microslop.views.components;
 
 import com.microslop.entity.Certificate;
 import com.microslop.service.CertificatePdfGenerator;
+import com.microslop.service.LocalizationService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
@@ -19,10 +20,12 @@ public class CertificateCardComponent extends Div {
 
     private final Certificate certificate;
     private final CertificatePdfGenerator pdfGenerator;
+    private final LocalizationService localizationService;
 
-    public CertificateCardComponent(Certificate certificate, CertificatePdfGenerator pdfGenerator) {
+    public CertificateCardComponent(Certificate certificate, CertificatePdfGenerator pdfGenerator, LocalizationService localizationService) {
         this.certificate = certificate;
         this.pdfGenerator = pdfGenerator;
+        this.localizationService = localizationService;
         buildCard();
     }
 
@@ -99,7 +102,7 @@ public class CertificateCardComponent extends Div {
 
         // Category (if applicable)
         if (certificate.getCategory() != null) {
-            Span category = new Span("Category: " + certificate.getCategory().getName());
+            Span category = new Span(localizationService.t("card.certificate.category") + certificate.getCategory().getName());
             category.getStyle()
                 .set("font-size", "12px")
                 .set("color", "var(--text-muted)");
@@ -108,7 +111,7 @@ public class CertificateCardComponent extends Div {
 
         // Date
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
-        Span dateSpan = new Span("Issued: " + certificate.getGeneratedDate().format(formatter));
+        Span dateSpan = new Span(localizationService.t("card.certificate.issued") + certificate.getGeneratedDate().format(formatter));
         dateSpan.getStyle()
             .set("font-size", "12px")
             .set("color", "var(--text-muted)")
@@ -122,7 +125,7 @@ public class CertificateCardComponent extends Div {
         actionsLayout.setPadding(false);
         actionsLayout.getStyle().set("margin-top", "1rem");
 
-        Button downloadBtn = new Button("Download");
+        Button downloadBtn = new Button(localizationService.t("card.certificate.download"));
         downloadBtn.setIcon(new Icon(VaadinIcon.DOWNLOAD));
         downloadBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         downloadBtn.getStyle().set("width", "100%");
@@ -140,7 +143,7 @@ public class CertificateCardComponent extends Div {
         downloadAnchor.getStyle().set("flex", "1");
         downloadAnchor.add(downloadBtn);
 
-        Button viewBtn = new Button("View Details");
+        Button viewBtn = new Button(localizationService.t("card.certificate.viewdetails"));
         viewBtn.setIcon(new Icon(VaadinIcon.EYE));
         viewBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         viewBtn.getStyle().set("flex", "1");
@@ -171,7 +174,7 @@ public class CertificateCardComponent extends Div {
             dialog.open();
         } catch (Exception e) {
             // Show error notification
-            com.vaadin.flow.component.notification.Notification.show("Error opening PDF: " + e.getMessage())
+            com.vaadin.flow.component.notification.Notification.show(localizationService.t("card.certificate.errorpdf") + e.getMessage())
                 .addThemeVariants(com.vaadin.flow.component.notification.NotificationVariant.LUMO_ERROR);
         }
     }

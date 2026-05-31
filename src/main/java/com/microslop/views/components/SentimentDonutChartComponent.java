@@ -1,5 +1,6 @@
 package com.microslop.views.components;
 
+import com.microslop.service.LocalizationService;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -19,8 +20,10 @@ public class SentimentDonutChartComponent extends VerticalLayout {
 
     private final Div chartContainer;
     private final Span centerLabel;
+    private final LocalizationService localizationService;
 
-    public SentimentDonutChartComponent() {
+    public SentimentDonutChartComponent(LocalizationService localizationService) {
+        this.localizationService = localizationService;
         setSpacing(false);
         setPadding(false);
         setAlignItems(Alignment.CENTER);
@@ -56,9 +59,9 @@ public class SentimentDonutChartComponent extends VerticalLayout {
         legend.setJustifyContentMode(JustifyContentMode.CENTER);
         legend.getStyle().set("margin-top", "12px").set("gap", "16px");
 
-        legend.add(createLegendItem("Positive", POSITIVE_COLOR));
-        legend.add(createLegendItem("Neutral", NEUTRAL_COLOR));
-        legend.add(createLegendItem("Negative", NEGATIVE_COLOR));
+        legend.add(createLegendItem(localizationService.t("chart.sentiment.positive"), POSITIVE_COLOR));
+        legend.add(createLegendItem(localizationService.t("chart.sentiment.neutral"), NEUTRAL_COLOR));
+        legend.add(createLegendItem(localizationService.t("chart.sentiment.negative"), NEGATIVE_COLOR));
 
         add(wrapper, legend);
     }

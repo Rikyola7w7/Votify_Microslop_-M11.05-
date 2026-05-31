@@ -362,7 +362,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 .set("width", "100%")
                 .set("box-sizing", "border-box")
                 .set("border-left", isFirst ? "4px solid var(--secondary)" : "4px solid var(--primary)")
-                .set("text-align", isFirst ? "center" : "left");
+                .set("text-align", "left");
 
         var info = new VerticalLayout();
         info.setPadding(false);
@@ -379,9 +379,11 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         desc.getStyle()
                 .set("font-size", "14px")
                 .set("color", "var(--text-muted)")
-                .set("margin-top", "0.25rem")
+                .set("margin-top", "0.6rem")
+                .set("margin-bottom", "0.6rem")
+                .set("line-height", "1.6")
                 .set("display", "-webkit-box")
-                .set("-webkit-line-clamp", "2")
+                .set("-webkit-line-clamp", "4")
                 .set("-webkit-box-orient", "vertical")
                 .set("overflow", "hidden");
 
@@ -389,7 +391,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         votesLabel.getStyle()
                 .set("font-size", "0.85rem")
                 .set("color", "var(--text-muted)")
-                .set("margin-top", "0.75rem");
+                .set("margin-top", "0.4rem");
 
         info.add(name, desc, votesLabel);
 
@@ -458,12 +460,12 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
         var actions = new VerticalLayout(voteInterface, commentsBtn);
         actions.setPadding(false);
         actions.setSpacing(true);
-        actions.setAlignItems(isFirst ? Alignment.CENTER : Alignment.END);
+        actions.setAlignItems(Alignment.END);
 
         var row = new HorizontalLayout(info, actions);
         row.setWidthFull();
         row.setAlignItems(Alignment.CENTER);
-        row.setJustifyContentMode(isFirst ? FlexComponent.JustifyContentMode.CENTER : FlexComponent.JustifyContentMode.BETWEEN);
+        row.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         row.setSpacing(true);
         row.setPadding(false);
 
@@ -567,17 +569,7 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
             int remainingVotes = getAvailableVotes(selectedCategory);
             boolean isLastVote = remainingVotes <= 0;
 
-            if (!isLastVote) {
-                if (remainingVotes <= 0) {
-                    maxVotesLabel.setText(localizationService.t("voting.no votes remaining"));
-                } else {
-                    String votesText = remainingVotes == 1
-                        ? localizationService.t("voting.votesleft")
-                        : localizationService.t("voting.votesleft.plural");
-                    maxVotesLabel.setText(localizationService.t("voting.youhave") + remainingVotes + votesText);
-                }
-                maxVotesLabel.getStyle().set("animation", "vote-success-pulse 0.4s ease");
-            }
+            updateMaxVotesLabel(selectedCategory);
 
             Runnable afterAnimation = () -> {
                 if (isLastVote) {
@@ -591,7 +583,6 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 VoteSuccessAnimation overlay = new VoteSuccessAnimation(afterAnimation);
                 getUI().ifPresent(ui -> ui.add(overlay));
             } else {
-                updateMaxVotesLabel(selectedCategory);
                 VoteQuickAnimation quick = new VoteQuickAnimation(remainingVotes, afterAnimation);
                 getUI().ifPresent(ui -> ui.add(quick));
             }
@@ -654,7 +645,8 @@ public class VotingView extends VerticalLayout implements BeforeEnterObserver {
                 () -> {
                     removeAll();
                     buildUi();
-                }
+                },
+                localizationService
             );
             dialog.open();
 

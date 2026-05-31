@@ -63,7 +63,8 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         this.notificationService = notificationService;
         this.localizationService = localizationService;
 
-        setSizeFull();
+        setWidthFull();
+        setHeight("auto");
         setPadding(false);
         setSpacing(false);
         getStyle()
@@ -86,6 +87,28 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             return;
         }
 
+        getUI().ifPresent(ui -> ui.getPage().executeJs(
+            "if (!document.getElementById('temp-scroll-override')) {" +
+            "  var style = document.createElement('style');" +
+            "  style.id = 'temp-scroll-override';" +
+            "  style.appendChild(document.createTextNode('* { scroll-behavior: auto !important; }'));" +
+            "  document.head.appendChild(style);" +
+            "}" +
+            "var scrollResetInterval = setInterval(function() {" +
+            "  window.scrollTo({ top: 0, behavior: 'instant' });" +
+            "  document.querySelectorAll('*').forEach(function(el) { if (el.scrollTop > 0) el.scrollTop = 0; });" +
+            "  var al = document.querySelector('vaadin-app-layout');" +
+            "  if (al && al.shadowRoot) {" +
+            "    al.shadowRoot.querySelectorAll('*').forEach(function(el) { if (el.scrollTop > 0) el.scrollTop = 0; });" +
+            "  }" +
+            "}, 100);" +
+            "setTimeout(function() {" +
+            "  clearInterval(scrollResetInterval);" +
+            "  var override = document.getElementById('temp-scroll-override');" +
+            "  if (override) override.remove();" +
+            "}, 1500);"
+        ));
+
         try {
             this.currentCompetition = competitionService.getByIdOrFail(competitionId);
         } catch (Exception e) {
@@ -99,18 +122,18 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             Span icon = new Span("\u26A0");
             icon.getStyle().set("font-size", "48px");
 
-            Span message = new Span("Competition not found.");
+            Span message = new Span(localizationService.t("catselection.notfound"));
             message.getStyle()
                 .set("font-size", "1.2rem")
                 .set("font-weight", "600")
                 .set("color", "var(--text-primary)");
 
-            Span sub = new Span("It may have been removed or the link is invalid.");
+            Span sub = new Span(localizationService.t("catselection.removed"));
             sub.getStyle()
                 .set("color", "var(--text-muted)")
                 .set("font-size", "0.95rem");
 
-            Button backBtn = new Button("\u2190 Back to home", new Icon(VaadinIcon.ARROW_LEFT));
+            Button backBtn = new Button(localizationService.t("catselection.backhome"), new Icon(VaadinIcon.ARROW_LEFT));
             backBtn.addClassName("votify-btn-primary");
             backBtn.addClickListener(ev -> getUI().ifPresent(ui -> ui.navigate("")));
             backBtn.addClickShortcut(Key.ESCAPE);
@@ -128,18 +151,18 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
 
     private void buildUi() {
 
-        Button submitBtn = new Button("Submit Project", new Icon(VaadinIcon.PLUS_CIRCLE_O));
+        Button submitBtn = new Button(localizationService.t("catselection.submit"), new Icon(VaadinIcon.PLUS_CIRCLE_O));
         submitBtn.addClassName("votify-btn-primary");
         submitBtn.getStyle().set("margin", "16px 24px 0 24px").set("align-self", "flex-start");
         submitBtn.addClickListener(e -> {
             if (!userService.isLoggedIn()) {
-                com.vaadin.flow.component.notification.Notification.show("Sign in to submit a project", 3000, com.vaadin.flow.component.notification.Notification.Position.MIDDLE);
+                com.vaadin.flow.component.notification.Notification.show(localizationService.t("catselection.signin"), 3000, com.vaadin.flow.component.notification.Notification.Position.MIDDLE);
                 return;
             }
             var cats = categoryService.getCategoriesByCompetition(competitionId);
             CreateProjectDialog dialog = new CreateProjectDialog(
                 pendingProjectSubmissionService, userService, notificationService,
-                currentCompetition, cats, () -> {}
+                currentCompetition, cats, () -> {}, localizationService
             );
             dialog.open();
         });
@@ -151,11 +174,11 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
 
     private Div buildSummaryCard() {
         var card = new Div();
-        card.setWidthFull();
         card.addClassName("votify-card-static");
         card.getStyle()
             .set("border-left", "4px solid var(--primary)")
-            .set("margin", "24px 40px 0")
+            .set("margin", "24px auto 0")
+            .set("width", "calc(100% - 80px)")
             .set("padding", "0");
 
         var content = new HorizontalLayout();
@@ -200,7 +223,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             ? currentCompetition.getEndDate().format(dateFormatter)
             : "N/A";
 
-        var startDate = new Span("Start: " + startDateStr);
+        var startDate = new Span(localizationService.t("catselection.start") + startDateStr);
         startDate.getStyle()
             .set("font-size", "0.9rem")
             .set("color", "var(--text-muted)");
@@ -210,7 +233,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             .set("color", "var(--border)")
             .set("font-size", "0.9rem");
 
-        var endDate = new Span("End: " + endDateStr);
+        var endDate = new Span(localizationService.t("catselection.end") + endDateStr);
         endDate.getStyle()
             .set("font-size", "0.9rem")
             .set("color", "var(--text-muted)");
@@ -219,7 +242,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
 
         leftSection.add(nameRow, datesRow);
 
-        var categoryCount = new Span(allCategories.size() + " categories");
+        var categoryCount = new Span(allCategories.size() + localizationService.t("catselection.categories.count"));
         categoryCount.addClassName("votify-badge");
         categoryCount.addClassName("votify-badge-active");
 
@@ -241,13 +264,13 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
 
         if (com.microslop.state.CompetitionStates.STATUS_VOTING_OPEN.equals(status)
                 || com.microslop.state.CompetitionStates.STATUS_ACTIVE.equals(status)) {
-                label = "ACTIVE";
+                label = localizationService.t("catselection.status.active");
             badgeClass = "votify-badge-active";
         } else if (com.microslop.state.CompetitionStates.STATUS_CONCLUDED.equals(status) || hasEnded) {
-            label = "FINISHED";
+            label = localizationService.t("catselection.status.finished");
             badgeClass = "votify-badge-finished";
         } else {
-            label = "PAUSED";
+            label = localizationService.t("catselection.status.paused");
             badgeClass = "votify-badge-paused";
         }
 
@@ -265,7 +288,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             .set("padding", "20px 40px");
 
         searchField = new TextField();
-        searchField.setPlaceholder("Search category...");
+        searchField.setPlaceholder(localizationService.t("catselection.search"));
         searchField.setWidth("400px");
         searchField.setClearButtonVisible(true);
         searchField.setValueChangeMode(ValueChangeMode.EAGER);
@@ -305,10 +328,10 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             emptyIcon.setSize("48px");
             emptyIcon.getStyle().set("color", "var(--text-muted)");
 
-            Span title = new Span("No categories found");
+            Span title = new Span(localizationService.t("catselection.nocategories"));
             title.addClassName("empty-state-title");
 
-            Span message = new Span("There are no categories matching your search.");
+            Span message = new Span(localizationService.t("catselection.nomatching"));
             message.addClassName("empty-state-message");
 
             emptyState.add(emptyIcon, title, message);
@@ -350,7 +373,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         gridContainer.setSpacing(false);
 
         // Show loading
-        BallotLoadingComponent loading = new BallotLoadingComponent("Loading categories...");
+        BallotLoadingComponent loading = new BallotLoadingComponent(localizationService.t("catselection.loading"));
         gridContainer.add(loading);
 
         // Build grid but hidden
@@ -362,8 +385,7 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
             .set("display", "flex")
             .set("flex-wrap", "wrap")
             .set("gap", "24px")
-            .set("justify-content", "center")
-            .set("opacity", "0");
+            .set("justify-content", "center");
 
         for (int i = 0; i < allCategories.size(); i++) {
             Category category = allCategories.get(i);
@@ -378,17 +400,37 @@ public class CategorySelectionView extends VerticalLayout implements BeforeEnter
         }
         gridContainer.add(grid);
 
-        // Fade out loading and reveal grid
+        // Reveal: CSS :has(> .votify-loading) already hides siblings.
         getElement().executeJs(
             "setTimeout(function() {" +
-            "  var loadings = document.querySelectorAll('.votify-loading');" +
-            "  loadings.forEach(function(l) { l.style.opacity = '0'; l.style.transition = 'opacity 0.15s ease'; });" +
-            "  var grids = document.querySelectorAll('#cat-cards-grid');" +
-            "  grids.forEach(function(g) { g.style.opacity = '1'; g.style.transition = 'opacity 0.3s ease'; });" +
-            "  setTimeout(function() {" +
-            "    var loadings = document.querySelectorAll('.votify-loading');" +
-            "    loadings.forEach(function(l) { l.style.display = 'none'; });" +
-            "  }, 150);" +
+            "  var l = document.querySelector('.votify-loading');" +
+            "  var g = document.getElementById('cat-cards-grid');" +
+            "  if (l) {" +
+            "    l.classList.add('is-hiding');" +
+            "    setTimeout(function() {" +
+            "      l.remove();" +
+            "      if (g) g.classList.add('votify-content-ready');" +
+            "      if (!document.getElementById('temp-scroll-override')) {" +
+            "        var style = document.createElement('style');" +
+            "        style.id = 'temp-scroll-override';" +
+            "        style.appendChild(document.createTextNode('* { scroll-behavior: auto !important; }'));" +
+            "        document.head.appendChild(style);" +
+            "      }" +
+            "      var scrollResetInterval = setInterval(function() {" +
+            "        window.scrollTo({ top: 0, behavior: 'instant' });" +
+            "        document.querySelectorAll('*').forEach(function(el) { if (el.scrollTop > 0) el.scrollTop = 0; });" +
+            "        var al = document.querySelector('vaadin-app-layout');" +
+            "        if (al && al.shadowRoot) {" +
+            "          al.shadowRoot.querySelectorAll('*').forEach(function(el) { if (el.scrollTop > 0) el.scrollTop = 0; });" +
+            "        }" +
+            "      }, 100);" +
+            "      setTimeout(function() {" +
+            "        clearInterval(scrollResetInterval);" +
+            "        var override = document.getElementById('temp-scroll-override');" +
+            "        if (override) override.remove();" +
+            "      }, 1500);" +
+            "    }, 200);" +
+            "  }" +
             "}, 750)");
 
         gridWrapper.add(gridContainer);

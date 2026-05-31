@@ -36,10 +36,10 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
         """)
     List<Project> findProjectsByParticipantUserId(@Param("userId") Long userId);
 
-    @Query("SELECT p FROM Project p LEFT JOIN p.votes v WHERE p.competition.id = :competitionId GROUP BY p ORDER BY COUNT(v) DESC")
+    @Query("SELECT p FROM Project p LEFT JOIN p.votes v WHERE p.competition.id = :competitionId GROUP BY p ORDER BY COALESCE(SUM(v.points), 0) DESC")
     List<Project> findRankingByCompetition(@Param("competitionId") Long competitionId);
 
-    @Query("SELECT p FROM Project p LEFT JOIN p.votes v LEFT JOIN FETCH p.categories c WHERE c.id = :categoryId GROUP BY p ORDER BY COUNT(v) DESC")
+    @Query("SELECT p FROM Project p LEFT JOIN p.votes v LEFT JOIN FETCH p.categories c WHERE c.id = :categoryId GROUP BY p ORDER BY COALESCE(SUM(v.points), 0) DESC")
     List<Project> findRankingByCategory(@Param("categoryId") Long categoryId);
 
     // Projects of a competition ordered by checklist vote count
@@ -63,7 +63,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
         """)
     List<Project> findChecklistRankingByCategory(@Param("categoryId") Long categoryId);
 
-    // Judge-only ranking: projects ordered by count of votes from judges
+    // Judge-only ranking: projects ordered by sum of votes from judges
     @Query("""
         SELECT p FROM Project p
         LEFT JOIN p.categories c
@@ -71,7 +71,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
         LEFT JOIN com.microslop.entity.Judge j ON j.user = v.user AND j.competition = p.competition
         WHERE c.id = :categoryId
         GROUP BY p
-        ORDER BY COUNT(CASE WHEN j.id IS NOT NULL THEN v.id END) DESC, p.id ASC
+        ORDER BY COALESCE(SUM(CASE WHEN j.id IS NOT NULL THEN v.points ELSE 0 END), 0) DESC, p.id ASC
         """)
     List<Project> findJudgeRankingByCategory(@Param("categoryId") Long categoryId);
 
@@ -82,7 +82,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
         LEFT JOIN com.microslop.entity.Judge j ON j.user = v.user AND j.competition = p.competition
         WHERE c.id = :categoryId
         GROUP BY p
-        ORDER BY COUNT(CASE WHEN j.id IS NULL THEN v.id END) DESC, p.id ASC
+        ORDER BY COALESCE(SUM(CASE WHEN j.id IS NULL THEN v.points ELSE 0 END), 0) DESC, p.id ASC
         """)
     List<Project> findPopularRankingByCategory(@Param("categoryId") Long categoryId);
 

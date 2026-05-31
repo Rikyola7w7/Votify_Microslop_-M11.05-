@@ -1,6 +1,7 @@
 package com.microslop.views.components;
 
 import com.microslop.entity.Project;
+import com.microslop.service.LocalizationService;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import java.text.NumberFormat;
@@ -31,15 +32,15 @@ public class PodiumCardComponent extends Div {
         public String getAnimationDelay() { return animationDelay; }
     }
 
-    public PodiumCardComponent(Project project, Position position, long totalVotes) {
-        this(project, position, totalVotes, false, false, 0.0);
+    public PodiumCardComponent(Project project, Position position, long totalVotes, LocalizationService localizationService) {
+        this(project, position, totalVotes, false, false, 0.0, localizationService);
     }
 
-    public PodiumCardComponent(Project project, Position position, long totalVotes, boolean isChecklistMode, boolean isScaleMode, double avgScore) {
-        buildCard(project, position, totalVotes, isChecklistMode, isScaleMode, avgScore);
+    public PodiumCardComponent(Project project, Position position, long totalVotes, boolean isChecklistMode, boolean isScaleMode, double avgScore, LocalizationService localizationService) {
+        buildCard(project, position, totalVotes, isChecklistMode, isScaleMode, avgScore, localizationService);
     }
 
-    private void buildCard(Project project, Position position, long totalVotes, boolean isChecklistMode, boolean isScaleMode, double avgScore) {
+    private void buildCard(Project project, Position position, long totalVotes, boolean isChecklistMode, boolean isScaleMode, double avgScore, LocalizationService localizationService) {
         for (String cls : position.getCssClass().split(" ")) {
             addClassName(cls);
         }
@@ -78,13 +79,13 @@ public class PodiumCardComponent extends Div {
         String votesLabel;
         String displayValue;
         if (isScaleMode) {
-            votesLabel = position == Position.FIRST ? "Avg. Score:" : "Score:";
+            votesLabel = position == Position.FIRST ? localizationService.t("card.podium.avgscore") : localizationService.t("card.podium.score");
             displayValue = String.format("%.1f", avgScore);
         } else if (isChecklistMode) {
-            votesLabel = position == Position.FIRST ? "Total Checks:" : "Checks:";
+            votesLabel = position == Position.FIRST ? localizationService.t("card.podium.totalchecks") : localizationService.t("card.podium.checks");
             displayValue = formatNumber(totalVotes);
         } else {
-            votesLabel = position == Position.FIRST ? "Total Votes:" : "Votes:";
+            votesLabel = position == Position.FIRST ? localizationService.t("card.podium.totalvotes") : localizationService.t("card.podium.votes");
             displayValue = formatNumber(totalVotes);
         }
         var labelVotes = new Span(votesLabel);
@@ -101,7 +102,11 @@ public class PodiumCardComponent extends Div {
             .set("display", "block")
             .set("margin-bottom", "0.8rem");
 
-        add(medalSpan, nameSpan, labelVotes, numVotes);
+        if (isChecklistMode) {
+            add(medalSpan, nameSpan);
+        } else {
+            add(medalSpan, nameSpan, labelVotes, numVotes);
+        }
     }
 
     private static String formatNumber(long num) {

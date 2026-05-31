@@ -3,6 +3,7 @@ package com.microslop.views;
 import com.microslop.base.ui.MainLayout;
 import com.microslop.entity.Competition;
 import com.microslop.service.CompetitionService;
+import com.microslop.service.LocalizationService;
 import com.microslop.service.UserService;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
@@ -31,13 +32,16 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
 
     private final CompetitionService competitionService;
     private final UserService userService;
+    private final LocalizationService localizationService;
 
     private String currentUsername;
     private VerticalLayout competitionsContainer;
 
-    public AdminDashboardView(CompetitionService competitionService, UserService userService) {
+    public AdminDashboardView(CompetitionService competitionService, UserService userService,
+                              LocalizationService localizationService) {
         this.competitionService = competitionService;
         this.userService = userService;
+        this.localizationService = localizationService;
         initializeView();
     }
 
@@ -73,7 +77,7 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         setSpacing(true);
         getStyle().set("background", "var(--background)");
 
-        Button createButton = new Button("Create Competition", new Icon(VaadinIcon.PLUS));
+        Button createButton = new Button(localizationService.t("admin.createcompetition"), new Icon(VaadinIcon.PLUS));
         createButton.addClassName("votify-btn-primary");
         createButton.addClickListener(e -> {
             String username = getLoggedInUsername();
@@ -118,10 +122,10 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         Icon emptyIcon = new Icon(VaadinIcon.FOLDER_OPEN);
         emptyIcon.addClassName("empty-state-icon");
 
-        Span emptyTitle = new Span("No competitions yet");
+        Span emptyTitle = new Span(localizationService.t("admin.nocompetitions"));
         emptyTitle.addClassName("empty-state-title");
 
-        Span emptyMessage = new Span("Create your first competition to get started!");
+        Span emptyMessage = new Span(localizationService.t("admin.createfirst"));
         emptyMessage.addClassName("empty-state-message");
 
         emptyLayout.add(emptyIcon, emptyTitle, emptyMessage);
@@ -140,16 +144,16 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         String statusText;
         String badgeClass;
         if (competition.isActive()) {
-            statusText = "ACTIVE";
+            statusText = localizationService.t("admin.status.active");
             badgeClass = "votify-badge-active";
         } else {
             boolean hasEnded = competition.getEndDate() != null
                     && LocalDateTime.now().isAfter(competition.getEndDate());
             if (hasEnded) {
-                statusText = "FINISHED";
+                statusText = localizationService.t("admin.status.finished");
                 badgeClass = "votify-badge-finished";
             } else {
-                statusText = "PAUSED";
+                statusText = localizationService.t("admin.status.paused");
                 badgeClass = "votify-badge-paused";
             }
         }
@@ -177,14 +181,14 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
                 .set("border-radius", "var(--radius-sm)")
                 .set("padding", "15px");
 
-        Span eventTypeSpan = new Span("Event Type: " + competition.getEventType());
+        Span eventTypeSpan = new Span(localizationService.t("admin.eventtype") + competition.getEventType());
         eventTypeSpan.getStyle().set("color", "var(--text-muted)");
 
-        Span descriptionSpan = new Span("Description: " + (competition.getDescription() != null ? competition.getDescription() : "No description"));
+        Span descriptionSpan = new Span(localizationService.t("admin.description") + (competition.getDescription() != null ? competition.getDescription() : localizationService.t("admin.nodescription")));
         descriptionSpan.getStyle().set("color", "var(--text-muted)");
 
-        String endDateStr = competition.getEndDate() != null ? competition.getEndDate().toLocalDate().toString() : "No end date";
-        Span endDateSpan = new Span("End Date: " + endDateStr);
+        String endDateStr = competition.getEndDate() != null ? competition.getEndDate().toLocalDate().toString() : localizationService.t("admin.noenddate");
+        Span endDateSpan = new Span(localizationService.t("admin.enddate") + endDateStr);
         endDateSpan.getStyle().set("color", "var(--text-muted)");
 
         detailsLayout.add(eventTypeSpan, descriptionSpan, endDateSpan);
@@ -194,14 +198,14 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         actionsLayout.setPadding(false);
         actionsLayout.setWidth("100%");
 
-        Button configureButton = new Button("Configure Competition");
+        Button configureButton = new Button(localizationService.t("admin.configure"));
         configureButton.addClassName("votify-btn-secondary");
         configureButton.setIcon(new Icon(VaadinIcon.COG));
         configureButton.addClickListener(e ->
                 getUI().ifPresent(ui -> ui.navigate("configure-competition/" + competition.getId()))
         );
 
-        Button manageButton = new Button("Manage Competition");
+        Button manageButton = new Button(localizationService.t("admin.manage"));
         manageButton.addClassName("votify-btn-primary");
         manageButton.setIcon(new Icon(VaadinIcon.CLIPBOARD_TEXT));
         manageButton.addClickListener(e ->
@@ -219,7 +223,7 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
     }
 
     private void showAccessDeniedNotification() {
-        Notification notification = Notification.show("Access denied. You can only view your own admin dashboard.");
+        Notification notification = Notification.show(localizationService.t("admin.accessdenied"));
         notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
     }
 }

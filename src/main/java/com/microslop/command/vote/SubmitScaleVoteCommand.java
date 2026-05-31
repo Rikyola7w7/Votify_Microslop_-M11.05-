@@ -67,8 +67,11 @@ public class SubmitScaleVoteCommand extends AbstractCommand<Void> {
             throw new IllegalStateException("Competition not found for project: " + projectId);
         }
 
-        if ("CHECKLIST".equalsIgnoreCase(competition.getVoteType())) {
-            throw new IllegalStateException("This competition uses checklist voting. Please use the checklist voting interface.");
+        var category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new IllegalStateException("Category not found: " + categoryId));
+
+        if ("CHECKLIST".equalsIgnoreCase(category.getVoteType())) {
+            throw new IllegalStateException("This category uses checklist voting. Please use the checklist voting interface.");
         }
 
         VotingStrategy votingStrategy = strategyRegistry.resolveVotingStrategy(competition.getVotingStrategyType());
@@ -77,8 +80,8 @@ public class SubmitScaleVoteCommand extends AbstractCommand<Void> {
             throw new IllegalStateException("User is not allowed to vote in this competition");
         }
 
-        if (!"SCALE".equalsIgnoreCase(competition.getVoteType())) {
-            throw new IllegalStateException("This competition does not use scale voting.");
+        if (!"SCALE".equalsIgnoreCase(category.getVoteType())) {
+            throw new IllegalStateException("This category does not use scale voting.");
         }
 
         if (!competition.isActive()) {
@@ -90,9 +93,6 @@ public class SubmitScaleVoteCommand extends AbstractCommand<Void> {
                 throw new IllegalStateException("Esta competición está pausada temporalmente. Inténtalo más tarde.");
             }
         }
-
-        var category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalStateException("Category not found: " + categoryId));
 
         long alreadyVotedProject = voteRepository.countByUserIdAndProjectIdAndCategoryId(user.getId(), project.getId(), category.getId());
         if (alreadyVotedProject > 0) {

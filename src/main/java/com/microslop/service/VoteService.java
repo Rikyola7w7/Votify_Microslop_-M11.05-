@@ -43,6 +43,14 @@ public interface VoteService extends VoteEventSubject {
 
     Map<Long, Long> countUserVotesByProjectIdsAndCategory(List<Long> projectIds, Long userId, Long categoryId);
 
+    Map<Long, Long> countJudgeVotesByProjectIdsAndCategory(List<Long> projectIds, Long categoryId, Long competitionId);
+
+    Map<Long, Long> countPopularVotesByProjectIdsAndCategory(List<Long> projectIds, Long categoryId, Long competitionId);
+
+    long countJudgeVotesByProjectAndCategory(Long projectId, Long categoryId, Long competitionId);
+
+    long countPopularVotesByProjectAndCategory(Long projectId, Long categoryId, Long competitionId);
+
     List<Vote> getVotesByUser(Long userId);
 
     List<Vote> getVotesByProject(Long projectId);
