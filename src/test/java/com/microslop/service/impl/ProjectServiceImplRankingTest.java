@@ -87,7 +87,7 @@ class ProjectServiceImplRankingTest {
         voteList.add(new Object[]{1L, 100L});
         voteList.add(new Object[]{2L, 80L});
         voteList.add(new Object[]{3L, 60L});
-        lenient().when(voteRepository.countVotesByProjectIds(anyList())).thenReturn(voteList);
+        lenient().when(voteRepository.countPopularVotesByProjectIdsAndCategory(anyList(), any(), any())).thenReturn(voteList);
 
         // Act
         List<Project> result = projectService.getRankingForCategory(1L, false);
@@ -112,7 +112,7 @@ class ProjectServiceImplRankingTest {
         List<Object[]> voteList = new ArrayList<>();
         voteList.add(new Object[]{1L, 50L});
         voteList.add(new Object[]{2L, 30L});
-        lenient().when(voteRepository.countVotesByProjectIds(anyList())).thenReturn(voteList);
+        lenient().when(voteRepository.countJudgeVotesByProjectIdsAndCategory(anyList(), any(), any())).thenReturn(voteList);
 
         // Act
         List<Project> result = projectService.getRankingForCategory(2L, true);
@@ -134,7 +134,7 @@ class ProjectServiceImplRankingTest {
         List<Project> baseRanking = Arrays.asList(p1, p2, p3);
 
         when(projectRepository.findPopularRankingByCategory(1L)).thenReturn(baseRanking);
-        when(voteRepository.countVotesByProjectIds(anyList())).thenReturn(Arrays.asList(
+        when(voteRepository.countPopularVotesByProjectIdsAndCategory(anyList(), any(), any())).thenReturn(Arrays.asList(
                 new Object[]{1L, 100L},
                 new Object[]{2L, 200L},
                 new Object[]{3L, 150L}
@@ -163,7 +163,7 @@ class ProjectServiceImplRankingTest {
         List<Project> baseRanking = Arrays.asList(p1, p2, p3);
 
         when(projectRepository.findPopularRankingByCategory(1L)).thenReturn(baseRanking);
-        when(voteRepository.countVotesByProjectIds(anyList())).thenReturn(Arrays.asList(
+        when(voteRepository.countPopularVotesByProjectIdsAndCategory(anyList(), any(), any())).thenReturn(Arrays.asList(
                 new Object[]{1L, 100L},
                 new Object[]{2L, 200L},
                 new Object[]{3L, 150L}
@@ -190,7 +190,7 @@ class ProjectServiceImplRankingTest {
         List<Project> baseRanking = Arrays.asList(p1, p2, p3);
 
         when(projectRepository.findPopularRankingByCategory(1L)).thenReturn(baseRanking);
-        when(voteRepository.countVotesByProjectIds(anyList())).thenReturn(Arrays.asList(
+        when(voteRepository.countPopularVotesByProjectIdsAndCategory(anyList(), any(), any())).thenReturn(Arrays.asList(
                 new Object[]{1L, 100L},
                 new Object[]{2L, 200L},
                 new Object[]{3L, 150L}
@@ -219,7 +219,7 @@ class ProjectServiceImplRankingTest {
         List<Project> baseRanking = Arrays.asList(p1, p2, p3);
 
         when(projectRepository.findPopularRankingByCategory(1L)).thenReturn(baseRanking);
-        when(voteRepository.countVotesByProjectIds(anyList())).thenReturn(Arrays.asList(
+        when(voteRepository.countPopularVotesByProjectIdsAndCategory(anyList(), any(), any())).thenReturn(Arrays.asList(
                 new Object[]{1L, 500L},
                 new Object[]{2L, 600L},
                 new Object[]{3L, 700L}
@@ -244,7 +244,7 @@ class ProjectServiceImplRankingTest {
         List<Project> baseRanking = Arrays.asList(p1, p2, p3);
 
         when(projectRepository.findPopularRankingByCategory(1L)).thenReturn(baseRanking);
-        when(voteRepository.countVotesByProjectIds(anyList())).thenReturn(Arrays.asList(
+        when(voteRepository.countPopularVotesByProjectIdsAndCategory(anyList(), any(), any())).thenReturn(Arrays.asList(
                 new Object[]{1L, 100L},
                 new Object[]{3L, 150L}
         ));
@@ -272,7 +272,7 @@ class ProjectServiceImplRankingTest {
         List<Project> baseRanking = Arrays.asList(p1, p2, p3, p4);
 
         when(projectRepository.findPopularRankingByCategory(1L)).thenReturn(baseRanking);
-        when(voteRepository.countVotesByProjectIds(anyList())).thenReturn(Arrays.asList(
+        when(voteRepository.countPopularVotesByProjectIdsAndCategory(anyList(), any(), any())).thenReturn(Arrays.asList(
                 new Object[]{1L, 100L},
                 new Object[]{2L, 200L},
                 new Object[]{3L, 150L},
@@ -307,7 +307,7 @@ class ProjectServiceImplRankingTest {
         List<Project> baseRanking = Arrays.asList(p1, p2, p3, p4, p5, p6);
 
         when(projectRepository.findPopularRankingByCategory(1L)).thenReturn(baseRanking);
-        when(voteRepository.countVotesByProjectIds(anyList())).thenReturn(Arrays.asList(
+        when(voteRepository.countPopularVotesByProjectIdsAndCategory(anyList(), any(), any())).thenReturn(Arrays.asList(
                 new Object[]{1L, 150L},
                 new Object[]{2L, 180L},
                 new Object[]{3L, 200L},
@@ -343,7 +343,7 @@ class ProjectServiceImplRankingTest {
         List<Project> baseRanking = Arrays.asList(p1, p2, p3);
 
         when(projectRepository.findJudgeRankingByCategory(1L)).thenReturn(baseRanking);
-        when(voteRepository.countVotesByProjectIds(anyList())).thenReturn(Arrays.asList(
+        when(voteRepository.countJudgeVotesByProjectIdsAndCategory(anyList(), any(), any())).thenReturn(Arrays.asList(
                 new Object[]{1L, 100L},
                 new Object[]{2L, 200L},
                 new Object[]{3L, 150L}
@@ -369,7 +369,7 @@ class ProjectServiceImplRankingTest {
         List<Project> baseRanking = Arrays.asList(p1, p2, p3);
 
         when(projectRepository.findPopularRankingByCategory(1L)).thenReturn(baseRanking);
-        lenient().when(voteRepository.countVotesByProjectIds(anyList())).thenReturn(new ArrayList<>());
+        lenient().when(voteRepository.countPopularVotesByProjectIdsAndCategory(anyList(), any(), any())).thenReturn(new ArrayList<>());
 
         // Act
         List<Project> result = projectService.getRankingForCategory(1L, false);
